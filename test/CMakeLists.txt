@@ -1,0 +1,35 @@
+
+cmake_minimum_required(VERSION 3.0)
+
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    project(FrictionQPotFEM-test)
+    find_package(FrictionQPotFEM REQUIRED CONFIG)
+endif()
+
+option(WARNINGS "Show build warnings" ON)
+option(ASSERT "Enable assertions" ON)
+option(DEBUG "Enable assertions" OFF)
+option(XSIMD "Use xsimd and 'march=native' optimisations" OFF)
+
+set(CMAKE_BUILD_TYPE Release)
+
+find_package(Catch2 REQUIRED)
+find_package(xtensor REQUIRED)
+add_executable(main main.cpp UniformSingleLayer2d.cpp)
+target_link_libraries(main PRIVATE Catch2::Catch2 FrictionQPotFEM)
+
+if(WARNINGS)
+    target_link_libraries(main PRIVATE FrictionQPotFEM::compiler_warnings)
+endif()
+
+if(ASSERT)
+    target_link_libraries(main PRIVATE FrictionQPotFEM::assert)
+endif()
+
+if(DEBUG)
+    target_link_libraries(main PRIVATE FrictionQPotFEM::debug)
+endif()
+
+if(XSIMD)
+    target_link_libraries(main PRIVATE xtensor::optimize xtensor::use_xsimd)
+endif()
