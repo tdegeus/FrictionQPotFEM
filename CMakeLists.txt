@@ -7,6 +7,7 @@ cmake_minimum_required(VERSION 3.0)
 project(FrictionQPotFEM)
 
 option(BUILD_TESTS "${PROJECT_NAME} Build tests" OFF)
+option(BUILD_EXAMPLES "${PROJECT_NAME} Build examples" OFF)
 
 # Version
 # =======
@@ -78,4 +79,8 @@ include("FrictionQPotFEMConfig.cmake")
 
 if(BUILD_TESTS)
     add_subdirectory(test)
+endif()
+
+if(BUILD_EXAMPLES)
+    add_subdirectory(examples)
 endif()

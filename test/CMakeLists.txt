@@ -6,15 +6,14 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     find_package(FrictionQPotFEM REQUIRED CONFIG)
 endif()
 
-option(WARNINGS "Show build warnings" ON)
-option(ASSERT "Enable assertions" ON)
-option(DEBUG "Enable assertions" OFF)
-option(XSIMD "Use xsimd and 'march=native' optimisations" OFF)
+set(WARNINGS ON)
+set(ASSERT ON)
+set(DEBUG ON)
+set(XSIMD OFF)
 
 set(CMAKE_BUILD_TYPE Release)
 
 find_package(Catch2 REQUIRED)
-find_package(xtensor REQUIRED)
 add_executable(main main.cpp UniformSingleLayer2d.cpp)
 target_link_libraries(main PRIVATE Catch2::Catch2 FrictionQPotFEM)
 
@@ -31,5 +30,7 @@ if(DEBUG)
 endif()
 
 if(XSIMD)
+    find_package(xtensor REQUIRED)
+    find_package(xsimd REQUIRED)
     target_link_libraries(main PRIVATE xtensor::optimize xtensor::use_xsimd)
 endif()

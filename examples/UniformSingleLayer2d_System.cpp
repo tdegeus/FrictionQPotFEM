@@ -1,18 +1,12 @@
 
-#include <catch2/catch.hpp>
-#include <xtensor/xrandom.hpp>
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
+#include <xtensor/xrandom.hpp>
 
-#define ISCLOSE(a, b) REQUIRE_THAT((a), Catch::WithinAbs((b), 1e-8));
-
-TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
-{
-
-SECTION("System vs. HybridSystem")
+int main()
 {
     // Define a geometry
 
-    size_t N = std::pow(3, 2);
+    size_t N = std::pow(3, 4);
     double h = xt::numeric_constants<double>::PI;
     double L = h * static_cast<double>(N);
 
@@ -55,23 +49,12 @@ SECTION("System vs. HybridSystem")
 
     // Initialise system
 
-    FrictionQPotFEM::UniformSingleLayer2d::System full(coor, conn, dofs, iip, elastic, plastic);
-    FrictionQPotFEM::UniformSingleLayer2d::HybridSystem reduced(coor, conn, dofs, iip, elastic, plastic);
-
-    full.setMassMatrix(rho * xt::ones<double>({mesh.nelem()}));
-    reduced.setMassMatrix(rho * xt::ones<double>({mesh.nelem()}));
-
-    full.setDampingMatrix(alpha * xt::ones<double>({mesh.nelem()}));
-    reduced.setDampingMatrix(alpha * xt::ones<double>({mesh.nelem()}));
-
-    full.setElastic(K * xt::ones<double>({elastic.size()}), G * xt::ones<double>({elastic.size()}));
-    reduced.setElastic(K * xt::ones<double>({elastic.size()}), G * xt::ones<double>({elastic.size()}));
-
-    full.setPlastic(K * xt::ones<double>({plastic.size()}), G * xt::ones<double>({plastic.size()}), epsy);
-    reduced.setPlastic(K * xt::ones<double>({plastic.size()}), G * xt::ones<double>({plastic.size()}), epsy);
-
-    full.setDt(dt);
-    reduced.setDt(dt);
+    FrictionQPotFEM::UniformSingleLayer2d::System sys(coor, conn, dofs, iip, elastic, plastic);
+    sys.setMassMatrix(rho * xt::ones<double>({mesh.nelem()}));
+    sys.setDampingMatrix(alpha * xt::ones<double>({mesh.nelem()}));
+    sys.setElastic(K * xt::ones<double>({elastic.size()}), G * xt::ones<double>({elastic.size()}));
+    sys.setPlastic(K * xt::ones<double>({plastic.size()}), G * xt::ones<double>({plastic.size()}), epsy);
+    sys.setDt(dt);
 
     // Run
 
@@ -79,16 +62,13 @@ SECTION("System vs. HybridSystem")
     xt::view(dF, xt::range(1, dF.shape(0)), 0, 1) = 0.004 / 1000.0;
 
     xt::xtensor<double, 2> ret = xt::zeros<double>(std::array<size_t, 2>{dF.shape(0), 2});
-    auto dV = full.AsTensor<2>(full.dV());
-    REQUIRE(xt::allclose(dV, reduced.AsTensor<2>(reduced.dV())));
+    auto dV = sys.AsTensor<2>(sys.dV());
 
     GF::Iterate::StopList stop(20);
 
     for (size_t inc = 0 ; inc < dF.shape(0); ++inc) {
 
-        REQUIRE(xt::allclose(full.u(), reduced.u()));
-
-        auto u = full.u();
+        auto u = sys.u();
 
         for (size_t i = 0; i < mesh.nnode(); ++i) {
             for (size_t j = 0; j < mesh.ndim(); ++j) {
@@ -98,41 +78,21 @@ SECTION("System vs. HybridSystem")
             }
         }
 
-        full.setU(u);
-        reduced.setU(u);
-
-        REQUIRE(xt::allclose(full.u(), reduced.u()));
+        sys.setU(u);
 
         for (size_t iiter = 0; iiter < 99999 ; ++iiter) {
 
-            full.timeStep();
-            reduced.timeStep();
+            sys.timeStep();
 
-            REQUIRE(xt::allclose(full.fmaterial(), reduced.fmaterial()));
-            REQUIRE(xt::allclose(full.u(), reduced.u()));
-            REQUIRE(full.t() == Approx(reduced.t()));
-            ISCLOSE(full.residual(), reduced.residual());
-
-            if (stop.stop(full.residual(), 1e-5)) {
+            if (stop.stop(sys.residual(), 1e-5)) {
                 std::cout << inc << ", " << iiter << std::endl;
                 break;
             }
         }
 
-        full.quench();
-        reduced.quench();
-
+        sys.quench();
         stop.reset();
-
-        // xt::xtensor<double, 2> Epsbar = xt::average(m_Eps, dV, {0, 1});
-        // xt::xtensor<double, 2> Sigbar = xt::average(m_Sig, dV, {0, 1});
-
-        // ret(inc, 0) = GM::Epsd(Epsbar)();
-        // ret(inc, 1) = GM::Epsd(Sigbar)();
     }
 
-
-
-}
-
+    return 0;
 }

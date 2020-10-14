@@ -52,7 +52,7 @@ inline void System::initGeometry(
         xt::xtensor<size_t, 1> elem = xt::concatenate(xt::xtuple(m_elem_elas, m_elem_plas));
         FRICTIONQPOTFEM_ASSERT(xt::sort(elem) == xt::arange<size_t>(m_nelem));
         // check that all "iip" or in "dofs"
-        FRICTIONQPOTFEM_ASSERT(xt::all(xt::in1d(m_iip, m_dofs)));
+        FRICTIONQPOTFEM_ASSERT(xt::all(xt::isin(m_iip, m_dofs)));
     #endif
 
     m_vector = GF::VectorPartitioned(m_conn, m_dofs, m_iip);
@@ -89,17 +89,6 @@ inline void System::evalAllSet()
     m_allset = m_set_M && m_set_D && m_set_elas && m_set_plas && m_dt > 0.0;
 }
 
-inline void System::initMaterial()
-{
-    if (!(m_set_elas && m_set_plas)) {
-        return;
-    }
-
-    m_material.check();
-
-    m_material.setStrain(m_Eps);
-}
-
 template <class T>
 inline void System::setMatrix(T& matrix, const xt::xtensor<double, 1>& val_elem)
 {
@@ -129,10 +118,24 @@ inline void System::setDampingMatrix(const xt::xtensor<double, 1>& val_elem)
     this->evalAllSet();
 }
 
+inline void System::initMaterial()
+{
+    if (!(m_set_elas && m_set_plas)) {
+        return;
+    }
+
+    m_material.check();
+
+    m_material.setStrain(m_Eps);
+}
+
 inline void System::setElastic(
     const xt::xtensor<double, 1>& K_elem,
     const xt::xtensor<double, 1>& G_elem)
 {
+    FRICTIONQPOTFEM_ASSERT(K_elem.size() == m_nelem_elas);
+    FRICTIONQPOTFEM_ASSERT(G_elem.size() == m_nelem_elas);
+
     xt::xtensor<size_t, 2> I = xt::zeros<size_t>({m_nelem, m_nip});
     xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem, m_nip});
     xt::view(I, xt::keep(m_elem_elas), xt::all()) = 1ul;
@@ -149,6 +152,10 @@ inline void System::setPlastic(
     const xt::xtensor<double, 1>& G_elem,
     const xt::xtensor<double, 2>& epsy_elem)
 {
+    FRICTIONQPOTFEM_ASSERT(K_elem.size() == m_nelem_plas);
+    FRICTIONQPOTFEM_ASSERT(G_elem.size() == m_nelem_plas);
+    FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
+
     xt::xtensor<size_t, 2> I = xt::zeros<size_t>({m_nelem, m_nip});
     xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem, m_nip});
     xt::view(I, xt::keep(m_elem_plas), xt::all()) = 1ul;
@@ -179,12 +186,12 @@ inline void System::quench()
     m_a.fill(0.0);
 }
 
-inline auto System::nelem() const
+inline auto System::u() const
 {
-    return m_nelem;
+    return m_u;
 }
 
-inline auto System::forceMaterial() const
+inline auto System::fmaterial() const
 {
     return m_fmaterial;
 }
@@ -209,33 +216,10 @@ inline auto System::dV() const
     return m_quad.dV();
 }
 
-inline auto System::u() const
-{
-    return m_u;
-}
-
 template <size_t rank, class T>
 inline auto System::AsTensor(const T& arg) const
 {
     return m_quad.AsTensor<rank>(arg);
-}
-
-inline void System::computeStress()
-{
-    FRICTIONQPOTFEM_ASSERT(m_allset);
-
-    m_vector.asElement(m_u, m_ue);
-    m_quad.symGradN_vector(m_ue, m_Eps);
-    m_material.setStrain(m_Eps);
-    m_material.stress(m_Sig);
-}
-
-inline void System::computeForceMaterial()
-{
-    computeStress();
-
-    m_quad.int_gradN_dot_tensor2_dV(m_Sig, m_fe);
-    m_vector.assembleNode(m_fe, m_fmaterial);
 }
 
 inline void System::timeStep()
@@ -304,6 +288,24 @@ inline void System::timeStep()
     m_M.solve(m_fres, m_a);
 }
 
+inline void System::computeStress()
+{
+    FRICTIONQPOTFEM_ASSERT(m_allset);
+
+    m_vector.asElement(m_u, m_ue);
+    m_quad.symGradN_vector(m_ue, m_Eps);
+    m_material.setStrain(m_Eps);
+    m_material.stress(m_Sig);
+}
+
+inline void System::computeForceMaterial()
+{
+    computeStress();
+
+    m_quad.int_gradN_dot_tensor2_dV(m_Sig, m_fe);
+    m_vector.assembleNode(m_fe, m_fmaterial);
+}
+
 inline HybridSystem::HybridSystem(
     const xt::xtensor<double, 2>& coor,
     const xt::xtensor<size_t, 2>& conn,
@@ -313,6 +315,63 @@ inline HybridSystem::HybridSystem(
     const xt::xtensor<size_t, 1>& elem_plastic)
 {
     this->initGeometry(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+
+    m_conn_elas = xt::view(m_conn, xt::keep(m_elem_elas), xt::all());
+    m_conn_plas = xt::view(m_conn, xt::keep(m_elem_plas), xt::all());
+
+    m_vector_elas = GF::VectorPartitioned(m_conn_elas, m_dofs, m_iip);
+    m_vector_plas = GF::VectorPartitioned(m_conn_plas, m_dofs, m_iip);
+
+    m_quad_elas = QD::Quadrature(m_vector_elas.AsElement(m_coor));
+    m_quad_plas = QD::Quadrature(m_vector_plas.AsElement(m_coor));
+
+    m_ue_plas = m_vector_plas.AllocateElemvec(0.0);
+    m_fe_plas = m_vector_plas.AllocateElemvec(0.0);
+
+    m_felas = m_vector.AllocateNodevec(0.0);
+    m_fplas = m_vector.AllocateNodevec(0.0);
+
+    m_Eps_elas = m_quad_elas.AllocateQtensor<2>(0.0);
+    m_Sig_elas = m_quad_elas.AllocateQtensor<2>(0.0);
+    m_Eps_plas = m_quad_plas.AllocateQtensor<2>(0.0);
+    m_Sig_plas = m_quad_plas.AllocateQtensor<2>(0.0);
+
+    m_material_elas = GM::Array<2>({m_nelem_elas, m_nip});
+    m_material_plas = GM::Array<2>({m_nelem_plas, m_nip});
+}
+
+inline void HybridSystem::setElastic(
+    const xt::xtensor<double, 1>& K_elem,
+    const xt::xtensor<double, 1>& G_elem)
+{
+    System::setElastic(K_elem, G_elem);
+
+    xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_elas, m_nip});
+    xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_elas, m_nip});
+    xt::view(idx, xt::range(0, m_nelem_elas), xt::all()) = xt::arange<size_t>(m_nelem_elas).reshape({-1, 1});
+    m_material_elas.setElastic(I, idx, K_elem, G_elem);
+
+    m_material_elas.check();
+    m_material_elas.setStrain(m_Eps_elas);
+
+    m_K_elas = GF::Matrix(m_conn_elas, m_dofs);
+    m_K_elas.assemble(m_quad_elas.Int_gradN_dot_tensor4_dot_gradNT_dV(m_material_elas.Tangent()));
+}
+
+inline void HybridSystem::setPlastic(
+    const xt::xtensor<double, 1>& K_elem,
+    const xt::xtensor<double, 1>& G_elem,
+    const xt::xtensor<double, 2>& epsy_elem)
+{
+    System::setPlastic(K_elem, G_elem, epsy_elem);
+
+    xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_plas, m_nip});
+    xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
+    xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) = xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
+    m_material_plas.setCusp(I, idx, K_elem, G_elem, epsy_elem);
+
+    m_material_plas.check();
+    m_material_plas.setStrain(m_Eps_plas);
 }
 
 inline void HybridSystem::computeStressPlastic()
@@ -332,6 +391,8 @@ inline void HybridSystem::computeForceMaterial()
     m_quad_plas.int_gradN_dot_tensor2_dV(m_Sig_plas, m_fe_plas);
     m_vector_plas.assembleNode(m_fe_plas, m_fplas);
     m_K_elas.dot(m_u, m_felas);
+
+    xt::noalias(m_fmaterial) = m_felas + m_fplas;
 }
 
 

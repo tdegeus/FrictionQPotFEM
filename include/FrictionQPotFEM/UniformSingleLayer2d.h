@@ -24,6 +24,10 @@ namespace GM = GMatElastoPlasticQPot::Cartesian2d;
 namespace FrictionQPotFEM {
 namespace UniformSingleLayer2d {
 
+// ----------------------------------------------------------------
+// Use GMatElastoPlasticQPot to evaluate stress -> force everywhere
+// ----------------------------------------------------------------
+
 class System {
 
 public:
@@ -45,33 +49,43 @@ public:
 
     // Set material parameters for the elastic elements
     // (taken uniform per element, ordering the same as in the constructor).
-    void setElastic(
+    virtual void setElastic(
         const xt::xtensor<double, 1>& K_elem,
         const xt::xtensor<double, 1>& G_elem);
 
     // Set material parameters for the plastic elements
     // (taken uniform per element, ordering the same as in the constructor).
-    void setPlastic(
+    virtual void setPlastic(
         const xt::xtensor<double, 1>& K_elem,
         const xt::xtensor<double, 1>& G_elem,
         const xt::xtensor<double, 2>& epsy_elem);
 
-    // Set/overwrite various parameters
-    void setDt(double dt); // time step
-    void setU(const xt::xtensor<double, 2>& u); // nodal displacements
-    void quench(); // set "v" and "a" equal to zero
+    // Set time step.
+    void setDt(double dt);
 
-    // Extract variables.
-    auto nelem() const;
-    auto forceMaterial() const;
-    double residual() const;
-    double t() const;
+    // Set nodal displacements.
+    void setU(const xt::xtensor<double, 2>& u);
+
+    // Set nodal velocities and accelerations equal to zero.
+    void quench();
+
+    // Extract nodal displacements.
     auto u() const;
-    auto dV() const;
-    template <size_t rank, class T> auto AsTensor(const T& arg) const;
 
-    // Compute strain and stress (everywhere).
-    void computeStress();
+    // Extract material resistance per node.
+    auto fmaterial() const;
+
+    // Extract residual (internal forces normalised by the external forces).
+    double residual() const;
+
+    // Extract current time.
+    double t() const;
+
+    // Extract integration volume.
+    auto dV() const;
+
+    // Convert "qtensor" to "qscalar" (see GooseFEM).
+    template <size_t rank, class T> auto AsTensor(const T& arg) const;
 
     // Make a time-step.
     void timeStep();
@@ -148,6 +162,7 @@ protected:
 
 protected:
 
+    // Initialise geometry (called by constructor).
     void initGeometry(
         const xt::xtensor<double, 2>& coor,
         const xt::xtensor<size_t, 2>& conn,
@@ -156,16 +171,27 @@ protected:
         const xt::xtensor<size_t, 1>& elem_elastic,
         const xt::xtensor<size_t, 1>& elem_plastic);
 
+    // Function to unify the implementations of "setMassMatrix" and "setDampingMatrix".
     template <class T>
     void setMatrix(T& matrix, const xt::xtensor<double, 1>& val_elem);
 
+    // Check the material definition and initialise strain.
     void initMaterial();
 
+    // Check if all prerequisites are satisfied.
     void evalAllSet();
 
-    void computeForceMaterial();
+    // Compute strain and stress (everywhere).
+    void computeStress();
+
+    // Evaluate "f_material".
+    virtual void computeForceMaterial();
 
 };
+
+// -----------------------------------------------------------------------
+// Use speed-up by evaluating the elastic response with a stiffness matrix
+// -----------------------------------------------------------------------
 
 class HybridSystem : public System {
 
@@ -181,8 +207,18 @@ public:
         const xt::xtensor<size_t, 1>& elem_elastic,
         const xt::xtensor<size_t, 1>& elem_plastic);
 
-    // Compute strain and stress in the plastic elements only and the internal forces everywhere.
-    void computeStressPlastic();
+    // Set material parameters for the elastic elements
+    // (taken uniform per element, ordering the same as in the constructor).
+    void setElastic(
+        const xt::xtensor<double, 1>& K_elem,
+        const xt::xtensor<double, 1>& G_elem) override;
+
+    // Set material parameters for the plastic elements
+    // (taken uniform per element, ordering the same as in the constructor).
+    void setPlastic(
+        const xt::xtensor<double, 1>& K_elem,
+        const xt::xtensor<double, 1>& G_elem,
+        const xt::xtensor<double, 2>& epsy_elem) override;
 
 protected:
 
@@ -221,9 +257,15 @@ protected:
 
 protected:
 
-    void computeForceMaterial();
+    // Compute strain and stress in the plastic elements only and the internal forces everywhere.
+    void computeStressPlastic();
+
+    // Evaluate "f_material".
+    void computeForceMaterial() override;
 
 };
+
+
 
 } // namespace UniformSingleLayer2d
 } // namespace FrictionQPotFEM
