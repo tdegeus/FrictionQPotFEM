@@ -1,6 +1,8 @@
 
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
 #include <xtensor/xrandom.hpp>
+#include <xtensor/xcsv.hpp>
+#include <fstream>
 
 int main()
 {
@@ -10,7 +12,7 @@ int main()
     double h = xt::numeric_constants<double>::PI;
     double L = h * static_cast<double>(N);
 
-    GF::Mesh::Quad4::FineLayer mesh(N, N, h);
+    GooseFEM::Mesh::Quad4::FineLayer mesh(N, N, h);
 
     auto coor = mesh.coor();
     auto conn = mesh.conn();
@@ -64,7 +66,7 @@ int main()
     xt::xtensor<double, 2> ret = xt::zeros<double>(std::array<size_t, 2>{dF.shape(0), 2});
     auto dV = sys.AsTensor<2>(sys.dV());
 
-    GF::Iterate::StopList stop(20);
+    GooseFEM::Iterate::StopList stop(20);
 
     for (size_t inc = 0 ; inc < dF.shape(0); ++inc) {
 
@@ -92,7 +94,17 @@ int main()
 
         sys.quench();
         stop.reset();
+
+        xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
+        xt::xtensor<double, 2> Sigbar = xt::average(sys.Sig(), dV, {0, 1});
+
+        ret(inc, 0) = GM::Epsd(Epsbar)();
+        ret(inc, 1) = GM::Epsd(Sigbar)();
     }
+
+    std::ofstream outfile("UniformSingleLayer2d_System.txt");
+    xt::dump_csv(outfile, ret);
+    outfile.close();
 
     return 0;
 }

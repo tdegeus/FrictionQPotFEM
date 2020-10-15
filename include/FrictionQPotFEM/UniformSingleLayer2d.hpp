@@ -176,8 +176,8 @@ inline void System::setDt(double dt)
 inline void System::setU(const xt::xtensor<double, 2>& u)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, {m_nnode, m_ndim}));
-    m_u = u;
-    this->computeStress();
+    xt::noalias(m_u) = u;
+    this->computeForceMaterial();
 }
 
 inline void System::quench()
@@ -222,6 +222,16 @@ inline auto System::AsTensor(const T& arg) const
     return m_quad.AsTensor<rank>(arg);
 }
 
+inline auto System::Sig() const
+{
+    return m_Sig;
+}
+
+inline auto System::Eps() const
+{
+    return m_Eps;
+}
+
 inline void System::timeStep()
 {
     FRICTIONQPOTFEM_ASSERT(m_allset);
@@ -236,8 +246,7 @@ inline void System::timeStep()
     // new displacement
 
     xt::noalias(m_u) = m_u + m_dt * m_v + 0.5 * std::pow(m_dt, 2.0) * m_a;
-
-    computeForceMaterial();
+    this->computeForceMaterial();
 
     // estimate new velocity, update corresponding force
 
@@ -288,6 +297,23 @@ inline void System::timeStep()
     m_M.solve(m_fres, m_a);
 }
 
+inline size_t System::minimise(double tol, size_t niter_tol, size_t max_iter)
+{
+    GooseFEM::Iterate::StopList stop(niter_tol);
+
+    for (size_t iiter = 0; iiter < max_iter ; ++iiter) {
+
+        this->timeStep();
+
+        if (stop.stop(this->residual(), tol)) {
+            this->quench();
+            return iiter;
+        }
+    }
+
+    throw std::runtime_error("Maximum number of iterations exceeded");
+}
+
 inline void System::computeStress()
 {
     FRICTIONQPOTFEM_ASSERT(m_allset);
@@ -300,7 +326,7 @@ inline void System::computeStress()
 
 inline void System::computeForceMaterial()
 {
-    computeStress();
+    this->computeStress();
 
     m_quad.int_gradN_dot_tensor2_dV(m_Sig, m_fe);
     m_vector.assembleNode(m_fe, m_fmaterial);
@@ -374,19 +400,35 @@ inline void HybridSystem::setPlastic(
     m_material_plas.setStrain(m_Eps_plas);
 }
 
-inline void HybridSystem::computeStressPlastic()
+inline auto HybridSystem::Sig()
+{
+    if (m_eval_full) {
+        this->computeStress();
+        m_eval_full = false;
+    }
+
+    return m_Sig;
+}
+
+inline auto HybridSystem::Eps()
+{
+    if (m_eval_full) {
+        this->computeStress();
+        m_eval_full = false;
+    }
+
+    return m_Eps;
+}
+
+inline void HybridSystem::computeForceMaterial()
 {
     FRICTIONQPOTFEM_ASSERT(m_allset);
+    m_eval_full = true;
 
     m_vector_plas.asElement(m_u, m_ue_plas);
     m_quad_plas.symGradN_vector(m_ue_plas, m_Eps_plas);
     m_material_plas.setStrain(m_Eps_plas);
     m_material_plas.stress(m_Sig_plas);
-}
-
-inline void HybridSystem::computeForceMaterial()
-{
-    computeStressPlastic();
 
     m_quad_plas.int_gradN_dot_tensor2_dV(m_Sig_plas, m_fe_plas);
     m_vector_plas.assembleNode(m_fe_plas, m_fplas);

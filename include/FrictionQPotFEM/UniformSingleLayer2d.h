@@ -24,9 +24,9 @@ namespace GM = GMatElastoPlasticQPot::Cartesian2d;
 namespace FrictionQPotFEM {
 namespace UniformSingleLayer2d {
 
-// ----------------------------------------------------------------
-// Use GMatElastoPlasticQPot to evaluate stress -> force everywhere
-// ----------------------------------------------------------------
+// -------------------------------------------------------
+// Use GMatElastoPlasticQPot to evaluate stress everywhere
+// -------------------------------------------------------
 
 class System {
 
@@ -67,6 +67,7 @@ public:
     void setU(const xt::xtensor<double, 2>& u);
 
     // Set nodal velocities and accelerations equal to zero.
+    // Call this function after an energy minimisation (taken care of in "minimise").
     void quench();
 
     // Extract nodal displacements.
@@ -87,8 +88,16 @@ public:
     // Convert "qtensor" to "qscalar" (see GooseFEM).
     template <size_t rank, class T> auto AsTensor(const T& arg) const;
 
+    // Extract stress and strain.
+    auto Sig() const;
+    auto Eps() const;
+
     // Make a time-step.
     void timeStep();
+
+    // Minimise energy:
+    // Returns the number of iterations.
+    size_t minimise(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 100000);
 
 protected:
 
@@ -181,10 +190,11 @@ protected:
     // Check if all prerequisites are satisfied.
     void evalAllSet();
 
-    // Compute strain and stress (everywhere).
+    // Compute strain and stress tensors.
     void computeStress();
 
-    // Evaluate "f_material".
+    // Evaluate "m_fmaterial". Calls "computeStress".
+    // Internal rule: "computeForceMaterial" is always evaluated after an update of "m_u".
     virtual void computeForceMaterial();
 
 };
@@ -219,6 +229,12 @@ public:
         const xt::xtensor<double, 1>& K_elem,
         const xt::xtensor<double, 1>& G_elem,
         const xt::xtensor<double, 2>& epsy_elem) override;
+
+    // Extract stress and strain.
+    // Note: involves re-evaluating the stress and strain,
+    // as they are only known in the plastic elements.
+    auto Sig();
+    auto Eps();
 
 protected:
 
@@ -255,17 +271,17 @@ protected:
     // stiffness matrix
     GF::Matrix m_K_elas;
 
+    // keep track of need to recompute
+    bool m_eval_full = true;
+
 protected:
 
-    // Compute strain and stress in the plastic elements only and the internal forces everywhere.
-    void computeStressPlastic();
-
-    // Evaluate "f_material".
+    // Evaluate "m_fmaterial": computes strain and stress in the plastic elements only.
+    // Contrary to "System::computeForceMaterial" does not call "computeStress",
+    // therefore separate overrides of "Sig" and "Eps" are needed.
     void computeForceMaterial() override;
 
 };
-
-
 
 } // namespace UniformSingleLayer2d
 } // namespace FrictionQPotFEM
