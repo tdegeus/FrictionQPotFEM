@@ -66,8 +66,6 @@ int main()
     xt::xtensor<double, 2> ret = xt::zeros<double>(std::array<size_t, 2>{dF.shape(0), 2});
     auto dV = sys.AsTensor<2>(sys.dV());
 
-    GooseFEM::Iterate::StopList stop(20);
-
     for (size_t inc = 0 ; inc < dF.shape(0); ++inc) {
 
         auto u = sys.u();
@@ -82,18 +80,8 @@ int main()
 
         sys.setU(u);
 
-        for (size_t iiter = 0; iiter < 99999 ; ++iiter) {
-
-            sys.timeStep();
-
-            if (stop.stop(sys.residual(), 1e-5)) {
-                std::cout << inc << ", " << iiter << std::endl;
-                break;
-            }
-        }
-
-        sys.quench();
-        stop.reset();
+        size_t niter = sys.minimise();
+        std::cout << inc << ", " << niter << std::endl;
 
         xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         xt::xtensor<double, 2> Sigbar = xt::average(sys.Sig(), dV, {0, 1});
