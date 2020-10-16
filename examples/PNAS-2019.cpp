@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
         }
         else {
             niter = 0;
-            MYASSERT(sys.residual(true) < 1e-2);
+            MYASSERT(sys.residual() < 1e-2);
         }
 
         kick = !kick;
