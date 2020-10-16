@@ -304,6 +304,9 @@ protected:
 
 protected:
 
+    // Alias for constructor to allow sub-classing (called by constructor).
+    void initHybridSystem();
+
     // Evaluate "m_fmaterial": computes strain and stress in the plastic elements only.
     // Contrary to "System::computeForceMaterial" does not call "computeStress",
     // therefore separate overrides of "Sig" and "Eps" are needed.
