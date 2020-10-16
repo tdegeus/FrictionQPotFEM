@@ -60,6 +60,9 @@ public:
         const xt::xtensor<double, 1>& G_elem,
         const xt::xtensor<double, 2>& epsy_elem);
 
+    // Check if elasticity is homogeneous.
+    bool isHomogeneousElastic() const;
+
     // Set time step.
     void setDt(double dt);
 
@@ -70,11 +73,14 @@ public:
     // Call this function after an energy minimisation (taken care of in "minimise").
     void quench();
 
-    // Extract nodal displacements.
-    auto u() const;
+    // Extract elastic/plastic elements.
+    auto elastic() const;
+    auto plastic() const;
 
-    // Extract material resistance per node.
-    auto fmaterial() const;
+    // Extract nodal quantities.
+    auto coor() const; // coordinates
+    auto u() const; // displacements
+    auto fmaterial() const; // material resistance
 
     // Extract residual (internal forces normalised by the external forces).
     double residual() const;
@@ -88,9 +94,16 @@ public:
     // Convert "qtensor" to "qscalar" (see GooseFEM).
     template <size_t rank, class T> auto AsTensor(const T& arg) const;
 
-    // Extract stress and strain.
+    // Extract stress and strain tensors.
     auto Sig() const;
     auto Eps() const;
+
+    // Extract for the plastic elements only.
+    virtual xt::xtensor<double, 4> plastic_Sig() const; // stress tensor
+    virtual xt::xtensor<double, 4> plastic_Eps() const; // strain tensor
+    virtual xt::xtensor<double, 2> plastic_CurrentYieldLeft() const; // yield strain 'left'
+    virtual xt::xtensor<double, 2> plastic_CurrentYieldRight() const; // yield strain 'right'
+    virtual xt::xtensor<size_t, 2> plastic_CurrentIndex() const; // current index in the landscape
 
     // Make a time-step.
     void timeStep();
@@ -236,6 +249,13 @@ public:
     auto Sig();
     auto Eps();
 
+    // Extract for the plastic elements only.
+    xt::xtensor<double, 4> plastic_Sig() const override; // stress tensor
+    xt::xtensor<double, 4> plastic_Eps() const override; // strain tensor
+    xt::xtensor<double, 2> plastic_CurrentYieldLeft() const override; // yield strain 'left'
+    xt::xtensor<double, 2> plastic_CurrentYieldRight() const override; // yield strain 'right'
+    xt::xtensor<size_t, 2> plastic_CurrentIndex() const override; // current index in the landscape
+
 protected:
 
     // mesh parameters
@@ -282,6 +302,12 @@ protected:
     void computeForceMaterial() override;
 
 };
+
+// ----------------
+// Event drive step
+// ----------------
+
+inline void addEventDrivenShear(System& sys, double deps, bool kick);
 
 } // namespace UniformSingleLayer2d
 } // namespace FrictionQPotFEM

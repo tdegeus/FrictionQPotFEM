@@ -167,6 +167,14 @@ inline void System::setPlastic(
     this->initMaterial();
 }
 
+inline bool System::isHomogeneousElastic() const
+{
+    auto K = m_material.K();
+    auto G = m_material.G();
+
+    return xt::allclose(K, K.data()[0]) && xt::allclose(G, G.data()[0]);
+}
+
 inline void System::setDt(double dt)
 {
     m_dt = dt;
@@ -184,6 +192,21 @@ inline void System::quench()
 {
     m_v.fill(0.0);
     m_a.fill(0.0);
+}
+
+inline auto System::elastic() const
+{
+    return m_elem_elas;
+}
+
+inline auto System::plastic() const
+{
+    return m_elem_plas;
+}
+
+inline auto System::coor() const
+{
+    return m_coor;
 }
 
 inline auto System::u() const
@@ -230,6 +253,31 @@ inline auto System::Sig() const
 inline auto System::Eps() const
 {
     return m_Eps;
+}
+
+inline xt::xtensor<double, 4> System::plastic_Sig() const
+{
+    return xt::view(m_Sig, xt::keep(m_elem_plas), xt::all(), xt::all(), xt::all());
+}
+
+inline xt::xtensor<double, 4> System::plastic_Eps() const
+{
+    return xt::view(m_Eps, xt::keep(m_elem_plas), xt::all(), xt::all(), xt::all());
+}
+
+inline xt::xtensor<double, 2> System::plastic_CurrentYieldLeft() const
+{
+    return xt::view(m_material.CurrentYieldLeft(), xt::keep(m_elem_plas), xt::all());
+}
+
+inline xt::xtensor<double, 2> System::plastic_CurrentYieldRight() const
+{
+    return xt::view(m_material.CurrentYieldRight(), xt::keep(m_elem_plas), xt::all());
+}
+
+inline xt::xtensor<size_t, 2> System::plastic_CurrentIndex() const
+{
+    return xt::view(m_material.CurrentIndex(), xt::keep(m_elem_plas), xt::all());
 }
 
 inline void System::timeStep()
@@ -420,6 +468,31 @@ inline auto HybridSystem::Eps()
     return m_Eps;
 }
 
+inline xt::xtensor<double, 4> HybridSystem::plastic_Sig() const
+{
+    return m_Sig_plas;
+}
+
+inline xt::xtensor<double, 4> HybridSystem::plastic_Eps() const
+{
+    return m_Eps_plas;
+}
+
+inline xt::xtensor<double, 2> HybridSystem::plastic_CurrentYieldLeft() const
+{
+    return m_material_plas.CurrentYieldLeft();
+}
+
+inline xt::xtensor<double, 2> HybridSystem::plastic_CurrentYieldRight() const
+{
+    return m_material_plas.CurrentYieldRight();
+}
+
+inline xt::xtensor<size_t, 2> HybridSystem::plastic_CurrentIndex() const
+{
+    return m_material_plas.CurrentIndex();
+}
+
 inline void HybridSystem::computeForceMaterial()
 {
     FRICTIONQPOTFEM_ASSERT(m_allset);
@@ -429,14 +502,114 @@ inline void HybridSystem::computeForceMaterial()
     m_quad_plas.symGradN_vector(m_ue_plas, m_Eps_plas);
     m_material_plas.setStrain(m_Eps_plas);
     m_material_plas.stress(m_Sig_plas);
-
     m_quad_plas.int_gradN_dot_tensor2_dV(m_Sig_plas, m_fe_plas);
     m_vector_plas.assembleNode(m_fe_plas, m_fplas);
+
     m_K_elas.dot(m_u, m_felas);
 
     xt::noalias(m_fmaterial) = m_felas + m_fplas;
 }
 
+inline void addEventDrivenShear(System& sys, double deps_kick, bool kick)
+{
+    FRICTIONQPOTFEM_ASSERT(sys.isHomogeneousElastic());
+
+    // extract properties
+    auto coor = sys.coor();
+    auto idx = sys.plastic_CurrentIndex();
+
+    // displacement perturbation to determine the sign in equivalent strain space
+    // --------------------------------------------------------------------------
+
+    // current (equivalent) deviatoric strain (for plastic elements only)
+    auto eps = GM::Epsd(sys.plastic_Eps());
+
+    // equivalent deviatoric strain after perturbation
+    auto u_new = sys.u();
+    auto u_pert = sys.u();
+
+    for (size_t n = 0; n < coor.shape(0); ++n) {
+        u_pert(n, 0) += deps_kick * (coor(n, 1) - coor(0, 1));
+    }
+
+    sys.setU(u_pert);
+    auto eps_pert = GM::Epsd(sys.plastic_Eps());
+
+    sys.setU(u_new);
+
+    // compute sign
+    xt::xtensor<double, 2> sign = xt::sign(eps_pert - eps);
+
+    // determine strain increment
+    // --------------------------
+
+    // distance to yielding
+    xt::xtensor<double, 2> epsy_l = xt::abs(sys.plastic_CurrentYieldLeft());
+    xt::xtensor<double, 2> epsy_r = xt::abs(sys.plastic_CurrentYieldRight());
+    xt::xtensor<double, 2> epsy = xt::where(sign > 0, epsy_r, epsy_l);
+    xt::xtensor<double, 2> deps = xt::abs(eps - epsy);
+
+    // deviatoric strain components
+    auto Epsd = GM::Deviatoric(sys.plastic_Eps());
+    auto epsxx = xt::view(Epsd, xt::all(), xt::all(), 0, 0);
+    auto epsxy = xt::view(Epsd, xt::all(), xt::all(), 0, 1);
+
+    // no kick & current strain sufficiently close the next yield strain: don't move
+    if (!kick && xt::amin(deps)() < deps_kick / 2.0) {
+        return;
+    }
+
+    // set yield strain close to next yield strain
+    xt::xtensor<double, 2> eps_new = epsy + sign * (-deps_kick / 2.0);
+
+    // or, apply a kick instead
+    if (kick) {
+        eps_new = eps + sign * deps_kick;
+    }
+
+    // compute shear strain increments
+    // - two possible solutions
+    xt::xtensor<double, 2> dgamma = 2.0 * (-epsxy + xt::sqrt(xt::pow(eps_new, 2.0) - xt::pow(epsxx, 2.0)));
+    xt::xtensor<double, 2> dgamma_n = 2.0 * (-epsxy - xt::sqrt(xt::pow(eps_new, 2.0) - xt::pow(epsxx, 2.0)));
+    // - discard irrelevant solutions
+    dgamma_n = xt::where(dgamma_n <= 0.0, dgamma, dgamma_n);
+    // - select lowest
+    dgamma = xt::where(dgamma_n < dgamma, dgamma_n, dgamma);
+    // - select minimal
+    double dux = xt::amin(dgamma)();
+
+    // add as affine deformation gradient to the system
+    for (size_t n = 0; n < coor.shape(0); ++n) {
+        u_new(n, 0) += dux * (coor(n, 1) - coor(0, 1));
+    }
+    sys.setU(u_new);
+
+    // sanity check
+    // ------------
+
+    // get element that was moved
+    auto index = xt::unravel_index(xt::argmin(dgamma)(), dgamma.shape());
+    size_t e = index[0];
+    size_t q = index[1];
+
+    // current equivalent deviatoric strain
+    eps = GM::Epsd(sys.plastic_Eps());
+
+    // current minima
+    auto idx_new = sys.plastic_CurrentIndex();
+
+    // check strain
+    if (std::abs(eps(e, q) - eps_new(e, q)) / eps_new(e, q) > 1e-4) {
+        throw std::runtime_error("Strain not what it was supposed to be");
+    }
+
+    // check that no yielding took place
+    if (!kick) {
+        if (xt::any(xt::not_equal(idx, idx_new))) {
+            throw std::runtime_error("Yielding took place where it shouldn't");
+        }
+    }
+}
 
 } // namespace UniformSingleLayer2d
 } // namespace FrictionQPotFEM
