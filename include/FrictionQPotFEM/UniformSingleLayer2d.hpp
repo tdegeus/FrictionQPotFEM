@@ -204,9 +204,19 @@ inline auto System::plastic() const
     return m_elem_plas;
 }
 
+inline auto System::conn() const
+{
+    return m_conn;
+}
+
 inline auto System::coor() const
 {
     return m_coor;
+}
+
+inline auto System::dofs() const
+{
+    return m_dofs;
 }
 
 inline auto System::u() const
@@ -243,6 +253,18 @@ template <size_t rank, class T>
 inline auto System::AsTensor(const T& arg) const
 {
     return m_quad.AsTensor<rank>(arg);
+}
+
+template <class T>
+inline auto System::AsDofs(const T& arg) const
+{
+    return m_vector.AsDofs(arg);
+}
+
+template <class T>
+inline auto System::AsNode(const T& arg) const
+{
+    return m_vector.AsNode(arg);
 }
 
 inline auto System::Sig() const
@@ -514,17 +536,18 @@ inline void addEventDrivenShear(System& sys, double deps_kick, bool kick)
 {
     FRICTIONQPOTFEM_ASSERT(sys.isHomogeneousElastic());
 
-    // extract properties
     auto coor = sys.coor();
+
+    auto eps = GM::Epsd(sys.plastic_Eps());
+    auto Epsd = GM::Deviatoric(sys.plastic_Eps());
+    auto epsxx = xt::view(Epsd, xt::all(), xt::all(), 0, 0);
+    auto epsxy = xt::view(Epsd, xt::all(), xt::all(), 0, 1);
+
     auto idx = sys.plastic_CurrentIndex();
 
     // displacement perturbation to determine the sign in equivalent strain space
     // --------------------------------------------------------------------------
 
-    // current (equivalent) deviatoric strain (for plastic elements only)
-    auto eps = GM::Epsd(sys.plastic_Eps());
-
-    // equivalent deviatoric strain after perturbation
     auto u_new = sys.u();
     auto u_pert = sys.u();
 
@@ -534,11 +557,9 @@ inline void addEventDrivenShear(System& sys, double deps_kick, bool kick)
 
     sys.setU(u_pert);
     auto eps_pert = GM::Epsd(sys.plastic_Eps());
+    xt::xtensor<double, 2> sign = xt::sign(eps_pert - eps);
 
     sys.setU(u_new);
-
-    // compute sign
-    xt::xtensor<double, 2> sign = xt::sign(eps_pert - eps);
 
     // determine strain increment
     // --------------------------
@@ -548,11 +569,6 @@ inline void addEventDrivenShear(System& sys, double deps_kick, bool kick)
     xt::xtensor<double, 2> epsy_r = xt::abs(sys.plastic_CurrentYieldRight());
     xt::xtensor<double, 2> epsy = xt::where(sign > 0, epsy_r, epsy_l);
     xt::xtensor<double, 2> deps = xt::abs(eps - epsy);
-
-    // deviatoric strain components
-    auto Epsd = GM::Deviatoric(sys.plastic_Eps());
-    auto epsxx = xt::view(Epsd, xt::all(), xt::all(), 0, 0);
-    auto epsxy = xt::view(Epsd, xt::all(), xt::all(), 0, 1);
 
     // no kick & current strain sufficiently close the next yield strain: don't move
     if (!kick && xt::amin(deps)() < deps_kick / 2.0) {
@@ -609,6 +625,55 @@ inline void addEventDrivenShear(System& sys, double deps_kick, bool kick)
             throw std::runtime_error("Yielding took place where it shouldn't");
         }
     }
+}
+
+inline void localTriggerElement(System& sys, double deps_kick, size_t plastic_element)
+{
+    auto coor = sys.coor();
+    auto dofs = sys.dofs();
+    auto conn = sys.conn();
+    auto plastic = sys.plastic();
+
+    auto eps = GM::Epsd(sys.plastic_Eps());
+
+    // distance to yielding on the positive side
+    auto epsy = sys.plastic_CurrentYieldRight();
+    auto deps = epsy - eps;
+
+    // find integration point closest to yielding
+    auto q = xt::argmin(xt::view(deps, plastic_element, xt::all()))();
+
+    // deviatoric strain at the selected quadrature-point
+    xt::xtensor<double, 2> Eps = xt::view(sys.plastic_Eps(), plastic_element, q);
+    xt::xtensor<double, 2> Epsd = GM::Deviatoric(Eps);
+
+    // new equivalent deviatoric strain: yield strain + small strain kick
+    double eps_new = epsy(plastic_element, q) + deps_kick / 2.0;
+
+    // convert to increment in shear strain (N.B. "dgamma = 2 * Epsd(0,1)")
+    double dgamma = 2.0 * (-Epsd(0, 1) + std::sqrt(std::pow(eps_new, 2.0) - std::pow(Epsd(0, 0), 2.0)));
+
+    // apply increment in shear strain as a perturbation to the selected element
+    // - nodes belonging to the current element, from connectivity
+    auto elem = xt::view(conn, plastic(plastic_element), xt::all());
+    // - displacement-DOFs
+    auto udofs = sys.AsDofs(sys.u());
+    // - update displacement-DOFs for the element
+    for (size_t n = 0; n < conn.shape(1); ++n) {
+        udofs(dofs(elem(n), 0)) += dgamma * (coor(elem(n), 1) - coor(elem(0), 1));
+    }
+    // - convert displacement-DOFs to (periodic) nodal displacement vector
+    //   (N.B. storing to nodes directly does not ensure periodicity)
+    sys.setU(sys.AsNode(udofs));
+}
+
+inline void localTriggerWeakestElement(System& sys, double deps_kick)
+{
+    auto eps = GM::Epsd(sys.plastic_Eps());
+    auto epsy = sys.plastic_CurrentYieldRight();
+    auto deps = epsy - eps;
+    auto index = xt::argmin(deps);
+    return localTriggerElement(sys, deps_kick, index[0]);
 }
 
 } // namespace UniformSingleLayer2d
