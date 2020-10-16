@@ -1,5 +1,5 @@
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.16)
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     project(FrictionQPotFEM-examples)
@@ -20,13 +20,20 @@ foreach(testsourcefile ${APP_SOURCES})
 
     add_executable(${testname} ${testsourcefile})
 
+    set(HIGHFIVE_USE_BOOST 0)
+    set(HIGHFIVE_USE_XTENSOR 1)
+
     find_package(xtensor REQUIRED)
     find_package(xsimd REQUIRED)
+    find_package(HighFive REQUIRED)
+    find_package(fmt REQUIRED)
 
     target_link_libraries(${testname} PUBLIC
         FrictionQPotFEM
         xtensor::optimize
-        xtensor::use_xsimd)
+        xtensor::use_xsimd
+        fmt::fmt
+        HighFive)
 
     if(WARNINGS)
         target_link_libraries(${testname} PRIVATE FrictionQPotFEM::compiler_warnings)
