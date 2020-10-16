@@ -411,7 +411,11 @@ inline HybridSystem::HybridSystem(
     const xt::xtensor<size_t, 1>& elem_plastic)
 {
     this->initGeometry(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+    this->initHybridSystem();
+}
 
+inline void HybridSystem::initHybridSystem()
+{
     m_conn_elas = xt::view(m_conn, xt::keep(m_elem_elas), xt::all());
     m_conn_plas = xt::view(m_conn, xt::keep(m_elem_plas), xt::all());
 
