@@ -77,8 +77,12 @@ public:
     auto elastic() const;
     auto plastic() const;
 
+    // Extract mesh
+    auto conn() const; // connectivity
+    auto coor() const; // nodal coordinates
+    auto dofs() const; // DOFs per node
+
     // Extract nodal quantities.
-    auto coor() const; // coordinates
     auto u() const; // displacements
     auto fmaterial() const; // material resistance
 
@@ -93,6 +97,10 @@ public:
 
     // Convert "qtensor" to "qscalar" (see GooseFEM).
     template <size_t rank, class T> auto AsTensor(const T& arg) const;
+
+    // Convert "nodevec" <-> "dofval" (see GooseFEM).
+    template <class T> auto AsDofs(const T& arg) const;
+    template <class T> auto AsNode(const T& arg) const;
 
     // Extract stress and strain tensors.
     auto Sig() const;
@@ -303,11 +311,28 @@ protected:
 
 };
 
-// ----------------
-// Event drive step
-// ----------------
+// -----------------
+// Event driven step
+// -----------------
 
+// Add event driven simple shear step.
+// - "deps": size of the local stain kick to apply
+// - "kick = false": increment displacements to the verge of yielding again
+// - "kick = true": increment displacements such that "deps" is applied locally
 inline void addEventDrivenShear(System& sys, double deps, bool kick);
+
+// -------------
+// Local trigger
+// -------------
+
+// Apply local strain on one of the plastic elements
+// (normally this implies that none of the boundary conditions are changed).
+// - "deps": size of the local stain kick to apply
+// - "plastic_element": trigger element "sys.plastic()(plastic_element)"
+inline void localTriggerElement(System& sys, double deps, size_t plastic_element);
+
+// Trigger point closest to yielding.
+inline void localTriggerWeakestElement(System& sys, double deps);
 
 } // namespace UniformSingleLayer2d
 } // namespace FrictionQPotFEM
