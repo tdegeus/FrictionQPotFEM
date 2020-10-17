@@ -562,7 +562,6 @@ inline void addEventDrivenShear(System& sys, double deps_kick, bool kick)
     sys.setU(u_pert);
     auto eps_pert = GM::Epsd(sys.plastic_Eps());
     xt::xtensor<double, 2> sign = xt::sign(eps_pert - eps);
-
     sys.setU(u_new);
 
     // determine strain increment
@@ -676,7 +675,7 @@ inline void localTriggerWeakestElement(System& sys, double deps_kick)
     auto eps = GM::Epsd(sys.plastic_Eps());
     auto epsy = sys.plastic_CurrentYieldRight();
     auto deps = epsy - eps;
-    auto index = xt::argmin(deps);
+    auto index = xt::unravel_index(xt::argmin(deps)(), deps.shape());
     return localTriggerElement(sys, deps_kick, index[0]);
 }
 
