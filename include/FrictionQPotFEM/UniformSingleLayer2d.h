@@ -103,6 +103,10 @@ public:
     template <class T> auto AsDofs(const T& arg) const;
     template <class T> auto AsNode(const T& arg) const;
 
+    // Get the "GooseFEM::VectorPartitioned" and the "GooseFEM::Element::Quad4::Quadrature"
+    auto vector() const;
+    auto quad() const;
+
     // Extract stress and strain tensors.
     auto Sig() const;
     auto Eps() const;
