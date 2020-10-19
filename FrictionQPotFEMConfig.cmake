@@ -36,6 +36,7 @@ get_target_property(
 find_dependency(xtensor)
 find_dependency(GooseFEM)
 find_dependency(GMatElastoPlasticQPot)
+find_dependency(fmt)
 
 # Define support target "FrictionQPotFEM::compiler_warnings"
 

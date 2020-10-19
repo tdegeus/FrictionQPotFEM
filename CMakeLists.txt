@@ -34,6 +34,7 @@ message(STATUS "Building FrictionQPotFEM v${_FRICTIONQPOTFEM_VERSION}")
 find_package(xtensor REQUIRED)
 find_package(GooseFEM REQUIRED)
 find_package(GMatElastoPlasticQPot REQUIRED)
+find_package(fmt REQUIRED)
 
 add_library(FrictionQPotFEM INTERFACE)
 
@@ -41,7 +42,7 @@ target_include_directories(FrictionQPotFEM INTERFACE
     $<INSTALL_INTERFACE:include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
-target_link_libraries(FrictionQPotFEM INTERFACE xtensor GooseFEM GMatElastoPlasticQPot)
+target_link_libraries(FrictionQPotFEM INTERFACE xtensor GooseFEM GMatElastoPlasticQPot fmt::fmt)
 
 # Installation
 # ============

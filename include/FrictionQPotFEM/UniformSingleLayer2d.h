@@ -16,6 +16,7 @@
 #include <xtensor/xnorm.hpp>
 #include <xtensor/xshape.hpp>
 #include <xtensor/xset_operation.hpp>
+#include <fmt/core.h>
 
 namespace GF = GooseFEM;
 namespace QD = GooseFEM::Element::Quad4;
@@ -336,6 +337,12 @@ inline void localTriggerElement(System& sys, double deps, size_t plastic_element
 
 // Trigger point closest to yielding.
 inline void localTriggerWeakestElement(System& sys, double deps);
+
+// -------------------------------------
+// Return versions of returned libraries
+// -------------------------------------
+
+inline std::vector<std::string> versionInfo();
 
 } // namespace UniformSingleLayer2d
 } // namespace FrictionQPotFEM
