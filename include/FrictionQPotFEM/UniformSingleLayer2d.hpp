@@ -551,13 +551,11 @@ inline void addEventDrivenShear(System& sys, double deps_kick, bool kick)
     FRICTIONQPOTFEM_ASSERT(sys.isHomogeneousElastic());
 
     auto coor = sys.coor();
-
+    auto idx = sys.plastic_CurrentIndex();
     auto eps = GM::Epsd(sys.plastic_Eps());
     auto Epsd = GM::Deviatoric(sys.plastic_Eps());
     auto epsxx = xt::view(Epsd, xt::all(), xt::all(), 0, 0);
     auto epsxy = xt::view(Epsd, xt::all(), xt::all(), 0, 1);
-
-    auto idx = sys.plastic_CurrentIndex();
 
     // displacement perturbation to determine the sign in equivalent strain space
     // --------------------------------------------------------------------------
@@ -616,44 +614,41 @@ inline void addEventDrivenShear(System& sys, double deps_kick, bool kick)
     // sanity check
     // ------------
 
-    // get element that was moved
     auto index = xt::unravel_index(xt::argmin(dgamma)(), dgamma.shape());
     size_t e = index[0];
     size_t q = index[1];
 
-    // current equivalent deviatoric strain
     eps = GM::Epsd(sys.plastic_Eps());
 
-    // current minima
     auto idx_new = sys.plastic_CurrentIndex();
 
-    // check strain
     if (std::abs(eps(e, q) - eps_new(e, q)) / eps_new(e, q) > 1e-4) {
         throw std::runtime_error("Strain not what it was supposed to be");
     }
 
-    // check that no yielding took place
-    if (!kick) {
-        if (xt::any(xt::not_equal(idx, idx_new))) {
-            throw std::runtime_error("Yielding took place where it shouldn't");
-        }
+    if (!kick && xt::any(xt::not_equal(idx, idx_new))) {
+        throw std::runtime_error("Yielding took place where it shouldn't");
     }
 }
 
-inline void localTriggerElement(System& sys, double deps_kick, size_t plastic_element)
+inline auto localTriggerElement(System& sys, double deps_kick, size_t plastic_element)
 {
     auto coor = sys.coor();
     auto dofs = sys.dofs();
     auto conn = sys.conn();
     auto plastic = sys.plastic();
-
+    auto idx = sys.plastic_CurrentIndex();
     auto eps = GM::Epsd(sys.plastic_Eps());
+    auto up = sys.vector().AsDofs_p(sys.u());
+
+    FRICTIONQPOTFEM_ASSERT(plastic_element < plastic.size());
 
     // distance to yielding on the positive side
     auto epsy = sys.plastic_CurrentYieldRight();
     auto deps = epsy - eps;
 
     // find integration point closest to yielding
+    auto e = plastic(plastic_element);
     auto q = xt::argmin(xt::view(deps, plastic_element, xt::all()))();
 
     // deviatoric strain at the selected quadrature-point
@@ -668,7 +663,7 @@ inline void localTriggerElement(System& sys, double deps_kick, size_t plastic_el
 
     // apply increment in shear strain as a perturbation to the selected element
     // - nodes belonging to the current element, from connectivity
-    auto elem = xt::view(conn, plastic(plastic_element), xt::all());
+    auto elem = xt::view(conn, e, xt::all());
     // - displacement-DOFs
     auto udofs = sys.AsDofs(sys.u());
     // - update displacement-DOFs for the element
@@ -678,9 +673,31 @@ inline void localTriggerElement(System& sys, double deps_kick, size_t plastic_el
     // - convert displacement-DOFs to (periodic) nodal displacement vector
     //   (N.B. storing to nodes directly does not ensure periodicity)
     sys.setU(sys.AsNode(udofs));
+
+    eps = GM::Epsd(sys.plastic_Eps());
+    auto idx_new = sys.plastic_CurrentIndex();
+    auto up_new = sys.vector().AsDofs_p(sys.u());
+
+    if (std::abs(eps(plastic_element, q) - eps_new) / eps_new > 1e-4) {
+        throw std::runtime_error("Strain not what it was supposed to be");
+    }
+
+    if (!xt::any(xt::not_equal(idx, idx_new))) {
+        throw std::runtime_error("Yielding didn't took place while it should have");
+    }
+
+    if (idx(plastic_element, q) == idx_new(plastic_element, q)) {
+        throw std::runtime_error("Yielding didn't took place while it should have");
+    }
+
+    if (!xt::allclose(up, up_new)) {
+        throw std::runtime_error("Fixed boundaries where moved");
+    }
+
+    return xt::xtensor<size_t, 1>{plastic_element, q};
 }
 
-inline void localTriggerWeakestElement(System& sys, double deps_kick)
+inline auto localTriggerWeakestElement(System& sys, double deps_kick)
 {
     auto eps = GM::Epsd(sys.plastic_Eps());
     auto epsy = sys.plastic_CurrentYieldRight();
