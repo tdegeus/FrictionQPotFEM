@@ -267,6 +267,16 @@ inline auto System::AsNode(const T& arg) const
     return m_vector.AsNode(arg);
 }
 
+inline auto System::vector() const
+{
+    return m_vector;
+}
+
+inline auto System::quad() const
+{
+    return m_quad;
+}
+
 inline auto System::Sig() const
 {
     return m_Sig;
