@@ -337,10 +337,12 @@ inline void addEventDrivenShear(System& sys, double deps, bool kick);
 // (normally this implies that none of the boundary conditions are changed).
 // - "deps": size of the local stain kick to apply
 // - "plastic_element": trigger element "sys.plastic()(plastic_element)"
-inline void localTriggerElement(System& sys, double deps, size_t plastic_element);
+// Returns the plastic_element and integration point which is triggered.
+inline auto localTriggerElement(System& sys, double deps, size_t plastic_element);
 
 // Trigger point closest to yielding.
-inline void localTriggerWeakestElement(System& sys, double deps);
+// Returns the plastic_element and integration point which is triggered.
+inline auto localTriggerWeakestElement(System& sys, double deps);
 
 // -------------------------------------
 // Return versions of returned libraries
