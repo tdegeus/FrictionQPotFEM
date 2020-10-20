@@ -544,7 +544,7 @@ inline auto System::localTriggerElement(double deps_kick, size_t plastic_element
     // - displacement-DOFs
     auto udofs = m_vector.AsDofs(m_u);
     // - update displacement-DOFs for the element
-    for (size_t n = 0; n < m_nelem; ++n) {
+    for (size_t n = 0; n < m_nne; ++n) {
         udofs(m_dofs(elem(n), 0)) += dgamma * (m_coor(elem(n), 1) - m_coor(elem(0), 1));
     }
     // - convert displacement-DOFs to (periodic) nodal displacement vector

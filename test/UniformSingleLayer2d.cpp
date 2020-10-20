@@ -393,10 +393,12 @@ SECTION("System vs. HybridSystem")
 
     // trigger just to check the function
 
+    xt::xtensor<size_t, 1> pair = {7, 0};
     auto full_pair = full.localTriggerWeakestElement(1e-5);
     auto reduced_pair = reduced.localTriggerWeakestElement(1e-5);
 
-    REQUIRE(xt::all(xt::equal(full_pair, reduced_pair)));
+    REQUIRE(xt::all(xt::equal(pair, full_pair)));
+    REQUIRE(xt::all(xt::equal(pair, reduced_pair)));
     REQUIRE(xt::allclose(full.fmaterial(), reduced.fmaterial()));
     REQUIRE(xt::allclose(full.u(), reduced.u()));
 
