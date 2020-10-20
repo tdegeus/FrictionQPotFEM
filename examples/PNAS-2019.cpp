@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 
     for (size_t inc = 1; inc < ninc; ++inc) {
 
-        FrictionQPotFEM::UniformSingleLayer2d::addEventDrivenShear(sys, deps, kick);
+        sys.addEventDrivenShear(deps, kick);
 
         if (kick) {
             niter = sys.minimise();
