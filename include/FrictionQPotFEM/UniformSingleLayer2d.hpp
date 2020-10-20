@@ -282,18 +282,6 @@ inline auto System::AsTensor(const T& arg) const
     return m_quad.AsTensor<rank>(arg);
 }
 
-template <class T>
-inline auto System::AsDofs(const T& arg) const
-{
-    return m_vector.AsDofs(arg);
-}
-
-template <class T>
-inline auto System::AsNode(const T& arg) const
-{
-    return m_vector.AsNode(arg);
-}
-
 inline auto System::vector() const
 {
     return m_vector;
@@ -444,7 +432,6 @@ inline void System::addEventDrivenShear(double deps_kick, bool kick)
 {
     FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
 
-    auto coor = this->coor();
     auto idx = this->plastic_CurrentIndex();
     auto eps = GM::Epsd(this->plastic_Eps());
     auto Epsd = GM::Deviatoric(this->plastic_Eps());
@@ -457,8 +444,8 @@ inline void System::addEventDrivenShear(double deps_kick, bool kick)
     auto u_new = this->u();
     auto u_pert = this->u();
 
-    for (size_t n = 0; n < coor.shape(0); ++n) {
-        u_pert(n, 0) += deps_kick * (coor(n, 1) - coor(0, 1));
+    for (size_t n = 0; n < m_nnode; ++n) {
+        u_pert(n, 0) += deps_kick * (m_coor(n, 1) - m_coor(0, 1));
     }
 
     this->setU(u_pert);
@@ -500,8 +487,8 @@ inline void System::addEventDrivenShear(double deps_kick, bool kick)
     double dux = xt::amin(dgamma)();
 
     // add as affine deformation gradient to the system
-    for (size_t n = 0; n < coor.shape(0); ++n) {
-        u_new(n, 0) += dux * (coor(n, 1) - coor(0, 1));
+    for (size_t n = 0; n < m_nnode; ++n) {
+        u_new(n, 0) += dux * (m_coor(n, 1) - m_coor(0, 1));
     }
     this->setU(u_new);
 
@@ -527,22 +514,18 @@ inline void System::addEventDrivenShear(double deps_kick, bool kick)
 
 inline auto System::localTriggerElement(double deps_kick, size_t plastic_element)
 {
-    auto coor = this->coor();
-    auto dofs = this->dofs();
-    auto conn = this->conn();
-    auto plastic = this->plastic();
+    FRICTIONQPOTFEM_ASSERT(plastic_element < m_nelem_plas);
+
     auto idx = this->plastic_CurrentIndex();
     auto eps = GM::Epsd(this->plastic_Eps());
-    auto up = this->vector().AsDofs_p(this->u());
-
-    FRICTIONQPOTFEM_ASSERT(plastic_element < plastic.size());
+    auto up = m_vector.AsDofs_p(m_u);
 
     // distance to yielding on the positive side
     auto epsy = this->plastic_CurrentYieldRight();
     auto deps = epsy - eps;
 
     // find integration point closest to yielding
-    auto e = plastic(plastic_element);
+    auto e = m_elem_plas(plastic_element);
     auto q = xt::argmin(xt::view(deps, plastic_element, xt::all()))();
 
     // deviatoric strain at the selected quadrature-point
@@ -557,20 +540,20 @@ inline auto System::localTriggerElement(double deps_kick, size_t plastic_element
 
     // apply increment in shear strain as a perturbation to the selected element
     // - nodes belonging to the current element, from connectivity
-    auto elem = xt::view(conn, e, xt::all());
+    auto elem = xt::view(m_conn, e, xt::all());
     // - displacement-DOFs
-    auto udofs = this->AsDofs(this->u());
+    auto udofs = m_vector.AsDofs(m_u);
     // - update displacement-DOFs for the element
-    for (size_t n = 0; n < conn.shape(1); ++n) {
-        udofs(dofs(elem(n), 0)) += dgamma * (coor(elem(n), 1) - coor(elem(0), 1));
+    for (size_t n = 0; n < m_nelem; ++n) {
+        udofs(m_dofs(elem(n), 0)) += dgamma * (m_coor(elem(n), 1) - m_coor(elem(0), 1));
     }
     // - convert displacement-DOFs to (periodic) nodal displacement vector
     //   (N.B. storing to nodes directly does not ensure periodicity)
-    this->setU(this->AsNode(udofs));
+    this->setU(m_vector.AsNode(udofs));
 
     eps = GM::Epsd(this->plastic_Eps());
     auto idx_new = this->plastic_CurrentIndex();
-    auto up_new = this->vector().AsDofs_p(this->u());
+    auto up_new = m_vector.AsDofs_p(m_u);
 
     if (std::abs(eps(plastic_element, q) - eps_new) / eps_new > 1e-4) {
         throw std::runtime_error("Strain not what it was supposed to be");
