@@ -25,6 +25,12 @@ namespace GM = GMatElastoPlasticQPot::Cartesian2d;
 namespace FrictionQPotFEM {
 namespace UniformSingleLayer2d {
 
+// -------------------------------------
+// Return versions of returned libraries
+// -------------------------------------
+
+inline std::vector<std::string> versionInfo();
+
 // -------------------------------------------------------
 // Use GMatElastoPlasticQPot to evaluate stress everywhere
 // -------------------------------------------------------
@@ -343,12 +349,6 @@ inline auto localTriggerElement(System& sys, double deps, size_t plastic_element
 // Trigger point closest to yielding.
 // Returns the plastic_element and integration point which is triggered.
 inline auto localTriggerWeakestElement(System& sys, double deps);
-
-// -------------------------------------
-// Return versions of returned libraries
-// -------------------------------------
-
-inline std::vector<std::string> versionInfo();
 
 } // namespace UniformSingleLayer2d
 } // namespace FrictionQPotFEM

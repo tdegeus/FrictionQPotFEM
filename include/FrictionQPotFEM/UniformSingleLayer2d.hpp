@@ -12,6 +12,33 @@
 namespace FrictionQPotFEM {
 namespace UniformSingleLayer2d {
 
+inline std::vector<std::string> versionInfo()
+{
+    std::vector<std::string> ret;
+
+    ret.push_back(fmt::format("xtensor={0:d}.{1:d}.{2:d}",
+        XTENSOR_VERSION_MAJOR,
+        XTENSOR_VERSION_MINOR,
+        XTENSOR_VERSION_PATCH));
+
+    ret.push_back(fmt::format("frictionqpotfem={0:d}.{1:d}.{2:d}",
+        FRICTIONQPOTFEM_VERSION_MAJOR,
+        FRICTIONQPOTFEM_VERSION_MINOR,
+        FRICTIONQPOTFEM_VERSION_PATCH));
+
+    ret.push_back(fmt::format("goosefem={0:d}.{1:d}.{2:d}",
+        GOOSEFEM_VERSION_MAJOR,
+        GOOSEFEM_VERSION_MINOR,
+        GOOSEFEM_VERSION_PATCH));
+
+    ret.push_back(fmt::format("gmatelastoplasticqpot={0:d}.{1:d}.{2:d}",
+        GMATELASTOPLASTICQPOT_VERSION_MAJOR,
+        GMATELASTOPLASTICQPOT_VERSION_MINOR,
+        GMATELASTOPLASTICQPOT_VERSION_PATCH));
+
+    return ret;
+}
+
 inline System::System(
     const xt::xtensor<double, 2>& coor,
     const xt::xtensor<size_t, 2>& conn,
@@ -704,33 +731,6 @@ inline auto localTriggerWeakestElement(System& sys, double deps_kick)
     auto deps = epsy - eps;
     auto index = xt::unravel_index(xt::argmin(deps)(), deps.shape());
     return localTriggerElement(sys, deps_kick, index[0]);
-}
-
-inline std::vector<std::string> versionInfo()
-{
-    std::vector<std::string> ret;
-
-    ret.push_back(fmt::format("xtensor={0:d}.{1:d}.{2:d}",
-        XTENSOR_VERSION_MAJOR,
-        XTENSOR_VERSION_MINOR,
-        XTENSOR_VERSION_PATCH));
-
-    ret.push_back(fmt::format("frictionqpotfem={0:d}.{1:d}.{2:d}",
-        FRICTIONQPOTFEM_VERSION_MAJOR,
-        FRICTIONQPOTFEM_VERSION_MINOR,
-        FRICTIONQPOTFEM_VERSION_PATCH));
-
-    ret.push_back(fmt::format("goosefem={0:d}.{1:d}.{2:d}",
-        GOOSEFEM_VERSION_MAJOR,
-        GOOSEFEM_VERSION_MINOR,
-        GOOSEFEM_VERSION_PATCH));
-
-    ret.push_back(fmt::format("gmatelastoplasticqpot={0:d}.{1:d}.{2:d}",
-        GMATELASTOPLASTICQPOT_VERSION_MAJOR,
-        GMATELASTOPLASTICQPOT_VERSION_MINOR,
-        GMATELASTOPLASTICQPOT_VERSION_PATCH));
-
-    return ret;
 }
 
 } // namespace UniformSingleLayer2d
