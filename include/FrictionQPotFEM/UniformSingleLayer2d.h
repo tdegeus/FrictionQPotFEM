@@ -133,6 +133,10 @@ public:
     // - "kick = true": increment displacements such that "deps" is applied locally
     void addEventDrivenShear(double deps, bool kick);
 
+    // Subtract event driven simple shear step:
+    // same as "addEventDrivenShear" in the opposite direction.
+    void subtractEventDrivenShear(double deps, bool kick);
+
     // Apply local strain on one of the plastic elements.
     // (this 'triggers' one element while keeping the boundary conditions unchanged).
     // - "deps": size of the local stain kick to apply

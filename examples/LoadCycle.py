@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
-ret = np.genfromtxt('UniformSingleLayer2d_System.txt', delimiter=",")
+ret = np.genfromtxt('LoadCycle.txt', delimiter=",")
 
 if len(sys.argv) == 2:
     test = np.genfromtxt(sys.argv[1], delimiter=",")
