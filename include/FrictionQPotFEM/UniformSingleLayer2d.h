@@ -131,6 +131,23 @@ public:
     // Returns the number of iterations.
     size_t minimise(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 100000);
 
+    // Add event driven simple shear step.
+    // - "deps": size of the local stain kick to apply
+    // - "kick = false": increment displacements to the verge of yielding again
+    // - "kick = true": increment displacements such that "deps" is applied locally
+    void addEventDrivenShear(double deps, bool kick);
+
+    // Apply local strain on one of the plastic elements.
+    // (this 'triggers' one element while keeping the boundary conditions unchanged).
+    // - "deps": size of the local stain kick to apply
+    // - "plastic_element": trigger element "sys.plastic()(plastic_element)"
+    // Returns the plastic_element and integration point which is triggered.
+    auto localTriggerElement(double deps, size_t plastic_element);
+
+    // Trigger point closest to yielding.
+    // Returns the plastic_element and integration point which is triggered.
+    auto localTriggerWeakestElement(double deps);
+
 protected:
 
     // mesh parameters
@@ -324,31 +341,6 @@ protected:
     void computeForceMaterial() override;
 
 };
-
-// -----------------
-// Event driven step
-// -----------------
-
-// Add event driven simple shear step.
-// - "deps": size of the local stain kick to apply
-// - "kick = false": increment displacements to the verge of yielding again
-// - "kick = true": increment displacements such that "deps" is applied locally
-inline void addEventDrivenShear(System& sys, double deps, bool kick);
-
-// -------------
-// Local trigger
-// -------------
-
-// Apply local strain on one of the plastic elements
-// (normally this implies that none of the boundary conditions are changed).
-// - "deps": size of the local stain kick to apply
-// - "plastic_element": trigger element "sys.plastic()(plastic_element)"
-// Returns the plastic_element and integration point which is triggered.
-inline auto localTriggerElement(System& sys, double deps, size_t plastic_element);
-
-// Trigger point closest to yielding.
-// Returns the plastic_element and integration point which is triggered.
-inline auto localTriggerWeakestElement(System& sys, double deps);
 
 } // namespace UniformSingleLayer2d
 } // namespace FrictionQPotFEM

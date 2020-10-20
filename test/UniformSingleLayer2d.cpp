@@ -393,8 +393,8 @@ SECTION("System vs. HybridSystem")
 
     // trigger just to check the function
 
-    auto full_pair = FrictionQPotFEM::UniformSingleLayer2d::localTriggerWeakestElement(full, 1e-5);
-    auto reduced_pair = FrictionQPotFEM::UniformSingleLayer2d::localTriggerWeakestElement(reduced, 1e-5);
+    auto full_pair = full.localTriggerWeakestElement(1e-5);
+    auto reduced_pair = reduced.localTriggerWeakestElement(1e-5);
 
     REQUIRE(xt::all(xt::equal(full_pair, reduced_pair)));
     REQUIRE(xt::allclose(full.fmaterial(), reduced.fmaterial()));
