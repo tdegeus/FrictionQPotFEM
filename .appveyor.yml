@@ -33,7 +33,7 @@ install:
     - conda update -q conda
     - conda info -a
     - conda install -c conda-forge mamba
-    - mamba install -c conda-forge cmake gmatelastoplasticqpot goosefem fmt highfive xtensor
+    - mamba install -c conda-forge cmake gmatelastoplasticqpot goosefem fmt highfive xtensor catch2
     # Build/install the library
     - cmake -G "NMake Makefiles" -DCMAKE_INSTALL_PREFIX=%MINICONDA%\\LIBRARY -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON .
     - nmake

@@ -65,7 +65,7 @@ install:
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
     - conda install -c conda-forge mamba
-    - mamba install -c conda-forge cmake gmatelastoplasticqpot goosefem fmt highfive xtensor
+    - mamba install -c conda-forge cmake gmatelastoplasticqpot goosefem fmt highfive xtensor catch2
     # Build/install the library
     - cmake . -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON -DXSIMD=$XSIMD
     - make
