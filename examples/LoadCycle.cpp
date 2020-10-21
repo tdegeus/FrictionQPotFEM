@@ -66,7 +66,7 @@ int main()
     size_t inc = 0;
 
     for (; inc < 100; ++inc) {
-        sys.addEventDrivenShear(1e-5, kick);
+        sys.addSimpleShearEventDriven(1e-5, kick, +1.0);
         if (kick) {
             size_t niter = sys.minimise();
             std::cout << inc << ", " << niter << std::endl;
@@ -81,7 +81,7 @@ int main()
     }
 
     for (; inc < 300; ++inc) {
-        sys.subtractEventDrivenShear(1e-5, kick);
+        sys.addSimpleShearEventDriven(1e-5, kick, -1.0);
         if (kick) {
             size_t niter = sys.minimise();
             std::cout << inc << ", " << niter << std::endl;
@@ -96,7 +96,7 @@ int main()
     }
 
     for (; inc < 500; ++inc) {
-        sys.addEventDrivenShear(1e-5, kick);
+        sys.addSimpleShearEventDriven(1e-5, kick, +1.0);
         if (kick) {
             size_t niter = sys.minimise();
             std::cout << inc << ", " << niter << std::endl;
@@ -111,7 +111,7 @@ int main()
     }
 
     for (; inc < 700; ++inc) {
-        sys.subtractEventDrivenShear(1e-5, kick);
+        sys.addSimpleShearEventDriven(1e-5, kick, -1.0);
         if (kick) {
             size_t niter = sys.minimise();
             std::cout << inc << ", " << niter << std::endl;
@@ -126,7 +126,7 @@ int main()
     }
 
     for (; inc < 800; ++inc) {
-        sys.addEventDrivenShear(1e-5, kick);
+        sys.addSimpleShearEventDriven(1e-5, kick, +1.0);
         if (kick) {
             size_t niter = sys.minimise();
             std::cout << inc << ", " << niter << std::endl;
