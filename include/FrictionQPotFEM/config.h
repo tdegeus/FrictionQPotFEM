@@ -25,6 +25,16 @@
 
 #endif
 
+#define FRICTIONQPOTFEM_REQUIRE(expr) \
+    FRICTIONQPOTFEM_REQUIRE_IMPL(expr, __FILE__, __LINE__)
+
+#define FRICTIONQPOTFEM_REQUIRE_IMPL(expr, file, line) \
+    if (!(expr)) { \
+        throw std::runtime_error( \
+            std::string(file) + ':' + std::to_string(line) + \
+            ": assertion failed (" #expr ") \n\t"); \
+    }
+
 #define FRICTIONQPOTFEM_VERSION_MAJOR 0
 #define FRICTIONQPOTFEM_VERSION_MINOR 5
 #define FRICTIONQPOTFEM_VERSION_PATCH 0

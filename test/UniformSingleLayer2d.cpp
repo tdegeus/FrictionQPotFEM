@@ -8,6 +8,201 @@
 TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
 {
 
+SECTION("System::addSimpleShearEventDriven")
+{
+    GooseFEM::Mesh::Quad4::Regular mesh(1, 1);
+
+    FrictionQPotFEM::UniformSingleLayer2d::System sys(
+        mesh.coor(),
+        mesh.conn(),
+        mesh.dofs(),
+        xt::arange<size_t>(mesh.nnode() * mesh.ndim()),
+        xt::xtensor<size_t, 1>{},
+        xt::xtensor<size_t, 1>{0});
+
+    sys.setMassMatrix(xt::ones<double>({1}));
+    sys.setDampingMatrix(xt::ones<double>({1}));
+
+    sys.setElastic(
+        xt::xtensor<double, 1>{},
+        xt::xtensor<double, 1>{});
+
+    sys.setPlastic(
+        xt::xtensor<double, 1>{1.0},
+        xt::xtensor<double, 1>{1.0},
+        xt::xtensor<double, 2>{{1.0, 2.0, 3.0, 4.0}});
+
+    sys.setDt(1.0);
+
+    REQUIRE(sys.isHomogeneousElastic());
+
+    double delta_eps = 1e-3;
+    auto dV = sys.AsTensor<2>(sys.dV());
+    xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
+    ISCLOSE(GM::Epsd(Epsbar)(), 0.0);
+
+    sys.addSimpleShearEventDriven(delta_eps, false, +1.0);
+
+    Epsbar = xt::average(sys.Eps(), dV, {0, 1});
+    ISCLOSE(GM::Epsd(Epsbar)(), 1.0 - delta_eps / 2.0);
+
+    sys.addSimpleShearEventDriven(delta_eps, true, +1.0);
+
+    Epsbar = xt::average(sys.Eps(), dV, {0, 1});
+    ISCLOSE(GM::Epsd(Epsbar)(), 1.0 + delta_eps / 2.0);
+
+    sys.addSimpleShearEventDriven(delta_eps, false, +1.0);
+
+    Epsbar = xt::average(sys.Eps(), dV, {0, 1});
+    ISCLOSE(GM::Epsd(Epsbar)(), 2.0 - delta_eps / 2.0);
+
+    sys.addSimpleShearEventDriven(delta_eps, true, +1.0);
+
+    Epsbar = xt::average(sys.Eps(), dV, {0, 1});
+    ISCLOSE(GM::Epsd(Epsbar)(), 2.0 + delta_eps / 2.0);
+
+    sys.addSimpleShearEventDriven(delta_eps, false, -1.0);
+
+    Epsbar = xt::average(sys.Eps(), dV, {0, 1});
+    ISCLOSE(GM::Epsd(Epsbar)(), 2.0 + delta_eps / 2.0);
+
+    sys.addSimpleShearEventDriven(delta_eps, true, -1.0);
+
+    Epsbar = xt::average(sys.Eps(), dV, {0, 1});
+    ISCLOSE(GM::Epsd(Epsbar)(), 2.0 - delta_eps / 2.0);
+
+    sys.addSimpleShearEventDriven(delta_eps, false, -1.0);
+
+    Epsbar = xt::average(sys.Eps(), dV, {0, 1});
+    ISCLOSE(GM::Epsd(Epsbar)(), 1.0 + delta_eps / 2.0);
+
+    sys.addSimpleShearEventDriven(delta_eps, true, -1.0);
+
+    Epsbar = xt::average(sys.Eps(), dV, {0, 1});
+    ISCLOSE(GM::Epsd(Epsbar)(), 1.0 - delta_eps / 2.0);
+}
+
+SECTION("System::addSimpleShearToFixedStress")
+{
+    GooseFEM::Mesh::Quad4::Regular mesh(1, 1);
+
+    FrictionQPotFEM::UniformSingleLayer2d::System sys(
+        mesh.coor(),
+        mesh.conn(),
+        mesh.dofs(),
+        xt::arange<size_t>(mesh.nnode() * mesh.ndim()),
+        xt::xtensor<size_t, 1>{},
+        xt::xtensor<size_t, 1>{0});
+
+    sys.setMassMatrix(xt::ones<double>({1}));
+    sys.setDampingMatrix(xt::ones<double>({1}));
+
+    sys.setElastic(
+        xt::xtensor<double, 1>{},
+        xt::xtensor<double, 1>{});
+
+    sys.setPlastic(
+        xt::xtensor<double, 1>{1.0},
+        xt::xtensor<double, 1>{1.0},
+        xt::xtensor<double, 2>{{1.0, 2.0, 3.0, 4.0}});
+
+    sys.setDt(1.0);
+
+    REQUIRE(sys.isHomogeneousElastic());
+
+    auto dV = sys.AsTensor<2>(sys.dV());
+    xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
+    xt::xtensor<double, 2> Sigbar = xt::average(sys.Sig(), dV, {0, 1});
+    ISCLOSE(GM::Epsd(Epsbar)(), 0.0);
+    ISCLOSE(GM::Sigd(Sigbar)(), 0.0);
+
+    double target_stress = 1.0;
+    sys.addSimpleShearToFixedStress(target_stress);
+    Epsbar = xt::average(sys.Eps(), dV, {0, 1});
+    Sigbar = xt::average(sys.Sig(), dV, {0, 1});
+    ISCLOSE(GM::Epsd(Epsbar)(), target_stress / 2.0);
+    ISCLOSE(GM::Sigd(Sigbar)(), target_stress);
+
+    target_stress = 1.5;
+    sys.addSimpleShearToFixedStress(target_stress);
+    Epsbar = xt::average(sys.Eps(), dV, {0, 1});
+    Sigbar = xt::average(sys.Sig(), dV, {0, 1});
+    ISCLOSE(GM::Epsd(Epsbar)(), target_stress / 2.0);
+    ISCLOSE(GM::Sigd(Sigbar)(), target_stress);
+
+    target_stress = 0.5;
+    sys.addSimpleShearToFixedStress(target_stress);
+    Epsbar = xt::average(sys.Eps(), dV, {0, 1});
+    Sigbar = xt::average(sys.Sig(), dV, {0, 1});
+    ISCLOSE(GM::Epsd(Epsbar)(), target_stress / 2.0);
+    ISCLOSE(GM::Sigd(Sigbar)(), target_stress);
+}
+
+SECTION("System::plastic_*")
+{
+    GooseFEM::Mesh::Quad4::Regular mesh(1, 1);
+
+    FrictionQPotFEM::UniformSingleLayer2d::System full(
+        mesh.coor(),
+        mesh.conn(),
+        mesh.dofs(),
+        xt::arange<size_t>(mesh.nnode() * mesh.ndim()),
+        xt::xtensor<size_t, 1>{},
+        xt::xtensor<size_t, 1>{0});
+
+    full.setMassMatrix(xt::ones<double>({1}));
+    full.setDampingMatrix(xt::ones<double>({1}));
+
+    full.setElastic(
+        xt::xtensor<double, 1>{},
+        xt::xtensor<double, 1>{});
+
+    full.setPlastic(
+        xt::xtensor<double, 1>{1.0},
+        xt::xtensor<double, 1>{1.0},
+        xt::xtensor<double, 2>{{1.0, 2.0, 3.0, 4.0}});
+
+    full.setDt(1.0);
+
+    FrictionQPotFEM::UniformSingleLayer2d::System reduced(
+        mesh.coor(),
+        mesh.conn(),
+        mesh.dofs(),
+        xt::arange<size_t>(mesh.nnode() * mesh.ndim()),
+        xt::xtensor<size_t, 1>{},
+        xt::xtensor<size_t, 1>{0});
+
+    reduced.setMassMatrix(xt::ones<double>({1}));
+    reduced.setDampingMatrix(xt::ones<double>({1}));
+
+    reduced.setElastic(
+        xt::xtensor<double, 1>{},
+        xt::xtensor<double, 1>{});
+
+    reduced.setPlastic(
+        xt::xtensor<double, 1>{1.0},
+        xt::xtensor<double, 1>{1.0},
+        xt::xtensor<double, 2>{{1.0, 2.0, 3.0, 4.0}});
+
+    reduced.setDt(1.0);
+
+    double delta_eps = 1e-3;
+    full.addSimpleShearEventDriven(delta_eps, false);
+    reduced.addSimpleShearEventDriven(delta_eps, false);
+
+    REQUIRE(xt::allclose(full.Eps(), reduced.Eps()));
+    REQUIRE(xt::allclose(full.Eps(), full.plastic_Eps()));
+    REQUIRE(xt::allclose(reduced.Eps(), reduced.plastic_Eps()));
+
+    REQUIRE(xt::allclose(full.Sig(), reduced.Sig()));
+    REQUIRE(xt::allclose(full.Sig(), full.plastic_Sig()));
+    REQUIRE(xt::allclose(reduced.Sig(), reduced.plastic_Sig()));
+
+    REQUIRE(xt::allclose(full.plastic_CurrentYieldLeft(), reduced.plastic_CurrentYieldLeft()));
+    REQUIRE(xt::allclose(full.plastic_CurrentYieldRight(), reduced.plastic_CurrentYieldRight()));
+    REQUIRE(xt::all(xt::equal(full.plastic_CurrentIndex(), reduced.plastic_CurrentIndex())));
+}
+
 SECTION("System vs. HybridSystem")
 {
     // Stress/strain response computed using previous versions
@@ -390,17 +585,6 @@ SECTION("System vs. HybridSystem")
 
     REQUIRE(xt::allclose(compute_Eps, check_Eps));
     REQUIRE(xt::allclose(compute_Sig, check_Sig));
-
-    // trigger just to check the function
-
-    xt::xtensor<size_t, 1> pair = {7, 0};
-    auto full_pair = full.localTriggerWeakestElement(1e-5);
-    auto reduced_pair = reduced.localTriggerWeakestElement(1e-5);
-
-    REQUIRE(xt::all(xt::equal(pair, full_pair)));
-    REQUIRE(xt::all(xt::equal(pair, reduced_pair)));
-    REQUIRE(xt::allclose(full.fmaterial(), reduced.fmaterial()));
-    REQUIRE(xt::allclose(full.u(), reduced.u()));
 
 }
 

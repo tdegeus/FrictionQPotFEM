@@ -74,13 +74,13 @@ inline void System::initGeometry(
     m_nelem_plas = m_elem_plas.size();
     m_N = m_nelem_plas;
 
-    #ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
-        // check that "elem_plastic" and "elem_plastic" together span all elements
-        xt::xtensor<size_t, 1> elem = xt::concatenate(xt::xtuple(m_elem_elas, m_elem_plas));
-        FRICTIONQPOTFEM_ASSERT(xt::sort(elem) == xt::arange<size_t>(m_nelem));
-        // check that all "iip" or in "dofs"
-        FRICTIONQPOTFEM_ASSERT(xt::all(xt::isin(m_iip, m_dofs)));
-    #endif
+#ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
+    // check that "elem_plastic" and "elem_plastic" together span all elements
+    xt::xtensor<size_t, 1> elem = xt::concatenate(xt::xtuple(m_elem_elas, m_elem_plas));
+    FRICTIONQPOTFEM_ASSERT(xt::sort(elem) == xt::arange<size_t>(m_nelem));
+    // check that all "iip" or in "dofs"
+    FRICTIONQPOTFEM_ASSERT(xt::all(xt::isin(m_iip, m_dofs)));
+#endif
 
     m_vector = GF::VectorPartitioned(m_conn, m_dofs, m_iip);
 
@@ -133,6 +133,7 @@ inline void System::setMatrix(T& matrix, const xt::xtensor<double, 1>& val_elem)
 
 inline void System::setMassMatrix(const xt::xtensor<double, 1>& val_elem)
 {
+    FRICTIONQPOTFEM_ASSERT(!m_set_M);
     this->setMatrix(m_M, val_elem);
     m_set_M = true;
     this->evalAllSet();
@@ -140,6 +141,7 @@ inline void System::setMassMatrix(const xt::xtensor<double, 1>& val_elem)
 
 inline void System::setDampingMatrix(const xt::xtensor<double, 1>& val_elem)
 {
+    FRICTIONQPOTFEM_ASSERT(!m_set_D);
     this->setMatrix(m_D, val_elem);
     m_set_D = true;
     this->evalAllSet();
@@ -160,14 +162,17 @@ inline void System::setElastic(
     const xt::xtensor<double, 1>& K_elem,
     const xt::xtensor<double, 1>& G_elem)
 {
+    FRICTIONQPOTFEM_ASSERT(!m_set_elas);
     FRICTIONQPOTFEM_ASSERT(K_elem.size() == m_nelem_elas);
     FRICTIONQPOTFEM_ASSERT(G_elem.size() == m_nelem_elas);
 
-    xt::xtensor<size_t, 2> I = xt::zeros<size_t>({m_nelem, m_nip});
-    xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem, m_nip});
-    xt::view(I, xt::keep(m_elem_elas), xt::all()) = 1ul;
-    xt::view(idx, xt::keep(m_elem_elas), xt::all()) = xt::arange<size_t>(m_nelem_elas).reshape({-1, 1});
-    m_material.setElastic(I, idx, K_elem, G_elem);
+    if (m_nelem_elas > 0) {
+        xt::xtensor<size_t, 2> I = xt::zeros<size_t>({m_nelem, m_nip});
+        xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem, m_nip});
+        xt::view(I, xt::keep(m_elem_elas), xt::all()) = 1ul;
+        xt::view(idx, xt::keep(m_elem_elas), xt::all()) = xt::arange<size_t>(m_nelem_elas).reshape({-1, 1});
+        m_material.setElastic(I, idx, K_elem, G_elem);
+    }
 
     m_set_elas = true;
     this->evalAllSet();
@@ -179,15 +184,18 @@ inline void System::setPlastic(
     const xt::xtensor<double, 1>& G_elem,
     const xt::xtensor<double, 2>& epsy_elem)
 {
+    FRICTIONQPOTFEM_ASSERT(!m_set_plas);
     FRICTIONQPOTFEM_ASSERT(K_elem.size() == m_nelem_plas);
     FRICTIONQPOTFEM_ASSERT(G_elem.size() == m_nelem_plas);
     FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
 
-    xt::xtensor<size_t, 2> I = xt::zeros<size_t>({m_nelem, m_nip});
-    xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem, m_nip});
-    xt::view(I, xt::keep(m_elem_plas), xt::all()) = 1ul;
-    xt::view(idx, xt::keep(m_elem_plas), xt::all()) = xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
-    m_material.setCusp(I, idx, K_elem, G_elem, epsy_elem);
+    if (m_nelem_plas > 0) {
+        xt::xtensor<size_t, 2> I = xt::zeros<size_t>({m_nelem, m_nip});
+        xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem, m_nip});
+        xt::view(I, xt::keep(m_elem_plas), xt::all()) = 1ul;
+        xt::view(idx, xt::keep(m_elem_plas), xt::all()) = xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
+        m_material.setCusp(I, idx, K_elem, G_elem, epsy_elem);
+    }
 
     m_set_plas = true;
     this->evalAllSet();
@@ -425,38 +433,42 @@ inline size_t System::minimise(double tol, size_t niter_tol, size_t max_iter)
         }
     }
 
-    throw std::runtime_error("Maximum number of iterations exceeded");
+    FRICTIONQPOTFEM_REQUIRE(false);
 }
 
-inline void System::addEventDrivenShear(double deps_kick, bool kick)
+inline auto System::plastic_signOfSimpleShearPerturbation(double perturbation)
+{
+    auto u_0 = this->u();
+    auto eps_0 = GM::Epsd(this->plastic_Eps());
+    auto u_pert = this->u();
+
+    for (size_t n = 0; n < m_nnode; ++n) {
+        u_pert(n, 0) += perturbation * (m_coor(n, 1) - m_coor(0, 1));
+    }
+
+    this->setU(u_pert);
+    auto eps_pert = GM::Epsd(this->plastic_Eps());
+    this->setU(u_0);
+
+    xt::xtensor<double, 2> sign = xt::sign(eps_pert - eps_0);
+    return sign;
+}
+
+inline void System::addSimpleShearEventDriven(double deps_kick, bool kick, double direction)
 {
     FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
+    FRICTIONQPOTFEM_REQUIRE(direction == +1.0 || direction == -1.0);
 
+    auto u_new = this->u();
     auto idx = this->plastic_CurrentIndex();
     auto eps = GM::Epsd(this->plastic_Eps());
     auto Epsd = GM::Deviatoric(this->plastic_Eps());
     auto epsxx = xt::view(Epsd, xt::all(), xt::all(), 0, 0);
     auto epsxy = xt::view(Epsd, xt::all(), xt::all(), 0, 1);
 
-    // displacement perturbation to determine the sign in equivalent strain space
-    // --------------------------------------------------------------------------
-
-    auto u_new = this->u();
-    auto u_pert = this->u();
-
-    for (size_t n = 0; n < m_nnode; ++n) {
-        u_pert(n, 0) += deps_kick * (m_coor(n, 1) - m_coor(0, 1));
-    }
-
-    this->setU(u_pert);
-    auto eps_pert = GM::Epsd(this->plastic_Eps());
-    xt::xtensor<double, 2> sign = xt::sign(eps_pert - eps);
-    this->setU(u_new);
-
-    // determine strain increment
-    // --------------------------
-
-    // distance to yielding
+    // distance to yielding: "deps"
+    // (event a positive kick can lead to a decreasing equivalent strain)
+    xt::xtensor<double, 2> sign = this->plastic_signOfSimpleShearPerturbation(direction * deps_kick);
     xt::xtensor<double, 2> epsy_l = xt::abs(this->plastic_CurrentYieldLeft());
     xt::xtensor<double, 2> epsy_r = xt::abs(this->plastic_CurrentYieldRight());
     xt::xtensor<double, 2> epsy = xt::where(sign > 0, epsy_r, epsy_l);
@@ -477,9 +489,11 @@ inline void System::addEventDrivenShear(double deps_kick, bool kick)
 
     // compute shear strain increments
     // - two possible solutions
-    //   (the factor two is needed to interpret dgamma and a displacement)
-    xt::xtensor<double, 2> dgamma = 2.0 * (-epsxy + xt::sqrt(xt::pow(eps_new, 2.0) - xt::pow(epsxx, 2.0)));
-    xt::xtensor<double, 2> dgamma_n = 2.0 * (-epsxy - xt::sqrt(xt::pow(eps_new, 2.0) - xt::pow(epsxx, 2.0)));
+    //   (the factor two is needed as "dgamma" is the xy-component of the deformation gradient)
+    xt::xtensor<double, 2> dgamma =
+        2.0 * (-1.0 * direction * epsxy + xt::sqrt(xt::pow(eps_new, 2.0) - xt::pow(epsxx, 2.0)));
+    xt::xtensor<double, 2> dgamma_n =
+        2.0 * (-1.0 * direction * epsxy - xt::sqrt(xt::pow(eps_new, 2.0) - xt::pow(epsxx, 2.0)));
     // - discard irrelevant solutions
     dgamma_n = xt::where(dgamma_n <= 0.0, dgamma, dgamma_n);
     // - select lowest
@@ -489,7 +503,7 @@ inline void System::addEventDrivenShear(double deps_kick, bool kick)
 
     // add as affine deformation gradient to the system
     for (size_t n = 0; n < m_nnode; ++n) {
-        u_new(n, 0) += dux * (m_coor(n, 1) - m_coor(0, 1));
+        u_new(n, 0) += direction * dux * (m_coor(n, 1) - m_coor(0, 1));
     }
     this->setU(u_new);
 
@@ -501,104 +515,58 @@ inline void System::addEventDrivenShear(double deps_kick, bool kick)
     size_t q = index[1];
 
     eps = GM::Epsd(this->plastic_Eps());
-
     auto idx_new = this->plastic_CurrentIndex();
 
-    if (std::abs(eps(e, q) - eps_new(e, q)) / eps_new(e, q) > 1e-4) {
-        throw std::runtime_error("Strain not what it was supposed to be");
-    }
-
-    if (!kick && xt::any(xt::not_equal(idx, idx_new))) {
-        throw std::runtime_error("Yielding took place where it shouldn't");
+    FRICTIONQPOTFEM_REQUIRE(std::abs(eps(e, q) - eps_new(e, q)) / eps_new(e, q) < 1e-4);
+    if (!kick) {
+        FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(idx, idx_new)));
     }
 }
 
-inline void System::subtractEventDrivenShear(double deps_kick, bool kick)
+inline void System::addSimpleShearToFixedStress(double target_stress)
 {
     FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
 
-    auto idx = this->plastic_CurrentIndex();
-    auto eps = GM::Epsd(this->plastic_Eps());
-    auto Epsd = GM::Deviatoric(this->plastic_Eps());
-    auto epsxx = xt::view(Epsd, xt::all(), xt::all(), 0, 0);
-    auto epsxy = xt::view(Epsd, xt::all(), xt::all(), 0, 1);
-
-    // displacement perturbation to determine the sign in equivalent strain space
-    // --------------------------------------------------------------------------
-
     auto u_new = this->u();
-    auto u_pert = this->u();
+    auto idx = this->plastic_CurrentIndex();
+    auto dV = this->AsTensor<2>(this->dV());
+    double G = m_material.G().data()[0];
+
+    xt::xtensor<double, 2> Epsbar = xt::average(this->Eps(), dV, {0, 1});
+    xt::xtensor<double, 2> Sigbar = xt::average(this->Sig(), dV, {0, 1});
+    xt::xtensor<double, 2> Epsd = GM::Deviatoric(Epsbar);
+    double epsxx = Epsd(0, 0);
+    double epsxy = Epsd(0, 1);
+
+    double eps = GM::Epsd(Epsbar)();
+    double sig = GM::Sigd(Sigbar)();
+    double direction = +1.0;
+    if (target_stress < sig) {
+        direction = -1.0;
+    }
+
+    double eps_new = eps + (target_stress - sig) / (2.0 * G);
+    double dgamma =
+        2.0 * (-1.0 * direction * epsxy + std::sqrt(std::pow(eps_new, 2.0) - std::pow(epsxx, 2.0)));
 
     for (size_t n = 0; n < m_nnode; ++n) {
-        u_pert(n, 0) -= deps_kick * (m_coor(n, 1) - m_coor(0, 1));
-    }
-
-    this->setU(u_pert);
-    auto eps_pert = GM::Epsd(this->plastic_Eps());
-    xt::xtensor<double, 2> sign = xt::sign(eps_pert - eps);
-    this->setU(u_new);
-
-    // determine strain increment
-    // --------------------------
-
-    // distance to yielding
-    xt::xtensor<double, 2> epsy_l = xt::abs(this->plastic_CurrentYieldLeft());
-    xt::xtensor<double, 2> epsy_r = xt::abs(this->plastic_CurrentYieldRight());
-    xt::xtensor<double, 2> epsy = xt::where(sign > 0, epsy_r, epsy_l);
-    xt::xtensor<double, 2> deps = xt::abs(eps - epsy);
-
-    // no kick & current strain sufficiently close the next yield strain: don't move
-    if (!kick && xt::amin(deps)() < deps_kick / 2.0) {
-        return;
-    }
-
-    // set yield strain close to next yield strain
-    xt::xtensor<double, 2> eps_new = epsy + sign * (-deps_kick / 2.0);
-
-    // or, apply a kick instead
-    if (kick) {
-        eps_new = eps + sign * deps_kick;
-    }
-
-    // compute shear strain increments
-    // - two possible solutions
-    //   (the factor two is needed to interpret dgamma and a displacement)
-    xt::xtensor<double, 2> dgamma = 2.0 * (epsxy + xt::sqrt(xt::pow(eps_new, 2.0) - xt::pow(epsxx, 2.0)));
-    xt::xtensor<double, 2> dgamma_n = 2.0 * (epsxy - xt::sqrt(xt::pow(eps_new, 2.0) - xt::pow(epsxx, 2.0)));
-    // - discard irrelevant solutions
-    dgamma_n = xt::where(dgamma_n <= 0.0, dgamma, dgamma_n);
-    // - select lowest
-    dgamma = xt::where(dgamma_n < dgamma, dgamma_n, dgamma);
-    // - select minimal
-    double dux = xt::amin(dgamma)();
-
-    // add as affine deformation gradient to the system
-    for (size_t n = 0; n < m_nnode; ++n) {
-        u_new(n, 0) -= dux * (m_coor(n, 1) - m_coor(0, 1));
+        u_new(n, 0) += direction * dgamma * (m_coor(n, 1) - m_coor(0, 1));
     }
     this->setU(u_new);
 
     // sanity check
     // ------------
 
-    auto index = xt::unravel_index(xt::argmin(dgamma)(), dgamma.shape());
-    size_t e = index[0];
-    size_t q = index[1];
-
-    eps = GM::Epsd(this->plastic_Eps());
+    Sigbar = xt::average(this->Sig(), dV, {0, 1});
+    sig = GM::Sigd(Sigbar)();
 
     auto idx_new = this->plastic_CurrentIndex();
 
-    if (std::abs(eps(e, q) - eps_new(e, q)) / eps_new(e, q) > 1e-4) {
-        throw std::runtime_error("Strain not what it was supposed to be");
-    }
-
-    if (!kick && xt::any(xt::not_equal(idx, idx_new))) {
-        throw std::runtime_error("Yielding took place where it shouldn't");
-    }
+    FRICTIONQPOTFEM_REQUIRE(std::abs(target_stress - sig) / sig < 1e-4);
+    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(idx, idx_new)));
 }
 
-inline auto System::localTriggerElement(double deps_kick, size_t plastic_element)
+inline auto System::triggerElementWithLocalSimpleShear(double deps_kick, size_t plastic_element)
 {
     FRICTIONQPOTFEM_ASSERT(plastic_element < m_nelem_plas);
 
@@ -641,32 +609,12 @@ inline auto System::localTriggerElement(double deps_kick, size_t plastic_element
     auto idx_new = this->plastic_CurrentIndex();
     auto up_new = m_vector.AsDofs_p(m_u);
 
-    if (std::abs(eps(plastic_element, q) - eps_new) / eps_new > 1e-4) {
-        throw std::runtime_error("Strain not what it was supposed to be");
-    }
-
-    if (!xt::any(xt::not_equal(idx, idx_new))) {
-        throw std::runtime_error("Yielding didn't took place while it should have");
-    }
-
-    if (idx(plastic_element, q) == idx_new(plastic_element, q)) {
-        throw std::runtime_error("Yielding didn't took place while it should have");
-    }
-
-    if (!xt::allclose(up, up_new)) {
-        throw std::runtime_error("Fixed boundaries where moved");
-    }
+    FRICTIONQPOTFEM_REQUIRE(std::abs(eps(plastic_element, q) - eps_new) / eps_new < 1e-4);
+    FRICTIONQPOTFEM_REQUIRE(xt::any(xt::not_equal(idx, idx_new)));
+    FRICTIONQPOTFEM_REQUIRE(idx(plastic_element, q) != idx_new(plastic_element, q));
+    FRICTIONQPOTFEM_REQUIRE(xt::allclose(up, up_new));
 
     return xt::xtensor<size_t, 1>{plastic_element, q};
-}
-
-inline auto System::localTriggerWeakestElement(double deps_kick)
-{
-    auto eps = GM::Epsd(this->plastic_Eps());
-    auto epsy = this->plastic_CurrentYieldRight();
-    auto deps = epsy - eps;
-    auto index = xt::unravel_index(xt::argmin(deps)(), deps.shape());
-    return this->localTriggerElement(deps_kick, index[0]);
 }
 
 inline HybridSystem::HybridSystem(
