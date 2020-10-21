@@ -131,18 +131,18 @@ public:
     // - "deps": size of the local stain kick to apply
     // - "kick = false": increment displacements to the verge of yielding again
     // - "kick = true": increment displacements such that "deps" is applied locally
-    void addEventDrivenShear(double deps, bool kick);
+    void addSimpleShearEventDriven(double deps, bool kick, double direction = +1.0);
+
+    // Add simple shear until a fixed equivalent macroscopic stress has been reached.
+    // Throws if yielding is triggered before the stress was reached.
+    void addSimpleShearToFixedStress(double target_equivalent_macroscopic_stress);
 
     // Apply local strain on one of the plastic elements.
     // (this 'triggers' one element while keeping the boundary conditions unchanged).
     // - "deps": size of the local stain kick to apply
     // - "plastic_element": trigger element "sys.plastic()(plastic_element)"
     // Returns the plastic_element and integration point which is triggered.
-    auto localTriggerElement(double deps, size_t plastic_element);
-
-    // Trigger point closest to yielding.
-    // Returns the plastic_element and integration point which is triggered.
-    auto localTriggerWeakestElement(double deps);
+    auto triggerElementWithLocalSimpleShear(double deps, size_t plastic_element);
 
 protected:
 
@@ -241,6 +241,10 @@ protected:
     // Evaluate "m_fmaterial". Calls "computeStress".
     // Internal rule: "computeForceMaterial" is always evaluated after an update of "m_u".
     virtual void computeForceMaterial();
+
+    // Get the sign of the equivalent strain increment upon a displacement perturbation,
+    // for each integration point of each plastic element.
+    auto plastic_signOfSimpleShearPerturbation(double perturbation);
 
 };
 

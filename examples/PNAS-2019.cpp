@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 
     for (size_t inc = 1; inc < ninc; ++inc) {
 
-        sys.addEventDrivenShear(deps, kick);
+        sys.addSimpleShearEventDriven(deps, kick);
 
         if (kick) {
             niter = sys.minimise();
