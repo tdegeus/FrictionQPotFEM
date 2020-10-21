@@ -113,31 +113,35 @@ public:
     auto Sig() const;
     auto Eps() const;
 
-    // Extract for the plastic elements only.
+    // Extract for the plastic elements only (per integration point).
     virtual xt::xtensor<double, 4> plastic_Sig() const; // stress tensor
     virtual xt::xtensor<double, 4> plastic_Eps() const; // strain tensor
     virtual xt::xtensor<double, 2> plastic_CurrentYieldLeft() const; // yield strain 'left'
     virtual xt::xtensor<double, 2> plastic_CurrentYieldRight() const; // yield strain 'right'
     virtual xt::xtensor<size_t, 2> plastic_CurrentIndex() const; // current index in the landscape
 
-    // Make a time-step.
+    // Make a time-step: apply velocity-Verlet integration.
     void timeStep();
 
-    // Minimise energy:
+    // Minimise energy: run "timeStep" until a mechanical equilibrium has been reached.
     // Returns the number of iterations.
     size_t minimise(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 100000);
 
     // Add event driven simple shear step.
     // - "deps": size of the local stain kick to apply
     // - "kick = false": increment displacements to the verge of yielding again
-    // - "kick = true": increment displacements such that "deps" is applied locally
+    //   "kick = true": increment displacements such that "deps" is applied locally
+    // - "direction = +1": apply shear to the right,
+    //   "direction = -1": apply shear to the left
     void addSimpleShearEventDriven(double deps, bool kick, double direction = +1.0);
 
-    // Add simple shear until a fixed equivalent macroscopic stress has been reached.
+    // Add simple shear until a target equivalent macroscopic stress has been reached.
+    // Depending of the target stress compared to the current equivalent macroscopic stress,
+    // the shear can be either to the left or to the right.
     // Throws if yielding is triggered before the stress was reached.
     void addSimpleShearToFixedStress(double target_equivalent_macroscopic_stress);
 
-    // Apply local strain on one of the plastic elements.
+    // Apply local strain to the right to a specific plastic element.
     // This 'triggers' one element while keeping the boundary conditions unchanged.
     // Note that by applying shear to the element, yielding can also be triggered in
     // the surrounding elements.
