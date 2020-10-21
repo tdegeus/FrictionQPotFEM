@@ -300,12 +300,12 @@ inline auto System::quad() const
     return m_quad;
 }
 
-inline auto System::Sig() const
+inline xt::xtensor<double, 4> System::Sig()
 {
     return m_Sig;
 }
 
-inline auto System::Eps() const
+inline xt::xtensor<double, 4> System::Eps()
 {
     return m_Eps;
 }
@@ -562,8 +562,8 @@ inline void System::addSimpleShearToFixedStress(double target_stress)
 
     auto idx_new = this->plastic_CurrentIndex();
 
-    FRICTIONQPOTFEM_REQUIRE(std::abs(target_stress - sig) / sig < 1e-4);
     FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(idx, idx_new)));
+    FRICTIONQPOTFEM_REQUIRE(std::abs(target_stress - sig) / sig < 1e-4);
 }
 
 inline auto System::triggerElementWithLocalSimpleShear(double deps_kick, size_t plastic_element)
@@ -689,7 +689,7 @@ inline void HybridSystem::setPlastic(
     m_material_plas.setStrain(m_Eps_plas);
 }
 
-inline auto HybridSystem::Sig()
+inline xt::xtensor<double, 4> HybridSystem::Sig()
 {
     if (m_eval_full) {
         this->computeStress();
@@ -699,7 +699,7 @@ inline auto HybridSystem::Sig()
     return m_Sig;
 }
 
-inline auto HybridSystem::Eps()
+inline xt::xtensor<double, 4> HybridSystem::Eps()
 {
     if (m_eval_full) {
         this->computeStress();

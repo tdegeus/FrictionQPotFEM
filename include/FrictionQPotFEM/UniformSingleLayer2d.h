@@ -110,8 +110,8 @@ public:
     auto quad() const;
 
     // Extract stress and strain tensors.
-    auto Sig() const;
-    auto Eps() const;
+    virtual xt::xtensor<double, 4> Sig();
+    virtual xt::xtensor<double, 4> Eps();
 
     // Extract for the plastic elements only (per integration point).
     virtual xt::xtensor<double, 4> plastic_Sig() const; // stress tensor
@@ -288,8 +288,8 @@ public:
     // Extract stress and strain.
     // Note: involves re-evaluating the stress and strain,
     // as they are only known in the plastic elements.
-    auto Sig();
-    auto Eps();
+    xt::xtensor<double, 4> Sig() override;
+    xt::xtensor<double, 4> Eps() override;
 
     // Extract for the plastic elements only.
     xt::xtensor<double, 4> plastic_Sig() const override; // stress tensor
