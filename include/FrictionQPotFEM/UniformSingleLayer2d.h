@@ -125,21 +125,24 @@ public:
 
     // Minimise energy: run "timeStep" until a mechanical equilibrium has been reached.
     // Returns the number of iterations.
-    size_t minimise(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 100000);
+    size_t minimise(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 1000000);
 
     // Add event driven simple shear step.
-    // - "deps": size of the local stain kick to apply
-    // - "kick = false": increment displacements to the verge of yielding again
-    //   "kick = true": increment displacements such that "deps" is applied locally
-    // - "direction = +1": apply shear to the right,
-    //   "direction = -1": apply shear to the left
-    void addSimpleShearEventDriven(double deps, bool kick, double direction = +1.0);
+    // Return deformation gradient that is applied to the system.
+    double addSimpleShearEventDriven(
+        double deps, // size of the local stain kick to apply
+        bool kick, // "kick = false": increment displacements to "deps / 2" of yielding again
+        double direction = +1.0, // "direction = +1": apply shear to the right
+        bool dry_run = false); // "dry_run = true": do not apply displacement, do not check
 
     // Add simple shear until a target equivalent macroscopic stress has been reached.
     // Depending of the target stress compared to the current equivalent macroscopic stress,
     // the shear can be either to the left or to the right.
     // Throws if yielding is triggered before the stress was reached.
-    void addSimpleShearToFixedStress(double target_equivalent_macroscopic_stress);
+    // Return deformation gradient that is applied to the system.
+    double addSimpleShearToFixedStress(
+        double target_equivalent_macroscopic_stress,
+        bool dry_run = false); // "dry_run = true": do not apply displacement, do not check
 
     // Apply local strain to the right to a specific plastic element.
     // This 'triggers' one element while keeping the boundary conditions unchanged.
