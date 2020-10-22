@@ -454,7 +454,8 @@ inline auto System::plastic_signOfSimpleShearPerturbation(double perturbation)
     return sign;
 }
 
-inline void System::addSimpleShearEventDriven(double deps_kick, bool kick, double direction)
+inline double System::addSimpleShearEventDriven(
+    double deps_kick, bool kick, double direction, bool dry_run)
 {
     FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
     FRICTIONQPOTFEM_REQUIRE(direction == +1.0 || direction == -1.0);
@@ -476,7 +477,7 @@ inline void System::addSimpleShearEventDriven(double deps_kick, bool kick, doubl
 
     // no kick & current strain sufficiently close the next yield strain: don't move
     if (!kick && xt::amin(deps)() < deps_kick / 2.0) {
-        return;
+        return 0.0;
     }
 
     // set yield strain close to next yield strain
@@ -501,6 +502,10 @@ inline void System::addSimpleShearEventDriven(double deps_kick, bool kick, doubl
     // - select minimal
     double dux = xt::amin(dgamma)();
 
+    if (dry_run) {
+        return direction * dux;
+    }
+
     // add as affine deformation gradient to the system
     for (size_t n = 0; n < m_nnode; ++n) {
         u_new(n, 0) += direction * dux * (m_coor(n, 1) - m_coor(0, 1));
@@ -521,9 +526,11 @@ inline void System::addSimpleShearEventDriven(double deps_kick, bool kick, doubl
     if (!kick) {
         FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(idx, idx_new)));
     }
+
+    return direction * dux;
 }
 
-inline void System::addSimpleShearToFixedStress(double target_stress)
+inline double System::addSimpleShearToFixedStress(double target_stress, bool dry_run)
 {
     FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
 
@@ -549,6 +556,10 @@ inline void System::addSimpleShearToFixedStress(double target_stress)
     double dgamma =
         2.0 * (-1.0 * direction * epsxy + std::sqrt(std::pow(eps_new, 2.0) - std::pow(epsxx, 2.0)));
 
+    if (dry_run) {
+        return direction * dgamma;
+    }
+
     for (size_t n = 0; n < m_nnode; ++n) {
         u_new(n, 0) += direction * dgamma * (m_coor(n, 1) - m_coor(0, 1));
     }
@@ -564,6 +575,8 @@ inline void System::addSimpleShearToFixedStress(double target_stress)
 
     FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(idx, idx_new)));
     FRICTIONQPOTFEM_REQUIRE(std::abs(target_stress - sig) / sig < 1e-4);
+
+    return direction * dgamma;
 }
 
 inline auto System::triggerElementWithLocalSimpleShear(double deps_kick, size_t plastic_element)
