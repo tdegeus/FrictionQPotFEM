@@ -545,6 +545,8 @@ inline double System::addSimpleShearToFixedStress(double target_stress, bool dry
     double epsxx = Epsd(0, 0);
     double epsxy = Epsd(0, 1);
 
+    FRICTIONQPOTFEM_ASSERT(Sigbar(0, 1) >= 0);
+
     double eps = GM::Epsd(Epsbar)();
     double sig = GM::Sigd(Sigbar)();
     double direction = +1.0;
