@@ -581,7 +581,7 @@ inline double System::addSimpleShearToFixedStress(double target_stress, bool dry
     return direction * dgamma;
 }
 
-inline auto System::triggerElementWithLocalSimpleShear(
+inline double System::triggerElementWithLocalSimpleShear(
     double deps_kick,
     size_t plastic_element,
     bool trigger_weakest)
@@ -635,7 +635,7 @@ inline auto System::triggerElementWithLocalSimpleShear(
     FRICTIONQPOTFEM_REQUIRE(idx(plastic_element, q) != idx_new(plastic_element, q));
     FRICTIONQPOTFEM_REQUIRE(xt::allclose(up, up_new));
 
-    return xt::xtensor<size_t, 1>{plastic_element, q};
+    return dgamma;
 }
 
 inline HybridSystem::HybridSystem(

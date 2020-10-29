@@ -148,8 +148,8 @@ public:
     // This 'triggers' one element while keeping the boundary conditions unchanged.
     // Note that by applying shear to the element, yielding can also be triggered in
     // the surrounding elements.
-    // Returns the plastic_element and integration point which is triggered.
-    auto triggerElementWithLocalSimpleShear(
+    // Return deformation gradient that is applied to the element.
+    double triggerElementWithLocalSimpleShear(
         double deps, // size of the local stain kick to apply
         size_t plastic_element, // which plastic element to trigger: sys.plastic()(plastic_element)
         bool trigger_weakest_integration_point = true); // trigger weakest or strongest int. point
