@@ -581,7 +581,10 @@ inline double System::addSimpleShearToFixedStress(double target_stress, bool dry
     return direction * dgamma;
 }
 
-inline auto System::triggerElementWithLocalSimpleShear(double deps_kick, size_t plastic_element)
+inline auto System::triggerElementWithLocalSimpleShear(
+    double deps_kick,
+    size_t plastic_element,
+    bool trigger_weakest)
 {
     FRICTIONQPOTFEM_ASSERT(plastic_element < m_nelem_plas);
 
@@ -594,8 +597,11 @@ inline auto System::triggerElementWithLocalSimpleShear(double deps_kick, size_t 
     auto deps = epsy - eps;
 
     // find integration point closest to yielding
-    auto e = m_elem_plas(plastic_element);
-    auto q = xt::argmin(xt::view(deps, plastic_element, xt::all()))();
+    size_t e = m_elem_plas(plastic_element);
+    size_t q = xt::argmin(xt::view(deps, plastic_element, xt::all()))();
+    if (!trigger_weakest) {
+        q = xt::argmax(xt::view(deps, plastic_element, xt::all()))();
+    }
 
     // deviatoric strain at the selected quadrature-point
     xt::xtensor<double, 2> Eps = xt::view(this->plastic_Eps(), plastic_element, q);
