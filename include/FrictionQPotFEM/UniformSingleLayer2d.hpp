@@ -36,6 +36,11 @@ inline std::vector<std::string> versionInfo()
         GMATELASTOPLASTICQPOT_VERSION_MINOR,
         GMATELASTOPLASTICQPOT_VERSION_PATCH));
 
+    ret.push_back(fmt::format("qpot={0:d}.{1:d}.{2:d}",
+        QPOT_VERSION_MAJOR,
+        QPOT_VERSION_MINOR,
+        QPOT_VERSION_PATCH));
+
     return ret;
 }
 
@@ -154,7 +159,6 @@ inline void System::initMaterial()
     }
 
     m_material.check();
-
     m_material.setStrain(m_Eps);
 }
 
