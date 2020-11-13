@@ -36,6 +36,11 @@ inline std::vector<std::string> versionInfo()
         GMATELASTOPLASTICQPOT_VERSION_MINOR,
         GMATELASTOPLASTICQPOT_VERSION_PATCH));
 
+    ret.push_back(fmt::format("qpot={0:d}.{1:d}.{2:d}",
+        QPOT_VERSION_MAJOR,
+        QPOT_VERSION_MINOR,
+        QPOT_VERSION_PATCH));
+
     return ret;
 }
 
@@ -154,7 +159,6 @@ inline void System::initMaterial()
     }
 
     m_material.check();
-
     m_material.setStrain(m_Eps);
 }
 
@@ -584,7 +588,8 @@ inline double System::addSimpleShearToFixedStress(double target_stress, bool dry
 inline double System::triggerElementWithLocalSimpleShear(
     double deps_kick,
     size_t plastic_element,
-    bool trigger_weakest)
+    bool trigger_weakest,
+    double amplify)
 {
     FRICTIONQPOTFEM_ASSERT(plastic_element < m_nelem_plas);
 
@@ -620,7 +625,7 @@ inline double System::triggerElementWithLocalSimpleShear(
     auto udofs = m_vector.AsDofs(m_u);
     // - update displacement-DOFs for the element
     for (size_t n = 0; n < m_nne; ++n) {
-        udofs(m_dofs(elem(n), 0)) += dgamma * (m_coor(elem(n), 1) - m_coor(elem(0), 1));
+        udofs(m_dofs(elem(n), 0)) += dgamma * amplify * (m_coor(elem(n), 1) - m_coor(elem(0), 1));
     }
     // - convert displacement-DOFs to (periodic) nodal displacement vector
     //   (N.B. storing to nodes directly does not ensure periodicity)
@@ -630,7 +635,9 @@ inline double System::triggerElementWithLocalSimpleShear(
     auto idx_new = this->plastic_CurrentIndex();
     auto up_new = m_vector.AsDofs_p(m_u);
 
-    FRICTIONQPOTFEM_REQUIRE(std::abs(eps(plastic_element, q) - eps_new) / eps_new < 1e-4);
+    FRICTIONQPOTFEM_REQUIRE(dgamma >= 0.0);
+    FRICTIONQPOTFEM_REQUIRE(amplify >= 0.0);
+    FRICTIONQPOTFEM_REQUIRE(std::abs(eps(plastic_element, q) - eps_new) / eps_new < 1e-4 || amplify != 1);
     FRICTIONQPOTFEM_REQUIRE(xt::any(xt::not_equal(idx, idx_new)));
     FRICTIONQPOTFEM_REQUIRE(idx(plastic_element, q) != idx_new(plastic_element, q));
     FRICTIONQPOTFEM_REQUIRE(xt::allclose(up, up_new));

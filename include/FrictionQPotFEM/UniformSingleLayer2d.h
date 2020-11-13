@@ -152,7 +152,8 @@ public:
     double triggerElementWithLocalSimpleShear(
         double deps, // size of the local stain kick to apply
         size_t plastic_element, // which plastic element to trigger: sys.plastic()(plastic_element)
-        bool trigger_weakest_integration_point = true); // trigger weakest or strongest int. point
+        bool trigger_weakest_integration_point = true, // trigger weakest or strongest int. point
+        double amplify = 1.0); // amplify the strain kick with a certain factor
 
 protected:
 
