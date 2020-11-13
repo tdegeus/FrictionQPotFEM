@@ -72,68 +72,82 @@ material.check()
 
 k = 0.05
 
-C = material.Tangent()
-K.assemble(quad.Int_gradN_dot_tensor4_dot_gradNT_dV(C))
+# C = material.Tangent()
+# K.assemble(quad.Int_gradN_dot_tensor4_dot_gradNT_dV(C))
 
 C = np.array([
     [ k,  0, -k,  0],
     [ 0,  0,  0,  0],
     [-k,  0,  k,  0],
     [ 0,  0,  0,  0],
-])t
-K.add(dofs[virtual, :].ravel(), dofs[virtual, :].ravel(), C)
-
-# -----
-# solve
-# -----
-
-fig, axes = gplt.subplots(ncols=2)
-
-disp = np.zeros(disp.shape)
-u = []
-f = []
-
-for inc in range(2):
-
-    for iiter in range(3):
-
-        Eps = quad.SymGradN_vector(vector.AsElement(disp));
-        material.setStrain(Eps)
-        Sig = material.Stress()
-        fmaterial = vector.AssembleNode(quad.Int_gradN_dot_tensor2_dV(Sig))
-
-        print(fmaterial[virtual[0], :])
-
-        disp[virtual[1], 0] = inc * 1.0
-
-        fspring = np.zeros(coor.shape)
-        fspring[virtual[0], :] = +k * (disp[virtual[1], :] - disp[virtual[0], :])
-        fspring[virtual[1], :] = -k * (disp[virtual[1], :] - disp[virtual[0], :])
-
-        # print(disp[virtual[0], 0], disp[virtual[1], 0], fspring[virtual[0], :], fspring[virtual[1], :])
-
-        disp = Solver.Solve(K, fmaterial + fspring, disp)
-
-        # Eps = quad.SymGradN_vector(vector.AsElement(disp));
-        # material.setStrain(Eps)
-        # Sig = material.Stress()
-        # fmaterial = vector.AssembleNode(quad.Int_gradN_dot_tensor2_dV(Sig))
-
-        # fspring = np.zeros(coor.shape)
-        # fspring[virtual[0], :] = +k * (disp[virtual[1], :] - disp[virtual[0], :])
-        # fspring[virtual[1], :] = -k * (disp[virtual[1], :] - disp[virtual[0], :])
-
-        # print(fmaterial)
+])
+K.set(dofs[virtual, :].ravel(), dofs[virtual, :].ravel(), C)
+# K.add(dofs[virtual, :].ravel(), dofs[virtual, :].ravel(), C)
 
 
 
+disp[virtual[1], 0] = 1.0
+
+fspring = np.zeros(coor.shape)
+fspring[virtual[0], :] = +k * (disp[virtual[1], :] - disp[virtual[0], :])
+fspring[virtual[1], :] = -k * (disp[virtual[1], :] - disp[virtual[0], :])
+
+print(fspring)
+print(K.Dot(disp))
 
 
-    u += [disp[virtual[1], 0]]
-    f += [k * (disp[virtual[1], 0] - disp[virtual[0], 0])]
 
-axes[0].plot(u, f)
+# # -----
+# # solve
+# # -----
 
-gplt.patch(coor=coor + disp, conn=conn, axis=axes[1])
-gplt.patch(coor=coor, conn=conn, linestyle='--', axis=axes[1])
-plt.show()
+# fig, axes = gplt.subplots(ncols=2)
+
+# disp = np.zeros(disp.shape)
+# u = []
+# f = []
+
+# for inc in range(2):
+
+#     for iiter in range(3):
+
+#         Eps = quad.SymGradN_vector(vector.AsElement(disp));
+#         material.setStrain(Eps)
+#         Sig = material.Stress()
+#         fmaterial = vector.AssembleNode(quad.Int_gradN_dot_tensor2_dV(Sig))
+
+#         print(fmaterial[virtual[0], :])
+
+#         disp[virtual[1], 0] = inc * 1.0
+
+#         fspring = np.zeros(coor.shape)
+#         fspring[virtual[0], :] = +k * (disp[virtual[1], :] - disp[virtual[0], :])
+#         fspring[virtual[1], :] = -k * (disp[virtual[1], :] - disp[virtual[0], :])
+
+#         # print(disp[virtual[0], 0], disp[virtual[1], 0], fspring[virtual[0], :], fspring[virtual[1], :])
+
+#         disp = Solver.Solve(K, fmaterial + fspring, disp)
+
+#         # Eps = quad.SymGradN_vector(vector.AsElement(disp));
+#         # material.setStrain(Eps)
+#         # Sig = material.Stress()
+#         # fmaterial = vector.AssembleNode(quad.Int_gradN_dot_tensor2_dV(Sig))
+
+#         # fspring = np.zeros(coor.shape)
+#         # fspring[virtual[0], :] = +k * (disp[virtual[1], :] - disp[virtual[0], :])
+#         # fspring[virtual[1], :] = -k * (disp[virtual[1], :] - disp[virtual[0], :])
+
+#         # print(fmaterial)
+
+
+
+
+
+#     u += [disp[virtual[1], 0]]
+#     f += [k * (disp[virtual[1], 0] - disp[virtual[0], 0])]
+
+# axes[0].plot(u, f)
+
+# gplt.patch(coor=coor + disp, conn=conn, axis=axes[1])
+# gplt.patch(coor=coor, conn=conn, linestyle='--', axis=axes[1])
+# plt.show()
