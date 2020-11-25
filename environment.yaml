@@ -1,0 +1,11 @@
+channels:
+  - conda-forge
+dependencies:
+  - gmatelastoplasticqpot
+  - goosefem
+  - fmt
+  - cmake
+  - xtensor
+  - xsimd
+  - python
+  - pyxtensor

@@ -1,0 +1,6 @@
+channels:
+  - conda-forge
+dependencies:
+  - highfive
+  - h5py
+  - matplotlib

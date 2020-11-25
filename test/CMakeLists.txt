@@ -13,24 +13,28 @@ set(XSIMD OFF)
 
 set(CMAKE_BUILD_TYPE Release)
 
+set(test_name "unit-tests")
+
 find_package(Catch2 REQUIRED)
-add_executable(main main.cpp UniformSingleLayer2d.cpp)
-target_link_libraries(main PRIVATE Catch2::Catch2 FrictionQPotFEM)
+find_package(xtensor REQUIRED)
+
+add_executable(${test_name} main.cpp UniformSingleLayer2d.cpp)
+
+target_link_libraries(${test_name} PRIVATE Catch2::Catch2 FrictionQPotFEM)
 
 if(WARNINGS)
-    target_link_libraries(main PRIVATE FrictionQPotFEM::compiler_warnings)
+    target_link_libraries(${test_name} PRIVATE FrictionQPotFEM::compiler_warnings)
 endif()
 
 if(ASSERT)
-    target_link_libraries(main PRIVATE FrictionQPotFEM::assert)
+    target_link_libraries(${test_name} PRIVATE FrictionQPotFEM::assert)
 endif()
 
 if(DEBUG)
-    target_link_libraries(main PRIVATE FrictionQPotFEM::debug)
+    target_link_libraries(${test_name} PRIVATE FrictionQPotFEM::debug)
 endif()
 
 if(XSIMD)
-    find_package(xtensor REQUIRED)
     find_package(xsimd REQUIRED)
-    target_link_libraries(main PRIVATE xtensor::optimize xtensor::use_xsimd)
+    target_link_libraries(${test_name} PRIVATE xtensor::optimize xtensor::use_xsimd)
 endif()

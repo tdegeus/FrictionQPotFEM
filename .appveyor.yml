@@ -37,4 +37,4 @@ install:
     - nmake install
 
 build_script:
-    - .\test\main
+    - .\test\unit-tests
