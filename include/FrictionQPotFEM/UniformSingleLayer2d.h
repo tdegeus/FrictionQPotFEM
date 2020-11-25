@@ -40,6 +40,7 @@ class System {
 public:
 
     System() = default;
+    virtual ~System() {};
 
     // Define the geometry, include boundary conditions and element sets.
     System(
@@ -108,6 +109,9 @@ public:
     // Get the "GooseFEM::VectorPartitioned" and the "GooseFEM::Element::Quad4::Quadrature"
     auto vector() const;
     auto quad() const;
+
+    // Get the underlying "GMatElastoPlasticQPot::Array<2>"
+    auto material() const;
 
     // Extract stress and strain tensors.
     virtual xt::xtensor<double, 4> Sig();
@@ -289,6 +293,10 @@ public:
         const xt::xtensor<double, 1>& K_elem,
         const xt::xtensor<double, 1>& G_elem,
         const xt::xtensor<double, 2>& epsy_elem) override;
+
+    // Get the underlying "GMatElastoPlasticQPot::Array<2>"
+    auto material_elastic() const;
+    auto material_plastic() const;
 
     // Extract stress and strain.
     // Note: involves re-evaluating the stress and strain,

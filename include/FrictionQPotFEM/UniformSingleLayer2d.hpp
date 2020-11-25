@@ -304,6 +304,11 @@ inline auto System::quad() const
     return m_quad;
 }
 
+inline auto System::material() const
+{
+    return m_material;
+}
+
 inline xt::xtensor<double, 4> System::Sig()
 {
     return m_Sig;
@@ -715,6 +720,16 @@ inline void HybridSystem::setPlastic(
 
     m_material_plas.check();
     m_material_plas.setStrain(m_Eps_plas);
+}
+
+inline auto HybridSystem::material_elastic() const
+{
+    return m_material_elas;
+}
+
+inline auto HybridSystem::material_plastic() const
+{
+    return m_material_plas;
 }
 
 inline xt::xtensor<double, 4> HybridSystem::Sig()
