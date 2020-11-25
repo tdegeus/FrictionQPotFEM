@@ -144,16 +144,35 @@ public:
         double target_equivalent_macroscopic_stress,
         bool dry_run = false); // "dry_run = true": do not apply displacement, do not check
 
-    // Apply local strain to the right to a specific plastic element.
-    // This 'triggers' one element while keeping the boundary conditions unchanged.
-    // Note that by applying shear to the element, yielding can also be triggered in
-    // the surrounding elements.
-    // Return deformation gradient that is applied to the element.
-    double triggerElementWithLocalSimpleShear(
-        double deps, // size of the local stain kick to apply
-        size_t plastic_element, // which plastic element to trigger: sys.plastic()(plastic_element)
-        bool trigger_weakest_integration_point = true, // trigger weakest or strongest int. point
-        double amplify = 1.0); // amplify the strain kick with a certain factor
+    // // Apply local strain to the right to a specific plastic element.
+    // // This 'triggers' one element while keeping the boundary conditions unchanged.
+    // // Note that by applying shear to the element, yielding can also be triggered in
+    // // the surrounding elements.
+    // // Return deformation gradient that is applied to the element.
+    // double triggerElementWithLocalSimpleShear(
+    //     double deps, // size of the local stain kick to apply
+    //     size_t plastic_element, // which plastic element to trigger: sys.plastic()(plastic_element)
+    //     bool trigger_weakest_integration_point = true, // trigger weakest or strongest int. point
+    //     double amplify = 1.0); // amplify the strain kick with a certain factor
+
+    // Compute the strain perturbation needed to trigger each integration point
+    xt::xtensor<double, 2> plastic_SimpleShearDistanceNextCusp(
+        double deps); // size of the local stain kick to apply
+
+    // Compute the energy barrier to a simple-shear perturbation
+    // Returns the shear strain increment
+    xt::xtensor<double, 1> plastic_SimpleShearDistanceToElementEnergyBarrier(
+        double deps, // local strain increment to perform perturbations
+        xt::xtensor<double, 1> delta_E); // return energy barrier
+
+    // Alias with no optional return argument
+    // Returns the shear strain increment
+    xt::xtensor<double, 1> plastic_ElementEnergyBarrierToSimpleShear(double deps);
+
+    // Apply strain trigger to a certain plastic element
+    void applySimpleShearTriggerToElement(
+        double dgamma, // shear strain increment
+        size_t plastic_element); // element to trigger: sys.plastic()(plastic_element)
 
 protected:
 
