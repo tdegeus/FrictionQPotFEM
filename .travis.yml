@@ -71,4 +71,4 @@ install:
     - make
     - sudo make install
 script:
-    - ./test/main
+    - ./test/unit-tests

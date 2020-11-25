@@ -78,7 +78,11 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/FrictionQPotFEMConfig.cmake"
 
 include("FrictionQPotFEMConfig.cmake")
 
+set(CTEST_TEST_TARGET_ALIAS RUN_ALL_TESTS)
+include(CTest)
+
 if(BUILD_TESTS)
+    enable_testing()
     add_subdirectory(test)
 endif()
 
