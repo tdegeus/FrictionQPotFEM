@@ -121,7 +121,9 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             "plastic_ElementEnergyBarrierForSimpleShear",
             &SM::HybridSystem::plastic_ElementEnergyBarrierForSimpleShear,
             "plastic_ElementEnergyBarrierForSimpleShear",
-            py::arg("titled") = true)
+            py::arg("titled") = true,
+            py::arg("max_iter") = 100,
+            py::arg("perturbation") = 1e-12)
 
         .def("__repr__", [](const SM::HybridSystem&) {
             return "<FrictionQPotFEM.UniformSingleLayer2d.HybridSystem>";

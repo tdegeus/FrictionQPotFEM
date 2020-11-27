@@ -846,20 +846,16 @@ inline xt::xtensor<double, 2> HybridSystem::plastic_ElementEnergyLandscapeForSim
     return ret;
 }
 
-// inline xt::xtensor<double, 2> HybridSystem::plastic_ElementEnergyBarrierForSimpleShear(bool tilted)
-inline std::tuple<xt::xtensor<double, 2>, xt::xtensor<double, 2>> HybridSystem::plastic_ElementEnergyBarrierForSimpleShear(bool tilted)
+inline xt::xtensor<double, 2> HybridSystem::plastic_ElementEnergyBarrierForSimpleShear(
+    bool tilted,
+    size_t max_iter,
+    double pert)
 {
-    size_t max_iter = 20;
-    double pert = 1e-12; // increment to cusps + small perturbation, to advance event driven
-
     double h = this->plastic_h();
     double dV = this->plastic_dV();
 
     double inf = std::numeric_limits<double>::infinity();
     xt::xtensor<double, 2> ret = inf * xt::ones<double>({m_N, size_t(2)});
-
-    xt::xtensor<double, 2> out_E = inf * xt::ones<double>({m_N, max_iter + size_t(1)});
-    xt::xtensor<double, 2> out_gamma = inf * xt::ones<double>({m_N, max_iter + size_t(1)});
 
     static constexpr size_t nip = 4;
     FRICTIONQPOTFEM_ASSERT(m_nip == nip);
@@ -878,9 +874,6 @@ inline std::tuple<xt::xtensor<double, 2>, xt::xtensor<double, 2>> HybridSystem::
 
         double E_n = E0;
         bool negative_slope = false;
-
-        out_E(e, 0) = E0 / (dV * static_cast<double>(m_nip));
-        out_gamma(e, 0) = 0.0;
 
         for (size_t i = 0; i < max_iter; ++i) {
 
@@ -921,26 +914,22 @@ inline std::tuple<xt::xtensor<double, 2>, xt::xtensor<double, 2>> HybridSystem::
             }
 
             if (i == 0) {
-                if (E < E_n) {
+                if (E <= E_n) {
                     negative_slope = true;
                 }
             }
-            if (negative_slope) {
+            else if (negative_slope) {
                 if (E > E_n) {
                     negative_slope = false;
-                    // E0 = E_n; // TODO: check
                 }
             }
 
             // energy barrier found: store the last known configuration, this will be the maximum
-            if (E < E_n || !negative_slope) {
+            if (E < E_n && !negative_slope) {
                 ret(e, 0) = Delta_gamma - dgamma;
                 ret(e, 1) = (E_n - E0) / (dV * static_cast<double>(m_nip));
-                // break; // TODO: uncomment
+                break;
             }
-
-            out_E(e, i + 1) = E / (dV * static_cast<double>(m_nip));
-            out_gamma(e, i + 1) = Delta_gamma;
 
             // store 'history'
             E_n = E;
@@ -949,20 +938,8 @@ inline std::tuple<xt::xtensor<double, 2>, xt::xtensor<double, 2>> HybridSystem::
 
     m_material_plas.setStrain(m_Eps_plas);
 
-    // return ret;
-    return std::make_tuple(out_E, out_gamma);
+    return ret;
 }
-
-// inline std::tuple<xt::xtensor<double, 1>, xt::xtensor<double, 1>>
-// HybridSystem::plastic_ElementEnergyLandscapeForSimpleShearEventDriven(
-//     size_t plastic_element,
-//     bool tilted)
-// {
-//     double dv = quad.dV()(m_elem_plas(plastic), 0);
-
-
-
-// }
 
 } // namespace UniformSingleLayer2d
 } // namespace FrictionQPotFEM

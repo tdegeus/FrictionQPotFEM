@@ -319,8 +319,10 @@ public:
         const xt::xtensor<double, 1>& dgamma,  // simple shear perturbation
         bool tilted = true); // tilt based on current element internal force
 
-    // xt::xtensor<double, 2> plastic_ElementEnergyBarrierForSimpleShear(bool tilted = true);
-    std::tuple<xt::xtensor<double, 2>, xt::xtensor<double, 2>> plastic_ElementEnergyBarrierForSimpleShear(bool tilted = true);
+    xt::xtensor<double, 2> plastic_ElementEnergyBarrierForSimpleShear(
+        bool tilted = true, // tilt based on current element internal force
+        size_t max_iter = 100, // maximum number of iterations to find a barrier
+        double perturbation = 1e-12); // small perturbation, to advance event driven
 
 protected:
 
