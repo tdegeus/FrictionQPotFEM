@@ -90,6 +90,10 @@ public:
     auto coor() const; // nodal coordinates
     auto dofs() const; // DOFs per node
 
+    // Basic properties of the layer
+    double plastic_h() const; // element height
+    double plastic_dV() const; // integration point volume
+
     // Extract nodal quantities.
     auto u() const; // displacements
     auto fmaterial() const; // material resistance
