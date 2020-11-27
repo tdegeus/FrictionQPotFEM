@@ -795,46 +795,56 @@ inline void HybridSystem::computeForceMaterial()
 }
 
 inline xt::xtensor<double, 2> HybridSystem::plastic_ElementEnergyLandscapeForSimpleShear(
-    const xt::xtensor<double, 1>& dgamma,
+    const xt::xtensor<double, 1>& Delta_gamma,
     bool tilted)
 {
-    auto Eps0 = m_Eps_plas;
-    auto dgamma_inc = xt::diff(dgamma);
     auto dV_plas = xt::view(m_quad.dV(), xt::keep(m_elem_plas), xt::all());
-    FRICTIONQPOTFEM_ASSERT(xt::all(dgamma_inc >= 0.0));
+    double dV = dV_plas(0, 0);
+    FRICTIONQPOTFEM_ASSERT(xt::allclose(dV_plas, dV));
 
-    xt::xtensor<double, 2> ret = xt::empty<double>({m_nelem_plas, dgamma.size()});
-    xt::view(ret, xt::all(), 0) = xt::sum(m_material_plas.Energy() * dV_plas, 1);
+    auto Eps = m_Eps_plas;
+    auto dgamma = xt::diff(Delta_gamma);
+    FRICTIONQPOTFEM_ASSERT(xt::all(dgamma >= 0.0));
 
-    for (size_t i = 0; i < dgamma_inc.size(); ++i) {
-        xt::view(m_Eps_plas, xt::all(), xt::all(), 0, 1) += 0.5 * dgamma_inc(i);
-        xt::view(m_Eps_plas, xt::all(), xt::all(), 1, 0) += 0.5 * dgamma_inc(i);
-        m_material_plas.setStrain(m_Eps_plas);
-        xt::view(ret, xt::all(), i + 1) = xt::sum(m_material_plas.Energy() * dV_plas, 1);
+    xt::xtensor<double, 2> ret = xt::empty<double>({m_nelem_plas, Delta_gamma.size()});
+    xt::view(ret, xt::all(), 0) = xt::sum(m_material_plas.Energy() * dV, 1);
+
+    for (size_t i = 0; i < dgamma.size(); ++i) {
+        xt::view(Eps, xt::all(), xt::all(), 0, 1) += 0.5 * dgamma(i);
+        xt::view(Eps, xt::all(), xt::all(), 1, 0) += 0.5 * dgamma(i);
+        m_material_plas.setStrain(Eps);
+        xt::view(ret, xt::all(), i + 1) = xt::sum(m_material_plas.Energy() * dV, 1);
     }
 
     if (tilted) {
         for (size_t e = 0; e < m_nelem_plas; ++e) {
             auto elem = xt::view(m_conn, m_elem_plas(e), xt::all());
             double h = m_coor(elem(3), 1) - m_coor(elem(0), 1);
-            double f = m_fe_plas(e, 2, 0) + m_fe_plas(e, 3, 0) - m_fe_plas(e, 0, 0) - m_fe_plas(e, 1, 0);
-            xt::view(ret, e, xt::all()) -= (0.5 * h * f * dgamma);
+            double f = m_fe_plas(e, 2, 0)
+                     + m_fe_plas(e, 3, 0)
+                     - m_fe_plas(e, 0, 0)
+                     - m_fe_plas(e, 1, 0);
+            xt::view(ret, e, xt::all()) -= (0.5 * h * f * Delta_gamma);
         }
     }
 
-    // normalise to energy density
-    FRICTIONQPOTFEM_ASSERT(xt::allclose(dV_plas, dV_plas(0, 0)));
-    ret /= (dV_plas(0, 0) * static_cast<double>(m_nip));
+    ret /= dV * static_cast<double>(m_nip);
 
-    // restore strain: internally strain is always assumed to be match the current displacement field
-    m_Eps_plas = Eps0;
     m_material_plas.setStrain(m_Eps_plas);
 
     return ret;
 }
 
-inline xt::xtensor<double, 2> HybridSystem::plastic_ElementEnergyBarrierForSimpleShear(bool tilted)
+// inline xt::xtensor<double, 2> HybridSystem::plastic_ElementEnergyBarrierForSimpleShear(bool tilted)
+inline std::tuple<xt::xtensor<double, 2>, xt::xtensor<double, 2>> HybridSystem::plastic_ElementEnergyBarrierForSimpleShear(bool tilted)
 {
+    auto dV_plas = xt::view(m_quad.dV(), xt::keep(m_elem_plas), xt::all());
+    double dV = dV_plas(0, 0);
+    FRICTIONQPOTFEM_ASSERT(xt::allclose(dV_plas, dV));
+
+    // TODO: input
+    size_t niter = 20;
+
     static constexpr size_t nip = 4;
     FRICTIONQPOTFEM_ASSERT(m_nip == nip);
 
@@ -842,15 +852,13 @@ inline xt::xtensor<double, 2> HybridSystem::plastic_ElementEnergyBarrierForSimpl
     auto elem = xt::view(m_conn, m_elem_plas(0), xt::all());
     double h = m_coor(elem(3), 1) - m_coor(elem(0), 1);
 
-    // TODO: assert on V
-    auto dV_plas = xt::view(m_quad.dV(), xt::keep(m_elem_plas), xt::all());
-    double dV = dV_plas(0, 0);
-
     double inf = std::numeric_limits<double>::infinity();
     xt::xtensor<double, 2> ret = inf * xt::ones<double>({m_N, size_t(2)});
+    xt::xtensor<double, 2> out_E = inf * xt::ones<double>({m_N, niter + size_t(1)});
+    xt::xtensor<double, 2> out_gamma = inf * xt::ones<double>({m_N, niter + size_t(1)});
 
     std::array<GM::Cusp*, nip> models;
-    xt::xtensor<double, 1> dgammas = xt::empty<double>({nip});
+    xt::xtensor<double, 1> trial_dgamma = xt::empty<double>({nip});
 
     for (size_t e = 0; e < m_N; ++e) {
 
@@ -864,8 +872,13 @@ inline xt::xtensor<double, 2> HybridSystem::plastic_ElementEnergyBarrierForSimpl
 
         double E_n = E0;
 
-        for (size_t i = 0; i < 1000; ++i) {
+        out_E(e, 0) = E0 / (dV * static_cast<double>(m_nip));
+        out_gamma(e, 0) = 0.0;
 
+        for (size_t i = 0; i < niter; ++i) {
+
+            // for each integration point: compute the increment in strain to reach
+            // the next minimum or the next cusp
             for (size_t q = 0; q < m_nip; ++q) {
                 auto Eps = models[q]->Strain();
                 double epsy_r = models[q]->currentYieldRight();
@@ -875,39 +888,52 @@ inline xt::xtensor<double, 2> HybridSystem::plastic_ElementEnergyBarrierForSimpl
                 if (eps < epsp) {
                     eps_new = epsp;
                 }
-                dgammas(q) = -Eps(0, 1) + std::sqrt(std::pow(eps_new, 2.0) + std::pow(Eps(0, 1), 2.0) - std::pow(eps, 2.0));
+                eps_new += 1e-12; // TODO: figure out a way around this
+                trial_dgamma(q) =
+                    - Eps(0, 1)
+                    + std::sqrt(std::pow(eps_new, 2.0) + std::pow(Eps(0, 1), 2.0) - std::pow(eps, 2.0));
             }
 
-            double dgamma = xt::amin(dgammas)();
-            double f = m_fe_plas(e, 2, 0) + m_fe_plas(e, 3, 0) - m_fe_plas(e, 0, 0) - m_fe_plas(e, 1, 0);
-            double E = - 0.5 * h * f * dgamma;
+            // increment strain for integration points with the same value
+            double E = 0.0;
+            double dgamma = xt::amin(trial_dgamma)();
             delta_gamma += dgamma;
-
-            std::cout << delta_gamma << ", ";
 
             for (size_t q = 0; q < m_nip; ++q) {
                 auto Eps = models[q]->Strain();
-                Eps(0, 1) += dgamma + 1e-12; // TODO: as input parameter
-                Eps(1, 0) += dgamma + 1e-12;
+                Eps(0, 1) += dgamma;
+                Eps(1, 0) += dgamma;
                 models[q]->setStrain(Eps);
                 E += models[q]->energy() * dV;
             }
 
-            if (E < E_n) {
-                ret(e, 0) = delta_gamma;
-                ret(e, 1) = (E_n - E0) / (dV * static_cast<double>(m_nip));
-                break;
+            if (tilted) {
+                double f = m_fe_plas(e, 2, 0)
+                         + m_fe_plas(e, 3, 0)
+                         - m_fe_plas(e, 0, 0)
+                         - m_fe_plas(e, 1, 0);
+                E -= h * f * delta_gamma;
             }
 
+            // energy barrier found: store the last known configuration, this will be the maximum
+            if (E < E_n) {
+                ret(e, 0) = delta_gamma - dgamma;
+                ret(e, 1) = (E_n - E0) / (dV * static_cast<double>(m_nip));
+                // break; // TODO: uncomment
+            }
+
+            out_E(e, i + 1) = E / (dV * static_cast<double>(m_nip));
+            out_gamma(e, i + 1) = delta_gamma;
+
+            // store 'history'
             E_n = E;
         }
-
-        std::cout << std::endl;
     }
 
     m_material_plas.setStrain(m_Eps_plas);
 
-    return ret;
+    // return ret;
+    return std::make_tuple(out_E, out_gamma);
 }
 
 // inline std::tuple<xt::xtensor<double, 1>, xt::xtensor<double, 1>>

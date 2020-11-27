@@ -315,7 +315,8 @@ public:
         const xt::xtensor<double, 1>& dgamma,  // simple shear perturbation
         bool tilted = true); // tilt based on current element internal force
 
-    xt::xtensor<double, 2> plastic_ElementEnergyBarrierForSimpleShear(bool tilted = true);
+    // xt::xtensor<double, 2> plastic_ElementEnergyBarrierForSimpleShear(bool tilted = true);
+    std::tuple<xt::xtensor<double, 2>, xt::xtensor<double, 2>> plastic_ElementEnergyBarrierForSimpleShear(bool tilted = true);
 
 protected:
 
