@@ -311,6 +311,12 @@ public:
     xt::xtensor<double, 2> plastic_CurrentYieldRight() const override; // yield strain 'right'
     xt::xtensor<size_t, 2> plastic_CurrentIndex() const override; // current index in the landscape
 
+    xt::xtensor<double, 2> plastic_ElementEnergyLandscapeForSimpleShear(
+        const xt::xtensor<double, 1>& dgamma,  // simple shear perturbation
+        bool tilted = true); // tilt based on current element internal force
+
+    xt::xtensor<double, 2> plastic_ElementEnergyBarrierForSimpleShear(bool tilted = true);
+
 protected:
 
     // mesh parameters

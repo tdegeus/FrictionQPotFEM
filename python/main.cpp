@@ -28,7 +28,7 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
     namespace SM = FrictionQPotFEM::UniformSingleLayer2d;
 
-    sm.def("versionInfo", &SM::versionInfo, "Return version information.");
+    // sm.def("versionInfo", &SM::versionInfo, "Return version information.");
 
     py::class_<SM::HybridSystem>(sm, "HybridSystem")
 
@@ -47,6 +47,18 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             py::arg("iip"),
             py::arg("elem_elastic"),
             py::arg("elem_plastic"))
+
+        .def(
+            "setMassMatrix",
+            &SM::HybridSystem::setMassMatrix,
+            "setMassMatrix",
+            py::arg("rho_elem"))
+
+        .def(
+            "setDampingMatrix",
+            &SM::HybridSystem::setDampingMatrix,
+            "setDampingMatrix",
+            py::arg("alpha_elem"))
 
         .def(
             "setElastic",
@@ -83,6 +95,11 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
         .def("material_plastic", &SM::HybridSystem::material_plastic, "material_plastic")
         .def("Eps", &SM::HybridSystem::Eps, "Eps")
         .def("Sig", &SM::HybridSystem::Sig, "Sig")
+        .def("plastic_Eps", &SM::HybridSystem::plastic_Eps, "plastic_Eps")
+        .def("plastic_Sig", &SM::HybridSystem::plastic_Sig, "plastic_Sig")
+        .def("plastic_CurrentYieldLeft", &SM::HybridSystem::plastic_CurrentYieldLeft, "plastic_CurrentYieldLeft")
+        .def("plastic_CurrentYieldRight", &SM::HybridSystem::plastic_CurrentYieldRight, "plastic_CurrentYieldRight")
+        .def("plastic_CurrentIndex", &SM::HybridSystem::plastic_CurrentIndex, "plastic_CurrentIndex")
         .def("timeStep", &SM::HybridSystem::timeStep, "timeStep")
 
         .def(
@@ -92,6 +109,19 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             py::arg("tol") = 1e-5,
             py::arg("niter_tol") = 20,
             py::arg("max_iter") = 1000000)
+
+        .def(
+            "plastic_ElementEnergyLandscapeForSimpleShear",
+            &SM::HybridSystem::plastic_ElementEnergyLandscapeForSimpleShear,
+            "plastic_ElementEnergyLandscapeForSimpleShear",
+            py::arg("dgamma"),
+            py::arg("titled") = true)
+
+        .def(
+            "plastic_ElementEnergyBarrierForSimpleShear",
+            &SM::HybridSystem::plastic_ElementEnergyBarrierForSimpleShear,
+            "plastic_ElementEnergyBarrierForSimpleShear",
+            py::arg("titled") = true)
 
         .def("__repr__", [](const SM::HybridSystem&) {
             return "<FrictionQPotFEM.UniformSingleLayer2d.HybridSystem>";
