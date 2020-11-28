@@ -1,6 +1,10 @@
 # Build directory
 build
 
+# Python build
+*.egg-info
+dist
+
 # Prerequisites
 *.d
 

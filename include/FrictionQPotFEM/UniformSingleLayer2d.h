@@ -90,6 +90,10 @@ public:
     auto coor() const; // nodal coordinates
     auto dofs() const; // DOFs per node
 
+    // Basic properties of the layer
+    double plastic_h() const; // element height
+    double plastic_dV() const; // integration point volume
+
     // Extract nodal quantities.
     auto u() const; // displacements
     auto fmaterial() const; // material resistance
@@ -310,6 +314,15 @@ public:
     xt::xtensor<double, 2> plastic_CurrentYieldLeft() const override; // yield strain 'left'
     xt::xtensor<double, 2> plastic_CurrentYieldRight() const override; // yield strain 'right'
     xt::xtensor<size_t, 2> plastic_CurrentIndex() const override; // current index in the landscape
+
+    xt::xtensor<double, 2> plastic_ElementEnergyLandscapeForSimpleShear(
+        const xt::xtensor<double, 1>& dgamma,  // simple shear perturbation
+        bool tilted = true); // tilt based on current element internal force
+
+    xt::xtensor<double, 2> plastic_ElementEnergyBarrierForSimpleShear(
+        bool tilted = true, // tilt based on current element internal force
+        size_t max_iter = 100, // maximum number of iterations to find a barrier
+        double perturbation = 1e-12); // small perturbation, to advance event driven
 
 protected:
 
