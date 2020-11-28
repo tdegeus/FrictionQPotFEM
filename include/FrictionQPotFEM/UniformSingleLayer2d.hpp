@@ -950,12 +950,12 @@ inline BrownianThermalHybridSystem::BrownianThermalHybridSystem(
     const xt::xtensor<size_t, 1>& elem_plastic)
 {
     this->initGeometry(coor, conn, dofs, iip, elem_elastic, elem_plastic);
-    this->initHybridSystem();
     this->initBrownianThermalHybridSystem();
 }
 
 inline void BrownianThermalHybridSystem::initBrownianThermalHybridSystem()
 {
+    this->initHybridSystem();
     m_fh = m_vector.AllocateNodevec(0.0);
 }
 
@@ -968,14 +968,14 @@ inline void BrownianThermalHybridSystem::setDampingMatrix(const xt::xtensor<doub
     this->evalAllSet();
 }
 
-inline void BrownianThermalHybridSystem::setKbT(double value)
+inline void BrownianThermalHybridSystem::setKBT(double value)
 {
-    m_kbT = value;
+    m_kBT = value;
 }
 
-inline double BrownianThermalHybridSystem::kbT() const
+inline double BrownianThermalHybridSystem::kBT() const
 {
-    return m_kbT;
+    return m_kBT;
 }
 
 inline void BrownianThermalHybridSystem::timeStep()
@@ -1005,7 +1005,7 @@ inline void BrownianThermalHybridSystem::timeStep()
     {
         xt::xtensor<double, 2> rand = xt::random::randn<double>(m_fh.shape(), 0.0, 1.0);
         m_Dsqrt.dot(rand, m_fh);
-        m_fh *= std::sqrt(2.0 * m_kbT / m_dt);
+        m_fh *= std::sqrt(2.0 * m_kBT / m_dt);
     }
 
     // compute residual force & solve
@@ -1029,7 +1029,7 @@ inline void BrownianThermalHybridSystem::timeStep()
     {
         xt::xtensor<double, 2> rand = xt::random::randn<double>(m_fh.shape(), 0.0, 1.0);
         m_Dsqrt.dot(rand, m_fh);
-        m_fh *= std::sqrt(2.0 * m_kbT / m_dt);
+        m_fh *= std::sqrt(2.0 * m_kBT / m_dt);
     }
 
     // compute residual force & solve
@@ -1053,7 +1053,7 @@ inline void BrownianThermalHybridSystem::timeStep()
     {
         xt::xtensor<double, 2> rand = xt::random::randn<double>(m_fh.shape(), 0.0, 1.0);
         m_Dsqrt.dot(rand, m_fh);
-        m_fh *= std::sqrt(2.0 * m_kbT / m_dt);
+        m_fh *= std::sqrt(2.0 * m_kBT / m_dt);
     }
 
     // compute residual force & solve

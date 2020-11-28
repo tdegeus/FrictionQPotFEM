@@ -398,8 +398,8 @@ public:
     void setDampingMatrix(const xt::xtensor<double, 1>& alpha_elem) override;
 
     // Set/get the temperature
-    void setKbT(double value);
-    double kbT() const;
+    void setKBT(double value);
+    double kBT() const;
 
     // Make a time-step: apply velocity-Verlet integration subject to the Brownian thermostat.
     void timeStep() override;
@@ -411,7 +411,7 @@ protected:
     GF::MatrixDiagonal m_Dsqrt;
 
     // temperature time Boltzmann's constant
-    double m_kbT = 0.0;
+    double m_kBT = 0.0;
 
     // thermal force
     xt::xtensor<double, 2> m_fh;
