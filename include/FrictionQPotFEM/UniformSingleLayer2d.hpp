@@ -941,6 +941,132 @@ inline xt::xtensor<double, 2> HybridSystem::plastic_ElementEnergyBarrierForSimpl
     return ret;
 }
 
+inline BrownianThermalHybridSystem::BrownianThermalHybridSystem(
+    const xt::xtensor<double, 2>& coor,
+    const xt::xtensor<size_t, 2>& conn,
+    const xt::xtensor<size_t, 2>& dofs,
+    const xt::xtensor<size_t, 1>& iip,
+    const xt::xtensor<size_t, 1>& elem_elastic,
+    const xt::xtensor<size_t, 1>& elem_plastic)
+{
+    this->initGeometry(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+    this->initHybridSystem();
+    this->initBrownianThermalHybridSystem();
+}
+
+inline void BrownianThermalHybridSystem::initBrownianThermalHybridSystem()
+{
+    m_fh = m_vector.AllocateNodevec(0.0);
+}
+
+inline void BrownianThermalHybridSystem::setDampingMatrix(const xt::xtensor<double, 1>& val_elem)
+{
+    FRICTIONQPOTFEM_ASSERT(!m_set_D);
+    this->setMatrix(m_D, val_elem);
+    this->setMatrix(m_Dsqrt, xt::sqrt(val_elem));
+    m_set_D = true;
+    this->evalAllSet();
+}
+
+inline void BrownianThermalHybridSystem::setKbT(double value)
+{
+    m_kbT = value;
+}
+
+inline double BrownianThermalHybridSystem::kbT() const
+{
+    return m_kbT;
+}
+
+inline void BrownianThermalHybridSystem::timeStep()
+{
+    FRICTIONQPOTFEM_ASSERT(m_allset);
+
+    // history
+
+    m_t += m_dt;
+
+    xt::noalias(m_v_n) = m_v;
+    xt::noalias(m_a_n) = m_a;
+
+    // new displacement
+
+    xt::noalias(m_u) = m_u + m_dt * m_v + 0.5 * std::pow(m_dt, 2.0) * m_a;
+    this->computeForceMaterial();
+
+    // estimate new velocity, update corresponding force
+
+    xt::noalias(m_v) = m_v_n + m_dt * m_a_n;
+
+    m_D.dot(m_v, m_fdamp);
+
+    // thermal random force
+
+    {
+        xt::xtensor<double, 2> rand = xt::random::randn<double>(m_fh.shape(), 0.0, 1.0);
+        m_Dsqrt.dot(rand, m_fh);
+        m_fh *= std::sqrt(2.0 * m_kbT / m_dt);
+    }
+
+    // compute residual force & solve
+
+    xt::noalias(m_fint) = m_fmaterial + m_fdamp - m_fh;
+
+    m_vector.copy_p(m_fint, m_fext);
+
+    xt::noalias(m_fres) = m_fext - m_fint;
+
+    m_M.solve(m_fres, m_a);
+
+    // re-estimate new velocity, update corresponding force
+
+    xt::noalias(m_v) = m_v_n + 0.5 * m_dt * (m_a_n + m_a);
+
+    m_D.dot(m_v, m_fdamp);
+
+    // thermal random force
+
+    {
+        xt::xtensor<double, 2> rand = xt::random::randn<double>(m_fh.shape(), 0.0, 1.0);
+        m_Dsqrt.dot(rand, m_fh);
+        m_fh *= std::sqrt(2.0 * m_kbT / m_dt);
+    }
+
+    // compute residual force & solve
+
+    xt::noalias(m_fint) = m_fmaterial + m_fdamp - m_fh;
+
+    m_vector.copy_p(m_fint, m_fext);
+
+    xt::noalias(m_fres) = m_fext - m_fint;
+
+    m_M.solve(m_fres, m_a);
+
+    // new velocity, update corresponding force
+
+    xt::noalias(m_v) = m_v_n + 0.5 * m_dt * (m_a_n + m_a);
+
+    m_D.dot(m_v, m_fdamp);
+
+    // thermal random force
+
+    {
+        xt::xtensor<double, 2> rand = xt::random::randn<double>(m_fh.shape(), 0.0, 1.0);
+        m_Dsqrt.dot(rand, m_fh);
+        m_fh *= std::sqrt(2.0 * m_kbT / m_dt);
+    }
+
+    // compute residual force & solve
+
+    xt::noalias(m_fint) = m_fmaterial + m_fdamp - m_fh;
+
+    m_vector.copy_p(m_fint, m_fext);
+
+    xt::noalias(m_fres) = m_fext - m_fint;
+
+    m_M.solve(m_fres, m_a);
+}
+
 } // namespace UniformSingleLayer2d
 } // namespace FrictionQPotFEM
 
