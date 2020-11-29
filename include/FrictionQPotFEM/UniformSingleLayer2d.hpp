@@ -668,6 +668,41 @@ inline double System::triggerElementWithLocalSimpleShear(
     return dgamma;
 }
 
+inline xt::xtensor<size_t, 2> myargsort(xt::xtensor<double, 2>& A, size_t axis)
+{
+    if (A.shape(0) == 1) {
+        xt::xtensor<double, 1> a = xt::view(A, 0, xt::all());
+        xt::xtensor<size_t, 2> ret = xt::empty<size_t>(A.shape());
+        xt::view(ret, 0, xt::all()) = xt::argsort(a, axis);
+        return ret;
+    }
+    return xt::argsort(A, axis);
+}
+
+inline xt::xtensor<double, 2>
+System::plastic_ElementYieldBarrierForSimpleShear(double deps_kick, size_t iquad)
+{
+    auto eps = GM::Epsd(this->plastic_Eps());
+    auto epsy = this->plastic_CurrentYieldRight();
+    auto deps = xt::eval(epsy - eps);
+    xt::xtensor<double, 2> ret = xt::empty<double>({m_N, size_t(2)});
+    auto isort = myargsort(deps, 1);
+
+    auto Eps = this->plastic_Eps();
+    auto Epsd = GM::Deviatoric(Eps);
+
+    for (size_t e = 0; e < m_N; ++e) {
+        size_t q = isort(e, iquad);
+        double eps_new = epsy(e, q) + deps_kick / 2.0;
+        double gamma = Epsd(e, q, 0, 1);
+        double epsd_xx = Epsd(e, q, 0, 0);
+        ret(e, 0) = deps(e, q);
+        ret(e, 1) = - gamma + std::sqrt(std::pow(eps_new, 2.0) - std::pow(epsd_xx, 2.0));
+    }
+
+    return ret;
+}
+
 inline HybridSystem::HybridSystem(
     const xt::xtensor<double, 2>& coor,
     const xt::xtensor<size_t, 2>& conn,
