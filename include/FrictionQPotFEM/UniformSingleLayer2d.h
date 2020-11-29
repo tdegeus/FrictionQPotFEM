@@ -17,6 +17,7 @@
 #include <xtensor/xshape.hpp>
 #include <xtensor/xsort.hpp>
 #include <xtensor/xset_operation.hpp>
+#include <xtensor/xrandom.hpp>
 #include <fmt/core.h>
 
 namespace GF = GooseFEM;
@@ -54,7 +55,7 @@ public:
 
     // Set mass and damping matrix, based on certain density (taken uniform per element).
     void setMassMatrix(const xt::xtensor<double, 1>& rho_elem);
-    void setDampingMatrix(const xt::xtensor<double, 1>& alpha_elem);
+    virtual void setDampingMatrix(const xt::xtensor<double, 1>& alpha_elem);
 
     // Set material parameters for the elastic elements
     // (taken uniform per element, ordering the same as in the constructor).
@@ -130,7 +131,7 @@ public:
     virtual xt::xtensor<size_t, 2> plastic_CurrentIndex() const; // current index in the landscape
 
     // Make a time-step: apply velocity-Verlet integration.
-    void timeStep();
+    virtual void timeStep();
 
     // Minimise energy: run "timeStep" until a mechanical equilibrium has been reached.
     // Returns the number of iterations.
@@ -382,6 +383,54 @@ protected:
     // Contrary to "System::computeForceMaterial" does not call "computeStress",
     // therefore separate overrides of "Sig" and "Eps" are needed.
     void computeForceMaterial() override;
+
+};
+
+// -----------------------------------------------------------------------
+// Use speed-up by evaluating the elastic response with a stiffness matrix
+// -----------------------------------------------------------------------
+
+class BrownianThermalHybridSystem : public HybridSystem {
+
+public:
+
+    BrownianThermalHybridSystem() = default;
+
+    BrownianThermalHybridSystem(
+        const xt::xtensor<double, 2>& coor,
+        const xt::xtensor<size_t, 2>& conn,
+        const xt::xtensor<size_t, 2>& dofs,
+        const xt::xtensor<size_t, 1>& iip,
+        const xt::xtensor<size_t, 1>& elem_elastic,
+        const xt::xtensor<size_t, 1>& elem_plastic);
+
+    // Set damping matrix, based on certain density (taken uniform per element).
+    // alpha == zeta * rho
+    void setDampingMatrix(const xt::xtensor<double, 1>& alpha_elem) override;
+
+    // Set/get the temperature
+    void setKBT(double value);
+    double kBT() const;
+
+    // Make a time-step: apply velocity-Verlet integration subject to the Brownian thermostat.
+    void timeStep() override;
+
+
+protected:
+
+    // damping matrix
+    GF::MatrixDiagonal m_Dsqrt;
+
+    // temperature time Boltzmann's constant
+    double m_kBT = 0.0;
+
+    // thermal force
+    xt::xtensor<double, 2> m_fh;
+
+protected:
+
+    // Alias for constructor to allow sub-classing (called by constructor).
+    void initBrownianThermalHybridSystem();
 
 };
 
