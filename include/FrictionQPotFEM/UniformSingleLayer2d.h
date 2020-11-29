@@ -15,6 +15,7 @@
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xnorm.hpp>
 #include <xtensor/xshape.hpp>
+#include <xtensor/xsort.hpp>
 #include <xtensor/xset_operation.hpp>
 #include <fmt/core.h>
 
@@ -162,6 +163,12 @@ public:
         size_t plastic_element, // which plastic element to trigger: sys.plastic()(plastic_element)
         bool trigger_weakest_integration_point = true, // trigger weakest or strongest int. point
         double amplify = 1.0); // amplify the strain kick with a certain factor
+
+    // Read the distance to overcome the first cusp in the element.
+    // Returns array of shape (N, 2) with columns (delta_eps, delta_epsxy).
+    xt::xtensor<double, 2> plastic_ElementYieldBarrierForSimpleShear(
+        double deps_kick = 0.0,
+        size_t iquad = 0); // iquad = 0 -> weakest, iquad = nip - 1 -> strongest
 
 protected:
 
@@ -315,10 +322,14 @@ public:
     xt::xtensor<double, 2> plastic_CurrentYieldRight() const override; // yield strain 'right'
     xt::xtensor<size_t, 2> plastic_CurrentIndex() const override; // current index in the landscape
 
+    // Read the (tilted) energy landscape to local simple shear perturbation
     xt::xtensor<double, 2> plastic_ElementEnergyLandscapeForSimpleShear(
         const xt::xtensor<double, 1>& dgamma,  // simple shear perturbation
         bool tilted = true); // tilt based on current element internal force
 
+    // Read the (first) energy barrier in the tilted energy landscape in
+    // "plastic_ElementEnergyLandscapeForSimpleShear".
+    // Returns array of shape (N, 2) with columns (delta_E, delta_epsxy).
     xt::xtensor<double, 2> plastic_ElementEnergyBarrierForSimpleShear(
         bool tilted = true, // tilt based on current element internal force
         size_t max_iter = 100, // maximum number of iterations to find a barrier
