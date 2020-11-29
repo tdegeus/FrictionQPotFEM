@@ -125,6 +125,13 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             py::arg("max_iter") = 100,
             py::arg("perturbation") = 1e-12)
 
+        .def(
+            "plastic_ElementYieldBarrierForSimpleShear",
+            &SM::HybridSystem::plastic_ElementYieldBarrierForSimpleShear,
+            "plastic_ElementYieldBarrierForSimpleShear",
+            py::arg("deps_kick") = 0.0,
+            py::arg("iquad") = 0)
+
         .def("__repr__", [](const SM::HybridSystem&) {
             return "<FrictionQPotFEM.UniformSingleLayer2d.HybridSystem>";
         });

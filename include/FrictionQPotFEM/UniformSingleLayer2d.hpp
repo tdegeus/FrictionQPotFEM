@@ -682,6 +682,8 @@ inline xt::xtensor<size_t, 2> myargsort(xt::xtensor<double, 2>& A, size_t axis)
 inline xt::xtensor<double, 2>
 System::plastic_ElementYieldBarrierForSimpleShear(double deps_kick, size_t iquad)
 {
+    FRICTIONQPOTFEM_ASSERT(iquad < m_nip);
+
     auto eps = GM::Epsd(this->plastic_Eps());
     auto epsy = this->plastic_CurrentYieldRight();
     auto deps = xt::eval(epsy - eps);

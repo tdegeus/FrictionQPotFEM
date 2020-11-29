@@ -165,7 +165,7 @@ public:
         double amplify = 1.0); // amplify the strain kick with a certain factor
 
     // Read the distance to overcome the first cusp in the element.
-    // Returns array of shape (N, 2) with columns (delta_eps, delta_gamma).
+    // Returns array of shape (N, 2) with columns (delta_eps, delta_epsxy).
     xt::xtensor<double, 2> plastic_ElementYieldBarrierForSimpleShear(
         double deps_kick = 0.0,
         size_t iquad = 0); // iquad = 0 -> weakest, iquad = nip - 1 -> strongest
@@ -329,7 +329,7 @@ public:
 
     // Read the (first) energy barrier in the tilted energy landscape in
     // "plastic_ElementEnergyLandscapeForSimpleShear".
-    // Returns array of shape (N, 2) with columns (delta_E, delta_gamma).
+    // Returns array of shape (N, 2) with columns (delta_E, delta_epsxy).
     xt::xtensor<double, 2> plastic_ElementEnergyBarrierForSimpleShear(
         bool tilted = true, // tilt based on current element internal force
         size_t max_iter = 100, // maximum number of iterations to find a barrier
