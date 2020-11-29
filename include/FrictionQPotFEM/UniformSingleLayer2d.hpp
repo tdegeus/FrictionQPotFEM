@@ -956,6 +956,7 @@ inline BrownianThermalHybridSystem::BrownianThermalHybridSystem(
 inline void BrownianThermalHybridSystem::initBrownianThermalHybridSystem()
 {
     this->initHybridSystem();
+    m_Dsqrt = GF::MatrixDiagonal(m_conn, m_dofs);
     m_fh = m_vector.AllocateNodevec(0.0);
 }
 
