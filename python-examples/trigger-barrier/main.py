@@ -1,6 +1,7 @@
 import GooseFEM
 import GMatElastoPlasticQPot.Cartesian2d as GMat
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import GooseMPL as gplt
 
@@ -223,23 +224,14 @@ def ComputePerturbation(sigma_star_test):
     # post-process
     # ------------
 
-    # compute strain and stress
     ue = vector.AsElement(disp)
     Eps = quad.SymGradN_vector(ue)
     mat.setStrain(Eps)
-    Sig = mat.Stress() - Sigstar
 
-    # residual force
-    fe = quad.Int_gradN_dot_tensor2_dV(Sig)
-    fint = vector.AssembleNode(fe)
-    fext = vector.Copy_p(fint, fext)
-    fres = fext - fint
+    sigeq = GMat.Sigd(np.average(mat.Stress(), weights=quad.AsTensor(2, quad.dV()), axis=1))
+    E = np.average(mat.Energy(), weights=quad.dV(), axis=1)
 
-    # average stress per node
-    dV = quad.AsTensor(2, quad.dV())
-    sigeq = GMat.Sigd(np.average(Sig, weights=dV, axis=1))
-
-    return GMat.Deviatoric(Sig[trigger, 0]), GMat.Deviatoric(Eps[trigger, 0]), trigger, disp, coor, conn, sigeq, vector, quad, mat
+    return GMat.Deviatoric(Eps[trigger, 0]), trigger, disp, sigeq, E, coor, conn, vector, quad, mat
 
 # Effect of perturbation
 # ----------------------
@@ -252,30 +244,27 @@ Sigstar_p = np.array([
     [+1.0,  0.0],
     [ 0.0, -1.0]])
 
-Sigstar_s, Epsstar_s, trigger, u_s, _, _, _, vector, quad, mat = ComputePerturbation(Sigstar_s)
-Sigstar_p, Epsstar_p, trigger, u_p, _, _, _, vector, quad, mat = ComputePerturbation(Sigstar_p)
-
-fac_s = 0.2 / (Sigstar_s[0, 1] * Epsstar_s[0, 1])
-fac_p = 0.2 / (Sigstar_p[0, 0] * Epsstar_p[0, 0])
-
-Sigstar_s *= fac_s
-Sigstar_p *= fac_p
-
-u_s *= fac_s
-u_p *= fac_p
+Epsstar_s, trigger, u_s, sigeq_s, energy_s, coor, conn, vector, quad, mat = ComputePerturbation(Sigstar_s)
+Epsstar_p, trigger, u_p, sigeq_p, energy_p, coor, conn, vector, quad, mat = ComputePerturbation(Sigstar_p)
 
 # Plot - simple shear
 # -------------------
 
-_, _, _, disp, coor, conn, sigeq, _, _, _ = ComputePerturbation(Sigstar_s)
-
 fig, ax = plt.subplots()
 
-gplt.patch(coor=coor + disp, conn=conn, cindex=sigeq, cmap='Reds', axis=ax, clim=(0, 0.5))
+gplt.patch(coor=coor + u_s, conn=conn, cindex=sigeq_s, cmap='Reds', axis=ax, clim=(0, 0.5))
 gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
 
 ax.axis('equal')
 plt.axis('off')
+
+sm = plt.cm.ScalarMappable(cmap='Reds', norm=mpl.colors.Normalize(vmin=0.0, vmax=0.5))
+sm.set_array([])
+
+ticks = [0.0, +0.5]
+labels = [0.0, +0.5]
+cbar = plt.colorbar(sm, ticks=ticks)
+cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
 
 fig.savefig('perturbation_simple-shear.pdf')
 plt.close(fig)
@@ -283,35 +272,67 @@ plt.close(fig)
 # Plot - pure shear
 # -----------------
 
-_, _, _, disp, coor, conn, sigeq, _, _, _ = ComputePerturbation(Sigstar_p)
-
 fig, ax = plt.subplots()
 
-gplt.patch(coor=coor + disp, conn=conn, cindex=sigeq, cmap='Reds', axis=ax, clim=(0, 0.5))
+gplt.patch(coor=coor + u_p, conn=conn, cindex=sigeq_p, cmap='Reds', axis=ax, clim=(0, 0.5))
 gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
 
 ax.axis('equal')
 plt.axis('off')
+
+sm = plt.cm.ScalarMappable(cmap='Reds', norm=mpl.colors.Normalize(vmin=0.0, vmax=0.5))
+sm.set_array([])
+
+ticks = [0.0, +0.5]
+labels = [0.0, +0.5]
+cbar = plt.colorbar(sm, ticks=ticks)
+cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
 
 fig.savefig('perturbation_pure-shear.pdf')
 plt.close(fig)
 
-# Plot - combination
-# ------------------
-
-_, _, _, disp, coor, conn, sigeq, _, _, _ = ComputePerturbation(1.123 * Sigstar_s + 1.456 * Sigstar_p)
-
-CheckEquilibrium(1.123 * u_s + 1.456 * u_p)
+# Plot - simple shear
+# -------------------
 
 fig, ax = plt.subplots()
 
-gplt.patch(coor=coor + disp, conn=conn, cindex=sigeq, cmap='Reds', axis=ax, clim=(0, 0.5))
+gplt.patch(coor=coor + u_s, conn=conn, cindex=energy_s, cmap='RdGy_r', axis=ax, clim=(-0.1, 0.1))
 gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
 
 ax.axis('equal')
 plt.axis('off')
 
-fig.savefig('perturbation_combination.pdf')
+sm = plt.cm.ScalarMappable(cmap='RdGy_r', norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1))
+sm.set_array([])
+
+ticks = [-0.1, 0.0, +0.1]
+labels = [-0.1, 0.0, +0.1]
+cbar = plt.colorbar(sm, ticks=ticks)
+cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
+
+fig.savefig('perturbation_simple-shear_energy.pdf')
+plt.close(fig)
+
+# Plot - pure shear
+# -----------------
+
+fig, ax = plt.subplots()
+
+gplt.patch(coor=coor + u_p, conn=conn, cindex=energy_p, cmap='RdGy_r', axis=ax, clim=(-0.1, 0.1))
+gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
+
+ax.axis('equal')
+plt.axis('off')
+
+sm = plt.cm.ScalarMappable(cmap='RdGy_r', norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1))
+sm.set_array([])
+
+ticks = [-0.1, 0.0, +0.1]
+labels = [-0.1, 0.0, +0.1]
+cbar = plt.colorbar(sm, ticks=ticks)
+cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
+
+fig.savefig('perturbation_pure-shear_energy.pdf')
 plt.close(fig)
 
 # Phase diagram for strain and stress
@@ -366,7 +387,6 @@ dV = quad.dV()
 for i, p in enumerate(np.linspace(-1, 1, energy.shape[0])):
     for j, s in enumerate(np.linspace(-1, 1, energy.shape[1])):
         disp = s * u_s + p * u_p
-        # CheckEquilibrium(disp)
         ue = vector.AsElement(disp)
         Eps = quad.SymGradN_vector(ue)
         mat.setStrain(Eps)
