@@ -336,11 +336,18 @@ plt.close(fig)
 # Phase diagram for strain and stress
 # -----------------------------------
 
+dV = quad.dV()
 sig = np.zeros((101, 101))
-eps = np.zeros((101, 101))
+eps = np.zeros(sig.shape)
+energy = np.zeros(sig.shape)
+P = np.linspace(-1, 1, sig.shape[0])
+S = np.linspace(-1, 1, sig.shape[1])
 
-for i, p in enumerate(np.linspace(-1, 1, sig.shape[0])):
-    for j, s in enumerate(np.linspace(-1, 1, sig.shape[1])):
+def A2_ddot_B2(A2, B2):
+    return np.einsum('...ij, ...ji -> ...', A2, B2)
+
+for i, p in enumerate(P):
+    for j, s in enumerate(S):
         disp = s * u_s + p * u_p
         ue = vector.AsElement(disp)
         Eps = quad.SymGradN_vector(ue)
@@ -348,11 +355,13 @@ for i, p in enumerate(np.linspace(-1, 1, sig.shape[0])):
         Sig = mat.Stress()
         sig[i, j] = GMat.Sigd(Sig[trigger, 0])
         eps[i, j] = GMat.Epsd(Eps[trigger, 0])
+        energy[i, j] = np.average(mat.Energy(), weights=dV) * np.sum(dV)
 
+# Plot phase diagram - stress
 
 fig, ax = plt.subplots()
 
-h = ax.imshow(sig, cmap='jet', extent=[-1, +1, -1, +1])
+h = ax.imshow(sig, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
 
 cbar = fig.colorbar(h, aspect=10)
 
@@ -362,10 +371,11 @@ ax.set_ylabel(r'$p$')
 fig.savefig('perturbation_phase-diagram_sig.pdf')
 plt.close(fig)
 
+# Plot phase diagram - strain
 
 fig, ax = plt.subplots()
 
-h = ax.imshow(eps, cmap='jet', extent=[-1, +1, -1, +1])
+h = ax.imshow(eps, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
 
 cbar = fig.colorbar(h, aspect=10)
 
@@ -375,23 +385,11 @@ ax.set_ylabel(r'$p$')
 fig.savefig('perturbation_phase-diagram_eps.pdf')
 plt.close(fig)
 
-# Phase diagram for energy
-# ------------------------
-
-energy = np.zeros((101, 101))
-dV = quad.dV()
-
-for i, p in enumerate(np.linspace(-1, 1, energy.shape[0])):
-    for j, s in enumerate(np.linspace(-1, 1, energy.shape[1])):
-        disp = s * u_s + p * u_p
-        ue = vector.AsElement(disp)
-        Eps = quad.SymGradN_vector(ue)
-        mat.setStrain(Eps)
-        energy[i, j] = np.average(mat.Energy(), weights=dV) * np.sum(dV)
+# Plot phase diagram - energy
 
 fig, ax = plt.subplots()
 
-h = ax.imshow(energy, cmap='jet', extent=[-1, +1, -1, +1])
+h = ax.imshow(energy, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
 
 cbar = fig.colorbar(h, aspect=10)
 
