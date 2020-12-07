@@ -335,6 +335,94 @@ cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
 fig.savefig('perturbation_pure-shear_energy.pdf')
 plt.close(fig)
 
+# Plot - simple shear
+# -------------------
+
+fig, ax = plt.subplots()
+
+gplt.patch(coor=coor - u_s, conn=conn, cindex=sigeq_s, cmap='Reds', axis=ax, clim=(0, 0.5))
+gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
+
+ax.axis('equal')
+plt.axis('off')
+
+sm = plt.cm.ScalarMappable(cmap='Reds', norm=mpl.colors.Normalize(vmin=0.0, vmax=0.5))
+sm.set_array([])
+
+ticks = [0.0, +0.5]
+labels = [0.0, +0.5]
+cbar = plt.colorbar(sm, ticks=ticks)
+cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
+
+fig.savefig('perturbation_minus-simple-shear.pdf')
+plt.close(fig)
+
+# Plot - pure shear
+# -----------------
+
+fig, ax = plt.subplots()
+
+gplt.patch(coor=coor - u_p, conn=conn, cindex=sigeq_p, cmap='Reds', axis=ax, clim=(0, 0.5))
+gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
+
+ax.axis('equal')
+plt.axis('off')
+
+sm = plt.cm.ScalarMappable(cmap='Reds', norm=mpl.colors.Normalize(vmin=0.0, vmax=0.5))
+sm.set_array([])
+
+ticks = [0.0, +0.5]
+labels = [0.0, +0.5]
+cbar = plt.colorbar(sm, ticks=ticks)
+cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
+
+fig.savefig('perturbation_minus-pure-shear.pdf')
+plt.close(fig)
+
+# Plot - simple shear
+# -------------------
+
+fig, ax = plt.subplots()
+
+gplt.patch(coor=coor - u_s, conn=conn, cindex=energy_s, cmap='RdGy_r', axis=ax, clim=(-0.1, 0.1))
+gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
+
+ax.axis('equal')
+plt.axis('off')
+
+sm = plt.cm.ScalarMappable(cmap='RdGy_r', norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1))
+sm.set_array([])
+
+ticks = [-0.1, 0.0, +0.1]
+labels = [-0.1, 0.0, +0.1]
+cbar = plt.colorbar(sm, ticks=ticks)
+cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
+
+fig.savefig('perturbation_minus-simple-shear_energy.pdf')
+plt.close(fig)
+
+# Plot - pure shear
+# -----------------
+
+fig, ax = plt.subplots()
+
+gplt.patch(coor=coor - u_p, conn=conn, cindex=energy_p, cmap='RdGy_r', axis=ax, clim=(-0.1, 0.1))
+gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
+
+ax.axis('equal')
+plt.axis('off')
+
+sm = plt.cm.ScalarMappable(cmap='RdGy_r', norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1))
+sm.set_array([])
+
+ticks = [-0.1, 0.0, +0.1]
+labels = [-0.1, 0.0, +0.1]
+cbar = plt.colorbar(sm, ticks=ticks)
+cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
+
+fig.savefig('perturbation_minus-pure-shear_energy.pdf')
+plt.close(fig)
+
 # Phase diagram for strain and stress
 # -----------------------------------
 
