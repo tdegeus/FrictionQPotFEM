@@ -6,10 +6,8 @@ import GooseMPL as gplt
 
 plt.style.use(['goose', 'goose-latex'])
 
-# np.random.seed(42)
 
-
-def InitRandom(ampl):
+def InitConfig():
 
     # mesh
     # ----
@@ -88,24 +86,11 @@ def InitRandom(ampl):
     # solve
     # -----
 
-    # pre-stress
-    s_xx = ampl * np.random.random(len(plastic))
-    s_xy = ampl * np.random.random(len(plastic))
-    s_yy = ampl * np.random.random(len(plastic))
-
-    Sigstar = quad.AllocateQtensor(2, 0.0)
-
-    for q in range(nip):
-        Sigstar[plastic, q, 0, 0] = +s_xx
-        Sigstar[plastic, q, 1, 1] = -s_yy
-        Sigstar[plastic, q, 0, 1] = +s_xy
-        Sigstar[plastic, q, 1, 0] = +s_xy
-
     # strain, stress, tangent
     ue = vector.AsElement(disp)
     Eps = quad.SymGradN_vector(ue)
     mat.setStrain(Eps)
-    Sig = mat.Stress() - Sigstar
+    Sig = mat.Stress()
     C = mat.Tangent()
 
     # stiffness matrix
@@ -370,182 +355,195 @@ Epsdstar_p, u_p, trigger, vector, quad, mat, coor, conn = ComputePerturbation(Si
 # Explore different configurations
 # --------------------------------
 
-for config in range(2):
+Eps0, u0, Energy0 = InitConfig()
 
-    Eps0, u0, Energy0 = InitRandom(0.3 if config != 0 else 0)
+sig = np.zeros((201, 201))
+eps = np.zeros(sig.shape)
+energy = np.zeros(sig.shape)
+dV = quad.dV()
+P = np.linspace(-2, 2, sig.shape[0])
+S = np.linspace(-2, 2, sig.shape[1])
+S1 = np.NaN * np.ones((sig.shape[0]))
+S2 = np.NaN * np.ones((sig.shape[0]))
 
-    sig = np.zeros((201, 201))
-    eps = np.zeros(sig.shape)
-    energy = np.zeros(sig.shape)
-    dV = quad.dV()
-    P = np.linspace(-2, 2, sig.shape[0])
-    S = np.linspace(-2, 2, sig.shape[1])
-    S1 = np.NaN * np.ones((sig.shape[0]))
-    S2 = np.NaN * np.ones((sig.shape[0]))
+dgamma = Epsdstar_s[0, 1]
+dE = Epsdstar_p[0, 0]
 
-    dgamma = Epsdstar_s[0, 1]
-    dE = Epsdstar_p[0, 0]
+Epsd = GMat.Deviatoric(Eps0[trigger, 0])
+gamma = Epsd[0, 1]
+E = Epsd[0, 0]
 
-    Epsd = GMat.Deviatoric(Eps0[trigger, 0])
-    gamma = Epsd[0, 1]
-    E = Epsd[0, 0]
+epsy = 0.4
 
-    epsy = 0.4
+for i, p in enumerate(P):
 
-    for i, p in enumerate(P):
+    a = dgamma ** 2
+    b = 2 * gamma * dgamma
+    c = gamma ** 2 + (E + p * dE) ** 2 - epsy ** 2
+    D = b ** 2 - 4 * a * c
+    if D >= 0:
+        S1[i] = (-b + np.sqrt(D)) / (2 * a)
+        S2[i] = (-b - np.sqrt(D)) / (2 * a)
 
-        a = dgamma ** 2
-        b = 2 * gamma * dgamma
-        c = gamma ** 2 + (E + p * dE) ** 2 - epsy ** 2
-        D = b ** 2 - 4 * a * c
-        if D >= 0:
-            S1[i] = (-b + np.sqrt(D)) / (2 * a)
-            S2[i] = (-b - np.sqrt(D)) / (2 * a)
+        disp = u0 + S1[i] * u_s + p * u_p
+        ue = vector.AsElement(disp)
+        Eps = quad.SymGradN_vector(ue)
+        assert np.isclose(float(GMat.Epsd(Eps[trigger, 0, :, :])), epsy)
 
-            disp = u0 + S1[i] * u_s + p * u_p
-            ue = vector.AsElement(disp)
-            Eps = quad.SymGradN_vector(ue)
-            assert np.isclose(float(GMat.Epsd(Eps[trigger, 0, :, :])), epsy)
+        disp = u0 + S2[i] * u_s + p * u_p
+        ue = vector.AsElement(disp)
+        Eps = quad.SymGradN_vector(ue)
+        assert np.isclose(float(GMat.Epsd(Eps[trigger, 0, :, :])), epsy)
 
-            disp = u0 + S2[i] * u_s + p * u_p
-            ue = vector.AsElement(disp)
-            Eps = quad.SymGradN_vector(ue)
-            assert np.isclose(float(GMat.Epsd(Eps[trigger, 0, :, :])), epsy)
+    for j, s in enumerate(S):
 
-        for j, s in enumerate(S):
+        disp = u0 + s * u_s + p * u_p
+        ue = vector.AsElement(disp)
+        Eps = quad.SymGradN_vector(ue)
+        mat.setStrain(Eps)
+        Sig = mat.Stress()
+        sig[i, j] = GMat.Sigd(Sig[trigger, 0])
+        eps[i, j] = GMat.Epsd(Eps[trigger, 0])
+        energy[i, j] = np.average(mat.Energy(), weights=dV) * np.sum(dV) - Energy0
 
-            disp = u0 + s * u_s + p * u_p
-            ue = vector.AsElement(disp)
-            Eps = quad.SymGradN_vector(ue)
-            mat.setStrain(Eps)
-            Sig = mat.Stress()
-            sig[i, j] = GMat.Sigd(Sig[trigger, 0])
-            eps[i, j] = GMat.Epsd(Eps[trigger, 0])
-            energy[i, j] = np.average(mat.Energy(), weights=dV) * np.sum(dV) - Energy0
+e = np.zeros((2, len(S1)))
 
-    e = np.where(eps > epsy + 5e-3, 0, eps)
-    e = np.where(e < epsy - 5e-3, 0, e)
-    e = np.where(e != 0, energy, 1e9)
-    imin, jmin = np.unravel_index(np.argmin(e), e.shape)
-
-    # Plot phase diagram - stress
-
-    fig, ax = plt.subplots()
-
-    h = ax.imshow(sig, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
-
-    ax.plot(S1, P, c='w')
-    ax.plot(S2, P, c='w')
-
-    ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
-    ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
-
-    ax.plot(S[jmin], P[imin], c='r', marker='o')
-
-    cbar = fig.colorbar(h, aspect=10)
-
-    ax.set_xlabel(r'$s$')
-    ax.set_ylabel(r'$p$')
-
-    fig.savefig('prestress_{0:d}_phase-diagram_sig.pdf'.format(config))
-    plt.close(fig)
-
-    # Plot phase diagram - strain
-
-    fig, ax = plt.subplots()
-
-    h = ax.imshow(eps, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
-
-    ax.plot(S1, P, c='w')
-    ax.plot(S2, P, c='w')
-
-    ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
-    ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
-
-    ax.plot(S[jmin], P[imin], c='r', marker='o')
-
-    cbar = fig.colorbar(h, aspect=10)
-
-    ax.set_xlabel(r'$s$')
-    ax.set_ylabel(r'$p$')
-
-    fig.savefig('prestress_{0:d}_phase-diagram_eps.pdf'.format(config))
-    plt.close(fig)
-
-    # Plot phase diagram - energy
-
-    fig, ax = plt.subplots()
-
-    h = ax.imshow(energy, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
-
-    cbar = fig.colorbar(h, aspect=10)
-
-    ax.plot(S1, P, c='w')
-    ax.plot(S2, P, c='w')
-
-    ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
-    ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
-
-    ax.plot(S[jmin], P[imin], c='r', marker='o')
-
-    ax.set_xlabel(r'$s$')
-    ax.set_ylabel(r'$p$')
-
-    fig.savefig('prestress_{0:d}_phase-diagram_energy.pdf'.format(config))
-    plt.close(fig)
-
-    # Plot phase diagram - energy contours
-
-    fig, ax = plt.subplots()
-
-    h = ax.contourf(S, P, energy)
-
-    cbar = fig.colorbar(h, aspect=10)
-
-    ax.plot(S1, P, c='w')
-    ax.plot(S2, P, c='w')
-
-    ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
-    ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
-
-    ax.plot(S[jmin], P[imin], c='r', marker='o')
-
-    ax.set_xlabel(r'$s$')
-    ax.set_ylabel(r'$p$')
-
-    fig.savefig('prestress_{0:d}_phase-diagram_energy-contour.pdf'.format(config))
-    plt.close(fig)
-
-    # Plot initial configuration
-
-    ue = vector.AsElement(u0)
+for i, (p, s) in enumerate(zip(P, S1)):
+    disp = u0 + s * u_s + p * u_p
+    ue = vector.AsElement(disp)
     Eps = quad.SymGradN_vector(ue)
     mat.setStrain(Eps)
-    sigeq = GMat.Sigd(np.average(mat.Stress(), weights=quad.AsTensor(2, quad.dV()), axis=1))
+    e[0, i] = np.average(mat.Energy(), weights=dV) * np.sum(dV) - Energy0
 
-    fig, ax = plt.subplots()
-
-    gplt.patch(coor=coor + u0, conn=conn, cindex=sigeq, cmap='Reds', axis=ax, clim=(0, 1.0))
-
-    ax.axis('equal')
-    plt.axis('off')
-
-    fig.savefig('prestress_{0:d}_config.pdf'.format(config))
-    plt.close(fig)
-
-    # Plot perturbed configuration
-
-    ue = vector.AsElement(u0 + P[imin] * u_p + S[jmin] * u_s)
+for i, (p, s) in enumerate(zip(P, S2)):
+    disp = u0 + s * u_s + p * u_p
+    ue = vector.AsElement(disp)
     Eps = quad.SymGradN_vector(ue)
     mat.setStrain(Eps)
-    sigeq = GMat.Sigd(np.average(mat.Stress(), weights=quad.AsTensor(2, quad.dV()), axis=1))
+    e[1, i] = np.average(mat.Energy(), weights=dV) * np.sum(dV) - Energy0
 
-    fig, ax = plt.subplots()
+imin, jmin = np.unravel_index(np.argmin(e), e.shape)
+pmin = P[jmin]
+smin = S1[jmin] if imin == 0 else S2[jmin]
 
-    gplt.patch(coor=coor + u0, conn=conn, cindex=sigeq, cmap='Reds', axis=ax, clim=(0, 1.0))
+# Plot phase diagram - stress
 
-    ax.axis('equal')
-    plt.axis('off')
+fig, ax = plt.subplots()
 
-    fig.savefig('prestress_{0:d}_config-perturbed.pdf'.format(config))
-    plt.close(fig)
+h = ax.imshow(sig, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
+
+ax.plot(S1, P, c='w')
+ax.plot(S2, P, c='w')
+
+ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
+ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
+
+ax.plot(smin, pmin, c='r', marker='o')
+
+cbar = fig.colorbar(h, aspect=10)
+
+ax.set_xlabel(r'$s$')
+ax.set_ylabel(r'$p$')
+
+fig.savefig('example_shear_phase-diagram_sig.pdf')
+plt.close(fig)
+
+# Plot phase diagram - strain
+
+fig, ax = plt.subplots()
+
+h = ax.imshow(eps, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
+
+ax.plot(S1, P, c='w')
+ax.plot(S2, P, c='w')
+
+ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
+ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
+
+ax.plot(smin, pmin, c='r', marker='o')
+
+cbar = fig.colorbar(h, aspect=10)
+
+ax.set_xlabel(r'$s$')
+ax.set_ylabel(r'$p$')
+
+fig.savefig('example_shear_phase-diagram_eps.pdf')
+plt.close(fig)
+
+# Plot phase diagram - energy
+
+fig, ax = plt.subplots()
+
+h = ax.imshow(energy, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
+
+cbar = fig.colorbar(h, aspect=10)
+
+ax.plot(S1, P, c='w')
+ax.plot(S2, P, c='w')
+
+ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
+ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
+
+ax.plot(smin, pmin, c='r', marker='o')
+
+ax.set_xlabel(r'$s$')
+ax.set_ylabel(r'$p$')
+
+fig.savefig('example_shear_phase-diagram_energy.pdf')
+plt.close(fig)
+
+# Plot phase diagram - energy contours
+
+fig, ax = plt.subplots()
+
+h = ax.contourf(S, P, energy)
+
+cbar = fig.colorbar(h, aspect=10)
+
+ax.plot(S1, P, c='w')
+ax.plot(S2, P, c='w')
+
+ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
+ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
+
+ax.plot(smin, pmin, c='r', marker='o')
+
+ax.set_xlabel(r'$s$')
+ax.set_ylabel(r'$p$')
+
+fig.savefig('example_shear_phase-diagram_energy-contour.pdf')
+plt.close(fig)
+
+# Plot initial configuration
+
+ue = vector.AsElement(u0)
+Eps = quad.SymGradN_vector(ue)
+mat.setStrain(Eps)
+sigeq = GMat.Sigd(np.average(mat.Stress(), weights=quad.AsTensor(2, quad.dV()), axis=1))
+
+fig, ax = plt.subplots()
+
+gplt.patch(coor=coor + u0, conn=conn, cindex=sigeq, cmap='Reds', axis=ax, clim=(0, 1.0))
+
+ax.axis('equal')
+plt.axis('off')
+
+fig.savefig('example_shear_config.pdf')
+plt.close(fig)
+
+# Plot perturbed configuration
+
+ue = vector.AsElement(u0 + pmin * u_p + smin * u_s)
+Eps = quad.SymGradN_vector(ue)
+mat.setStrain(Eps)
+sigeq = GMat.Sigd(np.average(mat.Stress(), weights=quad.AsTensor(2, quad.dV()), axis=1))
+
+fig, ax = plt.subplots()
+
+gplt.patch(coor=coor + u0, conn=conn, cindex=sigeq, cmap='Reds', axis=ax, clim=(0, 1.0))
+
+ax.axis('equal')
+plt.axis('off')
+
+fig.savefig('example_shear_config-perturbed.pdf')
+plt.close(fig)

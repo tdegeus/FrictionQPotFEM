@@ -227,11 +227,9 @@ def ComputePerturbation(sigma_star_test):
     ue = vector.AsElement(disp)
     Eps = quad.SymGradN_vector(ue)
     mat.setStrain(Eps)
-
-    sigeq = GMat.Sigd(np.average(mat.Stress(), weights=quad.AsTensor(2, quad.dV()), axis=1))
     E = np.average(mat.Energy(), weights=quad.dV(), axis=1)
 
-    return GMat.Deviatoric(Eps[trigger, 0]), trigger, disp, sigeq, E, coor, conn, vector, quad, mat
+    return GMat.Deviatoric(Eps[trigger, 0]), trigger, disp, E, coor, conn, vector, quad, mat
 
 # Effect of perturbation
 # ----------------------
@@ -244,52 +242,8 @@ Sigstar_p = np.array([
     [+1.0,  0.0],
     [ 0.0, -1.0]])
 
-Epsstar_s, trigger, u_s, sigeq_s, energy_s, coor, conn, vector, quad, mat = ComputePerturbation(Sigstar_s)
-Epsstar_p, trigger, u_p, sigeq_p, energy_p, coor, conn, vector, quad, mat = ComputePerturbation(Sigstar_p)
-
-# Plot - simple shear
-# -------------------
-
-fig, ax = plt.subplots()
-
-gplt.patch(coor=coor + u_s, conn=conn, cindex=sigeq_s, cmap='Reds', axis=ax, clim=(0, 0.5))
-gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
-
-ax.axis('equal')
-plt.axis('off')
-
-sm = plt.cm.ScalarMappable(cmap='Reds', norm=mpl.colors.Normalize(vmin=0.0, vmax=0.5))
-sm.set_array([])
-
-ticks = [0.0, +0.5]
-labels = [0.0, +0.5]
-cbar = plt.colorbar(sm, ticks=ticks)
-cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
-
-fig.savefig('perturbation_simple-shear.pdf')
-plt.close(fig)
-
-# Plot - pure shear
-# -----------------
-
-fig, ax = plt.subplots()
-
-gplt.patch(coor=coor + u_p, conn=conn, cindex=sigeq_p, cmap='Reds', axis=ax, clim=(0, 0.5))
-gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
-
-ax.axis('equal')
-plt.axis('off')
-
-sm = plt.cm.ScalarMappable(cmap='Reds', norm=mpl.colors.Normalize(vmin=0.0, vmax=0.5))
-sm.set_array([])
-
-ticks = [0.0, +0.5]
-labels = [0.0, +0.5]
-cbar = plt.colorbar(sm, ticks=ticks)
-cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
-
-fig.savefig('perturbation_pure-shear.pdf')
-plt.close(fig)
+Epsstar_s, trigger, u_s, energy_s, coor, conn, vector, quad, mat = ComputePerturbation(Sigstar_s)
+Epsstar_p, trigger, u_p, energy_p, coor, conn, vector, quad, mat = ComputePerturbation(Sigstar_p)
 
 # Plot - simple shear
 # -------------------
@@ -310,7 +264,7 @@ labels = [-0.1, 0.0, +0.1]
 cbar = plt.colorbar(sm, ticks=ticks)
 cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
 
-fig.savefig('perturbation_simple-shear_energy.pdf')
+fig.savefig('perturbation_simple-shear_pos.pdf')
 plt.close(fig)
 
 # Plot - pure shear
@@ -332,51 +286,7 @@ labels = [-0.1, 0.0, +0.1]
 cbar = plt.colorbar(sm, ticks=ticks)
 cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
 
-fig.savefig('perturbation_pure-shear_energy.pdf')
-plt.close(fig)
-
-# Plot - simple shear
-# -------------------
-
-fig, ax = plt.subplots()
-
-gplt.patch(coor=coor - u_s, conn=conn, cindex=sigeq_s, cmap='Reds', axis=ax, clim=(0, 0.5))
-gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
-
-ax.axis('equal')
-plt.axis('off')
-
-sm = plt.cm.ScalarMappable(cmap='Reds', norm=mpl.colors.Normalize(vmin=0.0, vmax=0.5))
-sm.set_array([])
-
-ticks = [0.0, +0.5]
-labels = [0.0, +0.5]
-cbar = plt.colorbar(sm, ticks=ticks)
-cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
-
-fig.savefig('perturbation_minus-simple-shear.pdf')
-plt.close(fig)
-
-# Plot - pure shear
-# -----------------
-
-fig, ax = plt.subplots()
-
-gplt.patch(coor=coor - u_p, conn=conn, cindex=sigeq_p, cmap='Reds', axis=ax, clim=(0, 0.5))
-gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
-
-ax.axis('equal')
-plt.axis('off')
-
-sm = plt.cm.ScalarMappable(cmap='Reds', norm=mpl.colors.Normalize(vmin=0.0, vmax=0.5))
-sm.set_array([])
-
-ticks = [0.0, +0.5]
-labels = [0.0, +0.5]
-cbar = plt.colorbar(sm, ticks=ticks)
-cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
-
-fig.savefig('perturbation_minus-pure-shear.pdf')
+fig.savefig('perturbation_pure-shear_pos.pdf')
 plt.close(fig)
 
 # Plot - simple shear
@@ -398,7 +308,7 @@ labels = [-0.1, 0.0, +0.1]
 cbar = plt.colorbar(sm, ticks=ticks)
 cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
 
-fig.savefig('perturbation_minus-simple-shear_energy.pdf')
+fig.savefig('perturbation_simple-shear_neg.pdf')
 plt.close(fig)
 
 # Plot - pure shear
@@ -420,7 +330,7 @@ labels = [-0.1, 0.0, +0.1]
 cbar = plt.colorbar(sm, ticks=ticks)
 cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
 
-fig.savefig('perturbation_minus-pure-shear_energy.pdf')
+fig.savefig('perturbation_pure-shear_neg.pdf')
 plt.close(fig)
 
 # Phase diagram for strain and stress
@@ -432,7 +342,6 @@ eps = np.zeros((101, 101))
 for i, p in enumerate(np.linspace(-1, 1, sig.shape[0])):
     for j, s in enumerate(np.linspace(-1, 1, sig.shape[1])):
         disp = s * u_s + p * u_p
-        # CheckEquilibrium(disp)
         ue = vector.AsElement(disp)
         Eps = quad.SymGradN_vector(ue)
         mat.setStrain(Eps)
@@ -450,7 +359,7 @@ cbar = fig.colorbar(h, aspect=10)
 ax.set_xlabel(r'$s$')
 ax.set_ylabel(r'$p$')
 
-fig.savefig('phase-diagram_sig.pdf')
+fig.savefig('perturbation_phase-diagram_sig.pdf')
 plt.close(fig)
 
 
@@ -463,7 +372,7 @@ cbar = fig.colorbar(h, aspect=10)
 ax.set_xlabel(r'$s$')
 ax.set_ylabel(r'$p$')
 
-fig.savefig('phase-diagram_eps.pdf')
+fig.savefig('perturbation_phase-diagram_eps.pdf')
 plt.close(fig)
 
 # Phase diagram for energy
@@ -489,6 +398,6 @@ cbar = fig.colorbar(h, aspect=10)
 ax.set_xlabel(r'$s$')
 ax.set_ylabel(r'$p$')
 
-fig.savefig('phase-diagram_energy.pdf')
+fig.savefig('perturbation_phase-diagram_energy.pdf')
 plt.close(fig)
 

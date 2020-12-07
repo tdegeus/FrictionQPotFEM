@@ -56,27 +56,27 @@ The protocol is as follows.
     \captionsetup[subfigure]{justification=centering}
     \begin{minipage}[t]{.49\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{perturbation_simple-shear_energy.pdf}
+        \includegraphics[width=\textwidth]{perturbation_simple-shear_pos.pdf}
         \subcaption{
             Simple shear:
             $\delta \vec{u}(\vec{r}) = s \vec{u}^*_s (\vec{r})$
         }
-        \label{fig:perturbation:simple-shear}
+        \label{fig:perturbation:simple-shear:pos}
     \end{minipage}
     \hfill
     \begin{minipage}[t]{.49\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{perturbation_pure-shear_energy.pdf}
+        \includegraphics[width=\textwidth]{perturbation_pure-shear_pos.pdf}
         \subcaption{
             Pure shear:
             $\delta \vec{u}(\vec{r}) = p \vec{u}^*_p (\vec{r})$
         }
-        \label{fig:perturbation:pure-shear}
+        \label{fig:perturbation:pure-shear:pos}
     \end{minipage}
     \\
     \begin{minipage}[t]{.49\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{perturbation_minus-simple-shear_energy.pdf}
+        \includegraphics[width=\textwidth]{perturbation_simple-shear_neg.pdf}
         \subcaption{
             Simple shear:
             $\delta \vec{u}(\vec{r}) = - s \vec{u}^*_s (\vec{r})$
@@ -86,7 +86,7 @@ The protocol is as follows.
     \hfill
     \begin{minipage}[t]{.49\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{perturbation_minus-pure-shear_energy.pdf}
+        \includegraphics[width=\textwidth]{perturbation_pure-shear_neg.pdf}
         \subcaption{
             Pure shear:
             $\delta \vec{u}(\vec{r}) = - p \vec{u}^*_p (\vec{r})$
@@ -102,7 +102,7 @@ The protocol is as follows.
 
 \begin{figure}[htp]
     \centering
-    \includegraphics[width=.5\textwidth]{phase-diagram_energy.pdf}
+    \includegraphics[width=.5\textwidth]{perturbation_phase-diagram_energy.pdf}
     \caption{
         Energetic cost of a perturbation:
         $\delta \vec{u}(\vec{r}) = s \vec{u}^*_s (\vec{r}) + p \vec{u}^*_p (\vec{r})$.
@@ -115,7 +115,7 @@ The protocol is as follows.
     \captionsetup[subfigure]{justification=centering}
     \begin{minipage}[t]{.49\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{phase-diagram_sig.pdf}
+        \includegraphics[width=\textwidth]{perturbation_phase-diagram_sig.pdf}
         \subcaption{
             Equivalent stress.
         }
@@ -124,7 +124,7 @@ The protocol is as follows.
     \hfill
     \begin{minipage}[t]{.49\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{phase-diagram_eps.pdf}
+        \includegraphics[width=\textwidth]{perturbation_phase-diagram_eps.pdf}
         \subcaption{
             Equivalent strain.
         }
@@ -144,88 +144,92 @@ The protocol is as follows.
 
 \section*{Example}
 
-An example for two configurations in \cref{fig:example:config} is shown in
-\cref{fig:example:phase-diagram}.
+Two examples are included:
+A homogeneous medium that is subjected to shear in \cref{fig:example:shear}, and
+the sample problem additionally subject to a random stress perturbation
+in \cref{fig:example:prestress}.
 
 \begin{figure}[htp]
     \centering
     \captionsetup[subfigure]{justification=centering}
     \begin{minipage}[t]{.40\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{prestress_0_config.pdf}
+        \includegraphics[width=\textwidth]{example_shear_config.pdf}
         \subcaption{Initial configuration.}
     \end{minipage}
     \hspace{0.01\textwidth}
     \begin{minipage}[t]{.40\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{prestress_0_config-perturbed.pdf}
+        \includegraphics[width=\textwidth]{example_shear_config-perturbed.pdf}
         \subcaption{After perturbation.}
     \end{minipage}
     \\
-    \begin{minipage}[t]{.40\textwidth}
+    \begin{minipage}[t]{.31\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{prestress_1_config.pdf}
-        \subcaption{Initial configuration.}
+        \includegraphics[width=\textwidth]{example_shear_phase-diagram_eps.pdf}
+        \subcaption{$\varepsilon$}
     \end{minipage}
-    \hspace{0.01\textwidth}
-    \begin{minipage}[t]{.40\textwidth}
+    \hfill
+    \begin{minipage}[t]{.31\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{prestress_1_config-perturbed.pdf}
-        \subcaption{After perturbation.}
+        \includegraphics[width=\textwidth]{example_shear_phase-diagram_energy.pdf}
+        \subcaption{$\Delta E$}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{.31\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{example_shear_phase-diagram_energy-contour.pdf}
+        \subcaption{$\Delta E$}
     \end{minipage}
     \caption{
-        Starting and perturbed configuration, for (a-b) a homogeneous sheared system, and
-        (c-d) a homogeneous sheared system subjected to a random pre-stress.
+        (a--b) Starting and perturbed configuration for a homogeneous sheared system.
+        (c--e) Phase diagram of a perturbation
+        $\delta \vec{u}(\vec{r}) = s \vec{u}^*_s (\vec{r}) + p \vec{u}^*_p (\vec{r})$
+        of the configuration in (a).
     }
-    \label{fig:example:config}
+    \label{fig:example:shear}
 \end{figure}
 
 \begin{figure}[htp]
     \centering
     \captionsetup[subfigure]{justification=centering}
-    \begin{minipage}[t]{.31\textwidth}
+    \begin{minipage}[t]{.40\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{prestress_0_phase-diagram_eps.pdf}
-        \subcaption{$\varepsilon$}
-        \label{fig:}
+        \includegraphics[width=\textwidth]{example_prestress_config.pdf}
+        \subcaption{Initial configuration.}
     \end{minipage}
-    \hfill
-    \begin{minipage}[t]{.31\textwidth}
+    \hspace{0.01\textwidth}
+    \begin{minipage}[t]{.40\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{prestress_0_phase-diagram_energy.pdf}
-        \subcaption{$\Delta E$}
-        \label{fig:}
-    \end{minipage}
-    \hfill
-    \begin{minipage}[t]{.31\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{prestress_0_phase-diagram_energy-contour.pdf}
-        \subcaption{$\Delta E$}
-        \label{fig:}
+        \includegraphics[width=\textwidth]{example_prestress_config-perturbed.pdf}
+        \subcaption{After perturbation.}
     \end{minipage}
     \\
     \begin{minipage}[t]{.31\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{prestress_1_phase-diagram_eps.pdf}
+        \includegraphics[width=\textwidth]{example_prestress_phase-diagram_eps.pdf}
         \subcaption{$\varepsilon$}
-        \label{fig:}
     \end{minipage}
     \hfill
     \begin{minipage}[t]{.31\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{prestress_1_phase-diagram_energy.pdf}
+        \includegraphics[width=\textwidth]{example_prestress_phase-diagram_energy.pdf}
         \subcaption{$\Delta E$}
-        \label{fig:}
     \end{minipage}
     \hfill
     \begin{minipage}[t]{.31\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{prestress_1_phase-diagram_energy-contour.pdf}
+        \includegraphics[width=\textwidth]{example_prestress_phase-diagram_energy-contour.pdf}
         \subcaption{$\Delta E$}
-        \label{fig:}
     \end{minipage}
-    \caption{Phase diagram for the configurations in \cref{fig:example:config}.}
-    \label{fig:example:phase-diagram}
+    \caption{
+        (a--b) Starting and perturbed configuration for a homogeneous sheared system.
+        (c--e) Phase diagram of a perturbation
+        $\delta \vec{u}(\vec{r}) = s \vec{u}^*_s (\vec{r}) + p \vec{u}^*_p (\vec{r})$
+        of the configuration in (a).
+    }
+    \label{fig:example:prestress}
 \end{figure}
+
 
 \end{document}
