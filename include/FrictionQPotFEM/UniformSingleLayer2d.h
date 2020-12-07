@@ -12,6 +12,7 @@
 #include <GMatElastoPlasticQPot/Cartesian2d.h>
 #include <GooseFEM/GooseFEM.h>
 #include <GooseFEM/Matrix.h>
+#include <GooseFEM/MatrixPartitioned.h>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xnorm.hpp>
 #include <xtensor/xshape.hpp>
@@ -228,6 +229,10 @@ protected:
     // integration point tensors
     xt::xtensor<double, 4> m_Eps;
     xt::xtensor<double, 4> m_Sig;
+
+    // stiffness matrix
+    GF::MatrixPartitioned m_K;
+    GF::MatrixPartitionedSolver<> m_solve;
 
     // time
     double m_t = 0.0;

@@ -52,17 +52,6 @@ inline System::System(
     const xt::xtensor<size_t, 1>& elem_elastic,
     const xt::xtensor<size_t, 1>& elem_plastic)
 {
-    this->initGeometry(coor, conn, dofs, iip, elem_elastic, elem_plastic);
-}
-
-inline void System::initGeometry(
-    const xt::xtensor<double, 2>& coor,
-    const xt::xtensor<size_t, 2>& conn,
-    const xt::xtensor<size_t, 2>& dofs,
-    const xt::xtensor<size_t, 1>& iip,
-    const xt::xtensor<size_t, 1>& elem_elastic,
-    const xt::xtensor<size_t, 1>& elem_plastic)
-{
     m_coor = coor;
     m_conn = conn;
     m_dofs = dofs;
@@ -112,6 +101,7 @@ inline void System::initGeometry(
 
     m_M = GF::MatrixDiagonalPartitioned(m_conn, m_dofs, m_iip);
     m_D = GF::MatrixDiagonal(m_conn, m_dofs);
+    m_K = GF::MatrixPartitioned(m_conn, m_dofs, m_iip);
 
     m_material = GM::Array<2>({m_nelem, m_nip});
 }
@@ -160,6 +150,8 @@ inline void System::initMaterial()
 
     m_material.check();
     m_material.setStrain(m_Eps);
+
+    m_K.assemble(m_quad.Int_gradN_dot_tensor4_dot_gradNT_dV(m_material.Tangent()));
 }
 
 inline void System::setElastic(
@@ -711,13 +703,8 @@ inline HybridSystem::HybridSystem(
     const xt::xtensor<size_t, 2>& dofs,
     const xt::xtensor<size_t, 1>& iip,
     const xt::xtensor<size_t, 1>& elem_elastic,
-    const xt::xtensor<size_t, 1>& elem_plastic)
-{
-    this->initGeometry(coor, conn, dofs, iip, elem_elastic, elem_plastic);
-    this->initHybridSystem();
-}
-
-inline void HybridSystem::initHybridSystem()
+    const xt::xtensor<size_t, 1>& elem_plastic) :
+    System::System(coor, conn, dofs, iip, elem_elastic, elem_plastic)
 {
     m_conn_elas = xt::view(m_conn, xt::keep(m_elem_elas), xt::all());
     m_conn_plas = xt::view(m_conn, xt::keep(m_elem_plas), xt::all());
