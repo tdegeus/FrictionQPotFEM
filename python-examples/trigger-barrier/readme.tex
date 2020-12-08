@@ -16,38 +16,40 @@ The protocol is as follows.
     (in the example below chosen in the center of the system).
     Its location is denoted by $\vec{r}'$.
 
-    \item A perturbation around a stress and strain free configuration is considered.
+    \item A perturbation around a stress- and strain-free configuration is considered.
     To this end, the selected element (only) is subjected to an eigen stress
     $\bm{\sigma}'$.
     The corresponding equilibrium configuration then constitutes to
     the perturbation that will be used.
-    It is characterised by the stress field $\vec{u}^* (\vec{r})$, and corresponding
-    stress $\bm{\sigma}^* (\vec{r})$
-    and strain $\bm{\varepsilon}^* (\vec{r})$ fields.
+    It is characterised by the stress field $\delta \vec{u} (\vec{r})$, and corresponding
+    stress $\delta \bm{\sigma} (\vec{r})$
+    and strain $\delta \bm{\varepsilon} (\vec{r})$ fields.
 
     \item Two types of perturbations are considered:
     \begin{itemize}
         \item Simple shear:
         $\bm{\sigma}' = \bm{\sigma}'_s = \vec{e}_x \vec{e}_y + \vec{e}_x \vec{e}_y$.
-        Gives: $\vec{u}^*_s (\vec{r})$, $\bm{\sigma}^*_s (\vec{r})$, and
-        $\bm{\varepsilon}^*_s (\vec{r})$.
+        Gives: $\delta \vec{u}_s (\vec{r})$, $\delta \bm{\sigma}_s (\vec{r})$, and
+        $\delta \bm{\varepsilon}_s (\vec{r})$.
 
         \item Pure shear:
         $\bm{\sigma}' = \bm{\sigma}'_p = \vec{e}_x \vec{e}_x - \vec{e}_y \vec{e}_y$.
-        Gives: $\vec{u}^*_p (\vec{r})$, $\bm{\sigma}^*_p (\vec{r})$, and
-        $\bm{\varepsilon}^*_p (\vec{r})$.
+        Gives: $\delta \vec{u}_p (\vec{r})$, $\delta \bm{\sigma}_p (\vec{r})$, and
+        $\delta \bm{\varepsilon}_p (\vec{r})$.
     \end{itemize}
 
-    For the triggered element the strain (and) stress are (by definition)
+    For the triggered element the strain (and) stress are empirically
     of the following structure:
-    $\bm{\varepsilon}^*_s (\vec{r}') = \chi_s (\vec{e}_x \vec{e}_y + \vec{e}_x \vec{e}_y)$
-    for the simple shear perturbation, and
-    $\bm{\varepsilon}^*_p (\vec{r}') = \chi_p (\vec{e}_x \vec{e}_x - \vec{e}_y \vec{e}_y)$
-    for the pure shear perturbation.
+    \begin{itemize}
+        \item Simple shear perturbation:
+        $\delta \bm{\varepsilon}_s (\vec{r}') = \delta \gamma (\vec{e}_x \vec{e}_y + \vec{e}_x \vec{e}_y)$
+        \item Pure shear perturbation:
+        $\delta \bm{\varepsilon}_p (\vec{r}') = \delta \mathcal{E} (\vec{e}_x \vec{e}_x - \vec{e}_y \vec{e}_y)$
+    \end{itemize}
 
-    \item A perturbation $\delta \vec{u}(\vec{r}) = s \vec{u}^*_s (\vec{r}) + p \vec{u}^*_p (\vec{r})$
-    is then applied such that it results in the minimal increase of potential energy in the
-    landscape.
+    \item A perturbation $\Delta \vec{u}(\vec{r}) = s \delta \vec{u}_s (\vec{r}) + p \delta \vec{u}_p (\vec{r})$
+    is then applied such that the yield surface is reached in the triggered element in such
+    a way that the change in potential energy introduced by the perturbation is minimal.
 
 \end{enumerate}
 
@@ -59,7 +61,7 @@ The protocol is as follows.
         \includegraphics[width=\textwidth]{perturbation_simple-shear_pos.pdf}
         \subcaption{
             Simple shear:
-            $\delta \vec{u}(\vec{r}) = s \vec{u}^*_s (\vec{r})$
+            $\delta \vec{u}_s (\vec{r})$
         }
         \label{fig:perturbation:simple-shear:pos}
     \end{minipage}
@@ -69,7 +71,7 @@ The protocol is as follows.
         \includegraphics[width=\textwidth]{perturbation_pure-shear_pos.pdf}
         \subcaption{
             Pure shear:
-            $\delta \vec{u}(\vec{r}) = p \vec{u}^*_p (\vec{r})$
+            $\delta \vec{u}_p (\vec{r})$
         }
         \label{fig:perturbation:pure-shear:pos}
     \end{minipage}
@@ -79,7 +81,7 @@ The protocol is as follows.
         \includegraphics[width=\textwidth]{perturbation_simple-shear_neg.pdf}
         \subcaption{
             Simple shear:
-            $\delta \vec{u}(\vec{r}) = - s \vec{u}^*_s (\vec{r})$
+            $- \delta \vec{u}_s (\vec{r})$
         }
         \label{fig:perturbation:simple-shear:neg}
     \end{minipage}
@@ -89,7 +91,7 @@ The protocol is as follows.
         \includegraphics[width=\textwidth]{perturbation_pure-shear_neg.pdf}
         \subcaption{
             Pure shear:
-            $\delta \vec{u}(\vec{r}) = - p \vec{u}^*_p (\vec{r})$
+            $- \delta \vec{u}_p (\vec{r})$
         }
         \label{fig:perturbation:pure-shear:neg}
     \end{minipage}
@@ -102,10 +104,19 @@ The protocol is as follows.
 
 \begin{figure}[htp]
     \centering
-    \includegraphics[width=.5\textwidth]{perturbation_phase-diagram_energy.pdf}
+    \begin{minipage}[t]{.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{perturbation_phase-diagram_energy.pdf}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{perturbation_phase-diagram_energy-contour.pdf}
+    \end{minipage}
     \caption{
-        Energetic cost of a perturbation:
-        $\delta \vec{u}(\vec{r}) = s \vec{u}^*_s (\vec{r}) + p \vec{u}^*_p (\vec{r})$.
+        Change of internal energy, $\Delta E$, for a perturbation:
+        $\Delta \vec{u}(\vec{r}) = s \delta \vec{u}_s (\vec{r}) + p \delta \vec{u}_p (\vec{r})$.
+        A contour plot is also shown.
     }
     \label{fig:energy}
 \end{figure}
@@ -135,10 +146,76 @@ The protocol is as follows.
         \subref{fig:phase-diagram:sig} equivalent stress and
         \subref{fig:phase-diagram:eps} equivalent strain
         for a perturbation:
-        $\delta \vec{u}(\vec{r}) = s \vec{u}^*_s (\vec{r}) + p \vec{u}^*_p (\vec{r})$.
+        $\Delta \vec{u}(\vec{r}) = s \delta \vec{u}_s (\vec{r}) + p \delta \vec{u}_p (\vec{r})$.
     }
     \label{fig:phase-diagram}
 \end{figure}
+
+\clearpage
+
+\section*{Exploring the yield surface}
+
+\paragraph{Yield surface}
+
+Initially the strain deviator in the triggered element reads
+\begin{equation}
+    \bm{\varepsilon}_\mathrm{d}(\vec{r}') =
+    \begin{bmatrix}
+        \mathcal{E} & \gamma \\
+        \gamma & - \mathcal{E}
+    \end{bmatrix}
+\end{equation}
+After triggering the strain deviator is
+\begin{equation}
+    \bm{\varepsilon}_\mathrm{d}^*(\vec{r}') =
+    \begin{bmatrix}
+        \mathcal{E} + p \delta \mathcal{E} & \gamma + s \delta \gamma \\
+        \gamma + s \delta \gamma & - \mathcal{E} - p \delta \mathcal{E}
+    \end{bmatrix}
+\end{equation}
+To reach the yield surface one thus needs to solve
+\begin{equation}
+    (\mathcal{E} + p \delta \mathcal{E})^2 +
+    (\gamma + s \delta \gamma)^2 =
+    \varepsilon_y^2
+\end{equation}
+for $(s, p)$ (with $\varepsilon_y$ the relevant yield strain).
+
+\paragraph{Change of energy}
+
+The energy in the system reads
+\begin{equation}
+    E = \frac{1}{2} \int_\Omega
+        \bm{\sigma}(\vec{r}) : \bm{\varepsilon}(\vec{r})
+    \; \mathrm{d} \Omega
+\end{equation}
+After triggering:
+\begin{equation}
+    E^* = \frac{1}{2} \int_\Omega
+        (\bm{\sigma}(\vec{r}) + \Delta \bm{\sigma}(\vec{r})) :
+        (\bm{\varepsilon}(\vec{r}) + \Delta \bm{\varepsilon}(\vec{r}))
+    \; \mathrm{d} \Omega
+\end{equation}
+where
+$\Delta \bm{\sigma}(\vec{r}) = s \delta \bm{\sigma}_s(\vec{r}) + p \delta \bm{\sigma}_p(\vec{r})$
+and
+$\Delta \bm{\varepsilon}(\vec{r}) = s \delta \bm{\varepsilon}_s(\vec{r}) + p \delta \bm{\varepsilon}_p(\vec{r})$.
+It is straightforward to show that the change of energy
+\begin{equation}
+    \Delta E = E^* - E =
+    \int_\Omega
+        \big(\bm{\sigma}(\vec{r}) + \tfrac{1}{2} \Delta \bm{\sigma}(\vec{r}) \big) :
+        \Delta \bm{\varepsilon}(\vec{r})
+    \; \mathrm{d} \Omega
+\end{equation}
+whereby in practice integration is performed numerically, e.g.\
+\begin{equation}
+    \Delta E = E^* - E =
+    \sum\limits_q
+        \delta \Omega_q \;
+        \big(\bm{\sigma}_q + \tfrac{1}{2} \Delta \bm{\sigma}_q \big) :
+        \Delta \bm{\varepsilon}_q
+\end{equation}
 
 \clearpage
 
@@ -146,8 +223,8 @@ The protocol is as follows.
 
 Two examples are included:
 A homogeneous medium that is subjected to shear in \cref{fig:example:shear}, and
-the sample problem additionally subject to a random stress perturbation
-in \cref{fig:example:prestress}.
+the same problem additionally subjected to a vertical perturbation
+of the top and bottom boundaries \cref{fig:example:prestress}.
 
 \begin{figure}[htp]
     \centering
@@ -184,8 +261,11 @@ in \cref{fig:example:prestress}.
     \caption{
         (a--b) Starting and perturbed configuration for a homogeneous sheared system.
         (c--e) Phase diagram of a perturbation
-        $\delta \vec{u}(\vec{r}) = s \vec{u}^*_s (\vec{r}) + p \vec{u}^*_p (\vec{r})$
+        $\Delta \vec{u}(\vec{r}) = s \delta \vec{u}_s (\vec{r}) + p \delta \vec{u}_p (\vec{r})$
         of the configuration in (a).
+        The perturbation is applied based on $(s, p)$ that lie on the yield surface and
+        that minimise the increase in potential
+        energy, as shown using a red dot.
     }
     \label{fig:example:shear}
 \end{figure}
@@ -225,8 +305,11 @@ in \cref{fig:example:prestress}.
     \caption{
         (a--b) Starting and perturbed configuration for a homogeneous sheared system.
         (c--e) Phase diagram of a perturbation
-        $\delta \vec{u}(\vec{r}) = s \vec{u}^*_s (\vec{r}) + p \vec{u}^*_p (\vec{r})$
+        $\Delta \vec{u}(\vec{r}) = s \delta \vec{u}_s (\vec{r}) + p \delta \vec{u}_p (\vec{r})$
         of the configuration in (a).
+        The perturbation is applied based on $(s, p)$ that lie on the yield surface and
+        that minimise the increase in potential
+        energy, as shown using a red dot.
     }
     \label{fig:example:prestress}
 \end{figure}
