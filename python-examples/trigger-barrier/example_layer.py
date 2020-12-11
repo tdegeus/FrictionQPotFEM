@@ -213,7 +213,7 @@ Sig = mat.Stress()
 # ----------------------
 
 elmap = mesh.roll(1)
-nconfig = plastic[-1] - elmap[plastic][-1]
+nconfig = plastic[-1] - elmap[plastic[-1]]
 N = len(plastic)
 config = []
 
