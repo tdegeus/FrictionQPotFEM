@@ -10,6 +10,7 @@
 #include "config.h"
 
 #include <GMatElastoPlasticQPot/Cartesian2d.h>
+#include <GMatTensor/Cartesian2d.h>
 #include <GooseFEM/GooseFEM.h>
 #include <GooseFEM/Matrix.h>
 #include <GooseFEM/MatrixPartitioned.h>
@@ -23,9 +24,13 @@
 namespace GF = GooseFEM;
 namespace QD = GooseFEM::Element::Quad4;
 namespace GM = GMatElastoPlasticQPot::Cartesian2d;
+namespace GT = GMatTensor::Cartesian2d;
 
 namespace FrictionQPotFEM {
 namespace UniformSingleLayer2d {
+
+// pre-deceleration
+class LocalTrigger;
 
 // -------------------------------------
 // Return versions of returned libraries
@@ -113,6 +118,7 @@ public:
     template <size_t rank, class T> auto AsTensor(const T& arg) const;
 
     // Get the "GooseFEM::VectorPartitioned" and the "GooseFEM::Element::Quad4::Quadrature"
+    auto stiffness() const;
     auto vector() const;
     auto quad() const;
 
@@ -245,16 +251,9 @@ protected:
     bool m_set_elas = false;
     bool m_set_plas = false;
 
-protected:
+    friend class LocalTrigger;
 
-    // Initialise geometry (called by constructor).
-    void initGeometry(
-        const xt::xtensor<double, 2>& coor,
-        const xt::xtensor<size_t, 2>& conn,
-        const xt::xtensor<size_t, 2>& dofs,
-        const xt::xtensor<size_t, 1>& iip,
-        const xt::xtensor<size_t, 1>& elem_elastic,
-        const xt::xtensor<size_t, 1>& elem_plastic);
+protected:
 
     // Function to unify the implementations of "setMassMatrix" and "setDampingMatrix".
     template <class T>
@@ -380,13 +379,78 @@ protected:
 
 protected:
 
-    // Alias for constructor to allow sub-classing (called by constructor).
-    void initHybridSystem();
-
     // Evaluate "m_fmaterial": computes strain and stress in the plastic elements only.
     // Contrary to "System::computeForceMaterial" does not call "computeStress",
     // therefore separate overrides of "Sig" and "Eps" are needed.
     void computeForceMaterial() override;
+
+};
+
+// -------------------------------------------------
+// Trigger by simple shear + pure shear perturbation
+// -------------------------------------------------
+
+class LocalTriggerFineLayer
+{
+public:
+    LocalTriggerFineLayer() = default;
+    LocalTriggerFineLayer(const System& sys);
+
+    void setState(
+        const xt::xtensor<double, 4>& Eps,
+        const xt::xtensor<double, 4>& Sig,
+        const xt::xtensor<double, 2>& epsy,
+        size_t ntest = 100);
+
+    xt::xtensor<double, 2> barriers() const;
+    xt::xtensor<double, 2> delta_u(size_t trigger_plastic, size_t q) const;
+
+    xt::xtensor<double, 2> u_s(size_t trigger_plastic) const;
+    xt::xtensor<double, 2> u_p(size_t trigger_plastic) const;
+    xt::xtensor<double, 4> Eps_s(size_t trigger_plastic) const;
+    xt::xtensor<double, 4> Eps_p(size_t trigger_plastic) const;
+    xt::xtensor<double, 4> Sig_s(size_t trigger_plastic) const;
+    xt::xtensor<double, 4> Sig_p(size_t trigger_plastic) const;
+
+protected:
+    void computePerturbation(
+        size_t trigger_plastic,
+        const xt::xtensor<double, 2>& sig_star,
+        xt::xtensor<double, 2>& u,
+        xt::xtensor<double, 4>& Eps,
+        xt::xtensor<double, 4>& Sig,
+        GF::MatrixPartitioned& K,
+        GF::MatrixPartitionedSolver<>& solver,
+        const QD::Quadrature& quad,
+        const GF::VectorPartitioned& vector,
+        GM::Array<2>& material);
+
+protected:
+
+    size_t m_nip;
+    size_t m_nelem_plas;
+    xt::xtensor<size_t, 1> m_elem_plas;
+
+    std::vector<xt::xtensor<double, 2>> m_u_s;
+    std::vector<xt::xtensor<double, 2>> m_u_p;
+    std::vector<xt::xtensor<double, 4>> m_Eps_s;
+    std::vector<xt::xtensor<double, 4>> m_Eps_p;
+    std::vector<xt::xtensor<double, 4>> m_Sig_s;
+    std::vector<xt::xtensor<double, 4>> m_Sig_p;
+    std::vector<xt::xtensor<double, 1>> m_elemmap;
+    std::vector<xt::xtensor<double, 1>> m_nodemap;
+
+    xt::xtensor<double, 2> m_dV;
+
+    xt::xtensor<double, 4> m_Eps;
+    xt::xtensor<double, 4> m_Sig;
+
+    xt::xtensor<double, 2> m_smin; // [nip, N]
+    xt::xtensor<double, 2> m_pmin; // [nip, N]
+    xt::xtensor<double, 2> m_Wmin; // [nip, N]
+    xt::xtensor<double, 2> m_dgamma; // [nip, N]
+    xt::xtensor<double, 2> m_dE; // [nip, N]
+
 
 };
 
