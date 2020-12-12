@@ -1055,6 +1055,10 @@ inline void LocalTriggerFineLayer::setState(
     m_Eps = Eps;
     m_Sig = Sig;
 
+    xt::xtensor<double, 2> S = xt::empty<double>({size_t(2), N});
+    xt::xtensor<double, 2> P = xt::empty<double>({size_t(2), N});
+    xt::xtensor<double, 2> W = xt::empty<double>({size_t(2), N});
+
     for (size_t e = 0; e < m_nelem_plas; ++e) {
 
         auto Eps_s = this->Eps_s(e);
@@ -1070,32 +1074,27 @@ inline void LocalTriggerFineLayer::setState(
             auto Epsd = GM::Deviatoric(xt::eval(xt::view(m_Eps, m_elem_plas(e), q)));
             double gamma = Epsd(0, 1);
             double E = Epsd(0, 0);
-
             double y = epsy(e, q);
-
             double a, b, c, D;
 
             // solve for "p = 0"
-            a = std::pow(dgamma, 2.0);
+            a = SQR(dgamma);
             b = 2.0 * gamma * dgamma;
-            c = std::pow(gamma, 2.0) + std::pow(E, 2.0) - std::pow(y, 2.0);
-            D = std::pow(b, 2.0) - 4.0 * a * c;
+            c = SQR(gamma) + SQR(E) - SQR(y);
+            D = SQR(b) - 4.0 * a * c;
             double smax = (- b + std::sqrt(D)) / (2.0 * a);
             double smin = (- b - std::sqrt(D)) / (2.0 * a);
 
             // solve for "s = 0"
-            a = std::pow(dE, 2.0);
+            a = SQR(dE);
             b = 2.0 * E * dE;
-            c = std::pow(E, 2.0) + std::pow(gamma, 2.0) - std::pow(y, 2.0);
-            D = std::pow(b, 2.0) - 4.0 * a * c;
+            c = SQR(E) + SQR(gamma) - SQR(y);
+            D = SQR(b) - 4.0 * a * c;
             double pmax = (- b + std::sqrt(D)) / (2.0 * a);
             double pmin = (- b - std::sqrt(D)) / (2.0 * a);
 
             size_t n = static_cast<size_t>(- smin / (smax - smin) * N);
             size_t m = N - n;
-            xt::xtensor<double, 2> S = xt::empty<double>({size_t(2), N});
-            xt::xtensor<double, 2> P = xt::empty<double>({size_t(2), N});
-            xt::xtensor<double, 2> W = xt::empty<double>({size_t(2), N});
 
             for (size_t i = 0; i < 2; ++i) {
                 xt::view(S, i, xt::range(0, n)) = xt::linspace<double>(smin, 0, n);
@@ -1110,10 +1109,10 @@ inline void LocalTriggerFineLayer::setState(
                 if (j == n - 1) {
                     continue;
                 }
-                a = std::pow(dE, 2.0);
+                a = SQR(dE);
                 b = 2.0 * E * dE;
-                c = std::pow(E, 2.0) + std::pow(gamma + S(0, j) * dgamma, 2.0) - std::pow(y, 2.0);
-                D = std::pow(b, 2.0) - 4.0 * a * c;
+                c = SQR(E) + std::pow(gamma + S(0, j) * dgamma, 2.0) - SQR(y);
+                D = SQR(b) - 4.0 * a * c;
                 P(0, j) = (- b + std::sqrt(D)) / (2.0 * a);
                 P(1, j) = (- b - std::sqrt(D)) / (2.0 * a);
 
@@ -1121,10 +1120,11 @@ inline void LocalTriggerFineLayer::setState(
 
             for (size_t i = 0; i < P.shape(0); ++i) {
                 for (size_t j = 0; j < P.shape(1); ++j) {
-                    W(i, j) = xt::sum(GT::A2_ddot_B2(
-                        xt::eval(m_Sig + P(i, j) * Sig_p + S(i, j) * Sig_s),
-                        xt::eval(P(i, j) * Eps_p + S(i, j) * Eps_s)
-                    ) * m_dV)();
+                    xt::xtensor<double, 4> sig = P(i, j) * Sig_p + S(i, j) * Sig_s + m_Sig;
+                    xt::xtensor<double, 4> deps = P(i, j) * Eps_p + S(i, j) * Eps_s;
+                    xt::xtensor<double, 2> w = GT::A2s_ddot_B2s(sig, deps);
+                    w *= m_dV;
+                    W(i, j) = xt::sum(w)();
                 }
             }
 

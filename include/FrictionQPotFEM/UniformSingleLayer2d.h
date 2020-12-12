@@ -25,6 +25,8 @@ namespace QD = GooseFEM::Element::Quad4;
 namespace GM = GMatElastoPlasticQPot::Cartesian2d;
 namespace GT = GMatTensor::Cartesian2d;
 
+#define SQR(x) ((x) * (x)) // x^2
+
 namespace FrictionQPotFEM {
 namespace UniformSingleLayer2d {
 
