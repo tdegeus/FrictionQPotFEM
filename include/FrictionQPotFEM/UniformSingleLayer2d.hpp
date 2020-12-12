@@ -16,11 +16,6 @@ inline std::vector<std::string> versionInfo()
 {
     std::vector<std::string> ret;
 
-    ret.push_back(fmt::format("xtensor={0:d}.{1:d}.{2:d}",
-        XTENSOR_VERSION_MAJOR,
-        XTENSOR_VERSION_MINOR,
-        XTENSOR_VERSION_PATCH));
-
     ret.push_back(fmt::format("frictionqpotfem={0:d}.{1:d}.{2:d}",
         FRICTIONQPOTFEM_VERSION_MAJOR,
         FRICTIONQPOTFEM_VERSION_MINOR,
@@ -36,26 +31,25 @@ inline std::vector<std::string> versionInfo()
         GMATELASTOPLASTICQPOT_VERSION_MINOR,
         GMATELASTOPLASTICQPOT_VERSION_PATCH));
 
+    ret.push_back(fmt::format("gmattensor={0:d}.{1:d}.{2:d}",
+        GMATTENSOR_VERSION_MAJOR,
+        GMATTENSOR_VERSION_MINOR,
+        GMATTENSOR_VERSION_PATCH));
+
     ret.push_back(fmt::format("qpot={0:d}.{1:d}.{2:d}",
         QPOT_VERSION_MAJOR,
         QPOT_VERSION_MINOR,
         QPOT_VERSION_PATCH));
 
+    ret.push_back(fmt::format("xtensor={0:d}.{1:d}.{2:d}",
+        XTENSOR_VERSION_MAJOR,
+        XTENSOR_VERSION_MINOR,
+        XTENSOR_VERSION_PATCH));
+
     return ret;
 }
 
 inline System::System(
-    const xt::xtensor<double, 2>& coor,
-    const xt::xtensor<size_t, 2>& conn,
-    const xt::xtensor<size_t, 2>& dofs,
-    const xt::xtensor<size_t, 1>& iip,
-    const xt::xtensor<size_t, 1>& elem_elastic,
-    const xt::xtensor<size_t, 1>& elem_plastic)
-{
-    this->initGeometry(coor, conn, dofs, iip, elem_elastic, elem_plastic);
-}
-
-inline void System::initGeometry(
     const xt::xtensor<double, 2>& coor,
     const xt::xtensor<size_t, 2>& conn,
     const xt::xtensor<size_t, 2>& dofs,
@@ -112,6 +106,7 @@ inline void System::initGeometry(
 
     m_M = GF::MatrixDiagonalPartitioned(m_conn, m_dofs, m_iip);
     m_D = GF::MatrixDiagonal(m_conn, m_dofs);
+    m_K = GF::MatrixPartitioned(m_conn, m_dofs, m_iip);
 
     m_material = GM::Array<2>({m_nelem, m_nip});
 }
@@ -158,8 +153,10 @@ inline void System::initMaterial()
         return;
     }
 
-    m_material.check();
+    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(m_material.type(), GM::Type::Unset)));
     m_material.setStrain(m_Eps);
+
+    m_K.assemble(m_quad.Int_gradN_dot_tensor4_dot_gradNT_dV(m_material.Tangent()));
 }
 
 inline void System::setElastic(
@@ -310,6 +307,11 @@ template <size_t rank, class T>
 inline auto System::AsTensor(const T& arg) const
 {
     return m_quad.AsTensor<rank>(arg);
+}
+
+inline auto System::stiffness() const
+{
+    return m_K;
 }
 
 inline auto System::vector() const
@@ -711,13 +713,8 @@ inline HybridSystem::HybridSystem(
     const xt::xtensor<size_t, 2>& dofs,
     const xt::xtensor<size_t, 1>& iip,
     const xt::xtensor<size_t, 1>& elem_elastic,
-    const xt::xtensor<size_t, 1>& elem_plastic)
-{
-    this->initGeometry(coor, conn, dofs, iip, elem_elastic, elem_plastic);
-    this->initHybridSystem();
-}
-
-inline void HybridSystem::initHybridSystem()
+    const xt::xtensor<size_t, 1>& elem_plastic) :
+    System::System(coor, conn, dofs, iip, elem_elastic, elem_plastic)
 {
     m_conn_elas = xt::view(m_conn, xt::keep(m_elem_elas), xt::all());
     m_conn_plas = xt::view(m_conn, xt::keep(m_elem_plas), xt::all());
@@ -753,8 +750,7 @@ inline void HybridSystem::setElastic(
     xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_elas, m_nip});
     xt::view(idx, xt::range(0, m_nelem_elas), xt::all()) = xt::arange<size_t>(m_nelem_elas).reshape({-1, 1});
     m_material_elas.setElastic(I, idx, K_elem, G_elem);
-
-    m_material_elas.check();
+    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(m_material_elas.type(), GM::Type::Unset)));
     m_material_elas.setStrain(m_Eps_elas);
 
     m_K_elas = GF::Matrix(m_conn_elas, m_dofs);
@@ -772,8 +768,7 @@ inline void HybridSystem::setPlastic(
     xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
     xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) = xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
     m_material_plas.setCusp(I, idx, K_elem, G_elem, epsy_elem);
-
-    m_material_plas.check();
+    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(m_material_plas.type(), GM::Type::Unset)));
     m_material_plas.setStrain(m_Eps_plas);
 }
 
@@ -976,6 +971,308 @@ inline xt::xtensor<double, 2> HybridSystem::plastic_ElementEnergyBarrierForSimpl
     m_material_plas.setStrain(m_Eps_plas);
 
     return ret;
+}
+
+inline LocalTriggerFineLayer::LocalTriggerFineLayer(const System& sys)
+{
+    // Copy / allocate local variables
+
+    auto m = sys.material();
+    GM::Array<2> material(m.shape());
+    material.setElastic(m.K(), m.G());
+    FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(material.type(), GM::Type::Elastic)));
+
+    auto vector = sys.vector();
+    auto K = sys.stiffness();
+    auto quad = sys.quad();
+    GF::MatrixPartitionedSolver<> solver;
+
+    m_elem_plas = sys.plastic();
+    m_nelem_plas = m_elem_plas.size();
+    m_nip = quad.nip();
+
+    m_smin = xt::zeros<decltype(m_smin)::value_type>({m_nelem_plas, m_nip});
+    m_pmin = xt::zeros<decltype(m_pmin)::value_type>({m_nelem_plas, m_nip});
+    m_Wmin = xt::zeros<decltype(m_Wmin)::value_type>({m_nelem_plas, m_nip});
+    m_dgamma = xt::zeros<decltype(m_dgamma)::value_type>({m_nelem_plas, m_nip});
+    m_dE = xt::zeros<decltype(m_dE)::value_type>({m_nelem_plas, m_nip});
+
+    auto coor = sys.coor();
+    auto conn = sys.conn();
+
+    auto u = vector.AllocateNodevec(0.0);
+    auto fint = vector.AllocateNodevec(0.0);
+    auto fext = vector.AllocateNodevec(0.0);
+    auto fres = vector.AllocateNodevec(0.0);
+
+    auto ue = vector.AllocateElemvec(0.0);
+    auto fe = vector.AllocateElemvec(0.0);
+
+    auto Eps = quad.AllocateQtensor<2>(0.0);
+    auto Sig = quad.AllocateQtensor<2>(0.0);
+
+    m_Eps = quad.AllocateQtensor<2>(0.0);
+    m_Sig = quad.AllocateQtensor<2>(0.0);
+
+    m_dV = quad.dV();
+
+    // Replicate mesh
+
+    GF::Mesh::Quad4::FineLayer mesh(sys.coor(), sys.conn());
+
+    auto elmap = mesh.roll(1);
+    size_t nconfig = m_elem_plas(m_nelem_plas - 1) - elmap(m_elem_plas(m_nelem_plas - 1));
+    size_t nroll = m_nelem_plas / nconfig;
+
+    m_u_s.resize(nconfig);
+    m_u_p.resize(nconfig);
+    m_Eps_s.resize(nconfig);
+    m_Eps_p.resize(nconfig);
+    m_Sig_s.resize(nconfig);
+    m_Sig_p.resize(nconfig);
+    m_elemmap.resize(nconfig);
+    m_nodemap.resize(nconfig);
+    m_elemmap.resize(nroll);
+    m_nodemap.resize(nroll);
+
+    for (size_t roll = 0; roll < nroll; ++roll) {
+        m_elemmap[roll] = mesh.roll(roll);
+        m_nodemap[roll] = GF::Mesh::elemmap2nodemap(m_elemmap[roll], coor, conn);
+    }
+
+    for (size_t iconfig = 0; iconfig < nconfig; ++iconfig) {
+
+        // Simple shear perturbation
+
+        xt::xtensor<double, 2> simple_shear = {
+            {0.0, 1.0},
+            {1.0, 0.0}};
+
+        this->computePerturbation(iconfig, simple_shear, u, Eps, Sig, K, solver, quad, vector, material);
+
+        m_u_s[iconfig] = u;
+        m_Eps_s[iconfig] = Eps;
+        m_Sig_s[iconfig] = Sig;
+
+        // Pure shear perturbation
+
+        xt::xtensor<double, 2> pure_shear = {
+            {1.0, 0.0},
+            {0.0, -1.0}};
+
+        this->computePerturbation(iconfig, pure_shear, u, Eps, Sig, K, solver, quad, vector, material);
+
+        m_u_p[iconfig] = u;
+        m_Eps_p[iconfig] = Eps;
+        m_Sig_p[iconfig] = Sig;
+    }
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+
+        Eps = this->Eps_s(e);
+        for (size_t q = 0; q < quad.nip(); ++q) {
+            auto Epsd = GM::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
+            m_dgamma(e, q) = Epsd(0, 1);
+        }
+
+        Eps = this->Eps_p(e);
+        for (size_t q = 0; q < quad.nip(); ++q) {
+            auto Epsd = GM::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
+            m_dE(e, q) = Epsd(0, 0);
+        }
+    }
+}
+
+inline void LocalTriggerFineLayer::computePerturbation(
+    size_t trigger_plastic,
+    const xt::xtensor<double, 2>& sig_star,
+    xt::xtensor<double, 2>& u,
+    xt::xtensor<double, 4>& Eps,
+    xt::xtensor<double, 4>& Sig,
+    GF::MatrixPartitioned& K,
+    GF::MatrixPartitionedSolver<>& solver,
+    const QD::Quadrature& quad,
+    const GF::VectorPartitioned& vector,
+    GM::Array<2>& material)
+{
+    size_t trigger_element = m_elem_plas(trigger_plastic);
+
+    Sig.fill(0.0);
+    u.fill(0.0);
+
+    for (size_t q = 0; q < quad.nip(); ++q) {
+        xt::view(Sig, trigger_element, q) = - sig_star;
+    }
+
+    auto fe = quad.Int_gradN_dot_tensor2_dV(Sig);
+    auto fint = vector.AssembleNode(fe);
+    auto fext = xt::zeros_like(fint);
+    vector.copy_p(fint, fext);
+    auto fres = xt::eval(fext - fint);
+
+    solver.solve(K, fres, u);
+
+    vector.asElement(u, fe);
+    quad.symGradN_vector(fe, Eps);
+    material.setStrain(Eps);
+    material.stress(Sig);
+}
+
+inline xt::xtensor<double, 2> LocalTriggerFineLayer::u_s(size_t trigger_plastic) const
+{
+    FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
+    size_t nconfig = m_u_s.size();
+    size_t iconfig = trigger_plastic % nconfig;
+    size_t iroll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
+    return xt::view(m_u_s[iconfig], xt::keep(m_nodemap[iroll]));
+}
+
+inline xt::xtensor<double, 2> LocalTriggerFineLayer::u_p(size_t trigger_plastic) const
+{
+    FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
+    size_t nconfig = m_u_p.size();
+    size_t iconfig = trigger_plastic % nconfig;
+    size_t iroll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
+    return xt::view(m_u_p[iconfig], xt::keep(m_nodemap[iroll]));
+}
+
+inline xt::xtensor<double, 4> LocalTriggerFineLayer::Eps_s(size_t trigger_plastic) const
+{
+    FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
+    size_t nconfig = m_u_s.size();
+    size_t iconfig = trigger_plastic % nconfig;
+    size_t iroll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
+    return xt::view(m_Eps_s[iconfig], xt::keep(m_elemmap[iroll]));
+}
+
+inline xt::xtensor<double, 4> LocalTriggerFineLayer::Eps_p(size_t trigger_plastic) const
+{
+    FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
+    size_t nconfig = m_u_p.size();
+    size_t iconfig = trigger_plastic % nconfig;
+    size_t iroll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
+    return xt::view(m_Eps_p[iconfig], xt::keep(m_elemmap[iroll]));
+}
+
+inline xt::xtensor<double, 4> LocalTriggerFineLayer::Sig_s(size_t trigger_plastic) const
+{
+    FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
+    size_t nconfig = m_u_s.size();
+    size_t iconfig = trigger_plastic % nconfig;
+    size_t iroll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
+    return xt::view(m_Sig_s[iconfig], xt::keep(m_elemmap[iroll]));
+}
+
+inline xt::xtensor<double, 4> LocalTriggerFineLayer::Sig_p(size_t trigger_plastic) const
+{
+    FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
+    size_t nconfig = m_u_p.size();
+    size_t iconfig = trigger_plastic % nconfig;
+    size_t iroll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
+    return xt::view(m_Sig_p[iconfig], xt::keep(m_elemmap[iroll]));
+}
+
+inline void LocalTriggerFineLayer::setState(
+    const xt::xtensor<double, 4>& Eps,
+    const xt::xtensor<double, 4>& Sig,
+    const xt::xtensor<double, 2>& epsy,
+    size_t N)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_Eps, Eps.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_Sig, Sig.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(epsy, {m_nelem_plas, m_nip}));
+    m_Eps = Eps;
+    m_Sig = Sig;
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+
+        auto Eps_s = this->Eps_s(e);
+        auto Eps_p = this->Eps_p(e);
+        auto Sig_s = this->Sig_s(e);
+        auto Sig_p = this->Sig_p(e);
+
+        for (size_t q = 0; q < m_nip; ++q) {
+
+            double dgamma = m_dgamma(e, q);
+            double dE = m_dE(e, q);
+
+            auto Epsd = GM::Deviatoric(xt::eval(xt::view(m_Eps, m_elem_plas(e), q)));
+            double gamma = Epsd(0, 1);
+            double E = Epsd(0, 0);
+
+            double y = epsy(e, q);
+
+            double a, b, c, D;
+
+            // solve for "p = 0"
+            a = std::pow(dgamma, 2.0);
+            b = 2.0 * gamma * dgamma;
+            c = std::pow(gamma, 2.0) + std::pow(E, 2.0) - std::pow(y, 2.0);
+            D = std::pow(b, 2.0) - 4.0 * a * c;
+            double smax = (- b + std::sqrt(D)) / (2.0 * a);
+            double smin = (- b - std::sqrt(D)) / (2.0 * a);
+
+            // solve for "s = 0"
+            a = std::pow(dE, 2.0);
+            b = 2.0 * E * dE;
+            c = std::pow(E, 2.0) + std::pow(gamma, 2.0) - std::pow(y, 2.0);
+            D = std::pow(b, 2.0) - 4.0 * a * c;
+            double pmax = (- b + std::sqrt(D)) / (2.0 * a);
+            double pmin = (- b - std::sqrt(D)) / (2.0 * a);
+
+            size_t n = static_cast<size_t>(- smin / (smax - smin) * N);
+            size_t m = N - n;
+            xt::xtensor<double, 2> S = xt::empty<double>({size_t(2), N});
+            xt::xtensor<double, 2> P = xt::empty<double>({size_t(2), N});
+            xt::xtensor<double, 2> W = xt::empty<double>({size_t(2), N});
+
+            for (size_t i = 0; i < 2; ++i) {
+                xt::view(S, i, xt::range(0, n)) = xt::linspace<double>(smin, 0, n);
+                xt::view(S, i, xt::range(n, N)) = xt::linspace<double>(smax / double(m), smax, m);
+                P(i, 0) = 0.0;
+                P(i, N - 1) = 0.0;
+            }
+            P(0, n - 1) = pmax;
+            P(1, n - 1) = pmin;
+
+            for (size_t j = 1; j < N - 1; ++j) {
+                if (j == n - 1) {
+                    continue;
+                }
+                a = std::pow(dE, 2.0);
+                b = 2.0 * E * dE;
+                c = std::pow(E, 2.0) + std::pow(gamma + S(0, j) * dgamma, 2.0) - std::pow(y, 2.0);
+                D = std::pow(b, 2.0) - 4.0 * a * c;
+                P(0, j) = (- b + std::sqrt(D)) / (2.0 * a);
+                P(1, j) = (- b - std::sqrt(D)) / (2.0 * a);
+
+            }
+
+            for (size_t i = 0; i < P.shape(0); ++i) {
+                for (size_t j = 0; j < P.shape(1); ++j) {
+                    W(i, j) = xt::sum(GT::A2_ddot_B2(
+                        xt::eval(m_Sig + P(i, j) * Sig_p + S(i, j) * Sig_s),
+                        xt::eval(P(i, j) * Eps_p + S(i, j) * Eps_s)
+                    ) * m_dV)();
+                }
+            }
+
+            auto idx = xt::argmin(W)();
+            m_smin(e, q) = S[idx];
+            m_pmin(e, q) = P[idx];
+            m_Wmin(e, q) = W[idx];
+        }
+    }
+}
+
+inline xt::xtensor<double, 2> LocalTriggerFineLayer::barriers() const
+{
+    return m_Wmin / xt::sum(m_dV)();
+}
+
+inline xt::xtensor<double, 2> LocalTriggerFineLayer::delta_u(size_t e, size_t q) const
+{
+    return m_pmin(e, q) * this->u_p(e) + m_smin(e, q) * this->u_s(e);
 }
 
 } // namespace UniformSingleLayer2d

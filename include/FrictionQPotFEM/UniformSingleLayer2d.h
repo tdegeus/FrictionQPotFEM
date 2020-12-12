@@ -10,18 +10,20 @@
 #include "config.h"
 
 #include <GMatElastoPlasticQPot/Cartesian2d.h>
+#include <GMatTensor/Cartesian2d.h>
 #include <GooseFEM/GooseFEM.h>
 #include <GooseFEM/Matrix.h>
+#include <GooseFEM/MatrixPartitioned.h>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xnorm.hpp>
 #include <xtensor/xshape.hpp>
-#include <xtensor/xsort.hpp>
 #include <xtensor/xset_operation.hpp>
 #include <fmt/core.h>
 
 namespace GF = GooseFEM;
 namespace QD = GooseFEM::Element::Quad4;
 namespace GM = GMatElastoPlasticQPot::Cartesian2d;
+namespace GT = GMatTensor::Cartesian2d;
 
 namespace FrictionQPotFEM {
 namespace UniformSingleLayer2d {
@@ -112,6 +114,7 @@ public:
     template <size_t rank, class T> auto AsTensor(const T& arg) const;
 
     // Get the "GooseFEM::VectorPartitioned" and the "GooseFEM::Element::Quad4::Quadrature"
+    auto stiffness() const;
     auto vector() const;
     auto quad() const;
 
@@ -229,6 +232,10 @@ protected:
     xt::xtensor<double, 4> m_Eps;
     xt::xtensor<double, 4> m_Sig;
 
+    // stiffness matrix
+    GF::MatrixPartitioned m_K;
+    GF::MatrixPartitionedSolver<> m_solve;
+
     // time
     double m_t = 0.0;
     double m_dt = 0.0;
@@ -241,15 +248,6 @@ protected:
     bool m_set_plas = false;
 
 protected:
-
-    // Initialise geometry (called by constructor).
-    void initGeometry(
-        const xt::xtensor<double, 2>& coor,
-        const xt::xtensor<size_t, 2>& conn,
-        const xt::xtensor<size_t, 2>& dofs,
-        const xt::xtensor<size_t, 1>& iip,
-        const xt::xtensor<size_t, 1>& elem_elastic,
-        const xt::xtensor<size_t, 1>& elem_plastic);
 
     // Function to unify the implementations of "setMassMatrix" and "setDampingMatrix".
     template <class T>
@@ -375,14 +373,83 @@ protected:
 
 protected:
 
-    // Alias for constructor to allow sub-classing (called by constructor).
-    void initHybridSystem();
-
     // Evaluate "m_fmaterial": computes strain and stress in the plastic elements only.
     // Contrary to "System::computeForceMaterial" does not call "computeStress",
     // therefore separate overrides of "Sig" and "Eps" are needed.
     void computeForceMaterial() override;
 
+};
+
+// -------------------------------------------------
+// Trigger by simple shear + pure shear perturbation
+// -------------------------------------------------
+
+class LocalTriggerFineLayer
+{
+public:
+    LocalTriggerFineLayer() = default;
+    LocalTriggerFineLayer(const System& sys);
+
+    // set state, compute energy barriers for all integration points,
+    // discretise the yield-surface in "ntest"-steps
+    void setState(
+        const xt::xtensor<double, 4>& Eps,
+        const xt::xtensor<double, 4>& Sig,
+        const xt::xtensor<double, 2>& epsy,
+        size_t ntest = 100);
+
+    // return all energy barriers [nelem_elas, nip], as energy density
+    xt::xtensor<double, 2> barriers() const;
+
+    // return the displacement corresponding to the energy barrier
+    xt::xtensor<double, 2> delta_u(size_t plastic_element, size_t q) const;
+
+    // return perturbation
+    xt::xtensor<double, 2> u_s(size_t plastic_element) const;
+    xt::xtensor<double, 2> u_p(size_t plastic_element) const;
+    xt::xtensor<double, 4> Eps_s(size_t plastic_element) const;
+    xt::xtensor<double, 4> Eps_p(size_t plastic_element) const;
+    xt::xtensor<double, 4> Sig_s(size_t plastic_element) const;
+    xt::xtensor<double, 4> Sig_p(size_t plastic_element) const;
+
+protected:
+    void computePerturbation(
+        size_t plastic_element,
+        const xt::xtensor<double, 2>& sig_star, // stress perturbation at "plastic_element"
+        xt::xtensor<double, 2>& u,      // output equilibrium displacement
+        xt::xtensor<double, 4>& Eps,    // output equilibrium strain`
+        xt::xtensor<double, 4>& Sig,    // output equilibrium stress
+        GF::MatrixPartitioned& K,
+        GF::MatrixPartitionedSolver<>& solver,
+        const QD::Quadrature& quad,
+        const GF::VectorPartitioned& vector,
+        GM::Array<2>& material);
+
+protected:
+
+    size_t m_nip;
+    size_t m_nelem_plas;
+    xt::xtensor<size_t, 1> m_elem_plas;
+
+    std::vector<xt::xtensor<double, 2>> m_u_s;
+    std::vector<xt::xtensor<double, 2>> m_u_p;
+    std::vector<xt::xtensor<double, 4>> m_Eps_s;
+    std::vector<xt::xtensor<double, 4>> m_Eps_p;
+    std::vector<xt::xtensor<double, 4>> m_Sig_s;
+    std::vector<xt::xtensor<double, 4>> m_Sig_p;
+    std::vector<xt::xtensor<double, 1>> m_elemmap;
+    std::vector<xt::xtensor<double, 1>> m_nodemap;
+
+    xt::xtensor<double, 2> m_dV;
+
+    xt::xtensor<double, 4> m_Eps;
+    xt::xtensor<double, 4> m_Sig;
+
+    xt::xtensor<double, 2> m_smin; // [nip, N]
+    xt::xtensor<double, 2> m_pmin; // [nip, N]
+    xt::xtensor<double, 2> m_Wmin; // [nip, N]
+    xt::xtensor<double, 2> m_dgamma; // [nip, N]
+    xt::xtensor<double, 2> m_dE; // [nip, N]
 };
 
 } // namespace UniformSingleLayer2d
