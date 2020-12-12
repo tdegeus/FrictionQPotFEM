@@ -387,6 +387,13 @@ public:
         const xt::xtensor<double, 2>& epsy,
         size_t ntest = 100);
 
+    // set state, compute energy barriers for all integration points,
+    // discretise the yield-surface using a minimal number of tests
+    void setStateMin(
+        const xt::xtensor<double, 4>& Eps,
+        const xt::xtensor<double, 4>& Sig,
+        const xt::xtensor<double, 2>& epsy);
+
     // return all energy barriers [nelem_elas, nip], as energy density
     xt::xtensor<double, 2> barriers() const;
 

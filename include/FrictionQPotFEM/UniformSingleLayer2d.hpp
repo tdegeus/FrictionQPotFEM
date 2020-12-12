@@ -1136,6 +1136,96 @@ inline void LocalTriggerFineLayer::setState(
     }
 }
 
+inline void LocalTriggerFineLayer::setStateMin(
+    const xt::xtensor<double, 4>& Eps,
+    const xt::xtensor<double, 4>& Sig,
+    const xt::xtensor<double, 2>& epsy)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_Eps, Eps.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_Sig, Sig.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(epsy, {m_nelem_plas, m_nip}));
+    m_Eps = Eps;
+    m_Sig = Sig;
+
+    std::array<double, 8> S;
+    std::array<double, 8> P;
+    std::array<double, 8> W;
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+
+        auto Eps_s = this->Eps_s(e);
+        auto Eps_p = this->Eps_p(e);
+        auto Sig_s = this->Sig_s(e);
+        auto Sig_p = this->Sig_p(e);
+
+        for (size_t q = 0; q < m_nip; ++q) {
+
+            double dgamma = m_dgamma(e, q);
+            double dE = m_dE(e, q);
+
+            auto Epsd = GM::Deviatoric(xt::eval(xt::view(m_Eps, m_elem_plas(e), q)));
+            double gamma = Epsd(0, 1);
+            double E = Epsd(0, 0);
+            double y = epsy(e, q);
+            double a, b, c, D;
+
+            // solve for "p = 0"
+            a = SQR(dgamma);
+            b = 2.0 * gamma * dgamma;
+            c = SQR(gamma) + SQR(E) - SQR(y);
+            D = SQR(b) - 4.0 * a * c;
+            double smax = (- b + std::sqrt(D)) / (2.0 * a);
+            double smin = (- b - std::sqrt(D)) / (2.0 * a);
+            P[0] = 0.0;
+            P[1] = 0.0;
+            S[0] = smin;
+            S[1] = smax;
+
+            // solve for "s = 0"
+            a = SQR(dE);
+            b = 2.0 * E * dE;
+            c = SQR(E) + SQR(gamma) - SQR(y);
+            D = SQR(b) - 4.0 * a * c;
+            double pmax = (- b + std::sqrt(D)) / (2.0 * a);
+            double pmin = (- b - std::sqrt(D)) / (2.0 * a);
+            P[2] = pmin;
+            P[3] = pmax;
+            S[2] = 0.0;
+            S[3] = 0.0;
+            S[4] = smin / 2.0;
+            S[5] = smin / 2.0;
+            S[6] = smax / 2.0;
+            S[7] = smax / 2.0;
+
+            for (size_t i = 4; i < S.size(); ++i) {
+                if (i % 2 != 0) {
+                    continue;
+                }
+                a = SQR(dE);
+                b = 2.0 * E * dE;
+                c = SQR(E) + std::pow(gamma + S[i] * dgamma, 2.0) - SQR(y);
+                D = SQR(b) - 4.0 * a * c;
+                P[i] = (- b + std::sqrt(D)) / (2.0 * a);
+                P[i + 1] = (- b - std::sqrt(D)) / (2.0 * a);
+
+            }
+
+            for (size_t i = 0; i < S.size(); ++i) {
+                xt::xtensor<double, 4> sig = P[i] * Sig_p + S[i] * Sig_s + m_Sig;
+                xt::xtensor<double, 4> deps = P[i] * Eps_p + S[i] * Eps_s;
+                xt::xtensor<double, 2> w = GT::A2s_ddot_B2s(sig, deps);
+                w *= m_dV;
+                W[i] = xt::sum(w)();
+            }
+
+            auto idx = std::distance(W.begin(), std::min_element(W.begin(), W.end()));
+            m_smin(e, q) = S[idx];
+            m_pmin(e, q) = P[idx];
+            m_Wmin(e, q) = W[idx];
+        }
+    }
+}
+
 inline xt::xtensor<double, 2> LocalTriggerFineLayer::barriers() const
 {
     return m_Wmin / xt::sum(m_dV)();
