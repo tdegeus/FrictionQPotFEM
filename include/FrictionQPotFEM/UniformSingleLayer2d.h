@@ -17,7 +17,6 @@
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xnorm.hpp>
 #include <xtensor/xshape.hpp>
-#include <xtensor/xsort.hpp>
 #include <xtensor/xset_operation.hpp>
 #include <fmt/core.h>
 
@@ -251,8 +250,6 @@ protected:
     bool m_set_elas = false;
     bool m_set_plas = false;
 
-    friend class LocalTrigger;
-
 protected:
 
     // Function to unify the implementations of "setMassMatrix" and "setDampingMatrix".
@@ -456,8 +453,6 @@ protected:
     xt::xtensor<double, 2> m_Wmin; // [nip, N]
     xt::xtensor<double, 2> m_dgamma; // [nip, N]
     xt::xtensor<double, 2> m_dE; // [nip, N]
-
-
 };
 
 } // namespace UniformSingleLayer2d

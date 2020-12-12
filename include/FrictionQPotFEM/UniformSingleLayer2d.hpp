@@ -1175,7 +1175,7 @@ inline void LocalTriggerFineLayer::setState(
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_Eps, Eps.shape()));
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_Sig, Sig.shape()));
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(epsy, {m_nelem_plas, m_E}));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(epsy, {m_nelem_plas, m_nip}));
     m_Eps = Eps;
     m_Sig = Sig;
 
