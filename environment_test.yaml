@@ -3,3 +3,6 @@ channels:
 dependencies:
   - catch2
   - goosefem
+  - python-goosefem
+  - python-gmattensor
+  - python-gmatelastoplasticqpot
