@@ -1259,6 +1259,16 @@ inline xt::xtensor<double, 2> LocalTriggerFineLayer::delta_u(size_t e, size_t q)
     return m_pmin(e, q) * this->u_p(e) + m_smin(e, q) * this->u_s(e);
 }
 
+inline double LocalTriggerFineLayer::p(size_t e, size_t q) const
+{
+    return m_pmin(e, q);
+}
+
+inline double LocalTriggerFineLayer::s(size_t e, size_t q) const
+{
+    return m_smin(e, q);
+}
+
 } // namespace UniformSingleLayer2d
 } // namespace FrictionQPotFEM
 

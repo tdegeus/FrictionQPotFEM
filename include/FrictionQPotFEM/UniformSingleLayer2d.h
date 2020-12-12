@@ -418,6 +418,10 @@ public:
     // return the displacement corresponding to the energy barrier
     xt::xtensor<double, 2> delta_u(size_t plastic_element, size_t q) const;
 
+    // return the trigger "p" ans "s"
+    double p(size_t plastic_element, size_t q) const;
+    double s(size_t plastic_element, size_t q) const;
+
     // return perturbation
     xt::xtensor<double, 2> u_s(size_t plastic_element) const;
     xt::xtensor<double, 2> u_p(size_t plastic_element) const;
