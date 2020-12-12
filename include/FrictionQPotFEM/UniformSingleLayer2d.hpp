@@ -16,11 +16,6 @@ inline std::vector<std::string> versionInfo()
 {
     std::vector<std::string> ret;
 
-    ret.push_back(fmt::format("xtensor={0:d}.{1:d}.{2:d}",
-        XTENSOR_VERSION_MAJOR,
-        XTENSOR_VERSION_MINOR,
-        XTENSOR_VERSION_PATCH));
-
     ret.push_back(fmt::format("frictionqpotfem={0:d}.{1:d}.{2:d}",
         FRICTIONQPOTFEM_VERSION_MAJOR,
         FRICTIONQPOTFEM_VERSION_MINOR,
@@ -36,10 +31,20 @@ inline std::vector<std::string> versionInfo()
         GMATELASTOPLASTICQPOT_VERSION_MINOR,
         GMATELASTOPLASTICQPOT_VERSION_PATCH));
 
+    ret.push_back(fmt::format("gmattensor={0:d}.{1:d}.{2:d}",
+        GMATTENSOR_VERSION_MAJOR,
+        GMATTENSOR_VERSION_MINOR,
+        GMATTENSOR_VERSION_PATCH));
+
     ret.push_back(fmt::format("qpot={0:d}.{1:d}.{2:d}",
         QPOT_VERSION_MAJOR,
         QPOT_VERSION_MINOR,
         QPOT_VERSION_PATCH));
+
+    ret.push_back(fmt::format("xtensor={0:d}.{1:d}.{2:d}",
+        XTENSOR_VERSION_MAJOR,
+        XTENSOR_VERSION_MINOR,
+        XTENSOR_VERSION_PATCH));
 
     return ret;
 }

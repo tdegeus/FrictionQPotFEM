@@ -28,9 +28,6 @@ namespace GT = GMatTensor::Cartesian2d;
 namespace FrictionQPotFEM {
 namespace UniformSingleLayer2d {
 
-// pre-deceleration
-class LocalTrigger;
-
 // -------------------------------------
 // Return versions of returned libraries
 // -------------------------------------
