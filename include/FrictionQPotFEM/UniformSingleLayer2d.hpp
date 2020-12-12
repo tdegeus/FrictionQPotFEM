@@ -57,6 +57,17 @@ inline System::System(
     const xt::xtensor<size_t, 1>& elem_elastic,
     const xt::xtensor<size_t, 1>& elem_plastic)
 {
+    this->initSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+}
+
+inline void System::initSystem(
+        const xt::xtensor<double, 2>& coor,
+        const xt::xtensor<size_t, 2>& conn,
+        const xt::xtensor<size_t, 2>& dofs,
+        const xt::xtensor<size_t, 1>& iip,
+        const xt::xtensor<size_t, 1>& elem_elastic,
+        const xt::xtensor<size_t, 1>& elem_plastic)
+{
     m_coor = coor;
     m_conn = conn;
     m_dofs = dofs;
@@ -713,9 +724,21 @@ inline HybridSystem::HybridSystem(
     const xt::xtensor<size_t, 2>& dofs,
     const xt::xtensor<size_t, 1>& iip,
     const xt::xtensor<size_t, 1>& elem_elastic,
-    const xt::xtensor<size_t, 1>& elem_plastic) :
-    System::System(coor, conn, dofs, iip, elem_elastic, elem_plastic)
+    const xt::xtensor<size_t, 1>& elem_plastic)
 {
+    this->initHybridSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+}
+
+inline void HybridSystem::initHybridSystem(
+    const xt::xtensor<double, 2>& coor,
+    const xt::xtensor<size_t, 2>& conn,
+    const xt::xtensor<size_t, 2>& dofs,
+    const xt::xtensor<size_t, 1>& iip,
+    const xt::xtensor<size_t, 1>& elem_elastic,
+    const xt::xtensor<size_t, 1>& elem_plastic)
+{
+    this->initSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+
     m_conn_elas = xt::view(m_conn, xt::keep(m_elem_elas), xt::all());
     m_conn_plas = xt::view(m_conn, xt::keep(m_elem_plas), xt::all());
 
@@ -1055,6 +1078,10 @@ inline void LocalTriggerFineLayer::setState(
     m_Eps = Eps;
     m_Sig = Sig;
 
+    xt::xtensor<double, 2> S = xt::empty<double>({size_t(2), N});
+    xt::xtensor<double, 2> P = xt::empty<double>({size_t(2), N});
+    xt::xtensor<double, 2> W = xt::empty<double>({size_t(2), N});
+
     for (size_t e = 0; e < m_nelem_plas; ++e) {
 
         auto Eps_s = this->Eps_s(e);
@@ -1070,32 +1097,27 @@ inline void LocalTriggerFineLayer::setState(
             auto Epsd = GM::Deviatoric(xt::eval(xt::view(m_Eps, m_elem_plas(e), q)));
             double gamma = Epsd(0, 1);
             double E = Epsd(0, 0);
-
             double y = epsy(e, q);
-
             double a, b, c, D;
 
             // solve for "p = 0"
-            a = std::pow(dgamma, 2.0);
+            a = SQR(dgamma);
             b = 2.0 * gamma * dgamma;
-            c = std::pow(gamma, 2.0) + std::pow(E, 2.0) - std::pow(y, 2.0);
-            D = std::pow(b, 2.0) - 4.0 * a * c;
+            c = SQR(gamma) + SQR(E) - SQR(y);
+            D = SQR(b) - 4.0 * a * c;
             double smax = (- b + std::sqrt(D)) / (2.0 * a);
             double smin = (- b - std::sqrt(D)) / (2.0 * a);
 
             // solve for "s = 0"
-            a = std::pow(dE, 2.0);
+            a = SQR(dE);
             b = 2.0 * E * dE;
-            c = std::pow(E, 2.0) + std::pow(gamma, 2.0) - std::pow(y, 2.0);
-            D = std::pow(b, 2.0) - 4.0 * a * c;
+            c = SQR(E) + SQR(gamma) - SQR(y);
+            D = SQR(b) - 4.0 * a * c;
             double pmax = (- b + std::sqrt(D)) / (2.0 * a);
             double pmin = (- b - std::sqrt(D)) / (2.0 * a);
 
             size_t n = static_cast<size_t>(- smin / (smax - smin) * N);
             size_t m = N - n;
-            xt::xtensor<double, 2> S = xt::empty<double>({size_t(2), N});
-            xt::xtensor<double, 2> P = xt::empty<double>({size_t(2), N});
-            xt::xtensor<double, 2> W = xt::empty<double>({size_t(2), N});
 
             for (size_t i = 0; i < 2; ++i) {
                 xt::view(S, i, xt::range(0, n)) = xt::linspace<double>(smin, 0, n);
@@ -1110,10 +1132,10 @@ inline void LocalTriggerFineLayer::setState(
                 if (j == n - 1) {
                     continue;
                 }
-                a = std::pow(dE, 2.0);
+                a = SQR(dE);
                 b = 2.0 * E * dE;
-                c = std::pow(E, 2.0) + std::pow(gamma + S(0, j) * dgamma, 2.0) - std::pow(y, 2.0);
-                D = std::pow(b, 2.0) - 4.0 * a * c;
+                c = SQR(E) + std::pow(gamma + S(0, j) * dgamma, 2.0) - SQR(y);
+                D = SQR(b) - 4.0 * a * c;
                 P(0, j) = (- b + std::sqrt(D)) / (2.0 * a);
                 P(1, j) = (- b - std::sqrt(D)) / (2.0 * a);
 
@@ -1121,14 +1143,105 @@ inline void LocalTriggerFineLayer::setState(
 
             for (size_t i = 0; i < P.shape(0); ++i) {
                 for (size_t j = 0; j < P.shape(1); ++j) {
-                    W(i, j) = xt::sum(GT::A2_ddot_B2(
-                        xt::eval(m_Sig + P(i, j) * Sig_p + S(i, j) * Sig_s),
-                        xt::eval(P(i, j) * Eps_p + S(i, j) * Eps_s)
-                    ) * m_dV)();
+                    xt::xtensor<double, 4> sig = P(i, j) * Sig_p + S(i, j) * Sig_s + m_Sig;
+                    xt::xtensor<double, 4> deps = P(i, j) * Eps_p + S(i, j) * Eps_s;
+                    xt::xtensor<double, 2> w = GT::A2s_ddot_B2s(sig, deps);
+                    w *= m_dV;
+                    W(i, j) = xt::sum(w)();
                 }
             }
 
             auto idx = xt::argmin(W)();
+            m_smin(e, q) = S[idx];
+            m_pmin(e, q) = P[idx];
+            m_Wmin(e, q) = W[idx];
+        }
+    }
+}
+
+inline void LocalTriggerFineLayer::setStateMin(
+    const xt::xtensor<double, 4>& Eps,
+    const xt::xtensor<double, 4>& Sig,
+    const xt::xtensor<double, 2>& epsy)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_Eps, Eps.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_Sig, Sig.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(epsy, {m_nelem_plas, m_nip}));
+    m_Eps = Eps;
+    m_Sig = Sig;
+
+    std::array<double, 8> S;
+    std::array<double, 8> P;
+    std::array<double, 8> W;
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+
+        auto Eps_s = this->Eps_s(e);
+        auto Eps_p = this->Eps_p(e);
+        auto Sig_s = this->Sig_s(e);
+        auto Sig_p = this->Sig_p(e);
+
+        for (size_t q = 0; q < m_nip; ++q) {
+
+            double dgamma = m_dgamma(e, q);
+            double dE = m_dE(e, q);
+
+            auto Epsd = GM::Deviatoric(xt::eval(xt::view(m_Eps, m_elem_plas(e), q)));
+            double gamma = Epsd(0, 1);
+            double E = Epsd(0, 0);
+            double y = epsy(e, q);
+            double a, b, c, D;
+
+            // solve for "p = 0"
+            a = SQR(dgamma);
+            b = 2.0 * gamma * dgamma;
+            c = SQR(gamma) + SQR(E) - SQR(y);
+            D = SQR(b) - 4.0 * a * c;
+            double smax = (- b + std::sqrt(D)) / (2.0 * a);
+            double smin = (- b - std::sqrt(D)) / (2.0 * a);
+            P[0] = 0.0;
+            P[1] = 0.0;
+            S[0] = smin;
+            S[1] = smax;
+
+            // solve for "s = 0"
+            a = SQR(dE);
+            b = 2.0 * E * dE;
+            c = SQR(E) + SQR(gamma) - SQR(y);
+            D = SQR(b) - 4.0 * a * c;
+            double pmax = (- b + std::sqrt(D)) / (2.0 * a);
+            double pmin = (- b - std::sqrt(D)) / (2.0 * a);
+            P[2] = pmin;
+            P[3] = pmax;
+            S[2] = 0.0;
+            S[3] = 0.0;
+            S[4] = smin / 2.0;
+            S[5] = smin / 2.0;
+            S[6] = smax / 2.0;
+            S[7] = smax / 2.0;
+
+            for (size_t i = 4; i < S.size(); ++i) {
+                if (i % 2 != 0) {
+                    continue;
+                }
+                a = SQR(dE);
+                b = 2.0 * E * dE;
+                c = SQR(E) + std::pow(gamma + S[i] * dgamma, 2.0) - SQR(y);
+                D = SQR(b) - 4.0 * a * c;
+                P[i] = (- b + std::sqrt(D)) / (2.0 * a);
+                P[i + 1] = (- b - std::sqrt(D)) / (2.0 * a);
+
+            }
+
+            for (size_t i = 0; i < S.size(); ++i) {
+                xt::xtensor<double, 4> sig = P[i] * Sig_p + S[i] * Sig_s + m_Sig;
+                xt::xtensor<double, 4> deps = P[i] * Eps_p + S[i] * Eps_s;
+                xt::xtensor<double, 2> w = GT::A2s_ddot_B2s(sig, deps);
+                w *= m_dV;
+                W[i] = xt::sum(w)();
+            }
+
+            auto idx = std::distance(W.begin(), std::min_element(W.begin(), W.end()));
             m_smin(e, q) = S[idx];
             m_pmin(e, q) = P[idx];
             m_Wmin(e, q) = W[idx];

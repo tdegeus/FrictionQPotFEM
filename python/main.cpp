@@ -196,6 +196,13 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             py::arg("epsy"),
             py::arg("ntest") = 100)
 
+        .def(
+            "setStateMin",
+            &SM::LocalTriggerFineLayer::setStateMin,
+            py::arg("Eps"),
+            py::arg("Sig"),
+            py::arg("epsy"))
+
         .def("barriers", &SM::LocalTriggerFineLayer::barriers)
         .def("delta_u", &SM::LocalTriggerFineLayer::delta_u)
 

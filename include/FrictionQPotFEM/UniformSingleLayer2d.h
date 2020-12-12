@@ -25,6 +25,8 @@ namespace QD = GooseFEM::Element::Quad4;
 namespace GM = GMatElastoPlasticQPot::Cartesian2d;
 namespace GT = GMatTensor::Cartesian2d;
 
+#define SQR(x) ((x) * (x)) // x^2
+
 namespace FrictionQPotFEM {
 namespace UniformSingleLayer2d {
 
@@ -249,6 +251,15 @@ protected:
 
 protected:
 
+    // Constructor alias
+    void initSystem(
+        const xt::xtensor<double, 2>& coor,
+        const xt::xtensor<size_t, 2>& conn,
+        const xt::xtensor<size_t, 2>& dofs,
+        const xt::xtensor<size_t, 1>& iip,
+        const xt::xtensor<size_t, 1>& elem_elastic,
+        const xt::xtensor<size_t, 1>& elem_plastic);
+
     // Function to unify the implementations of "setMassMatrix" and "setDampingMatrix".
     template <class T>
     void setMatrix(T& matrix, const xt::xtensor<double, 1>& val_elem);
@@ -360,6 +371,15 @@ protected:
 
 protected:
 
+    // Constructor alias
+    void initHybridSystem(
+        const xt::xtensor<double, 2>& coor,
+        const xt::xtensor<size_t, 2>& conn,
+        const xt::xtensor<size_t, 2>& dofs,
+        const xt::xtensor<size_t, 1>& iip,
+        const xt::xtensor<size_t, 1>& elem_elastic,
+        const xt::xtensor<size_t, 1>& elem_plastic);
+
     // Evaluate "m_fmaterial": computes strain and stress in the plastic elements only.
     // Contrary to "System::computeForceMaterial" does not call "computeStress",
     // therefore separate overrides of "Sig" and "Eps" are needed.
@@ -384,6 +404,13 @@ public:
         const xt::xtensor<double, 4>& Sig,
         const xt::xtensor<double, 2>& epsy,
         size_t ntest = 100);
+
+    // set state, compute energy barriers for all integration points,
+    // discretise the yield-surface using a minimal number of tests
+    void setStateMin(
+        const xt::xtensor<double, 4>& Eps,
+        const xt::xtensor<double, 4>& Sig,
+        const xt::xtensor<double, 2>& epsy);
 
     // return all energy barriers [nelem_elas, nip], as energy density
     xt::xtensor<double, 2> barriers() const;
