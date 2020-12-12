@@ -61,3 +61,6 @@ jobs:
       run: |
         python setup.py build
         python setup.py install
+
+    - name: Run Python tests
+      run: python test/UniformSingleLayer2d_LocalTriggerFineLayer.py

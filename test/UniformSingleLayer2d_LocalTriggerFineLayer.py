@@ -216,6 +216,7 @@ sys.setDampingMatrix(np.ones(nelem))
 sys.setDt(1)
 
 modelTrigger = model.LocalTriggerFineLayer(sys)
+modelTrigger.setState(Eps, Sig, 0.5 * np.ones((len(plastic), 4)), 100)
 
 Barrier = []
 
@@ -254,7 +255,8 @@ for itrigger, trigger in enumerate(plastic):
     pmin = Py.ravel()[np.argmin(Ey)]
     Barrier += [np.min(Ey)]
 
-Barrier = np.array(Barrier)
-modelTrigger.setState(Eps, Sig, 0.5 * np.ones((len(plastic), 4)), 100)
+    delta_u = pmin * u_p + smin * u_s
+    assert np.allclose(delta_u, modelTrigger.delta_u(itrigger, 0))
 
+Barrier = np.array(Barrier)
 assert np.allclose(Barrier, modelTrigger.barriers()[:, 0] * np.sum(quad.dV()))

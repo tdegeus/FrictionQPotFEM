@@ -396,29 +396,35 @@ public:
     LocalTriggerFineLayer() = default;
     LocalTriggerFineLayer(const System& sys);
 
+    // set state, compute energy barriers for all integration points,
+    // discretise the yield-surface in "ntest"-steps
     void setState(
         const xt::xtensor<double, 4>& Eps,
         const xt::xtensor<double, 4>& Sig,
         const xt::xtensor<double, 2>& epsy,
         size_t ntest = 100);
 
+    // return all energy barriers [nelem_elas, nip], as energy density
     xt::xtensor<double, 2> barriers() const;
-    xt::xtensor<double, 2> delta_u(size_t trigger_plastic, size_t q) const;
 
-    xt::xtensor<double, 2> u_s(size_t trigger_plastic) const;
-    xt::xtensor<double, 2> u_p(size_t trigger_plastic) const;
-    xt::xtensor<double, 4> Eps_s(size_t trigger_plastic) const;
-    xt::xtensor<double, 4> Eps_p(size_t trigger_plastic) const;
-    xt::xtensor<double, 4> Sig_s(size_t trigger_plastic) const;
-    xt::xtensor<double, 4> Sig_p(size_t trigger_plastic) const;
+    // return the displacement corresponding to the energy barrier
+    xt::xtensor<double, 2> delta_u(size_t plastic_element, size_t q) const;
+
+    // return perturbation
+    xt::xtensor<double, 2> u_s(size_t plastic_element) const;
+    xt::xtensor<double, 2> u_p(size_t plastic_element) const;
+    xt::xtensor<double, 4> Eps_s(size_t plastic_element) const;
+    xt::xtensor<double, 4> Eps_p(size_t plastic_element) const;
+    xt::xtensor<double, 4> Sig_s(size_t plastic_element) const;
+    xt::xtensor<double, 4> Sig_p(size_t plastic_element) const;
 
 protected:
     void computePerturbation(
-        size_t trigger_plastic,
-        const xt::xtensor<double, 2>& sig_star,
-        xt::xtensor<double, 2>& u,
-        xt::xtensor<double, 4>& Eps,
-        xt::xtensor<double, 4>& Sig,
+        size_t plastic_element,
+        const xt::xtensor<double, 2>& sig_star, // stress perturbation at "plastic_element"
+        xt::xtensor<double, 2>& u,      // output equilibrium displacement
+        xt::xtensor<double, 4>& Eps,    // output equilibrium strain`
+        xt::xtensor<double, 4>& Sig,    // output equilibrium stress
         GF::MatrixPartitioned& K,
         GF::MatrixPartitionedSolver<>& solver,
         const QD::Quadrature& quad,
