@@ -251,6 +251,15 @@ protected:
 
 protected:
 
+    // Constructor alias
+    void initSystem(
+        const xt::xtensor<double, 2>& coor,
+        const xt::xtensor<size_t, 2>& conn,
+        const xt::xtensor<size_t, 2>& dofs,
+        const xt::xtensor<size_t, 1>& iip,
+        const xt::xtensor<size_t, 1>& elem_elastic,
+        const xt::xtensor<size_t, 1>& elem_plastic);
+
     // Function to unify the implementations of "setMassMatrix" and "setDampingMatrix".
     template <class T>
     void setMatrix(T& matrix, const xt::xtensor<double, 1>& val_elem);
@@ -361,6 +370,15 @@ protected:
     bool m_eval_full = true;
 
 protected:
+
+    // Constructor alias
+    void initHybridSystem(
+        const xt::xtensor<double, 2>& coor,
+        const xt::xtensor<size_t, 2>& conn,
+        const xt::xtensor<size_t, 2>& dofs,
+        const xt::xtensor<size_t, 1>& iip,
+        const xt::xtensor<size_t, 1>& elem_elastic,
+        const xt::xtensor<size_t, 1>& elem_plastic);
 
     // Evaluate "m_fmaterial": computes strain and stress in the plastic elements only.
     // Contrary to "System::computeForceMaterial" does not call "computeStress",

@@ -57,6 +57,17 @@ inline System::System(
     const xt::xtensor<size_t, 1>& elem_elastic,
     const xt::xtensor<size_t, 1>& elem_plastic)
 {
+    this->initSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+}
+
+inline void System::initSystem(
+        const xt::xtensor<double, 2>& coor,
+        const xt::xtensor<size_t, 2>& conn,
+        const xt::xtensor<size_t, 2>& dofs,
+        const xt::xtensor<size_t, 1>& iip,
+        const xt::xtensor<size_t, 1>& elem_elastic,
+        const xt::xtensor<size_t, 1>& elem_plastic)
+{
     m_coor = coor;
     m_conn = conn;
     m_dofs = dofs;
@@ -713,9 +724,21 @@ inline HybridSystem::HybridSystem(
     const xt::xtensor<size_t, 2>& dofs,
     const xt::xtensor<size_t, 1>& iip,
     const xt::xtensor<size_t, 1>& elem_elastic,
-    const xt::xtensor<size_t, 1>& elem_plastic) :
-    System::System(coor, conn, dofs, iip, elem_elastic, elem_plastic)
+    const xt::xtensor<size_t, 1>& elem_plastic)
 {
+    this->initHybridSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+}
+
+inline void HybridSystem::initHybridSystem(
+    const xt::xtensor<double, 2>& coor,
+    const xt::xtensor<size_t, 2>& conn,
+    const xt::xtensor<size_t, 2>& dofs,
+    const xt::xtensor<size_t, 1>& iip,
+    const xt::xtensor<size_t, 1>& elem_elastic,
+    const xt::xtensor<size_t, 1>& elem_plastic)
+{
+    this->initSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+
     m_conn_elas = xt::view(m_conn, xt::keep(m_elem_elas), xt::all());
     m_conn_plas = xt::view(m_conn, xt::keep(m_elem_plas), xt::all());
 
