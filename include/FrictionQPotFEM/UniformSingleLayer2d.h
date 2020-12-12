@@ -320,19 +320,6 @@ public:
     xt::xtensor<double, 2> plastic_CurrentYieldRight() const override; // yield strain 'right'
     xt::xtensor<size_t, 2> plastic_CurrentIndex() const override; // current index in the landscape
 
-    // Read the (tilted) energy landscape to local simple shear perturbation
-    xt::xtensor<double, 2> plastic_ElementEnergyLandscapeForSimpleShear(
-        const xt::xtensor<double, 1>& dgamma,  // simple shear perturbation
-        bool tilted = true); // tilt based on current element internal force
-
-    // Read the (first) energy barrier in the tilted energy landscape in
-    // "plastic_ElementEnergyLandscapeForSimpleShear".
-    // Returns array of shape (N, 2) with columns (delta_E, delta_epsxy).
-    xt::xtensor<double, 2> plastic_ElementEnergyBarrierForSimpleShear(
-        bool tilted = true, // tilt based on current element internal force
-        size_t max_iter = 100, // maximum number of iterations to find a barrier
-        double perturbation = 1e-12); // small perturbation, to advance event driven
-
 protected:
 
     // mesh parameters

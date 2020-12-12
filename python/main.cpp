@@ -180,28 +180,6 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             py::arg("niter_tol") = 20,
             py::arg("max_iter") = 1000000)
 
-        .def(
-            "plastic_ElementEnergyLandscapeForSimpleShear",
-            &SM::HybridSystem::plastic_ElementEnergyLandscapeForSimpleShear,
-            "plastic_ElementEnergyLandscapeForSimpleShear",
-            py::arg("dgamma"),
-            py::arg("titled") = true)
-
-        .def(
-            "plastic_ElementEnergyBarrierForSimpleShear",
-            &SM::HybridSystem::plastic_ElementEnergyBarrierForSimpleShear,
-            "plastic_ElementEnergyBarrierForSimpleShear",
-            py::arg("titled") = true,
-            py::arg("max_iter") = 100,
-            py::arg("perturbation") = 1e-12)
-
-        .def(
-            "plastic_ElementYieldBarrierForSimpleShear",
-            &SM::HybridSystem::plastic_ElementYieldBarrierForSimpleShear,
-            "plastic_ElementYieldBarrierForSimpleShear",
-            py::arg("deps_kick") = 0.0,
-            py::arg("iquad") = 0)
-
         .def("__repr__", [](const SM::HybridSystem&) {
             return "<FrictionQPotFEM.UniformSingleLayer2d.HybridSystem>";
         });
