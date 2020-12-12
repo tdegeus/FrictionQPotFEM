@@ -186,48 +186,6 @@ SECTION("System::triggerElementWithLocalSimpleShear")
     REQUIRE(xt::allclose(eps_p, 1.0 + delta_eps / 2.0));
 }
 
-SECTION("System::plastic_ElementYieldBarrierForSimpleShear")
-{
-    GooseFEM::Mesh::Quad4::Regular mesh(3, 3);
-
-    auto dofs = mesh.dofs();
-    auto top = mesh.nodesTopEdge();
-    auto bottom = mesh.nodesBottomEdge();
-    size_t nfix = top.size();
-    xt::xtensor<size_t, 1> iip = xt::empty<size_t>({2 * mesh.ndim() * nfix});
-    xt::view(iip, xt::range(0 * nfix, 1 * nfix)) = xt::view(dofs, xt::keep(bottom), 0);
-    xt::view(iip, xt::range(1 * nfix, 2 * nfix)) = xt::view(dofs, xt::keep(bottom), 1);
-    xt::view(iip, xt::range(2 * nfix, 3 * nfix)) = xt::view(dofs, xt::keep(top), 0);
-    xt::view(iip, xt::range(3 * nfix, 4 * nfix)) = xt::view(dofs, xt::keep(top), 1);
-
-    FrictionQPotFEM::UniformSingleLayer2d::System sys(
-        mesh.coor(),
-        mesh.conn(),
-        dofs,
-        iip,
-        xt::xtensor<size_t, 1>{0, 1, 2, 3, 5, 6, 7, 8},
-        xt::xtensor<size_t, 1>{4});
-
-    sys.setMassMatrix(xt::ones<double>({mesh.nelem()}));
-    sys.setDampingMatrix(xt::ones<double>({mesh.nelem()}));
-
-    sys.setElastic(
-        1.0 * xt::ones<double>({8}),
-        1.0 * xt::ones<double>({8}));
-
-    sys.setPlastic(
-        xt::xtensor<double, 1>{1.0},
-        xt::xtensor<double, 1>{1.0},
-        xt::xtensor<double, 2>{{1.0, 2.0, 3.0, 4.0}});
-
-    sys.setDt(1.0);
-
-    REQUIRE(sys.isHomogeneousElastic());
-
-    xt::xtensor<double, 2> ret = {{1.0, 1.0}};
-    REQUIRE(xt::allclose(ret, sys.plastic_ElementYieldBarrierForSimpleShear()));
-}
-
 SECTION("System::plastic_*")
 {
     GooseFEM::Mesh::Quad4::Regular mesh(1, 1);
