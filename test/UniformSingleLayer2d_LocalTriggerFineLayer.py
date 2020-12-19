@@ -83,14 +83,14 @@ def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N = 100):
     return P, S
 
 
-def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p):
+def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p, e):
 
     dE = np.empty(P.size)
 
     for i, (p, s) in enumerate(zip(P.ravel(), S.ravel())):
         dE[i] = np.sum(gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV)
 
-    return dE.reshape(P.shape)
+    return (dE / np.sum(dV[e,: ])).reshape(P.shape)
 
 # ------------------------
 # initialise configuration
@@ -215,7 +215,7 @@ sys.setMassMatrix(np.ones(nelem))
 sys.setDampingMatrix(np.ones(nelem))
 sys.setDt(1)
 
-modelTrigger = model.LocalTriggerFineLayer(sys)
+modelTrigger = model.LocalTriggerFineLayerFull(sys)
 modelTrigger.setState(Eps, Sig, 0.5 * np.ones((len(plastic), 4)), 100)
 
 Barrier = []
@@ -247,7 +247,7 @@ for itrigger, trigger in enumerate(plastic):
 
     # Find which (s, p) lie on the yield surface, and to which energy change those perturbations lead
     Py, Sy = GetYieldSurface(E, gamma, Epsstar_p[0, 0], Epsstar_s[0, 1])
-    Ey = ComputeEnergy(Py, Sy, Eps, Sig, quad.dV(), Eps_s, Sig_s, Eps_p, Sig_p)
+    Ey = ComputeEnergy(Py, Sy, Eps, Sig, quad.dV(), Eps_s, Sig_s, Eps_p, Sig_p, plastic[itrigger])
 
     # Plot perturbed configuration
 
@@ -259,4 +259,4 @@ for itrigger, trigger in enumerate(plastic):
     assert np.allclose(delta_u, modelTrigger.delta_u(itrigger, 0))
 
 Barrier = np.array(Barrier)
-assert np.allclose(Barrier, modelTrigger.barriers()[:, 0] * np.sum(quad.dV()))
+assert np.allclose(Barrier, modelTrigger.barriers()[:, 0])

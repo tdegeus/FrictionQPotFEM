@@ -391,11 +391,12 @@ protected:
 // Trigger by simple shear + pure shear perturbation
 // -------------------------------------------------
 
-class LocalTriggerFineLayer
+class LocalTriggerFineLayerFull
 {
 public:
-    LocalTriggerFineLayer() = default;
-    LocalTriggerFineLayer(const System& sys);
+    LocalTriggerFineLayerFull() = default;
+    LocalTriggerFineLayerFull(const System& sys);
+    virtual ~LocalTriggerFineLayerFull() {};
 
     // set state, compute energy barriers for all integration points,
     // discretise the yield-surface in "ntest"-steps
@@ -407,28 +408,38 @@ public:
 
     // set state, compute energy barriers for all integration points,
     // discretise the yield-surface using a minimal number of tests
-    void setStateMin(
+    void setStateMinimalSearch(
+        const xt::xtensor<double, 4>& Eps,
+        const xt::xtensor<double, 4>& Sig,
+        const xt::xtensor<double, 2>& epsy);
+
+    // set state, compute energy barriers for simple shear perturbation
+    void setStateSimpleShear(
         const xt::xtensor<double, 4>& Eps,
         const xt::xtensor<double, 4>& Sig,
         const xt::xtensor<double, 2>& epsy);
 
     // return all energy barriers [nelem_elas, nip], as energy density
     xt::xtensor<double, 2> barriers() const;
+    xt::xtensor<double, 2> p() const; // correspond "p"
+    xt::xtensor<double, 2> s() const; // correspond "s"
 
     // return the displacement corresponding to the energy barrier
     xt::xtensor<double, 2> delta_u(size_t plastic_element, size_t q) const;
 
-    // return the trigger "p" ans "s"
-    double p(size_t plastic_element, size_t q) const;
-    double s(size_t plastic_element, size_t q) const;
-
     // return perturbation
     xt::xtensor<double, 2> u_s(size_t plastic_element) const;
     xt::xtensor<double, 2> u_p(size_t plastic_element) const;
-    xt::xtensor<double, 4> Eps_s(size_t plastic_element) const;
-    xt::xtensor<double, 4> Eps_p(size_t plastic_element) const;
-    xt::xtensor<double, 4> Sig_s(size_t plastic_element) const;
-    xt::xtensor<double, 4> Sig_p(size_t plastic_element) const;
+    virtual xt::xtensor<double, 4> Eps_s(size_t plastic_element) const;
+    virtual xt::xtensor<double, 4> Eps_p(size_t plastic_element) const;
+    virtual xt::xtensor<double, 4> Sig_s(size_t plastic_element) const;
+    virtual xt::xtensor<double, 4> Sig_p(size_t plastic_element) const;
+    xt::xtensor<double, 2> dgamma() const;
+    xt::xtensor<double, 2> dE() const;
+
+    // remap quantities (does nothing here, but used by derived class)
+    virtual xt::xtensor<double, 2> slice(const xt::xtensor<double, 2>& arg, size_t e) const;
+    virtual xt::xtensor<double, 4> slice(const xt::xtensor<double, 4>& arg, size_t e) const;
 
 protected:
     void computePerturbation(
@@ -444,30 +455,65 @@ protected:
         GM::Array<2>& material);
 
 protected:
-
+    // Basic info.
     size_t m_nip;
     size_t m_nelem_plas;
     xt::xtensor<size_t, 1> m_elem_plas;
 
+    // Perturbation for each plastic element.
+    // The idea is to store/compute the minimal number of perturbations as possible,
+    // and use a periodic "roll" to reconstruct the perturbations everywhere.
+    // Because of the construction of the "FineLayer"-mesh, one roll of the mesh will not
+    // correspond to one roll of the middle layer, therefore a few percolations are needed.
     std::vector<xt::xtensor<double, 2>> m_u_s;
     std::vector<xt::xtensor<double, 2>> m_u_p;
     std::vector<xt::xtensor<double, 4>> m_Eps_s;
     std::vector<xt::xtensor<double, 4>> m_Eps_p;
     std::vector<xt::xtensor<double, 4>> m_Sig_s;
     std::vector<xt::xtensor<double, 4>> m_Sig_p;
-    std::vector<xt::xtensor<double, 1>> m_elemmap;
     std::vector<xt::xtensor<double, 1>> m_nodemap;
+    std::vector<xt::xtensor<double, 1>> m_elemmap;
 
+    // Integration point values.
     xt::xtensor<double, 2> m_dV;
+    double m_V;
+    std::array<size_t, 4> m_shape_T2;
 
-    xt::xtensor<double, 4> m_Eps;
-    xt::xtensor<double, 4> m_Sig;
+    // Perturbation of minimal work.
+    xt::xtensor<double, 2> m_smin; // value of "s" at minimal work "W" [nip, N]
+    xt::xtensor<double, 2> m_pmin; // value of "p" at minimal work "W" [nip, N]
+    xt::xtensor<double, 2> m_Wmin; // value of minimal work "W" [nip, N]
 
-    xt::xtensor<double, 2> m_smin; // [nip, N]
-    xt::xtensor<double, 2> m_pmin; // [nip, N]
-    xt::xtensor<double, 2> m_Wmin; // [nip, N]
-    xt::xtensor<double, 2> m_dgamma; // [nip, N]
-    xt::xtensor<double, 2> m_dE; // [nip, N]
+    // Strain change in the element for each plastic element.
+    xt::xtensor<double, 2> m_dgamma; // == Eps_s(plastic(e), q, 0, 1) [nip, N]
+    xt::xtensor<double, 2> m_dE; // == Eps_p(plastic(e), q, 0, 0) [nip, N]
+};
+
+// -------------------------------------------------
+// Trigger by simple shear + pure shear perturbation
+// -------------------------------------------------
+
+class LocalTriggerFineLayer : public LocalTriggerFineLayerFull
+{
+public:
+    LocalTriggerFineLayer() = default;
+    LocalTriggerFineLayer(const System& sys, size_t region_of_interest = 5);
+
+    xt::xtensor<double, 4> Eps_s(size_t plastic_element) const override;
+    xt::xtensor<double, 4> Eps_p(size_t plastic_element) const override;
+    xt::xtensor<double, 4> Sig_s(size_t plastic_element) const override;
+    xt::xtensor<double, 4> Sig_p(size_t plastic_element) const override;
+
+    xt::xtensor<double, 2> slice(const xt::xtensor<double, 2>& arg, size_t e) const override;
+    xt::xtensor<double, 4> slice(const xt::xtensor<double, 4>& arg, size_t e) const override;
+
+protected:
+    std::vector<xt::xtensor<size_t, 1>> m_elemslice;
+
+    std::vector<xt::xtensor<double, 4>> m_Eps_s_slice;
+    std::vector<xt::xtensor<double, 4>> m_Eps_p_slice;
+    std::vector<xt::xtensor<double, 4>> m_Sig_s_slice;
+    std::vector<xt::xtensor<double, 4>> m_Sig_p_slice;
 };
 
 } // namespace UniformSingleLayer2d

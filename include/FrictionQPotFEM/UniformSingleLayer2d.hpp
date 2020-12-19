@@ -867,7 +867,7 @@ inline void HybridSystem::computeForceMaterial()
     xt::noalias(m_fmaterial) = m_felas + m_fplas;
 }
 
-inline LocalTriggerFineLayer::LocalTriggerFineLayer(const System& sys)
+inline LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(const System& sys)
 {
     // Copy / allocate local variables
 
@@ -885,11 +885,11 @@ inline LocalTriggerFineLayer::LocalTriggerFineLayer(const System& sys)
     m_nelem_plas = m_elem_plas.size();
     m_nip = quad.nip();
 
-    m_smin = xt::zeros<decltype(m_smin)::value_type>({m_nelem_plas, m_nip});
-    m_pmin = xt::zeros<decltype(m_pmin)::value_type>({m_nelem_plas, m_nip});
-    m_Wmin = xt::zeros<decltype(m_Wmin)::value_type>({m_nelem_plas, m_nip});
-    m_dgamma = xt::zeros<decltype(m_dgamma)::value_type>({m_nelem_plas, m_nip});
-    m_dE = xt::zeros<decltype(m_dE)::value_type>({m_nelem_plas, m_nip});
+    m_smin = xt::zeros<double>({m_nelem_plas, m_nip});
+    m_pmin = xt::zeros<double>({m_nelem_plas, m_nip});
+    m_Wmin = xt::zeros<double>({m_nelem_plas, m_nip});
+    m_dgamma = xt::zeros<double>({m_nelem_plas, m_nip});
+    m_dE = xt::zeros<double>({m_nelem_plas, m_nip});
 
     auto coor = sys.coor();
     auto conn = sys.conn();
@@ -904,11 +904,10 @@ inline LocalTriggerFineLayer::LocalTriggerFineLayer(const System& sys)
 
     auto Eps = quad.AllocateQtensor<2>(0.0);
     auto Sig = quad.AllocateQtensor<2>(0.0);
-
-    m_Eps = quad.AllocateQtensor<2>(0.0);
-    m_Sig = quad.AllocateQtensor<2>(0.0);
+    std::copy(Eps.shape().cbegin(), Eps.shape().cend(), m_shape_T2.begin());
 
     m_dV = quad.dV();
+    m_V = xt::sum(xt::view(m_dV, m_elem_plas(0)))();
 
     // Replicate mesh
 
@@ -924,8 +923,6 @@ inline LocalTriggerFineLayer::LocalTriggerFineLayer(const System& sys)
     m_Eps_p.resize(nconfig);
     m_Sig_s.resize(nconfig);
     m_Sig_p.resize(nconfig);
-    m_elemmap.resize(nconfig);
-    m_nodemap.resize(nconfig);
     m_elemmap.resize(nroll);
     m_nodemap.resize(nroll);
 
@@ -934,7 +931,7 @@ inline LocalTriggerFineLayer::LocalTriggerFineLayer(const System& sys)
         m_nodemap[roll] = GF::Mesh::elemmap2nodemap(m_elemmap[roll], coor, conn);
     }
 
-    for (size_t iconfig = 0; iconfig < nconfig; ++iconfig) {
+    for (size_t e = 0; e < nconfig; ++e) {
 
         // Simple shear perturbation
 
@@ -942,11 +939,20 @@ inline LocalTriggerFineLayer::LocalTriggerFineLayer(const System& sys)
             {0.0, 1.0},
             {1.0, 0.0}};
 
-        this->computePerturbation(iconfig, simple_shear, u, Eps, Sig, K, solver, quad, vector, material);
+        this->computePerturbation(e, simple_shear, u, Eps, Sig, K, solver, quad, vector, material);
 
-        m_u_s[iconfig] = u;
-        m_Eps_s[iconfig] = Eps;
-        m_Sig_s[iconfig] = Sig;
+        for (size_t q = 0; q < m_nip; ++q) {
+            auto Epsd = GM::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
+            double gamma = Epsd(0, 1);
+            for (size_t roll = 0; roll < nroll; ++roll) {
+                auto map = mesh.roll(roll);
+                m_dgamma(e + map(m_elem_plas(e)) - m_elem_plas(e), q) = gamma;
+            }
+        }
+
+        m_u_s[e] = u;
+        m_Eps_s[e] = Eps;
+        m_Sig_s[e] = Sig;
 
         // Pure shear perturbation
 
@@ -954,30 +960,24 @@ inline LocalTriggerFineLayer::LocalTriggerFineLayer(const System& sys)
             {1.0, 0.0},
             {0.0, -1.0}};
 
-        this->computePerturbation(iconfig, pure_shear, u, Eps, Sig, K, solver, quad, vector, material);
+        this->computePerturbation(e, pure_shear, u, Eps, Sig, K, solver, quad, vector, material);
 
-        m_u_p[iconfig] = u;
-        m_Eps_p[iconfig] = Eps;
-        m_Sig_p[iconfig] = Sig;
-    }
-
-    for (size_t e = 0; e < m_nelem_plas; ++e) {
-
-        Eps = this->Eps_s(e);
-        for (size_t q = 0; q < quad.nip(); ++q) {
+        for (size_t q = 0; q < m_nip; ++q) {
             auto Epsd = GM::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
-            m_dgamma(e, q) = Epsd(0, 1);
+            double E = Epsd(0, 0);
+            for (size_t roll = 0; roll < nroll; ++roll) {
+                auto map = mesh.roll(roll);
+                m_dE(e + map(m_elem_plas(e)) - m_elem_plas(e), q) = E;
+            }
         }
 
-        Eps = this->Eps_p(e);
-        for (size_t q = 0; q < quad.nip(); ++q) {
-            auto Epsd = GM::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
-            m_dE(e, q) = Epsd(0, 0);
-        }
+        m_u_p[e] = u;
+        m_Eps_p[e] = Eps;
+        m_Sig_p[e] = Sig;
     }
 }
 
-inline void LocalTriggerFineLayer::computePerturbation(
+inline void LocalTriggerFineLayerFull::computePerturbation(
     size_t trigger_plastic,
     const xt::xtensor<double, 2>& sig_star,
     xt::xtensor<double, 2>& u,
@@ -1012,71 +1012,81 @@ inline void LocalTriggerFineLayer::computePerturbation(
     material.stress(Sig);
 }
 
-inline xt::xtensor<double, 2> LocalTriggerFineLayer::u_s(size_t trigger_plastic) const
+inline xt::xtensor<double, 2> LocalTriggerFineLayerFull::u_s(size_t trigger_plastic) const
 {
     FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
     size_t nconfig = m_u_s.size();
-    size_t iconfig = trigger_plastic % nconfig;
-    size_t iroll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
-    return xt::view(m_u_s[iconfig], xt::keep(m_nodemap[iroll]));
+    size_t config = trigger_plastic % nconfig;
+    size_t roll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
+    return xt::view(m_u_s[config], xt::keep(m_nodemap[roll]));
 }
 
-inline xt::xtensor<double, 2> LocalTriggerFineLayer::u_p(size_t trigger_plastic) const
+inline xt::xtensor<double, 2> LocalTriggerFineLayerFull::u_p(size_t trigger_plastic) const
 {
     FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
     size_t nconfig = m_u_p.size();
-    size_t iconfig = trigger_plastic % nconfig;
-    size_t iroll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
-    return xt::view(m_u_p[iconfig], xt::keep(m_nodemap[iroll]));
+    size_t config = trigger_plastic % nconfig;
+    size_t roll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
+    return xt::view(m_u_p[config], xt::keep(m_nodemap[roll]));
 }
 
-inline xt::xtensor<double, 4> LocalTriggerFineLayer::Eps_s(size_t trigger_plastic) const
+inline xt::xtensor<double, 4> LocalTriggerFineLayerFull::Eps_s(size_t trigger_plastic) const
 {
     FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
     size_t nconfig = m_u_s.size();
-    size_t iconfig = trigger_plastic % nconfig;
-    size_t iroll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
-    return xt::view(m_Eps_s[iconfig], xt::keep(m_elemmap[iroll]));
+    size_t config = trigger_plastic % nconfig;
+    size_t roll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
+    return xt::view(m_Eps_s[config], xt::keep(m_elemmap[roll]));
 }
 
-inline xt::xtensor<double, 4> LocalTriggerFineLayer::Eps_p(size_t trigger_plastic) const
+inline xt::xtensor<double, 4> LocalTriggerFineLayerFull::Eps_p(size_t trigger_plastic) const
 {
     FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
     size_t nconfig = m_u_p.size();
-    size_t iconfig = trigger_plastic % nconfig;
-    size_t iroll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
-    return xt::view(m_Eps_p[iconfig], xt::keep(m_elemmap[iroll]));
+    size_t config = trigger_plastic % nconfig;
+    size_t roll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
+    return xt::view(m_Eps_p[config], xt::keep(m_elemmap[roll]));
 }
 
-inline xt::xtensor<double, 4> LocalTriggerFineLayer::Sig_s(size_t trigger_plastic) const
+inline xt::xtensor<double, 4> LocalTriggerFineLayerFull::Sig_s(size_t trigger_plastic) const
 {
     FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
     size_t nconfig = m_u_s.size();
-    size_t iconfig = trigger_plastic % nconfig;
-    size_t iroll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
-    return xt::view(m_Sig_s[iconfig], xt::keep(m_elemmap[iroll]));
+    size_t config = trigger_plastic % nconfig;
+    size_t roll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
+    return xt::view(m_Sig_s[config], xt::keep(m_elemmap[roll]));
 }
 
-inline xt::xtensor<double, 4> LocalTriggerFineLayer::Sig_p(size_t trigger_plastic) const
+inline xt::xtensor<double, 4> LocalTriggerFineLayerFull::Sig_p(size_t trigger_plastic) const
 {
     FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
     size_t nconfig = m_u_p.size();
-    size_t iconfig = trigger_plastic % nconfig;
-    size_t iroll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
-    return xt::view(m_Sig_p[iconfig], xt::keep(m_elemmap[iroll]));
+    size_t config = trigger_plastic % nconfig;
+    size_t roll = (trigger_plastic - trigger_plastic % nconfig) / nconfig;
+    return xt::view(m_Sig_p[config], xt::keep(m_elemmap[roll]));
 }
 
-inline void LocalTriggerFineLayer::setState(
+inline xt::xtensor<double, 2>
+LocalTriggerFineLayerFull::slice(const xt::xtensor<double, 2>& arg, size_t) const
+{
+    return arg;
+}
+
+inline xt::xtensor<double, 4>
+LocalTriggerFineLayerFull::slice(const xt::xtensor<double, 4>& arg, size_t) const
+{
+    return arg;
+}
+
+inline void LocalTriggerFineLayerFull::setState(
     const xt::xtensor<double, 4>& Eps,
     const xt::xtensor<double, 4>& Sig,
     const xt::xtensor<double, 2>& epsy,
     size_t N)
 {
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_Eps, Eps.shape()));
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_Sig, Sig.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(Eps, m_shape_T2));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(Sig, m_shape_T2));
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(epsy, {m_nelem_plas, m_nip}));
-    m_Eps = Eps;
-    m_Sig = Sig;
 
     xt::xtensor<double, 2> S = xt::empty<double>({size_t(2), N});
     xt::xtensor<double, 2> P = xt::empty<double>({size_t(2), N});
@@ -1088,13 +1098,15 @@ inline void LocalTriggerFineLayer::setState(
         auto Eps_p = this->Eps_p(e);
         auto Sig_s = this->Sig_s(e);
         auto Sig_p = this->Sig_p(e);
+        auto Sig_slice = this->slice(Sig, e);
+        auto dV_slice = this->slice(m_dV, e);
 
         for (size_t q = 0; q < m_nip; ++q) {
 
             double dgamma = m_dgamma(e, q);
             double dE = m_dE(e, q);
 
-            auto Epsd = GM::Deviatoric(xt::eval(xt::view(m_Eps, m_elem_plas(e), q)));
+            auto Epsd = GM::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
             double gamma = Epsd(0, 1);
             double E = Epsd(0, 0);
             double y = epsy(e, q);
@@ -1116,7 +1128,7 @@ inline void LocalTriggerFineLayer::setState(
             double pmax = (- b + std::sqrt(D)) / (2.0 * a);
             double pmin = (- b - std::sqrt(D)) / (2.0 * a);
 
-            size_t n = static_cast<size_t>(- smin / (smax - smin) * N);
+            size_t n = static_cast<size_t>(- smin / (smax - smin) * static_cast<double>(N));
             size_t m = N - n;
 
             for (size_t i = 0; i < 2; ++i) {
@@ -1138,15 +1150,14 @@ inline void LocalTriggerFineLayer::setState(
                 D = SQR(b) - 4.0 * a * c;
                 P(0, j) = (- b + std::sqrt(D)) / (2.0 * a);
                 P(1, j) = (- b - std::sqrt(D)) / (2.0 * a);
-
             }
 
             for (size_t i = 0; i < P.shape(0); ++i) {
                 for (size_t j = 0; j < P.shape(1); ++j) {
-                    xt::xtensor<double, 4> sig = P(i, j) * Sig_p + S(i, j) * Sig_s + m_Sig;
+                    xt::xtensor<double, 4> sig = P(i, j) * Sig_p + S(i, j) * Sig_s + Sig_slice;
                     xt::xtensor<double, 4> deps = P(i, j) * Eps_p + S(i, j) * Eps_s;
                     xt::xtensor<double, 2> w = GT::A2s_ddot_B2s(sig, deps);
-                    w *= m_dV;
+                    w *= dV_slice;
                     W(i, j) = xt::sum(w)();
                 }
             }
@@ -1159,16 +1170,14 @@ inline void LocalTriggerFineLayer::setState(
     }
 }
 
-inline void LocalTriggerFineLayer::setStateMin(
+inline void LocalTriggerFineLayerFull::setStateMinimalSearch(
     const xt::xtensor<double, 4>& Eps,
     const xt::xtensor<double, 4>& Sig,
     const xt::xtensor<double, 2>& epsy)
 {
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_Eps, Eps.shape()));
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_Sig, Sig.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(Eps, m_shape_T2));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(Sig, m_shape_T2));
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(epsy, {m_nelem_plas, m_nip}));
-    m_Eps = Eps;
-    m_Sig = Sig;
 
     std::array<double, 8> S;
     std::array<double, 8> P;
@@ -1180,13 +1189,15 @@ inline void LocalTriggerFineLayer::setStateMin(
         auto Eps_p = this->Eps_p(e);
         auto Sig_s = this->Sig_s(e);
         auto Sig_p = this->Sig_p(e);
+        auto Sig_slice = this->slice(Sig, e);
+        auto dV_slice = this->slice(m_dV, e);
 
         for (size_t q = 0; q < m_nip; ++q) {
 
             double dgamma = m_dgamma(e, q);
             double dE = m_dE(e, q);
 
-            auto Epsd = GM::Deviatoric(xt::eval(xt::view(m_Eps, m_elem_plas(e), q)));
+            auto Epsd = GM::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
             double gamma = Epsd(0, 1);
             double E = Epsd(0, 0);
             double y = epsy(e, q);
@@ -1234,10 +1245,10 @@ inline void LocalTriggerFineLayer::setStateMin(
             }
 
             for (size_t i = 0; i < S.size(); ++i) {
-                xt::xtensor<double, 4> sig = P[i] * Sig_p + S[i] * Sig_s + m_Sig;
+                xt::xtensor<double, 4> sig = P[i] * Sig_p + S[i] * Sig_s + Sig_slice;
                 xt::xtensor<double, 4> deps = P[i] * Eps_p + S[i] * Eps_s;
                 xt::xtensor<double, 2> w = GT::A2s_ddot_B2s(sig, deps);
-                w *= m_dV;
+                w *= dV_slice;
                 W[i] = xt::sum(w)();
             }
 
@@ -1249,24 +1260,157 @@ inline void LocalTriggerFineLayer::setStateMin(
     }
 }
 
-inline xt::xtensor<double, 2> LocalTriggerFineLayer::barriers() const
+inline void LocalTriggerFineLayerFull::setStateSimpleShear(
+    const xt::xtensor<double, 4>& Eps,
+    const xt::xtensor<double, 4>& Sig,
+    const xt::xtensor<double, 2>& epsy)
 {
-    return m_Wmin / xt::sum(m_dV)();
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(Eps, m_shape_T2));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(Sig, m_shape_T2));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(epsy, {m_nelem_plas, m_nip}));
+
+    std::array<double, 2> S;
+    std::array<double, 2> W;
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+
+        auto Eps_s = this->Eps_s(e);
+        auto Sig_s = this->Sig_s(e);
+        auto Sig_slice = this->slice(Sig, e);
+        auto dV_slice = this->slice(m_dV, e);
+
+        for (size_t q = 0; q < m_nip; ++q) {
+
+            double dgamma = m_dgamma(e, q);
+
+            auto Epsd = GM::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
+            double gamma = Epsd(0, 1);
+            double E = Epsd(0, 0);
+            double y = epsy(e, q);
+            double a, b, c, D;
+
+            // solve for "p = 0"
+            a = SQR(dgamma);
+            b = 2.0 * gamma * dgamma;
+            c = SQR(gamma) + SQR(E) - SQR(y);
+            D = SQR(b) - 4.0 * a * c;
+            S[1] = (- b + std::sqrt(D)) / (2.0 * a);
+            S[0] = (- b - std::sqrt(D)) / (2.0 * a);
+
+            for (size_t i = 0; i < S.size(); ++i) {
+                xt::xtensor<double, 4> sig = S[i] * Sig_s + Sig_slice;
+                xt::xtensor<double, 4> deps = S[i] * Eps_s;
+                xt::xtensor<double, 2> w = GT::A2s_ddot_B2s(sig, deps);
+                w *= dV_slice;
+                W[i] = xt::sum(w)();
+            }
+
+            size_t idx = 0;
+            if (W[1] < W[0]) {
+                idx = 1;
+            }
+
+            m_smin(e, q) = S[idx];
+            m_pmin(e, q) = 0.0;
+            m_Wmin(e, q) = W[idx];
+        }
+    }
 }
 
-inline xt::xtensor<double, 2> LocalTriggerFineLayer::delta_u(size_t e, size_t q) const
+inline xt::xtensor<double, 2> LocalTriggerFineLayerFull::barriers() const
+{
+    return m_Wmin / m_V;
+}
+
+inline xt::xtensor<double, 2> LocalTriggerFineLayerFull::p() const
+{
+    return m_pmin;
+}
+
+inline xt::xtensor<double, 2> LocalTriggerFineLayerFull::s() const
+{
+    return m_smin;
+}
+
+inline xt::xtensor<double, 2> LocalTriggerFineLayerFull::dgamma() const
+{
+    return m_dgamma;
+}
+
+inline xt::xtensor<double, 2> LocalTriggerFineLayerFull::dE() const
+{
+    return m_dE;
+}
+
+inline xt::xtensor<double, 2> LocalTriggerFineLayerFull::delta_u(size_t e, size_t q) const
 {
     return m_pmin(e, q) * this->u_p(e) + m_smin(e, q) * this->u_s(e);
 }
 
-inline double LocalTriggerFineLayer::p(size_t e, size_t q) const
+inline LocalTriggerFineLayer::LocalTriggerFineLayer(const System& sys, size_t roi) :
+    LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(sys)
 {
-    return m_pmin(e, q);
+    GF::Mesh::Quad4::FineLayer mesh(sys.coor(), sys.conn());
+
+    m_elemslice.resize(m_nelem_plas);
+    m_Eps_s_slice.resize(m_nelem_plas);
+    m_Eps_p_slice.resize(m_nelem_plas);
+    m_Sig_s_slice.resize(m_nelem_plas);
+    m_Sig_p_slice.resize(m_nelem_plas);
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+
+        auto slice = xt::sort(mesh.elementgrid_around_ravel(m_elem_plas(e), roi));
+        m_elemslice[e] = slice;
+
+        auto Eps = LocalTriggerFineLayerFull::Eps_s(e);
+        m_Eps_s_slice[e] = xt::view(Eps, xt::keep(slice));
+
+        Eps = LocalTriggerFineLayerFull::Eps_p(e);
+        m_Eps_p_slice[e] = xt::view(Eps, xt::keep(slice));
+
+        auto Sig = LocalTriggerFineLayerFull::Sig_s(e);
+        m_Sig_s_slice[e] = xt::view(Sig, xt::keep(slice));
+
+        Sig = LocalTriggerFineLayerFull::Sig_p(e);
+        m_Sig_p_slice[e] = xt::view(Sig, xt::keep(slice));
+    }
 }
 
-inline double LocalTriggerFineLayer::s(size_t e, size_t q) const
+inline xt::xtensor<double, 2>
+LocalTriggerFineLayer::slice(const xt::xtensor<double, 2>& arg, size_t e) const
 {
-    return m_smin(e, q);
+    return xt::view(arg, xt::keep(m_elemslice[e]));
+}
+
+inline xt::xtensor<double, 4>
+LocalTriggerFineLayer::slice(const xt::xtensor<double, 4>& arg, size_t e) const
+{
+    return xt::view(arg, xt::keep(m_elemslice[e]));
+}
+
+inline xt::xtensor<double, 4> LocalTriggerFineLayer::Eps_s(size_t trigger_plastic) const
+{
+    FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
+    return m_Eps_s_slice[trigger_plastic];
+}
+
+inline xt::xtensor<double, 4> LocalTriggerFineLayer::Eps_p(size_t trigger_plastic) const
+{
+    FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
+    return m_Eps_p_slice[trigger_plastic];
+}
+
+inline xt::xtensor<double, 4> LocalTriggerFineLayer::Sig_s(size_t trigger_plastic) const
+{
+    FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
+    return m_Sig_s_slice[trigger_plastic];
+}
+
+inline xt::xtensor<double, 4> LocalTriggerFineLayer::Sig_p(size_t trigger_plastic) const
+{
+    FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
+    return m_Sig_p_slice[trigger_plastic];
 }
 
 } // namespace UniformSingleLayer2d
