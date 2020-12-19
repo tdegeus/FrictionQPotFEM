@@ -3,8 +3,6 @@
 #include <xtensor/xrandom.hpp>
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
 
-#define ISCLOSE(a, b) REQUIRE_THAT((a), Catch::WithinAbs((b), 1e-8));
-
 TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLayer2d.h")
 {
     SECTION("LocalTrigger")
@@ -57,9 +55,18 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
         sys.setPlastic(K * xt::ones<double>({plastic.size()}), G * xt::ones<double>({plastic.size()}), epsy);
         sys.setDt(dt);
 
-        FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayer trigger(sys);
-        trigger.setState(sys.Eps(), sys.Sig(), xt::ones<double>({plastic.size(), size_t(4)}));
-        xt::xtensor<double, 2> barriers = 0.178587 * xt::ones<double>({plastic.size(), size_t(4)});
-        REQUIRE(xt::allclose(barriers, trigger.barriers()));
+        {
+            FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayerFull trigger(sys);
+            trigger.setState(sys.Eps(), sys.Sig(), xt::ones<double>({plastic.size(), size_t(4)}));
+            xt::xtensor<double, 2> barriers = 5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
+            REQUIRE(xt::allclose(barriers, trigger.barriers()));
+        }
+
+        {
+            FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayer trigger(sys);
+            trigger.setState(sys.Eps(), sys.Sig(), xt::ones<double>({plastic.size(), size_t(4)}));
+            xt::xtensor<double, 2> barriers = 5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
+            REQUIRE(xt::allclose(barriers, trigger.barriers()));
+        }
     }
 }

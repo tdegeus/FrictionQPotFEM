@@ -184,9 +184,53 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             return "<FrictionQPotFEM.UniformSingleLayer2d.HybridSystem>";
         });
 
+    py::class_<SM::LocalTriggerFineLayerFull>(sm, "LocalTriggerFineLayerFull")
+
+        .def(py::init<const SM::System&>(), "LocalTriggerFineLayerFull")
+
+        .def(
+            "setState",
+            &SM::LocalTriggerFineLayerFull::setState,
+            py::arg("Eps"),
+            py::arg("Sig"),
+            py::arg("epsy"),
+            py::arg("ntest") = 100)
+
+        .def(
+            "setStateMinimalSearch",
+            &SM::LocalTriggerFineLayerFull::setStateMinimalSearch,
+            py::arg("Eps"),
+            py::arg("Sig"),
+            py::arg("epsy"))
+
+        .def(
+            "setStateSimpleShear",
+            &SM::LocalTriggerFineLayerFull::setStateSimpleShear,
+            py::arg("Eps"),
+            py::arg("Sig"),
+            py::arg("epsy"))
+
+        .def("barriers", &SM::LocalTriggerFineLayerFull::barriers)
+        .def("delta_u", &SM::LocalTriggerFineLayerFull::delta_u)
+
+        .def("u_s", &SM::LocalTriggerFineLayerFull::u_s)
+        .def("u_p", &SM::LocalTriggerFineLayerFull::u_p)
+        .def("Eps_s", &SM::LocalTriggerFineLayerFull::Eps_s)
+        .def("Eps_p", &SM::LocalTriggerFineLayerFull::Eps_p)
+        .def("Sig_s", &SM::LocalTriggerFineLayerFull::Sig_s)
+        .def("Sig_p", &SM::LocalTriggerFineLayerFull::Sig_p)
+
+        .def("__repr__", [](const SM::LocalTriggerFineLayerFull&) {
+            return "<FrictionQPotFEM.UniformSingleLayer2d.LocalTriggerFineLayerFull>";
+        });
+
     py::class_<SM::LocalTriggerFineLayer>(sm, "LocalTriggerFineLayer")
 
-        .def(py::init<const SM::System&>(), "LocalTriggerFineLayer")
+        .def(
+            py::init<const SM::System&, size_t>(),
+            "LocalTriggerFineLayer",
+            py::arg("sys"),
+            py::arg("roi") = 5)
 
         .def(
             "setState",
@@ -197,8 +241,15 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             py::arg("ntest") = 100)
 
         .def(
-            "setStateMin",
-            &SM::LocalTriggerFineLayer::setStateMin,
+            "setStateMinimalSearch",
+            &SM::LocalTriggerFineLayer::setStateMinimalSearch,
+            py::arg("Eps"),
+            py::arg("Sig"),
+            py::arg("epsy"))
+
+        .def(
+            "setStateSimpleShear",
+            &SM::LocalTriggerFineLayer::setStateSimpleShear,
             py::arg("Eps"),
             py::arg("Sig"),
             py::arg("epsy"))
