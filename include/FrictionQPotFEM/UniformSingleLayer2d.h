@@ -132,6 +132,8 @@ public:
     virtual xt::xtensor<double, 4> plastic_Eps() const; // strain tensor
     virtual xt::xtensor<double, 2> plastic_CurrentYieldLeft() const; // yield strain 'left'
     virtual xt::xtensor<double, 2> plastic_CurrentYieldRight() const; // yield strain 'right'
+    virtual xt::xtensor<double, 2> plastic_CurrentYieldLeft(size_t offset) const;
+    virtual xt::xtensor<double, 2> plastic_CurrentYieldRight(size_t offset) const;
     virtual xt::xtensor<size_t, 2> plastic_CurrentIndex() const; // current index in the landscape
 
     // Make a time-step: apply velocity-Verlet integration.
@@ -329,6 +331,8 @@ public:
     xt::xtensor<double, 4> plastic_Eps() const override; // strain tensor
     xt::xtensor<double, 2> plastic_CurrentYieldLeft() const override; // yield strain 'left'
     xt::xtensor<double, 2> plastic_CurrentYieldRight() const override; // yield strain 'right'
+    xt::xtensor<double, 2> plastic_CurrentYieldLeft(size_t offset) const override;
+    xt::xtensor<double, 2> plastic_CurrentYieldRight(size_t offset) const override;
     xt::xtensor<size_t, 2> plastic_CurrentIndex() const override; // current index in the landscape
 
 protected:

@@ -370,6 +370,16 @@ inline xt::xtensor<double, 2> System::plastic_CurrentYieldRight() const
     return xt::view(m_material.CurrentYieldRight(), xt::keep(m_elem_plas), xt::all());
 }
 
+inline xt::xtensor<double, 2> System::plastic_CurrentYieldLeft(size_t offset) const
+{
+    return xt::view(m_material.CurrentYieldLeft(offset), xt::keep(m_elem_plas), xt::all());
+}
+
+inline xt::xtensor<double, 2> System::plastic_CurrentYieldRight(size_t offset) const
+{
+    return xt::view(m_material.CurrentYieldRight(offset), xt::keep(m_elem_plas), xt::all());
+}
+
 inline xt::xtensor<size_t, 2> System::plastic_CurrentIndex() const
 {
     return xt::view(m_material.CurrentIndex(), xt::keep(m_elem_plas), xt::all());
@@ -843,6 +853,16 @@ inline xt::xtensor<double, 2> HybridSystem::plastic_CurrentYieldLeft() const
 inline xt::xtensor<double, 2> HybridSystem::plastic_CurrentYieldRight() const
 {
     return m_material_plas.CurrentYieldRight();
+}
+
+inline xt::xtensor<double, 2> HybridSystem::plastic_CurrentYieldLeft(size_t offset) const
+{
+    return m_material_plas.CurrentYieldLeft(offset);
+}
+
+inline xt::xtensor<double, 2> HybridSystem::plastic_CurrentYieldRight(size_t offset) const
+{
+    return m_material_plas.CurrentYieldRight(offset);
 }
 
 inline xt::xtensor<size_t, 2> HybridSystem::plastic_CurrentIndex() const
