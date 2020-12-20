@@ -95,6 +95,36 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
         .def("Sig", &SM::System::Sig, "Sig")
         .def("timeStep", &SM::System::timeStep, "timeStep")
 
+        .def("plastic_Eps", &SM::System::plastic_Eps, "plastic_Eps")
+        .def("plastic_Sig", &SM::System::plastic_Sig, "plastic_Sig")
+
+        .def(
+            "plastic_CurrentYieldLeft",
+            py::overload_cast<>(&SM::System::plastic_CurrentYieldLeft, py::const_),
+            "plastic_CurrentYieldLeft")
+
+        .def(
+            "plastic_CurrentYieldRight",
+            py::overload_cast<>(&SM::System::plastic_CurrentYieldRight, py::const_),
+            "plastic_CurrentYieldRight")
+
+        .def(
+            "plastic_CurrentYieldLeft",
+            py::overload_cast<size_t>(&SM::System::plastic_CurrentYieldLeft, py::const_),
+            "plastic_CurrentYieldLeft",
+            py::arg("offset"))
+
+        .def(
+            "plastic_CurrentYieldRight",
+            py::overload_cast<size_t>(&SM::System::plastic_CurrentYieldRight, py::const_),
+            "plastic_CurrentYieldRight",
+            py::arg("offset"))
+
+        .def(
+            "plastic_CurrentIndex",
+            &SM::System::plastic_CurrentIndex,
+            "plastic_CurrentIndex")
+
         .def("__repr__", [](const SM::System&) {
             return "<FrictionQPotFEM.UniformSingleLayer2d.System>";
         });
@@ -168,9 +198,33 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
         .def("material_plastic", &SM::HybridSystem::material_plastic, "material_plastic")
         .def("plastic_Eps", &SM::HybridSystem::plastic_Eps, "plastic_Eps")
         .def("plastic_Sig", &SM::HybridSystem::plastic_Sig, "plastic_Sig")
-        .def("plastic_CurrentYieldLeft", &SM::HybridSystem::plastic_CurrentYieldLeft, "plastic_CurrentYieldLeft")
-        .def("plastic_CurrentYieldRight", &SM::HybridSystem::plastic_CurrentYieldRight, "plastic_CurrentYieldRight")
-        .def("plastic_CurrentIndex", &SM::HybridSystem::plastic_CurrentIndex, "plastic_CurrentIndex")
+
+        .def(
+            "plastic_CurrentYieldLeft",
+            py::overload_cast<>(&SM::HybridSystem::plastic_CurrentYieldLeft, py::const_),
+            "plastic_CurrentYieldLeft")
+
+        .def(
+            "plastic_CurrentYieldRight",
+            py::overload_cast<>(&SM::HybridSystem::plastic_CurrentYieldRight, py::const_),
+            "plastic_CurrentYieldRight")
+
+        .def(
+            "plastic_CurrentYieldLeft",
+            py::overload_cast<size_t>(&SM::HybridSystem::plastic_CurrentYieldLeft, py::const_),
+            "plastic_CurrentYieldLeft",
+            py::arg("offset"))
+
+        .def(
+            "plastic_CurrentYieldRight",
+            py::overload_cast<size_t>(&SM::HybridSystem::plastic_CurrentYieldRight, py::const_),
+            "plastic_CurrentYieldRight",
+            py::arg("offset"))
+
+        .def(
+            "plastic_CurrentIndex",
+            &SM::HybridSystem::plastic_CurrentIndex,
+            "plastic_CurrentIndex")
 
         .def(
             "minimise",
