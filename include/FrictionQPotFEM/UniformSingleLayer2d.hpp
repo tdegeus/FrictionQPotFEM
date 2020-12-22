@@ -385,6 +385,11 @@ inline xt::xtensor<size_t, 2> System::plastic_CurrentIndex() const
     return xt::view(m_material.CurrentIndex(), xt::keep(m_elem_plas), xt::all());
 }
 
+inline xt::xtensor<double, 2> System::plastic_Epsp() const
+{
+    return xt::view(m_material.Epsp(), xt::keep(m_elem_plas), xt::all());
+}
+
 inline void System::computeStress()
 {
     FRICTIONQPOTFEM_ASSERT(m_allset);
@@ -895,6 +900,11 @@ inline xt::xtensor<double, 2> HybridSystem::plastic_CurrentYieldRight(size_t off
 inline xt::xtensor<size_t, 2> HybridSystem::plastic_CurrentIndex() const
 {
     return m_material_plas.CurrentIndex();
+}
+
+inline xt::xtensor<size_t, 2> HybridSystem::plastic_Epsp() const
+{
+    return m_material_plas.Epsp();
 }
 
 inline void HybridSystem::computeForceMaterial()
