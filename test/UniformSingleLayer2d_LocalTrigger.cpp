@@ -59,6 +59,8 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
             FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayerFull trigger(sys);
             trigger.setState(sys.Eps(), sys.Sig(), xt::ones<double>({plastic.size(), size_t(4)}));
             xt::xtensor<double, 2> barriers = 5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
+            std:cout << barriers << std::endl;
+            std:cout << trigger.barriers() << std::endl;
             REQUIRE(xt::allclose(barriers, trigger.barriers()));
         }
 
@@ -66,6 +68,8 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
             FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayer trigger(sys);
             trigger.setState(sys.Eps(), sys.Sig(), xt::ones<double>({plastic.size(), size_t(4)}));
             xt::xtensor<double, 2> barriers = 5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
+            std:cout << barriers << std::endl;
+            std:cout << trigger.barriers() << std::endl;
             REQUIRE(xt::allclose(barriers, trigger.barriers()));
         }
     }
