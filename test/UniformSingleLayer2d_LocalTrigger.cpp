@@ -61,6 +61,14 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
             xt::xtensor<double, 2> barriers = 5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
             std::cout << barriers << std::endl;
             std::cout << trigger.barriers() << std::endl;
+            std::cout << trigger.dgamma() << std::endl;
+            std::cout << trigger.dE() << std::endl;
+            std::cout << trigger.u_s(mesh.nelem() - 1) << std::endl;
+            std::cout << trigger.u_p(mesh.nelem() - 1) << std::endl;
+            std::cout << trigger.Eps_s(mesh.nelem() - 1) << std::endl;
+            std::cout << trigger.Eps_p(mesh.nelem() - 1) << std::endl;
+            std::cout << trigger.Sig_s(mesh.nelem() - 1) << std::endl;
+            std::cout << trigger.Sig_p(mesh.nelem() - 1) << std::endl;
             REQUIRE(xt::allclose(barriers, trigger.barriers()));
         }
 
