@@ -143,6 +143,11 @@ public:
     // Returns the number of iterations.
     size_t minimise(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 1000000);
 
+    // Add affine simple shear (may be negative to subtract affine simple shear).
+    // The input is the strain value, the shear component deformation gradient is twice that.
+    // Return deformation gradient that is applied to the system.
+    double addAffineSimpleShear(double delta_gamma);
+
     // Add event driven simple shear step.
     // Return deformation gradient that is applied to the system.
     double addSimpleShearEventDriven(
