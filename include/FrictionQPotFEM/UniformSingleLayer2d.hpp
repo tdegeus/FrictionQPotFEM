@@ -902,7 +902,7 @@ inline xt::xtensor<size_t, 2> HybridSystem::plastic_CurrentIndex() const
     return m_material_plas.CurrentIndex();
 }
 
-inline xt::xtensor<size_t, 2> HybridSystem::plastic_Epsp() const
+inline xt::xtensor<double, 2> HybridSystem::plastic_Epsp() const
 {
     return m_material_plas.Epsp();
 }
