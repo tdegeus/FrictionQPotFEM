@@ -125,6 +125,11 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             &SM::System::plastic_CurrentIndex,
             "plastic_CurrentIndex")
 
+        .def(
+            "plastic_Epsp",
+            &SM::System::plastic_Epsp,
+            "plastic_Epsp")
+
         .def("__repr__", [](const SM::System&) {
             return "<FrictionQPotFEM.UniformSingleLayer2d.System>";
         });
@@ -225,6 +230,11 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             "plastic_CurrentIndex",
             &SM::HybridSystem::plastic_CurrentIndex,
             "plastic_CurrentIndex")
+
+        .def(
+            "plastic_Epsp",
+            &SM::HybridSystem::plastic_Epsp,
+            "plastic_Epsp")
 
         .def(
             "minimise",
