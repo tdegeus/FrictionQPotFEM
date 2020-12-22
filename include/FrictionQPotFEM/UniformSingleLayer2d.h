@@ -143,6 +143,10 @@ public:
     // Returns the number of iterations.
     size_t minimise(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 1000000);
 
+    // Get the sign of the equivalent strain increment upon a displacement perturbation,
+    // for each integration point of each plastic element.
+    auto plastic_signOfPerturbation(const xt::xtensor<double, 2>& delta_u);
+
     // Add affine simple shear (may be negative to subtract affine simple shear).
     // The input is the strain value, the shear component deformation gradient is twice that.
     // Return deformation gradient that is applied to the system.
