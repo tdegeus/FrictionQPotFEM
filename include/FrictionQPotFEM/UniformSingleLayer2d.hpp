@@ -1210,6 +1210,7 @@ inline void LocalTriggerFineLayerFull::setState(
             }
 
             auto idx = xt::argmin(W)();
+            std::cout << idx << std::endl;
             m_smin(e, q) = S[idx];
             m_pmin(e, q) = P[idx];
             m_Wmin(e, q) = W[idx];
