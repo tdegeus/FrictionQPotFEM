@@ -486,6 +486,21 @@ inline size_t System::minimise(double tol, size_t niter_tol, size_t max_iter)
     FRICTIONQPOTFEM_REQUIRE(false);
 }
 
+inline auto System::plastic_signOfPerturbation(const xt::xtensor<double, 2>& delta_u)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(delta_u, {m_nnode, m_ndim}));
+
+    auto u_0 = this->u();
+    auto eps_0 = GM::Epsd(this->plastic_Eps());
+    auto u_pert = this->u() + delta_u;
+    this->setU(u_pert);
+    auto eps_pert = GM::Epsd(this->plastic_Eps());
+    this->setU(u_0);
+
+    xt::xtensor<int, 2> sign = xt::sign(eps_pert - eps_0);
+    return sign;
+}
+
 inline auto System::plastic_signOfSimpleShearPerturbation(double perturbation)
 {
     auto u_0 = this->u();
