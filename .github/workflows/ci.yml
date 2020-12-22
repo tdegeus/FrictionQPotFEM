@@ -14,16 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest, macos-latest, windows-latest]
+        runs-on: [windows-latest]
         include:
-          - runs-on: ubuntu-latest
-            config: -DBUILD_TESTS=1 -DBUILD_EXAMPLES=1
-            conda: environment.yaml
-            prop: tests & examples
-          - runs-on: macos-latest
-            config: -DBUILD_TESTS=1 -DBUILD_EXAMPLES=0
-            conda: environment_no-examples.yaml
-            prop: tests
           - runs-on: windows-latest
             config: -DBUILD_TESTS=1 -DBUILD_EXAMPLES=0
             conda: environment_no-examples.yaml
@@ -65,12 +57,4 @@ jobs:
       run: cmake --build .
 
     - name: Run C++ tests
-      run: cmake --build . --target "RUN_ALL_TESTS"
-
-    - name: Build and install Python module
-      run: |
-        python setup.py build
-        python setup.py install
-
-    - name: Run Python tests
-      run: python test/UniformSingleLayer2d_LocalTriggerFineLayer.py
+      run: .\test\unit-tests
