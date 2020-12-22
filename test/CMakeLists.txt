@@ -8,7 +8,7 @@ endif()
 
 set(ASSERT ON)
 set(DEBUG OFF)
-set(XSIMD OFF)
+option(XSIMD "Use xsimd optimisations" ON)
 
 set(CMAKE_BUILD_TYPE Release)
 
@@ -41,3 +41,5 @@ if(XSIMD)
     find_package(xsimd REQUIRED)
     target_link_libraries(${test_name} PRIVATE xtensor::use_xsimd)
 endif()
+
+add_test(NAME ${test_name} COMMAND ${test_name})

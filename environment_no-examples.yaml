@@ -25,8 +25,3 @@ dependencies:
   - python-gmatelastoplasticqpot
   - numpy
 
-  # to run examples
-  - highfive
-  - h5py
-  - matplotlib
-
