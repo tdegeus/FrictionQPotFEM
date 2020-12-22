@@ -63,12 +63,12 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
             std::cout << trigger.barriers() << std::endl;
             std::cout << trigger.dgamma() << std::endl;
             std::cout << trigger.dE() << std::endl;
-            std::cout << trigger.u_s(mesh.nelem() - 1) << std::endl;
-            std::cout << trigger.u_p(mesh.nelem() - 1) << std::endl;
-            std::cout << trigger.Eps_s(mesh.nelem() - 1) << std::endl;
-            std::cout << trigger.Eps_p(mesh.nelem() - 1) << std::endl;
-            std::cout << trigger.Sig_s(mesh.nelem() - 1) << std::endl;
-            std::cout << trigger.Sig_p(mesh.nelem() - 1) << std::endl;
+            std::cout << trigger.u_s(sys.plastic().size() - 1) << std::endl;
+            std::cout << trigger.u_p(sys.plastic().size() - 1) << std::endl;
+            std::cout << trigger.Eps_s(sys.plastic().size() - 1) << std::endl;
+            std::cout << trigger.Eps_p(sys.plastic().size() - 1) << std::endl;
+            std::cout << trigger.Sig_s(sys.plastic().size() - 1) << std::endl;
+            std::cout << trigger.Sig_p(sys.plastic().size() - 1) << std::endl;
             REQUIRE(xt::allclose(barriers, trigger.barriers()));
         }
 

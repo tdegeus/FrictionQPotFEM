@@ -7,7 +7,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 endif()
 
 set(ASSERT ON)
-set(DEBUG OFF)
+set(DEBUG ON)
 option(XSIMD "Use xsimd optimisations" ON)
 
 set(CMAKE_BUILD_TYPE Release)
