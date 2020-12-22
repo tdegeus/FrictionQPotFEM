@@ -5,6 +5,40 @@
 
 TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
 {
+    SECTION("System::addAffineSimpleShear")
+    {
+        GooseFEM::Mesh::Quad4::Regular mesh(3, 3);
+
+        FrictionQPotFEM::UniformSingleLayer2d::System sys(
+            mesh.coor(),
+            mesh.conn(),
+            mesh.dofs(),
+            xt::arange<size_t>(mesh.nnode() * mesh.ndim()),
+            xt::xtensor<size_t, 1>{0, 1, 2, 6, 7, 8},
+            xt::xtensor<size_t, 1>{3, 4, 5});
+
+        sys.setMassMatrix(xt::ones<double>({mesh.nelem()}));
+        sys.setDampingMatrix(xt::ones<double>({mesh.nelem()}));
+
+        sys.setElastic(
+            xt::ones<double>({6}),
+            xt::ones<double>({6}));
+
+        sys.setPlastic(
+            xt::xtensor<double, 1>{1.0, 1.0, 1.0},
+            xt::xtensor<double, 1>{1.0, 1.0, 1.0},
+            xt::xtensor<double, 2>{{1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}});
+
+        sys.setDt(1.0);
+
+        for (size_t i = 0; i < 10; ++i) {
+            double delta_gamma = 0.01;
+            double gamma = delta_gamma * static_cast<double>(i + 1);
+            sys.addAffineSimpleShear(delta_gamma);
+            REQUIRE(xt::allclose(xt::view(sys.Eps(), xt::all(), xt::all(), 0, 1), gamma));
+        }
+    }
+
     SECTION("System::addSimpleShearEventDriven")
     {
         GooseFEM::Mesh::Quad4::Regular mesh(1, 1);

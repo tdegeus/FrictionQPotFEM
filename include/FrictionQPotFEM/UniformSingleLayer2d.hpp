@@ -504,6 +504,18 @@ inline auto System::plastic_signOfSimpleShearPerturbation(double perturbation)
     return sign;
 }
 
+inline double System::addAffineSimpleShear(double delta_gamma)
+{
+    auto u_new = this->u();
+
+    for (size_t n = 0; n < m_nnode; ++n) {
+        u_new(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - m_coor(0, 1));
+    }
+    this->setU(u_new);
+
+    return delta_gamma * 2.0;
+}
+
 inline double System::addSimpleShearEventDriven(
     double deps_kick, bool kick, double direction, bool dry_run)
 {
