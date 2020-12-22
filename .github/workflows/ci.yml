@@ -15,6 +15,19 @@ jobs:
       fail-fast: false
       matrix:
         runs-on: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - runs-on: ubuntu-latest
+            config: -DBUILD_TESTS=1 -DBUILD_EXAMPLES=1
+            conda: environment.yaml
+            prop: tests & examples
+          - runs-on: macos-latest
+            config: -DBUILD_TESTS=1 -DBUILD_EXAMPLES=0
+            conda: environment_no-examples.yaml
+            prop: tests
+          - runs-on: windows-latest
+            config: -DBUILD_TESTS=1 -DBUILD_EXAMPLES=0
+            conda: environment_no-examples.yaml
+            prop: tests
 
     defaults:
       run:
@@ -34,24 +47,21 @@ jobs:
         mamba-version: "*"
         channels: conda-forge,defaults
         channel-priority: true
-        environment-file: environment.yaml
+        environment-file: ${{ matrix.conda }}
         activate-environment: test
         auto-activate-base: false
 
-    - name: Extending conda environment for testing
+    - name: Configure using CMake (!Windows)
+      if: runner.os != 'Windows'
+      run: cmake . ${{ matrix.config }}
+
+    - name: Configure using CMake (Windows)
+      if: runner.os == 'Windows'
       run: |
-        conda env update --file environment_test.yaml
-        conda env update --file environment_examples.yaml
+        conda install -c conda-forge clang_win-64 ninja
+        cmake . -G Ninja ${{ matrix.config }} -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 
-    - name: Configure using CMake (also compile examples)
-      if: runner.os == 'Linux'
-      run: cmake . -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON
-
-    - name: Configure using CMake (skip compilation of examples)
-      if: runner.os != 'Linux'
-      run: cmake . -DBUILD_TESTS=ON
-
-    - name: Build C++ tests & examples
+    - name: Build C++ ${{ matrix.prop }}
       run: cmake --build .
 
     - name: Run C++ tests
