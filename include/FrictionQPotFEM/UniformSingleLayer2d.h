@@ -79,8 +79,10 @@ public:
     // Set time step.
     void setDt(double dt);
 
-    // Set nodal displacements.
-    void setU(const xt::xtensor<double, 2>& u);
+    // Set nodal quantities.
+    void setU(const xt::xtensor<double, 2>& u); // displacements
+    void setV(const xt::xtensor<double, 2>& v); // velocities
+    void setA(const xt::xtensor<double, 2>& a); // accelerations
 
     // Set nodal velocities and accelerations equal to zero.
     // Call this function after an energy minimisation (taken care of in "minimise").
@@ -101,6 +103,8 @@ public:
 
     // Extract nodal quantities.
     auto u() const; // displacements
+    auto v() const; // velocities
+    auto a() const; // accelerations
     auto fmaterial() const; // material resistance
 
     // Extract residual (internal forces normalised by the external forces).
