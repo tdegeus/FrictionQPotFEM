@@ -26,8 +26,14 @@ add_executable(${test_name}
 target_link_libraries(${test_name} PRIVATE
     Catch2::Catch2
     FrictionQPotFEM
-    FrictionQPotFEM::compiler_warnings
-    xtensor::optimize)
+    FrictionQPotFEM::compiler_warnings)
+
+if (NOT (WIN32 AND (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")))
+    target_link_libraries(${test_name} PRIVATE xtensor::optimize)
+else()
+    message(STATUS "Skipping 'xtensor::optimize' because of known bug on Windows/clang.")
+endif()
+
 
 if(ASSERT)
     target_link_libraries(${test_name} PRIVATE FrictionQPotFEM::assert)
