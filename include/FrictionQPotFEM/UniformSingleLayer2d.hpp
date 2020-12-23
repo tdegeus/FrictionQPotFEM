@@ -1137,6 +1137,7 @@ inline void LocalTriggerFineLayerFull::setState(
 
     xt::xtensor<double, 2> S = xt::empty<double>({size_t(2), N});
     xt::xtensor<double, 2> P = xt::empty<double>({size_t(2), N});
+    fmt::print("i = {0:d}, j = {1:d}, w = {2:e}\n", i, j, w);
     xt::xtensor<double, 2> W = xt::empty<double>({size_t(2), N});
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
@@ -1216,7 +1217,8 @@ inline void LocalTriggerFineLayerFull::setState(
                     xt::xtensor<double, 4> deps = P(i, j) * Eps_p + S(i, j) * Eps_s;
                     xt::xtensor<double, 2> w = GT::A2s_ddot_B2s(sig, deps);
                     w *= dV_slice;
-                    W(i, j) = xt::sum(w)();
+                    fmt::print("i = {0:d}, j = {1:d}, w = {2:e}\n", i, j, xt::sum(w)());
+                    W(i, j) =  xt::sum(w)();
                 }
             }
 
