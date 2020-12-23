@@ -26,8 +26,7 @@ add_executable(${test_name}
 target_link_libraries(${test_name} PRIVATE
     Catch2::Catch2
     FrictionQPotFEM
-    FrictionQPotFEM::compiler_warnings
-    xtensor::optimize)
+    FrictionQPotFEM::compiler_warnings)
 
 if(ASSERT)
     target_link_libraries(${test_name} PRIVATE FrictionQPotFEM::assert)
