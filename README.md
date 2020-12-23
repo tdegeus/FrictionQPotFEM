@@ -1,7 +1,6 @@
 # FrictionQPotFEM
 
-[![Travis](https://travis-ci.com/tdegeus/FrictionQPotFEM.svg?branch=main)](https://travis-ci.com/tdegeus/FrictionQPotFEM)
-[![Build status](https://ci.appveyor.com/api/projects/status/cx5ksr804rqidq0d?svg=true)](https://ci.appveyor.com/project/tdegeus/frictionqpotfem)
+[![CI](https://github.com/tdegeus/FrictionQPotFEM/workflows/CI/badge.svg)](https://github.com/tdegeus/FrictionQPotFEM/actions)
 
 Friction simulations based on "GMatElastoPlasticQPot" and "GooseFEM"
 
