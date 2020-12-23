@@ -1175,8 +1175,19 @@ inline void LocalTriggerFineLayerFull::setState(
             double pmax = (- b + std::sqrt(D)) / (2.0 * a);
             double pmin = (- b - std::sqrt(D)) / (2.0 * a);
 
+            std::cout << "smin = " << smin << std::endl;
+            std::cout << "smax = " << smax << std::endl;
+            std::cout << "pmin = " << pmin << std::endl;
+            std::cout << "pmax = " << pmax << std::endl;
+
             size_t n = static_cast<size_t>(- smin / (smax - smin) * static_cast<double>(N));
             size_t m = N - n;
+
+            std::cout << "N = " << N << std::endl;
+            std::cout << "n = " << n << std::endl;
+            std::cout << "m = " << m << std::endl;
+            std::cout << "S.shape() = " << xt::adapt(S.shape()) << std::endl;
+            std::cout << "P.shape() = " << xt::adapt(P.shape()) << std::endl;
 
             for (size_t i = 0; i < 2; ++i) {
                 xt::view(S, i, xt::range(0, n)) = xt::linspace<double>(smin, 0, n);
@@ -1208,6 +1219,10 @@ inline void LocalTriggerFineLayerFull::setState(
                     W(i, j) = xt::sum(w)();
                 }
             }
+
+            std::cout << "W = " << W << std::endl;
+            std::cout << "P = " << P << std::endl;
+            std::cout << "S = " << S << std::endl;
 
             auto idx = xt::argmin(W)();
             std::cout << idx << std::endl;
