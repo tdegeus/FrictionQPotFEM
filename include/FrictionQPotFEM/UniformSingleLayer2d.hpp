@@ -1217,6 +1217,8 @@ inline void LocalTriggerFineLayerFull::setState(
                     xt::xtensor<double, 2> w = GT::A2s_ddot_B2s(sig, deps);
                     w *= dV_slice;
                     fmt::print("i = {0:d}, j = {1:d}, w = {2:e}\n", i, j, xt::sum(w)());
+                    std::cout << "sig = " << sig << std::endl;
+                    std::cout << "deps = " << deps << std::endl;
                     W(i, j) =  xt::sum(w)();
                 }
             }
