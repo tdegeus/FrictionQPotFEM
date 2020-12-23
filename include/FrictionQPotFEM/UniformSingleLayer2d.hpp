@@ -235,6 +235,18 @@ inline void System::setU(const xt::xtensor<double, 2>& u)
     this->computeForceMaterial();
 }
 
+inline void System::setV(const xt::xtensor<double, 2>& v)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(v, {m_nnode, m_ndim}));
+    xt::noalias(m_v) = v;
+}
+
+inline void System::setA(const xt::xtensor<double, 2>& a)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(a, {m_nnode, m_ndim}));
+    xt::noalias(m_a) = a;
+}
+
 inline void System::quench()
 {
     m_v.fill(0.0);
@@ -269,6 +281,16 @@ inline auto System::dofs() const
 inline auto System::u() const
 {
     return m_u;
+}
+
+inline auto System::v() const
+{
+    return m_v;
+}
+
+inline auto System::a() const
+{
+    return m_a;
 }
 
 inline double System::plastic_h() const
