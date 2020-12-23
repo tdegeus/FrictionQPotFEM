@@ -51,3 +51,36 @@ make
 cp ../examples/LoadCycle.py .
 python LoadCycle.py ../examples/LoadCycle.txt
 ```
+
+## Change-log
+
+### v0.6.0
+
+*   [CI] Removing travis and appveyor
+*   Adding possibility to restart (#40)
+*   Clang/Windows switching-off xtensor::optimize (#39)
+*   Getting plastic strain (#38)
+*   Reformatting CI: using clang on Windows
+*   Compute sign of displacement perturbation
+*   Add affine shear step
+*   Adding "currentYield*" offset overload
+*   LocalTrigger: adding option to evaluate only small slice; making energy relative to the  
+    volume of a plastic element (not to that of the system); adding simple-shear search
+*   Splitting tests in several sources, enable Windows CI
+*   Trigger: most output
+*   Triggering: optimisations & minimal search (#34)
+    -   Trigger: Optimizations
+    -   Adding minimal search
+    -   Changing call of parent constructor
+*   Deprecated local energy barriers (#33)
+*   Implementation triggering of smallest energy barrier (#31)
+    -   API Change: Removing "init" functions, using constructors directly. 
+        Adding stiffness matrix.
+    -   Adding triggering protocol
+*    Exploring energy barrier upon trigger (#30)
+*    Adding plastic_ElementYieldBarrierForSimpleShear (#28)
+*    Exploring energy landscape to local simple shear perturbation (#24)
+*    Temporarily excluding Windows from GitHub CI
+*    Adding GitHub CI
+*    Adding Python API
+*    Amplifying trigger
