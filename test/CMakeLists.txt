@@ -8,9 +8,9 @@ endif()
 
 set(ASSERT ON)
 set(DEBUG ON)
-option(XSIMD "Use xsimd optimisations" ON)
+option(XSIMD "Use xsimd optimisations" OFF)
 
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
 set(test_name "unit-tests")
 
