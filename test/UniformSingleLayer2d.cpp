@@ -75,6 +75,48 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
         }
     }
 
+    SECTION("System::addAffineSimpleShearCentered")
+    {
+        GooseFEM::Mesh::Quad4::Regular mesh(3, 3);
+
+        FrictionQPotFEM::UniformSingleLayer2d::System sys(
+            mesh.coor(),
+            mesh.conn(),
+            mesh.dofs(),
+            xt::arange<size_t>(mesh.nnode() * mesh.ndim()),
+            xt::xtensor<size_t, 1>{0, 1, 2, 6, 7, 8},
+            xt::xtensor<size_t, 1>{3, 4, 5});
+
+        sys.setMassMatrix(xt::ones<double>({mesh.nelem()}));
+        sys.setDampingMatrix(xt::ones<double>({mesh.nelem()}));
+
+        sys.setElastic(
+            xt::ones<double>({6}),
+            xt::ones<double>({6}));
+
+        sys.setPlastic(
+            xt::xtensor<double, 1>{1.0, 1.0, 1.0},
+            xt::xtensor<double, 1>{1.0, 1.0, 1.0},
+            xt::xtensor<double, 2>{{1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}});
+
+        sys.setDt(1.0);
+
+        auto plastic = sys.plastic();
+        auto conn = sys.conn();
+        auto bot = xt::view(conn, xt::keep(plastic), 0); // missing last node, but ok for test
+        auto top = xt::view(conn, xt::keep(plastic), 3);
+
+        for (size_t i = 0; i < 10; ++i) {
+            double delta_gamma = 0.01;
+            double gamma = delta_gamma * static_cast<double>(i + 1);
+            sys.addAffineSimpleShearCentered(delta_gamma);
+            auto u = sys.u();
+            auto du = xt::eval(xt::view(u, xt::keep(top), 1) + xt::view(u, xt::keep(bot), 1));
+            REQUIRE(xt::allclose(xt::view(sys.Eps(), xt::all(), xt::all(), 0, 1), gamma));
+            REQUIRE(xt::allclose(du, 0.0));
+        }
+    }
+
     SECTION("System::addSimpleShearEventDriven")
     {
         GooseFEM::Mesh::Quad4::Regular mesh(1, 1);

@@ -153,9 +153,15 @@ public:
     auto plastic_signOfPerturbation(const xt::xtensor<double, 2>& delta_u);
 
     // Add affine simple shear (may be negative to subtract affine simple shear).
+    // The displacement of the bottom boundary is zero, while it is maximal for the top boundary.
     // The input is the strain value, the shear component deformation gradient is twice that.
     // Return deformation gradient that is applied to the system.
     double addAffineSimpleShear(double delta_gamma);
+
+    // Similar to "addAffineSimpleShear" with the difference that the displacement is zero
+    // exactly in the middle, while the displacement at the bottom and the top boundary is maximal
+    // (with a negative displacement for the bottom boundary).
+    double addAffineSimpleShearCentered(double delta_gamma);
 
     // Add event driven simple shear step.
     // Return deformation gradient that is applied to the system.
