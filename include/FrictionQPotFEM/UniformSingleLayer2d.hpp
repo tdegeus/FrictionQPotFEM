@@ -558,6 +558,21 @@ inline double System::addAffineSimpleShear(double delta_gamma)
     return delta_gamma * 2.0;
 }
 
+inline double System::addAffineSimpleShearCentered(double delta_gamma)
+{
+    size_t ll = m_conn(m_elem_plas(0), 0);
+    size_t ul = m_conn(m_elem_plas(0), 3);
+    double y0 = (m_coor(ul, 1) + m_coor(ll, 1)) / 2.0;
+    auto u_new = this->u();
+
+    for (size_t n = 0; n < m_nnode; ++n) {
+        u_new(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - y0);
+    }
+    this->setU(u_new);
+
+    return delta_gamma * 2.0;
+}
+
 inline double System::addSimpleShearEventDriven(
     double deps_kick, bool kick, double direction, bool dry_run)
 {
