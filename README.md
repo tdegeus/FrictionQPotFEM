@@ -54,6 +54,10 @@ python LoadCycle.py ../examples/LoadCycle.txt
 
 ## Change-log
 
+### v0.7.0
+
+*   Adding addAffineSimpleShearCentered (#41)
+
 ### v0.6.0
 
 *   [CI] Removing travis and appveyor
