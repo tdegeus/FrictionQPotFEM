@@ -700,65 +700,70 @@ inline double System::addSimpleShearToFixedStress(double target_stress, bool dry
     return direction * dgamma;
 }
 
-inline double System::triggerElementWithLocalSimpleShear(
-    double deps_kick,
-    size_t plastic_element,
-    bool trigger_weakest,
-    double amplify)
-{
-    FRICTIONQPOTFEM_ASSERT(plastic_element < m_nelem_plas);
+// inline double System::triggerElementWithLocalSimpleShear(
+//     double deps_kick,
+//     size_t plastic_element,
+//     bool trigger_weakest,
+//     double amplify)
+// {
+//     FRICTIONQPOTFEM_REQUIRE(plastic_element < m_nelem_plas);
+//     FRICTIONQPOTFEM_REQUIRE(deps_kick >= 0);
+//     FRICTIONQPOTFEM_REQUIRE(amplify >= 0.0);
 
-    auto idx = this->plastic_CurrentIndex();
-    auto eps = GM::Epsd(this->plastic_Eps());
-    auto up = m_vector.AsDofs_p(m_u);
+//     auto idx = this->plastic_CurrentIndex();
+//     auto eps = GM::Epsd(this->plastic_Eps());
+//     auto up = m_vector.AsDofs_p(m_u);
 
-    // distance to yielding on the positive side
-    auto epsy = this->plastic_CurrentYieldRight();
-    auto deps = epsy - eps;
+//     // distance to yielding on the positive side
+//     auto epsy = this->plastic_CurrentYieldRight();
+//     auto deps = epsy - eps;
 
-    // find integration point closest to yielding
-    size_t e = m_elem_plas(plastic_element);
-    size_t q = xt::argmin(xt::view(deps, plastic_element, xt::all()))();
-    if (!trigger_weakest) {
-        q = xt::argmax(xt::view(deps, plastic_element, xt::all()))();
-    }
+//     // find integration point closest to yielding
+//     size_t e = m_elem_plas(plastic_element);
+//     size_t q = xt::argmin(xt::view(deps, plastic_element, xt::all()))();
+//     if (!trigger_weakest) {
+//         q = xt::argmax(xt::view(deps, plastic_element, xt::all()))();
+//     }
 
-    // deviatoric strain at the selected quadrature-point
-    xt::xtensor<double, 2> Eps = xt::view(this->plastic_Eps(), plastic_element, q);
-    xt::xtensor<double, 2> Epsd = GM::Deviatoric(Eps);
+//     // deviatoric strain at the selected quadrature-point
+//     xt::xtensor<double, 2> Eps = xt::view(this->plastic_Eps(), plastic_element, q);
+//     xt::xtensor<double, 2> Epsd = GM::Deviatoric(Eps);
 
-    // new equivalent deviatoric strain: yield strain + small strain kick
-    double eps_new = epsy(plastic_element, q) + deps_kick / 2.0;
+//     // new equivalent deviatoric strain: yield strain + small strain kick
+//     double eps_new = epsy(plastic_element, q) + deps_kick / 2.0;
 
-    // convert to increment in shear strain (N.B. "dgamma = 2 * Epsd(0,1)")
-    double dgamma = 2.0 * (-Epsd(0, 1) + std::sqrt(std::pow(eps_new, 2.0) - std::pow(Epsd(0, 0), 2.0)));
+//     // convert to increment in shear strain (N.B. "dgamma = 2 * Epsd(0,1)")
+//     double dgamma = 2.0 * (-Epsd(0, 1) + std::sqrt(std::pow(eps_new, 2.0) - std::pow(Epsd(0, 0), 2.0)));
+//     dgamma *= amplify;
 
-    // apply increment in shear strain as a perturbation to the selected element
-    // - nodes belonging to the current element, from connectivity
-    auto elem = xt::view(m_conn, e, xt::all());
-    // - displacement-DOFs
-    auto udofs = m_vector.AsDofs(m_u);
-    // - update displacement-DOFs for the element
-    for (size_t n = 0; n < m_nne; ++n) {
-        udofs(m_dofs(elem(n), 0)) += dgamma * amplify * (m_coor(elem(n), 1) - m_coor(elem(0), 1));
-    }
-    // - convert displacement-DOFs to (periodic) nodal displacement vector
-    //   (N.B. storing to nodes directly does not ensure periodicity)
-    this->setU(m_vector.AsNode(udofs));
+//     // apply increment in shear strain as a perturbation to the selected element
+//     // - nodes belonging to the current element, from connectivity
+//     auto elem = xt::view(m_conn, e, xt::all());
+//     // - displacement-DOFs
+//     auto udofs = m_vector.AsDofs(m_u);
+//     // - y-position of the middle of the element
+//     double h = m_coor(elem(n), 1) - m_coor(elem(0), 1);
+//     double ymid = m_coor(elem(0), 1) + h / 2.0;
+//     // - update displacement-DOFs for the element
+//     for (size_t n = 0; n < m_nne; ++n) {
+//         udofs(m_dofs(elem(n), 0)) += dgamma * (m_coor(elem(n), 1) - ymid);
+//     }
+//     // - convert displacement-DOFs to (periodic) nodal displacement vector
+//     //   (N.B. storing to nodes directly does not ensure periodicity)
+//     this->setU(m_vector.AsNode(udofs));
 
-    eps = GM::Epsd(this->plastic_Eps());
-    auto idx_new = this->plastic_CurrentIndex();
-    auto up_new = m_vector.AsDofs_p(m_u);
+//     eps = GM::Epsd(this->plastic_Eps());
+//     auto idx_new = this->plastic_CurrentIndex();
+//     auto up_new = m_vector.AsDofs_p(m_u);
 
-    FRICTIONQPOTFEM_REQUIRE(dgamma >= 0.0);
-    FRICTIONQPOTFEM_REQUIRE(amplify >= 0.0);
-    FRICTIONQPOTFEM_REQUIRE(std::abs(eps(plastic_element, q) - eps_new) / eps_new < 1e-4 || amplify != 1);
-    FRICTIONQPOTFEM_REQUIRE(xt::any(xt::not_equal(idx, idx_new)));
-    FRICTIONQPOTFEM_REQUIRE(idx(plastic_element, q) != idx_new(plastic_element, q));
-    FRICTIONQPOTFEM_REQUIRE(xt::allclose(up, up_new));
+//     FRICTIONQPOTFEM_REQUIRE(dgamma >= 0.0);
+//     FRICTIONQPOTFEM_REQUIRE(std::abs(eps(plastic_element, q) - eps_new) / eps_new < 1e-4 || amplify != 1);
+//     FRICTIONQPOTFEM_REQUIRE(xt::any(xt::not_equal(idx, idx_new)));
+//     FRICTIONQPOTFEM_REQUIRE(idx(plastic_element, q) != idx_new(plastic_element, q));
+//     FRICTIONQPOTFEM_REQUIRE(xt::allclose(up, up_new));
 
-    return dgamma;
-}
+//     return dgamma;
+// }
 
 inline xt::xtensor<size_t, 2> myargsort(xt::xtensor<double, 2>& A, size_t axis)
 {
