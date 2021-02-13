@@ -116,9 +116,6 @@ public:
     // Extract integration volume.
     auto dV() const;
 
-    // Convert "qtensor" to "qscalar" (see GooseFEM).
-    template <size_t rank, class T> auto AsTensor(const T& arg) const;
-
     // Get the "GooseFEM::VectorPartitioned" and the "GooseFEM::Element::Quad4::Quadrature"
     auto stiffness() const;
     auto vector() const;
@@ -281,10 +278,6 @@ protected:
         const xt::xtensor<size_t, 1>& iip,
         const xt::xtensor<size_t, 1>& elem_elastic,
         const xt::xtensor<size_t, 1>& elem_plastic);
-
-    // Function to unify the implementations of "setMassMatrix" and "setDampingMatrix".
-    template <class T>
-    void setMatrix(T& matrix, const xt::xtensor<double, 1>& val_elem);
 
     // Check the material definition and initialise strain.
     void initMaterial();
