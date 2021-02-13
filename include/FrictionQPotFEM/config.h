@@ -1,7 +1,10 @@
-/*
+/**
+\file config.h
+
+\brief
+Defines used in the library.
 
 (c - MIT) T.W.J. de Geus (Tom) | www.geus.me | github.com/tdegeus/FrictionQPotFEM
-
 */
 
 #ifndef FRICTIONQPOTFEM_CONFIG_H

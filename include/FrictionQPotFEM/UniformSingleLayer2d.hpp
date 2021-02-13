@@ -1,7 +1,9 @@
-/*
+/**
+\file UniformSingleLayer2d.hpp
+
+Implementation of UniformSingleLayer2d.h
 
 (c - MIT) T.W.J. de Geus (Tom) | www.geus.me | github.com/tdegeus/FrictionQPotFEM
-
 */
 
 #ifndef FRICTIONQPOTFEM_UNIFORMSINGLELAYER2D_HPP
@@ -84,13 +86,13 @@ inline void System::initSystem(
     m_nelem_plas = m_elem_plas.size();
     m_N = m_nelem_plas;
 
-#ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
-    // check that "elem_plastic" and "elem_plastic" together span all elements
-    xt::xtensor<size_t, 1> elem = xt::concatenate(xt::xtuple(m_elem_elas, m_elem_plas));
-    FRICTIONQPOTFEM_ASSERT(xt::sort(elem) == xt::arange<size_t>(m_nelem));
-    // check that all "iip" or in "dofs"
-    FRICTIONQPOTFEM_ASSERT(xt::all(xt::isin(m_iip, m_dofs)));
-#endif
+    #ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
+        // check that "elem_plastic" and "elem_plastic" together span all elements
+        xt::xtensor<size_t, 1> elem = xt::concatenate(xt::xtuple(m_elem_elas, m_elem_plas));
+        FRICTIONQPOTFEM_ASSERT(xt::sort(elem) == xt::arange<size_t>(m_nelem));
+        // check that all "iip" or in "dofs"
+        FRICTIONQPOTFEM_ASSERT(xt::all(xt::isin(m_iip, m_dofs)));
+    #endif
 
     m_vector = GF::VectorPartitioned(m_conn, m_dofs, m_iip);
 
@@ -652,7 +654,7 @@ inline double System::addSimpleShearToFixedStress(double target_stress, bool dry
 
     auto u_new = this->u();
     auto idx = this->plastic_CurrentIndex();
-    auto dV = this->AsTensor<2>(this->dV());
+    auto dV = m_quad.AsTensor<2>(this->dV());
     double G = m_material.G().data()[0];
 
     xt::xtensor<double, 2> Epsbar = xt::average(this->Eps(), dV, {0, 1});
