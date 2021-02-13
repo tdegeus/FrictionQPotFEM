@@ -61,7 +61,7 @@ int main()
     // Run
 
     xt::xtensor<double, 2> ret = xt::zeros<double>(std::array<size_t, 2>{800, 2});
-    auto dV = sys.AsTensor<2>(sys.dV());
+    auto dV = sys.quad().AsTensor<2>(sys.dV());
     bool kick = true;
     size_t inc = 0;
 

@@ -11,7 +11,7 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
         double h = xt::numeric_constants<double>::PI;
         double L = h * static_cast<double>(N);
 
-        GF::Mesh::Quad4::FineLayer mesh(N, N, h);
+        GooseFEM::Mesh::Quad4::FineLayer mesh(N, N, h);
 
         auto coor = mesh.coor();
         auto conn = mesh.conn();
