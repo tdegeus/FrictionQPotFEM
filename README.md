@@ -1,6 +1,7 @@
 # FrictionQPotFEM
 
 [![CI](https://github.com/tdegeus/FrictionQPotFEM/workflows/CI/badge.svg)](https://github.com/tdegeus/FrictionQPotFEM/actions)
+[![Doxygen -> gh-pages](https://github.com/tdegeus/FrictionQPotFEM/workflows/gh-pages/badge.svg)](https://tdegeus.github.io/FrictionQPotFEM)
 
 Friction simulations based on "GMatElastoPlasticQPot" and "GooseFEM"
 
