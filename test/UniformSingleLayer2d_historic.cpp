@@ -269,7 +269,7 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_historic", "UniformSingleLayer2
         double h = xt::numeric_constants<double>::PI;
         double L = h * static_cast<double>(N);
 
-        GF::Mesh::Quad4::FineLayer mesh(N, N, h);
+        GooseFEM::Mesh::Quad4::FineLayer mesh(N, N, h);
 
         auto coor = mesh.coor();
         auto conn = mesh.conn();
@@ -333,10 +333,10 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_historic", "UniformSingleLayer2
 
         xt::xtensor<double, 1> compute_Eps = xt::zeros<double>({dF.shape(0)});
         xt::xtensor<double, 1> compute_Sig = xt::zeros<double>({dF.shape(0)});
-        auto dV = full.AsTensor<2>(full.dV());
-        REQUIRE(xt::allclose(dV, reduced.AsTensor<2>(reduced.dV())));
+        auto dV = full.quad().AsTensor<2>(full.dV());
+        REQUIRE(xt::allclose(dV, reduced.quad().AsTensor<2>(reduced.dV())));
 
-        GF::Iterate::StopList stop(20);
+        GooseFEM::Iterate::StopList stop(20);
 
         for (size_t inc = 0 ; inc < dF.shape(0); ++inc) {
 
@@ -383,8 +383,8 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_historic", "UniformSingleLayer2
             xt::xtensor<double, 2> Epsbar = xt::average(full.Eps(), dV, {0, 1});
             xt::xtensor<double, 2> Sigbar = xt::average(full.Sig(), dV, {0, 1});
 
-            compute_Eps(inc) = GM::Epsd(Epsbar)();
-            compute_Sig(inc) = GM::Epsd(Sigbar)();
+            compute_Eps(inc) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)();
+            compute_Sig(inc) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Sigbar)();
         }
 
         REQUIRE(xt::allclose(compute_Eps, check_Eps));

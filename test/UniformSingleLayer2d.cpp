@@ -146,49 +146,49 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
         REQUIRE(sys.isHomogeneousElastic());
 
         double delta_eps = 1e-3;
-        auto dV = sys.AsTensor<2>(sys.dV());
+        auto dV = sys.quad().AsTensor<2>(sys.dV());
         xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
-        REQUIRE(xt::allclose(GM::Epsd(Epsbar)(), 0.0));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 0.0));
 
         sys.addSimpleShearEventDriven(delta_eps, false, +1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
-        REQUIRE(xt::allclose(GM::Epsd(Epsbar)(), 1.0 - delta_eps / 2.0));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 1.0 - delta_eps / 2.0));
 
         sys.addSimpleShearEventDriven(delta_eps, true, +1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
-        REQUIRE(xt::allclose(GM::Epsd(Epsbar)(), 1.0 + delta_eps / 2.0));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 1.0 + delta_eps / 2.0));
 
         sys.addSimpleShearEventDriven(delta_eps, false, +1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
-        REQUIRE(xt::allclose(GM::Epsd(Epsbar)(), 2.0 - delta_eps / 2.0));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 2.0 - delta_eps / 2.0));
 
         sys.addSimpleShearEventDriven(delta_eps, true, +1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
-        REQUIRE(xt::allclose(GM::Epsd(Epsbar)(), 2.0 + delta_eps / 2.0));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 2.0 + delta_eps / 2.0));
 
         sys.addSimpleShearEventDriven(delta_eps, false, -1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
-        REQUIRE(xt::allclose(GM::Epsd(Epsbar)(), 2.0 + delta_eps / 2.0));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 2.0 + delta_eps / 2.0));
 
         sys.addSimpleShearEventDriven(delta_eps, true, -1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
-        REQUIRE(xt::allclose(GM::Epsd(Epsbar)(), 2.0 - delta_eps / 2.0));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 2.0 - delta_eps / 2.0));
 
         sys.addSimpleShearEventDriven(delta_eps, false, -1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
-        REQUIRE(xt::allclose(GM::Epsd(Epsbar)(), 1.0 + delta_eps / 2.0));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 1.0 + delta_eps / 2.0));
 
         sys.addSimpleShearEventDriven(delta_eps, true, -1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
-        REQUIRE(xt::allclose(GM::Epsd(Epsbar)(), 1.0 - delta_eps / 2.0));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 1.0 - delta_eps / 2.0));
     }
 
     SECTION("System::addSimpleShearToFixedStress")
@@ -219,32 +219,32 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
 
         REQUIRE(sys.isHomogeneousElastic());
 
-        auto dV = sys.AsTensor<2>(sys.dV());
+        auto dV = sys.quad().AsTensor<2>(sys.dV());
         xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         xt::xtensor<double, 2> Sigbar = xt::average(sys.Sig(), dV, {0, 1});
-        REQUIRE(xt::allclose(GM::Epsd(Epsbar)(), 0.0));
-        REQUIRE(xt::allclose(GM::Sigd(Sigbar)(), 0.0));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 0.0));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Sigd(Sigbar)(), 0.0));
 
         double target_stress = 1.0;
         sys.addSimpleShearToFixedStress(target_stress);
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         Sigbar = xt::average(sys.Sig(), dV, {0, 1});
-        REQUIRE(xt::allclose(GM::Epsd(Epsbar)(), target_stress / 2.0));
-        REQUIRE(xt::allclose(GM::Sigd(Sigbar)(), target_stress));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), target_stress / 2.0));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Sigd(Sigbar)(), target_stress));
 
         target_stress = 1.5;
         sys.addSimpleShearToFixedStress(target_stress);
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         Sigbar = xt::average(sys.Sig(), dV, {0, 1});
-        REQUIRE(xt::allclose(GM::Epsd(Epsbar)(), target_stress / 2.0));
-        REQUIRE(xt::allclose(GM::Sigd(Sigbar)(), target_stress));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), target_stress / 2.0));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Sigd(Sigbar)(), target_stress));
 
         target_stress = 0.5;
         sys.addSimpleShearToFixedStress(target_stress);
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         Sigbar = xt::average(sys.Sig(), dV, {0, 1});
-        REQUIRE(xt::allclose(GM::Epsd(Epsbar)(), target_stress / 2.0));
-        REQUIRE(xt::allclose(GM::Sigd(Sigbar)(), target_stress));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), target_stress / 2.0));
+        REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Sigd(Sigbar)(), target_stress));
     }
 
     SECTION("System::triggerElementWithLocalSimpleShear")
@@ -288,7 +288,7 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
         double delta_eps = 1e-3;
         sys.triggerElementWithLocalSimpleShear(delta_eps, 0);
 
-        auto eps = GM::Epsd(sys.Eps());
+        auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(sys.Eps());
         auto plastic = sys.plastic();
         auto eps_p = xt::view(eps, xt::keep(plastic), xt::all());
 

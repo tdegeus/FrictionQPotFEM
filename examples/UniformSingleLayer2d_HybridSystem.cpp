@@ -64,7 +64,7 @@ int main()
     xt::view(dF, xt::range(1, dF.shape(0)), 0, 1) = 0.004 / 1000.0;
 
     xt::xtensor<double, 2> ret = xt::zeros<double>(std::array<size_t, 2>{dF.shape(0), 2});
-    auto dV = sys.AsTensor<2>(sys.dV());
+    auto dV = sys.quad().AsTensor<2>(sys.dV());
 
     for (size_t inc = 0 ; inc < dF.shape(0); ++inc) {
 
@@ -86,8 +86,8 @@ int main()
         xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         xt::xtensor<double, 2> Sigbar = xt::average(sys.Sig(), dV, {0, 1});
 
-        ret(inc, 0) = GM::Epsd(Epsbar)();
-        ret(inc, 1) = GM::Epsd(Sigbar)();
+        ret(inc, 0) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)();
+        ret(inc, 1) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Sigbar)();
     }
 
     std::ofstream outfile("UniformSingleLayer2d_HybridSystem.txt");
