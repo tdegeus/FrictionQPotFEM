@@ -127,9 +127,9 @@ inline void System::evalAllSet()
     m_allset = m_set_M && m_set_D && m_set_elas && m_set_plas && m_dt > 0.0;
 }
 
-template <class T>
-inline void System::setMatrix(T& matrix, const xt::xtensor<double, 1>& val_elem)
+inline void System::setMassMatrix(const xt::xtensor<double, 1>& val_elem)
 {
+    FRICTIONQPOTFEM_ASSERT(!m_set_M);
     FRICTIONQPOTFEM_ASSERT(val_elem.size() == m_nelem);
 
     QD::Quadrature nodalQuad(m_vector.AsElement(m_coor), QD::Nodal::xi(), QD::Nodal::w());
@@ -139,13 +139,7 @@ inline void System::setMatrix(T& matrix, const xt::xtensor<double, 1>& val_elem)
         xt::view(val_quad, xt::all(), q) = val_elem;
     }
 
-    matrix.assemble(nodalQuad.Int_N_scalar_NT_dV(val_quad));
-}
-
-inline void System::setMassMatrix(const xt::xtensor<double, 1>& val_elem)
-{
-    FRICTIONQPOTFEM_ASSERT(!m_set_M);
-    this->setMatrix(m_M, val_elem);
+    m_M.assemble(nodalQuad.Int_N_scalar_NT_dV(val_quad));
     m_set_M = true;
     this->evalAllSet();
 }
@@ -153,7 +147,16 @@ inline void System::setMassMatrix(const xt::xtensor<double, 1>& val_elem)
 inline void System::setDampingMatrix(const xt::xtensor<double, 1>& val_elem)
 {
     FRICTIONQPOTFEM_ASSERT(!m_set_D);
-    this->setMatrix(m_D, val_elem);
+    FRICTIONQPOTFEM_ASSERT(val_elem.size() == m_nelem);
+
+    QD::Quadrature nodalQuad(m_vector.AsElement(m_coor), QD::Nodal::xi(), QD::Nodal::w());
+
+    xt::xtensor<double, 2> val_quad = xt::empty<double>({m_nelem, nodalQuad.nip()});
+    for (size_t q = 0; q < nodalQuad.nip(); ++q) {
+        xt::view(val_quad, xt::all(), q) = val_elem;
+    }
+
+    m_D.assemble(nodalQuad.Int_N_scalar_NT_dV(val_quad));
     m_set_D = true;
     this->evalAllSet();
 }
@@ -334,12 +337,6 @@ inline double System::t() const
 inline auto System::dV() const
 {
     return m_quad.dV();
-}
-
-template <size_t rank, class T>
-inline auto System::AsTensor(const T& arg) const
-{
-    return m_quad.AsTensor<rank>(arg);
 }
 
 inline auto System::stiffness() const
