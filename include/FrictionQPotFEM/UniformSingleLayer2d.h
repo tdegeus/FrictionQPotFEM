@@ -63,11 +63,11 @@ public:
     Define the geometry, including boundary conditions and element sets.
 
     \param coor Nodal coordinates.
-    \param conn Connectivity
-    \param dofs DOFs per node
-    \param iip DOFs whose displacement is fixed
-    \param elem_elastic Elastic elements
-    \param elem_plastic Plastic elements
+    \param conn Connectivity.
+    \param dofs DOFs per node.
+    \param iip DOFs whose displacement is fixed.
+    \param elem_elastic Elastic elements.
+    \param elem_plastic Plastic elements.
     */
     System(
         const xt::xtensor<double, 2>& coor,
@@ -151,28 +151,28 @@ public:
     void quench();
 
     /**
-    List of elastic elements.
+    List of elastic elements. Shape: [System::m_nelem_elas].
 
     \return List of element numbers.
     */
     auto elastic() const;
 
     /**
-    List of plastic elements.
+    List of plastic elements. Shape: [System::m_nelem_plas].
 
     \return List of element numbers.
     */
     auto plastic() const;
 
     /**
-    Connectivity.
+    Connectivity. Shape: [System::m_nelem, System::m_nne].
 
     \return Connectivity.
     */
     auto conn() const;
 
     /**
-    Nodal coordinates.
+    Nodal coordinates. Shape: [System::m_nnode, System::m_ndim].
 
     \return Nodal coordinates.
     */
@@ -505,9 +505,9 @@ public:
 
 protected:
 
-    xt::xtensor<size_t, 2> m_conn; ///< Connectivity.
-    xt::xtensor<double, 2> m_coor; ///< Nodal coordinates.
-    xt::xtensor<size_t, 2> m_dofs; ///< DOFs.
+    xt::xtensor<size_t, 2> m_conn; ///< Connectivity. See System::conn.
+    xt::xtensor<double, 2> m_coor; ///< Nodal coordinates. See System::coor.
+    xt::xtensor<size_t, 2> m_dofs; ///< DOFs. Shape: [System::m_nnode, System::m_ndim].
     xt::xtensor<size_t, 1> m_iip; ///< Fixed DOFs.
     size_t m_N; ///< Number of plastic elements. Alias of System::nelem_plas.
     size_t m_nelem; ///< Number of element.
@@ -530,7 +530,7 @@ protected:
     xt::xtensor<double, 2> m_v_n; ///< Nodal velocities last time-step.
     xt::xtensor<double, 2> m_a_n; ///< Nodal accelerations last time-step.
     xt::xtensor<double, 3> m_ue; ///< Element vector (used for displacements).
-    xt::xtensor<double, 3> m_fe; ///< Element vector (used for displacements).
+    xt::xtensor<double, 3> m_fe; ///< Element vector (used for forces).
     xt::xtensor<double, 2> m_fmaterial; ///< Nodal force, deriving from elasticity.
     xt::xtensor<double, 2> m_fdamp; ///< Nodal force, deriving from damping.
     xt::xtensor<double, 2> m_fint; ///< Nodal force: total internal force.
@@ -550,7 +550,16 @@ protected:
 
 protected:
 
-    // Constructor alias
+    /**
+    Constructor alias, useful for derived classes.
+
+    \param coor Nodal coordinates.
+    \param conn Connectivity.
+    \param dofs DOFs per node.
+    \param iip DOFs whose displacement is fixed.
+    \param elem_elastic Elastic elements.
+    \param elem_plastic Plastic elements.
+    */
     void initSystem(
         const xt::xtensor<double, 2>& coor,
         const xt::xtensor<size_t, 2>& conn,
@@ -559,13 +568,20 @@ protected:
         const xt::xtensor<size_t, 1>& elem_elastic,
         const xt::xtensor<size_t, 1>& elem_plastic);
 
-    // Check the material definition and initialise strain.
+    /**
+    If all material points are specified: initialise strain and set stiffness matrix.
+    */
     void initMaterial();
 
-    // Check if all prerequisites are satisfied.
+    /**
+    Set System::m_allset = ``true`` if all prerequisites are satisfied.
+    */
     void evalAllSet();
 
-    // Compute strain and stress tensors.
+    /**
+    Compute strain and stress tensors.
+    Uses System::m_u to update System::m_Sig and System::m_Eps.
+    */
     void computeStress();
 
     /**
@@ -573,27 +589,54 @@ protected:
     This implies taking the gradient of the stress tensor, System::m_Sig,
     computed using System::computeStress.
 
-    Internal rule: System::computeForceMaterial is always evaluated after an update of System::m_u.
+    Internal rule: This function is always evaluated after an update of System::m_u.
     This is taken care off by calling System::setU, and never updating System::m_u directly.
     */
     virtual void computeForceMaterial();
 
-    // Get the sign of the equivalent strain increment upon a displacement perturbation,
-    // for each integration point of each plastic element.
+    /**
+    Get the sign of the equivalent strain increment upon a displacement perturbation,
+    for each integration point of each plastic element.
+
+    \param perturbation xy-component of the deformation gradient to use to perturb.
+    \return Sign of the perturbation. Shape: [System::m_nelem, System::m_nip].
+    */
     auto plastic_signOfSimpleShearPerturbation(double perturbation);
 
 };
 
-// -----------------------------------------------------------------------
-// Use speed-up by evaluating the elastic response with a stiffness matrix
-// -----------------------------------------------------------------------
+/**
+Same functionality as System, but with potential speed-ups.
+This class may be faster in most cases, as internally the elastic and plastic
+elements are separated.
+The force deriving from elasticity, System::m_fmaterial, is now computed as
+HybridSystem::m_material_elas + HybridSystem::m_material_plas.
 
+Thereby:
+-   Elastic: forces, HybridSystem::m_material_elas, are evaluated using a stiffness matrix.
+    This avoids the evaluation of stress and strain.
+    This of course implies that their evaluation requires them to be computed.
+    Thus HybridSystem::Sig and HybridSystem::Eps require a computation, whereas
+    System::Sig and System::Eps are for free.
+-   Plastic: methods as HybridSystem::plastic_Sig, HybridSystem::plastic_Epsp, etc.
+    do not require slicing (which is needed in System::plastic_Sig, etc.).
+*/
 class HybridSystem : public System {
 
 public:
 
     HybridSystem() = default;
 
+    /**
+    Define the geometry, including boundary conditions and element sets.
+
+    \param coor Nodal coordinates.
+    \param conn Connectivity.
+    \param dofs DOFs per node.
+    \param iip DOFs whose displacement is fixed.
+    \param elem_elastic Elastic elements.
+    \param elem_plastic Plastic elements.
+    */
     HybridSystem(
         const xt::xtensor<double, 2>& coor,
         const xt::xtensor<size_t, 2>& conn,
@@ -602,80 +645,91 @@ public:
         const xt::xtensor<size_t, 1>& elem_elastic,
         const xt::xtensor<size_t, 1>& elem_plastic);
 
-    // Set material parameters for the elastic elements
-    // (taken uniform per element, ordering the same as in the constructor).
     void setElastic(
         const xt::xtensor<double, 1>& K_elem,
         const xt::xtensor<double, 1>& G_elem) override;
 
-    // Set material parameters for the plastic elements
-    // (taken uniform per element, ordering the same as in the constructor).
     void setPlastic(
         const xt::xtensor<double, 1>& K_elem,
         const xt::xtensor<double, 1>& G_elem,
         const xt::xtensor<double, 2>& epsy_elem) override;
 
-    // Get the underlying "GMatElastoPlasticQPot::Array<2>"
+    /**
+    GMatElastoPlasticQPot Array definition for the elastic elements.
+
+    \return GMatElastoPlasticQPot::Cartesian2d::Array<2>" (System::m_material_elas).
+    */
     auto material_elastic() const;
+
+    /**
+    GMatElastoPlasticQPot Array definition for the plastic elements.
+
+    \return GMatElastoPlasticQPot::Cartesian2d::Array<2>" (System::m_material_plas).
+    */
     auto material_plastic() const;
 
-    // Extract stress and strain.
-    // Note: involves re-evaluating the stress and strain,
-    // as they are only known in the plastic elements.
+    /**
+    Stress tensor of each integration point.
+    Note: involves re-evaluating the stress and strain,
+    as they are only known in the plastic elements.
+    No re-evaluation is needed if the method is class directly after HybridSystem::Eps.
+
+    \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
+    */
     xt::xtensor<double, 4> Sig() override;
+
+    /**
+    Strain tensor of each integration point.
+    Note: involves re-evaluating the stress and strain,
+    as they are only known in the plastic elements.
+    No re-evaluation is needed if the method is class directly after HybridSystem::Sig.
+
+    \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
+    */
     xt::xtensor<double, 4> Eps() override;
 
-    // Extract for the plastic elements only.
-    xt::xtensor<double, 4> plastic_Sig() const override; // stress tensor
-    xt::xtensor<double, 4> plastic_Eps() const override; // strain tensor
-    xt::xtensor<double, 2> plastic_CurrentYieldLeft() const override; // yield strain 'left'
-    xt::xtensor<double, 2> plastic_CurrentYieldRight() const override; // yield strain 'right'
+    xt::xtensor<double, 4> plastic_Sig() const override;
+    xt::xtensor<double, 4> plastic_Eps() const override;
+    xt::xtensor<double, 2> plastic_CurrentYieldLeft() const override;
+    xt::xtensor<double, 2> plastic_CurrentYieldRight() const override;
     xt::xtensor<double, 2> plastic_CurrentYieldLeft(size_t offset) const override;
     xt::xtensor<double, 2> plastic_CurrentYieldRight(size_t offset) const override;
-    xt::xtensor<size_t, 2> plastic_CurrentIndex() const override; // current index in the landscape
-    xt::xtensor<double, 2> plastic_Epsp() const override; // plastic strain
+    xt::xtensor<size_t, 2> plastic_CurrentIndex() const override;
+    xt::xtensor<double, 2> plastic_Epsp() const override;
 
 protected:
 
-    // mesh parameters
-    xt::xtensor<size_t, 2> m_conn_elas;
-    xt::xtensor<size_t, 2> m_conn_plas;
-
-    // numerical quadrature
-    QD::Quadrature m_quad_elas;
-    QD::Quadrature m_quad_plas;
-
-    // convert vectors between 'nodevec', 'elemvec', ...
-    GF::VectorPartitioned m_vector_elas;
-    GF::VectorPartitioned m_vector_plas;
-
-    // material definition
-    GM::Array<2> m_material_elas;
-    GM::Array<2> m_material_plas;
-
-    // element vectors
-    xt::xtensor<double, 3> m_ue_plas;
-    xt::xtensor<double, 3> m_fe_plas;
-
-    // nodal forces
-    xt::xtensor<double, 2> m_felas;
-    xt::xtensor<double, 2> m_fplas;
-
-    // integration point tensors
-    xt::xtensor<double, 4> m_Eps_elas;
-    xt::xtensor<double, 4> m_Eps_plas;
-    xt::xtensor<double, 4> m_Sig_elas;
-    xt::xtensor<double, 4> m_Sig_plas;
-
-    // stiffness matrix
-    GF::Matrix m_K_elas;
-
-    // keep track of need to recompute
-    bool m_eval_full = true;
+    xt::xtensor<size_t, 2> m_conn_elas; ///< Slice of System::m_conn for elastic elements.
+    xt::xtensor<size_t, 2> m_conn_plas; ///< Slice of System::m_conn for plastic elements.
+    QD::Quadrature m_quad_elas; ///< Numerical quadrature for elastic elements.
+    QD::Quadrature m_quad_plas; ///< Numerical quadrature for plastic elements.
+    GF::VectorPartitioned m_vector_elas; ///< Convert vectors for elastic elements.
+    GF::VectorPartitioned m_vector_plas; ///< Convert vectors for plastic elements.
+    GM::Array<2> m_material_elas; ///< Material definition for elastic elements.
+    GM::Array<2> m_material_plas; ///< Material definition for plastic elements.
+    xt::xtensor<double, 3> m_ue_plas; ///< Element vector for elastic elements (used for displacements).
+    xt::xtensor<double, 3> m_fe_plas; ///< Element vector for plastic elements (used for forces).
+    xt::xtensor<double, 2> m_felas; ///< Nodal force, deriving from elasticity of elastic elements.
+    xt::xtensor<double, 2> m_fplas; ///< Nodal force, deriving from elasticity of plastic elements.
+    xt::xtensor<double, 4> m_Eps_elas; ///< Integration point tensor: strain for elastic elements.
+    xt::xtensor<double, 4> m_Eps_plas; ///< Integration point tensor: strain for plastic elements.
+    xt::xtensor<double, 4> m_Sig_elas; ///< Integration point tensor: stress for elastic elements.
+    xt::xtensor<double, 4> m_Sig_plas; ///< Integration point tensor: stress for plastic elements.
+    GF::Matrix m_K_elas; ///< Stiffness matrix for elastic elements.
+    bool m_eval_full = true; ///< Keep track of the need to recompute full variables as System::m_Sig.
 
 protected:
 
-    // Constructor alias
+    /**
+    Constructor alias, useful for derived classes.
+
+    \param coor Nodal coordinates.
+    \param conn Connectivity.
+    \param dofs DOFs per node.
+    \param iip DOFs whose displacement is fixed.
+    \param elem_elastic Elastic elements.
+    \param elem_plastic Plastic elements.
+    */
     void initHybridSystem(
         const xt::xtensor<double, 2>& coor,
         const xt::xtensor<size_t, 2>& conn,
@@ -684,9 +738,15 @@ protected:
         const xt::xtensor<size_t, 1>& elem_elastic,
         const xt::xtensor<size_t, 1>& elem_plastic);
 
-    // Evaluate "m_fmaterial": computes strain and stress in the plastic elements only.
-    // Contrary to "System::computeForceMaterial" does not call "computeStress",
-    // therefore separate overrides of "Sig" and "Eps" are needed.
+    /**
+    Update System::m_fmaterial based on the current displacement field System::m_u.
+    Contrary to System::computeForceMaterial does not call HybridSystem::computeStress,
+    therefore separate computation (and overrides) of
+    HybridSystem::Sig and HybridSystem::Eps are needed.
+
+    Internal rule: This function is always evaluated after an update of System::m_u.
+    This is taken care off by calling System::setU, and never updating System::m_u directly.
+    */
     void computeForceMaterial() override;
 
 };
