@@ -65,7 +65,7 @@ jobs:
       run: cmake --build .
 
     - name: Run C++ tests
-      run: cmake --build . --target "RUN_ALL_TESTS"
+      run: ctest --output-on-failure
 
     - name: Build and install Python module
       run: |

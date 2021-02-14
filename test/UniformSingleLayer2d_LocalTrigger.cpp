@@ -56,15 +56,17 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
         sys.setDt(dt);
 
         {
-            FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayerFull trigger(sys);
-            trigger.setState(sys.Eps(), sys.Sig(), xt::ones<double>({plastic.size(), size_t(4)}));
+            FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayer trigger(sys);
+            xt::xtensor<double, 2> epsy = xt::ones<double>({plastic.size(), size_t(4)});
+            trigger.setState(sys.Eps(), sys.Sig(), epsy);
             xt::xtensor<double, 2> barriers = 5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
             REQUIRE(xt::allclose(barriers, trigger.barriers()));
         }
 
         {
-            FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayer trigger(sys);
-            trigger.setState(sys.Eps(), sys.Sig(), xt::ones<double>({plastic.size(), size_t(4)}));
+            FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayerFull trigger(sys);
+            xt::xtensor<double, 2> epsy = xt::ones<double>({plastic.size(), size_t(4)});
+            trigger.setState(sys.Eps(), sys.Sig(), epsy);
             xt::xtensor<double, 2> barriers = 5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
             REQUIRE(xt::allclose(barriers, trigger.barriers()));
         }

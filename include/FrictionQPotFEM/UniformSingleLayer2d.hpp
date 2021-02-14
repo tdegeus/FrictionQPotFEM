@@ -1256,9 +1256,9 @@ inline void LocalTriggerFineLayerFull::setState(
             }
 
             auto idx = xt::argmin(W)();
-            m_smin(e, q) = S[idx];
-            m_pmin(e, q) = P[idx];
-            m_Wmin(e, q) = W[idx];
+            m_smin(e, q) = S.data()[idx];
+            m_pmin(e, q) = P.data()[idx];
+            m_Wmin(e, q) = W.data()[idx];
         }
     }
 }
