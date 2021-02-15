@@ -751,67 +751,259 @@ protected:
 
 };
 
-// -------------------------------------------------
-// Trigger by simple shear + pure shear perturbation
-// -------------------------------------------------
+/**
+Trigger element by a linear combination of simple shear and a pure shear perturbations.
+The contribution of both perturbation is computed as the minimal
+energy barrier needed to reach a yield surface for the triggered element, see:
 
+- LocalTriggerFineLayerFull::setState
+- LocalTriggerFineLayerFull::setStateMinimalSearch
+- LocalTriggerFineLayerFull::setStateSimpleShear
+
+The perturbations are established as the displacement field needed to reach mechanical equilibrium
+when an eigen-stress is applied to the triggered element (assuming elasticity everywhere).
+To get the two perturbations a sinple shear and pure shear eigen-stress are applied.
+
+The configuration, including the definition of elasticity is read from the input System.
+*/
 class LocalTriggerFineLayerFull
 {
 public:
+
     LocalTriggerFineLayerFull() = default;
+
+    /**
+    Constructor, reading the basic properties of the System, and computing the perturbation
+    for all plastic elements.
+    The perturbations of all elements are stored internally, making the computation of the
+    energy barriers cheap.
+    Note that this can use significant memory.
+
+    \param sys The System (or derived class) to trigger.
+    */
     LocalTriggerFineLayerFull(const System& sys);
+
     virtual ~LocalTriggerFineLayerFull() {};
 
-    // set state, compute energy barriers for all integration points,
-    // discretise the yield-surface in "ntest"-steps
+    /**
+    Set current state and compute energy barriers to reach the specified yield surface
+    (for all plastic elements).
+    The yield surface is discretised in ``ntest`` steps.
+
+    \param Eps Integration point strain, see System::Eps.
+    \param Sig Integration point stress, see System::Sig.
+    \param epsy Next yield strains, see System::plastic_CurrentYieldRight.
+    \param ntest Number of steps in which to discretise the yield surface.
+    */
     void setState(
         const xt::xtensor<double, 4>& Eps,
         const xt::xtensor<double, 4>& Sig,
         const xt::xtensor<double, 2>& epsy,
         size_t ntest = 100);
 
-    // set state, compute energy barriers for all integration points,
-    // discretise the yield-surface using a minimal number of tests
+    /**
+    Set current state and compute energy barriers to reach the specified yield surface
+    (for all plastic elements).
+    The yield surface is discretised in only ``8`` steps.
+
+    \param Eps Integration point strain, see System::Eps.
+    \param Sig Integration point stress, see System::Sig.
+    \param epsy Next yield strains, see System::plastic_CurrentYieldRight.
+    */
     void setStateMinimalSearch(
         const xt::xtensor<double, 4>& Eps,
         const xt::xtensor<double, 4>& Sig,
         const xt::xtensor<double, 2>& epsy);
 
-    // set state, compute energy barriers for simple shear perturbation
+    /**
+    Set current state and compute energy barriers to reach the specified yield surface,
+    for a purely simple shear perturbation (for all plastic elements)
+
+    \param Eps Integration point strain, see System::Eps.
+    \param Sig Integration point stress, see System::Sig.
+    \param epsy Next yield strains, see System::plastic_CurrentYieldRight.
+    */
     void setStateSimpleShear(
         const xt::xtensor<double, 4>& Eps,
         const xt::xtensor<double, 4>& Sig,
         const xt::xtensor<double, 2>& epsy);
 
-    // return all energy barriers [nelem_elas, nip], as energy density
-    xt::xtensor<double, 2> barriers() const;
-    xt::xtensor<double, 2> p() const; // correspond "p"
-    xt::xtensor<double, 2> s() const; // correspond "s"
+    /**
+    Get all energy barriers, as energy density.
+    Shape of output: [LocalTriggerFineLayerFull::nelem_elas, LocalTriggerFineLayerFull::nip].
+    Function reads from memory, all computations are done in the construction and
+    LocalTriggerFineLayerFull::setState (or one of its approximations).
 
-    // return the displacement corresponding to the energy barrier
+    \return Energy barriers.
+    */
+    xt::xtensor<double, 2> barriers() const;
+
+    /**
+    The energy barrier in LocalTriggerFineLayerFull::barriers is reached with a displacement
+    LocalTriggerFineLayerFull::delta_u =
+    ``p`` * LocalTriggerFineLayerFull::u_p + ``s`` * LocalTriggerFineLayerFull::u_s.
+    This function returns the value of ``p``.
+    Shape of output: [LocalTriggerFineLayerFull::nelem_elas, LocalTriggerFineLayerFull::nip].
+    Function reads from memory, all computations are done in the construction and
+    LocalTriggerFineLayerFull::setState (or one of its approximations).
+
+    \return Pure shear contribution.
+    */
+    xt::xtensor<double, 2> p() const;
+
+    /**
+    The energy barrier in LocalTriggerFineLayerFull::barriers is reached with a displacement
+    LocalTriggerFineLayerFull::delta_u =
+    ``p`` * LocalTriggerFineLayerFull::u_p + ``s`` * LocalTriggerFineLayerFull::u_s.
+    This function returns the value of ``s``.
+    Shape of output: [LocalTriggerFineLayerFull::nelem_elas, LocalTriggerFineLayerFull::nip].
+    Function reads from memory, all computations are done in the construction and
+    LocalTriggerFineLayerFull::setState (or one of its approximations).
+
+    \return Simple shear contribution.
+    */
+    xt::xtensor<double, 2> s() const;
+
+    /**
+    The energy barrier in LocalTriggerFineLayerFull::barriers is reached with this
+    displacement field.
+    This function takes the index of the plastic element; the real element number
+    is obtained by LocalTriggerFineLayerFull::m_elem_plas(plastic_element).
+    Function reads from memory, all computations are done in the construction and
+    LocalTriggerFineLayerFull::setState (or one of its approximations).
+
+    \param plastic_element Index of the plastic element.
+    \param q Index of the integration point.
+    \return Nodal displacement. Shape [System::m_nelem, System::m_nip].
+    */
     xt::xtensor<double, 2> delta_u(size_t plastic_element, size_t q) const;
 
-    // return perturbation
+    /**
+    Displacement field for the simple shear eigen-stress applied to a specific element.
+    This function takes the index of the plastic element; the real element number
+    is obtained by LocalTriggerFineLayerFull::m_elem_plas(plastic_element).
+    Function reads from memory, all computations are done in the constructor.
+
+    \param plastic_element Index of the plastic element.
+    \return Nodal displacement. Shape [System::m_nelem, System::m_nip].
+    */
     xt::xtensor<double, 2> u_s(size_t plastic_element) const;
+
+    /**
+    Displacement field for the pure shear eigen-stress applied to a specific element.
+    This function takes the index of the plastic element; the real element number
+    is obtained by LocalTriggerFineLayerFull::m_elem_plas(plastic_element).
+    Function reads from memory, all computations are done in the constructor.
+
+    \param plastic_element Index of the plastic element.
+    \return Nodal displacement. Shape [System::m_nelem, System::m_nip].
+    */
     xt::xtensor<double, 2> u_p(size_t plastic_element) const;
+
+    /**
+    Integration point strain tensors for LocalTriggerFineLayerFull::u_s.
+    This function takes the index of the plastic element; the real element number
+    is obtained by LocalTriggerFineLayerFull::m_elem_plas(plastic_element).
+    Function reads from memory, all computations are done in the constructor.
+
+    \param plastic_element Index of the plastic element.
+    \return Integration point tensor. Shape [System::m_nelem, System::m_nip, 2, 2].
+    */
     virtual xt::xtensor<double, 4> Eps_s(size_t plastic_element) const;
+
+    /**
+    Integration point strain tensors for LocalTriggerFineLayerFull::u_p.
+    This function takes the index of the plastic element; the real element number
+    is obtained by LocalTriggerFineLayerFull::m_elem_plas(plastic_element).
+    Function reads from memory, all computations are done in the constructor.
+
+    \param plastic_element Index of the plastic element.
+    \return Integration point tensor. Shape [System::m_nelem, System::m_nip, 2, 2].
+    */
     virtual xt::xtensor<double, 4> Eps_p(size_t plastic_element) const;
+
+    /**
+    Integration point stress tensors for LocalTriggerFineLayerFull::u_s.
+    This function takes the index of the plastic element; the real element number
+    is obtained by LocalTriggerFineLayerFull::m_elem_plas(plastic_element).
+    Function reads from memory, all computations are done in the constructor.
+
+    \param plastic_element Index of the plastic element.
+    \return Integration point tensor. Shape [System::m_nelem, System::m_nip, 2, 2].
+    */
     virtual xt::xtensor<double, 4> Sig_s(size_t plastic_element) const;
+
+    /**
+    Integration point stress tensors for LocalTriggerFineLayerFull::u_p.
+    This function takes the index of the plastic element; the real element number
+    is obtained by LocalTriggerFineLayerFull::m_elem_plas(plastic_element).
+    Function reads from memory, all computations are done in the constructor.
+
+    \param plastic_element Index of the plastic element.
+    \return Integration point tensor. Shape [System::m_nelem, System::m_nip, 2, 2].
+    */
     virtual xt::xtensor<double, 4> Sig_p(size_t plastic_element) const;
+
+    /**
+    Simple shear mode for all integration points of the triggered element, for all elements.
+    The output is thus::
+
+        dgamma(e, q) = Eps_s(plastic(e), q).
+
+    \return Shape [System::m_elem_plas, System::m_nip].
+    */
     xt::xtensor<double, 2> dgamma() const;
+
+    /**
+    Pure shear mode for all integration points of the triggered element, for all elements.
+    The output is thus::
+
+        dE(e, q) = Deviatoric(Eps_p)(plastic(e), q).
+
+    \return Shape [System::m_elem_plas, System::m_nip].
+    */
     xt::xtensor<double, 2> dE() const;
 
-    // remap quantities (does nothing here, but used by derived class)
+    /**
+    Empty function, used by LocalTriggerFineLayer.
+
+    \param arg Integration point scalar.
+    \param e Index of the plastic element.
+    \return A copy of ``arg``.
+    */
     virtual xt::xtensor<double, 2> slice(const xt::xtensor<double, 2>& arg, size_t e) const;
+
+    /**
+    Empty function, used by LocalTriggerFineLayer.
+
+    \param arg Integration point tensor.
+    \param e Index of the plastic element.
+    \return A copy of ``arg``.
+    */
     virtual xt::xtensor<double, 4> slice(const xt::xtensor<double, 4>& arg, size_t e) const;
 
 protected:
+
+    /**
+    Compute the displacement response to an eigen-stress applied to a plastic element.
+
+    \param plastic_element Index of the plastic element.
+    \param sig_star Eigen-stress applied to ``plastic_element``.
+    \param u Output displacement field.
+    \param Eps Output integration point strain corresponding to ``u``.
+    \param Sig Output integration point stress corresponding to ``u``.
+    \param K Stiffness matrix of the System.
+    \param solver Diagonalisation of ``K``.
+    \param quad Numerical quadrature of the System.
+    \param vector Book-keeping of the System.
+    \param material Material definition of the System.
+    */
     void computePerturbation(
         size_t plastic_element,
-        const xt::xtensor<double, 2>& sig_star, // stress perturbation at "plastic_element"
-        xt::xtensor<double, 2>& u,      // output equilibrium displacement
-        xt::xtensor<double, 4>& Eps,    // output equilibrium strain`
-        xt::xtensor<double, 4>& Sig,    // output equilibrium stress
+        const xt::xtensor<double, 2>& sig_star,
+        xt::xtensor<double, 2>& u,
+        xt::xtensor<double, 4>& Eps,
+        xt::xtensor<double, 4>& Sig,
         GF::MatrixPartitioned& K,
         GF::MatrixPartitionedSolver<>& solver,
         const QD::Quadrature& quad,
@@ -819,48 +1011,65 @@ protected:
         GM::Array<2>& material);
 
 protected:
-    // Basic info.
-    size_t m_nip;
-    size_t m_nelem_plas;
-    xt::xtensor<size_t, 1> m_elem_plas;
 
-    // Perturbation for each plastic element.
-    // The idea is to store/compute the minimal number of perturbations as possible,
-    // and use a periodic "roll" to reconstruct the perturbations everywhere.
-    // Because of the construction of the "FineLayer"-mesh, one roll of the mesh will not
-    // correspond to one roll of the middle layer, therefore a few percolations are needed.
-    std::vector<xt::xtensor<double, 2>> m_u_s;
-    std::vector<xt::xtensor<double, 2>> m_u_p;
-    std::vector<xt::xtensor<double, 4>> m_Eps_s;
-    std::vector<xt::xtensor<double, 4>> m_Eps_p;
-    std::vector<xt::xtensor<double, 4>> m_Sig_s;
-    std::vector<xt::xtensor<double, 4>> m_Sig_p;
-    std::vector<xt::xtensor<double, 1>> m_nodemap;
-    std::vector<xt::xtensor<double, 1>> m_elemmap;
+    size_t m_nip; ///< Number of integration points.
+    size_t m_nelem_plas; ///< Number of plastic elements.
+    xt::xtensor<size_t, 1> m_elem_plas; ///< Plastic elements.
 
-    // Integration point values.
-    xt::xtensor<double, 2> m_dV;
-    double m_V;
-    std::array<size_t, 4> m_shape_T2;
+    /**
+    Perturbation for each plastic element.
+    The idea is to store/compute the minimal number of perturbations as possible,
+    and use a periodic "roll" to reconstruct the perturbations everywhere.
+    Because of the construction of the "FineLayer"-mesh, one roll of the mesh will not
+    correspond to one roll of the middle layer, therefore a few percolations are needed.
+    */
+    std::vector<xt::xtensor<double, 2>> m_u_s; ///< Displacement field for simple shear perturbation.
+    std::vector<xt::xtensor<double, 2>> m_u_p; ///< Displacement field for pure shear perturbation.
+    std::vector<xt::xtensor<double, 4>> m_Eps_s; ///< Strain field for simple shear perturbation.
+    std::vector<xt::xtensor<double, 4>> m_Eps_p; ///< Strain field for pure shear perturbation.
+    std::vector<xt::xtensor<double, 4>> m_Sig_s; ///< Stress field for simple shear perturbation.
+    std::vector<xt::xtensor<double, 4>> m_Sig_p; ///< Stress field for pure shear perturbation.
+    std::vector<xt::xtensor<double, 1>> m_nodemap; ///< Node-map for the roll.
+    std::vector<xt::xtensor<double, 1>> m_elemmap; ///< Element-map for the roll.
 
-    // Perturbation of minimal work.
-    xt::xtensor<double, 2> m_smin; // value of "s" at minimal work "W" [nip, N]
-    xt::xtensor<double, 2> m_pmin; // value of "p" at minimal work "W" [nip, N]
-    xt::xtensor<double, 2> m_Wmin; // value of minimal work "W" [nip, N]
+    xt::xtensor<double, 2> m_dV; ///< Integration point volume.
+    double m_V; ///< Volume of a plastic element: assumed homogeneous!
+    std::array<size_t, 4> m_shape_T2; ///< Shape of an integration point tensor.
 
-    // Strain change in the element for each plastic element.
-    xt::xtensor<double, 2> m_dgamma; // == Eps_s(plastic(e), q, 0, 1) [nip, N]
-    xt::xtensor<double, 2> m_dE; // == Eps_p(plastic(e), q, 0, 0) [nip, N]
+    xt::xtensor<double, 2> m_smin; ///< value of "s" at minimal work "W" [nip, N]
+    xt::xtensor<double, 2> m_pmin; ///< value of "p" at minimal work "W" [nip, N]
+    xt::xtensor<double, 2> m_Wmin; ///< value of minimal work "W" [nip, N]
+
+    /**
+    Strain change in the element for each plastic element::
+
+        == Eps_s(plastic(e), q, 0, 1) [nip, N]
+    */
+    xt::xtensor<double, 2> m_dgamma;
+    xt::xtensor<double, 2> m_dE; ///< == Eps_p(plastic(e), q, 0, 0) [nip, N]
 };
 
-// -------------------------------------------------
-// Trigger by simple shear + pure shear perturbation
-// -------------------------------------------------
-
+/**
+Similar to LocalTriggerFineLayerFull, with the difference that only a (small) group of elements
+around the triggered element is considered to compute the energy barriers.
+The should speed-up the evaluation of the energy barriers significantly.
+*/
 class LocalTriggerFineLayer : public LocalTriggerFineLayerFull
 {
 public:
+
     LocalTriggerFineLayer() = default;
+
+    /**
+    Constructor.
+
+    \param sys
+        System.
+
+    \param region_of_interest
+        Edge size of the square box encapsulating the triggered element.
+        See GooseFEM::Mesh::Quad4::FineLayer::elementgrid_around_ravel.
+    */
     LocalTriggerFineLayer(const System& sys, size_t region_of_interest = 5);
 
     xt::xtensor<double, 4> Eps_s(size_t plastic_element) const override;
@@ -868,16 +1077,30 @@ public:
     xt::xtensor<double, 4> Sig_s(size_t plastic_element) const override;
     xt::xtensor<double, 4> Sig_p(size_t plastic_element) const override;
 
+    /**
+    Select values in the region of interest around a plastic element.
+
+    \param arg Integration point scalar.
+    \param e Index of the plastic element.
+    \return Slice of ``arg`` for the region of interest around ``e``.
+    */
     xt::xtensor<double, 2> slice(const xt::xtensor<double, 2>& arg, size_t e) const override;
+
+    /**
+    Select values in the region of interest around a plastic element.
+
+    \param arg Integration point tensor.
+    \param e Index of the plastic element.
+    \return Slice of ``arg`` for the region of interest around ``e``.
+    */
     xt::xtensor<double, 4> slice(const xt::xtensor<double, 4>& arg, size_t e) const override;
 
 protected:
-    std::vector<xt::xtensor<size_t, 1>> m_elemslice;
-
-    std::vector<xt::xtensor<double, 4>> m_Eps_s_slice;
-    std::vector<xt::xtensor<double, 4>> m_Eps_p_slice;
-    std::vector<xt::xtensor<double, 4>> m_Sig_s_slice;
-    std::vector<xt::xtensor<double, 4>> m_Sig_p_slice;
+    std::vector<xt::xtensor<size_t, 1>> m_elemslice; ///< Region-of-interest per plastic element.
+    std::vector<xt::xtensor<double, 4>> m_Eps_s_slice; ///< LocalTriggerFineLayerFull::m_Eps_s for the ROI only.
+    std::vector<xt::xtensor<double, 4>> m_Eps_p_slice; ///< LocalTriggerFineLayerFull::m_Eps_p for the ROI only.
+    std::vector<xt::xtensor<double, 4>> m_Sig_s_slice; ///< LocalTriggerFineLayerFull::m_Sig_s for the ROI only.
+    std::vector<xt::xtensor<double, 4>> m_Sig_p_slice; ///< LocalTriggerFineLayerFull::m_Sig_p for the ROI only.
 };
 
 } // namespace UniformSingleLayer2d
