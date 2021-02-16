@@ -1010,32 +1010,29 @@ inline LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(const System& sys)
     size_t nconfig = m_elem_plas(m_nelem_plas - 1) - elmap(m_elem_plas(m_nelem_plas - 1));
     size_t nroll = m_nelem_plas / nconfig;
 
-    m_u_s.resize(nconfig);
-    m_u_p.resize(nconfig);
-    m_Eps_s.resize(nconfig);
-    m_Eps_p.resize(nconfig);
-    m_Sig_s.resize(nconfig);
-    m_Sig_p.resize(nconfig);
-    m_elemmap.resize(nroll);
-    m_nodemap.resize(nroll);
-
     for (size_t roll = 0; roll < nroll; ++roll) {
-        m_elemmap[roll] = mesh.roll(roll);
-        m_nodemap[roll] = GF::Mesh::elemmap2nodemap(m_elemmap[roll], coor, conn);
+        m_elemmap.push_back(mesh.roll(roll));
+        m_nodemap.push_back(GF::Mesh::elemmap2nodemap(m_elemmap[roll], coor, conn));
     }
 
     for (size_t e = 0; e < nconfig; ++e) {
 
         // Simple shear perturbation
 
+        m_u_s.emplace_back(u.shape());
+        m_Eps_s.emplace_back(Eps.shape());
+        m_Sig_s.emplace_back(Sig.shape());
+
         xt::xtensor<double, 2> simple_shear = {
             {0.0, 1.0},
             {1.0, 0.0}};
 
-        this->computePerturbation(e, simple_shear, u, Eps, Sig, K, solver, quad, vector, material);
+        this->computePerturbation(
+            e, simple_shear, m_u_s[e], m_Eps_s[e], m_Sig_s[e],
+            K, solver, quad, vector, material);
 
         for (size_t q = 0; q < m_nip; ++q) {
-            auto Epsd = GM::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
+            auto Epsd = GM::Deviatoric(xt::eval(xt::view(m_Eps_s[e], m_elem_plas(e), q)));
             double gamma = Epsd(0, 1);
             for (size_t roll = 0; roll < nroll; ++roll) {
                 auto map = mesh.roll(roll);
@@ -1043,30 +1040,28 @@ inline LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(const System& sys)
             }
         }
 
-        m_u_s[e] = u;
-        m_Eps_s[e] = Eps;
-        m_Sig_s[e] = Sig;
-
         // Pure shear perturbation
+
+        m_u_p.emplace_back(u.shape());
+        m_Eps_p.emplace_back(Eps.shape());
+        m_Sig_p.emplace_back(Sig.shape());
 
         xt::xtensor<double, 2> pure_shear = {
             {1.0, 0.0},
             {0.0, -1.0}};
 
-        this->computePerturbation(e, pure_shear, u, Eps, Sig, K, solver, quad, vector, material);
+        this->computePerturbation(
+            e, pure_shear, m_u_p[e], m_Eps_p[e], m_Sig_p[e],
+            K, solver, quad, vector, material);
 
         for (size_t q = 0; q < m_nip; ++q) {
-            auto Epsd = GM::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
+            auto Epsd = GM::Deviatoric(xt::eval(xt::view(m_Eps_p[e], m_elem_plas(e), q)));
             double E = Epsd(0, 0);
             for (size_t roll = 0; roll < nroll; ++roll) {
                 auto map = mesh.roll(roll);
                 m_dE(e + map(m_elem_plas(e)) - m_elem_plas(e), q) = E;
             }
         }
-
-        m_u_p[e] = u;
-        m_Eps_p[e] = Eps;
-        m_Sig_p[e] = Sig;
     }
 }
 
