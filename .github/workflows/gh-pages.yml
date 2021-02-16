@@ -34,10 +34,6 @@ jobs:
       working-directory: docs
       run: doxygen
 
-    - name: Switch-off Jekyll for GH-actions
-      working-directory: docs
-      run: echo "" > .nojekyll
-
     - name: Deploy to GitHub Pages
       if: success()
       uses: crazy-max/ghaction-github-pages@v2
