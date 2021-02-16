@@ -56,18 +56,34 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
         sys.setDt(dt);
 
         {
-            FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayer trigger(sys);
+            FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayerFull trigger(sys);
             xt::xtensor<double, 2> epsy = xt::ones<double>({plastic.size(), size_t(4)});
             trigger.setState(sys.Eps(), sys.Sig(), epsy);
+            xt::xtensor<double, 2> p = xt::zeros<double>({plastic.size(), size_t(4)});
+            xt::xtensor<double, 2> s = -2.678804 * xt::ones<double>({plastic.size(), size_t(4)});
+            xt::xtensor<double, 2> dE = 0.150701 * xt::ones<double>({plastic.size(), size_t(4)});
+            xt::xtensor<double, 2> dgamma = 0.373301 * xt::ones<double>({plastic.size(), size_t(4)});
             xt::xtensor<double, 2> barriers = 5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
+            REQUIRE(xt::allclose(p, trigger.p()));
+            REQUIRE(xt::allclose(s, trigger.s()));
+            REQUIRE(xt::allclose(dE, trigger.dE()));
+            REQUIRE(xt::allclose(dgamma, trigger.dgamma()));
             REQUIRE(xt::allclose(barriers, trigger.barriers()));
         }
 
         {
-            FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayerFull trigger(sys);
+            FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayer trigger(sys);
             xt::xtensor<double, 2> epsy = xt::ones<double>({plastic.size(), size_t(4)});
             trigger.setState(sys.Eps(), sys.Sig(), epsy);
+            xt::xtensor<double, 2> p = xt::zeros<double>({plastic.size(), size_t(4)});
+            xt::xtensor<double, 2> s = -2.678804 * xt::ones<double>({plastic.size(), size_t(4)});
+            xt::xtensor<double, 2> dE = 0.150701 * xt::ones<double>({plastic.size(), size_t(4)});
+            xt::xtensor<double, 2> dgamma = 0.373301 * xt::ones<double>({plastic.size(), size_t(4)});
             xt::xtensor<double, 2> barriers = 5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
+            REQUIRE(xt::allclose(p, trigger.p()));
+            REQUIRE(xt::allclose(s, trigger.s()));
+            REQUIRE(xt::allclose(dE, trigger.dE()));
+            REQUIRE(xt::allclose(dgamma, trigger.dgamma()));
             REQUIRE(xt::allclose(barriers, trigger.barriers()));
         }
     }
