@@ -1010,15 +1010,6 @@ inline LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(const System& sys)
     size_t nconfig = m_elem_plas(m_nelem_plas - 1) - elmap(m_elem_plas(m_nelem_plas - 1));
     size_t nroll = m_nelem_plas / nconfig;
 
-    // m_u_s.resize(nconfig);
-    // m_u_p.resize(nconfig);
-    // m_Eps_s.resize(nconfig);
-    // m_Eps_p.resize(nconfig);
-    // m_Sig_s.resize(nconfig);
-    // m_Sig_p.resize(nconfig);
-    // m_elemmap.resize(nroll);
-    // m_nodemap.resize(nroll);
-
     for (size_t roll = 0; roll < nroll; ++roll) {
         m_elemmap.push_back(mesh.roll(roll));
         m_nodemap.push_back(GF::Mesh::elemmap2nodemap(m_elemmap[roll], coor, conn));
