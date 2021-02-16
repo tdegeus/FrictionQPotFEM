@@ -66,9 +66,9 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
             xt::xtensor<double, 2> s = -2.678804 * xt::ones<double>({plastic.size(), size_t(4)});
             REQUIRE(xt::allclose(dE, trigger.dE()));
             REQUIRE(xt::allclose(dgamma, trigger.dgamma()));
-            REQUIRE(xt::allclose(barriers, trigger.barriers()));
-            REQUIRE(xt::allclose(p, trigger.p()));
-            REQUIRE(xt::allclose(s, trigger.s()));
+            // REQUIRE(xt::allclose(barriers, trigger.barriers()));
+            // REQUIRE(xt::allclose(p, trigger.p()));
+            // REQUIRE(xt::allclose(s, trigger.s()));
         }
 
         {
@@ -82,9 +82,9 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
             xt::xtensor<double, 2> s = -2.678804 * xt::ones<double>({plastic.size(), size_t(4)});
             REQUIRE(xt::allclose(dE, trigger.dE()));
             REQUIRE(xt::allclose(dgamma, trigger.dgamma()));
-            REQUIRE(xt::allclose(barriers, trigger.barriers()));
-            REQUIRE(xt::allclose(p, trigger.p()));
-            REQUIRE(xt::allclose(s, trigger.s()));
+            // REQUIRE(xt::allclose(barriers, trigger.barriers()));
+            // REQUIRE(xt::allclose(p, trigger.p()));
+            // REQUIRE(xt::allclose(s, trigger.s()));
         }
     }
 }
