@@ -244,6 +244,7 @@ inline void System::setV(const xt::xtensor<double, 2>& v)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(v, {m_nnode, m_ndim}));
     xt::noalias(m_v) = v;
+    m_D.dot(m_v, m_fdamp);
 }
 
 inline void System::setA(const xt::xtensor<double, 2>& a)
@@ -319,6 +320,11 @@ inline double System::plastic_dV() const
 inline auto System::fmaterial() const
 {
     return m_fmaterial;
+}
+
+inline auto System::fdamp() const
+{
+    return m_fdamp;
 }
 
 inline double System::residual() const

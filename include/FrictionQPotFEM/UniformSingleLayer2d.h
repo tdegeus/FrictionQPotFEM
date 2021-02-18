@@ -129,13 +129,13 @@ public:
 
     /**
     Set nodal displacements.
-    Internally, System::computeForceMaterial is called to update forces deriving from
-    elasticity (System::m_fmaterial).
+    Internally, this updates System::m_fmaterial by calling System::computeForceMaterial.
     */
     void setU(const xt::xtensor<double, 2>& u);
 
     /**
     Set nodal velocities.
+    Internally, this updates System::m_fdamp.
     */
     void setV(const xt::xtensor<double, 2>& v);
 
@@ -223,9 +223,16 @@ public:
     /**
     Force deriving from elasticity.
 
-    \return Force deriving from elasticity.
+    \return Nodal force. Shape ``[nnode, ndim]``.
     */
     auto fmaterial() const;
+
+    /**
+    Force deriving from damping.
+
+    \return Nodal force. Shape ``[nnode, ndim]``.
+    */
+    auto fdamp() const;
 
     /**
     Norm of the relative residual force (the external force at the top/bottom boundaries is
