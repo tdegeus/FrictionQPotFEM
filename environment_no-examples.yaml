@@ -4,7 +4,6 @@ dependencies:
   # dependencies
   - gmatelastoplasticqpot
   - goosefem
-  - fmt
   - xtensor
 
   # optional dependencies
@@ -19,6 +18,7 @@ dependencies:
 
   # to run tests
   - catch2
+  - fmt
   - goosefem
   - python-goosefem
   - python-gmattensor

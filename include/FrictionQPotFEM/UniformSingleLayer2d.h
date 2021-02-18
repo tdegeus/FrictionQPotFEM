@@ -26,7 +26,6 @@ Implementation in UniformSingleLayer2d.hpp
 #include <xtensor/xnorm.hpp>
 #include <xtensor/xshape.hpp>
 #include <xtensor/xset_operation.hpp>
-#include <fmt/core.h>
 
 /**
 \return x^2
@@ -47,6 +46,20 @@ Return versions of returned libraries.
 \return List of strings with version information.
 */
 inline std::vector<std::string> versionInfo();
+
+/**
+Return git branch and hash (at the time of configuring)
+
+\return ``{branch, hash}``
+*/
+inline std::vector<std::string> git();
+
+/**
+Return version as string.
+
+\return Version string, e.g. ``v0.5.2``.
+*/
+inline std::string version();
 
 /**
 Class that uses GMatElastoPlasticQPot to evaluate stress everywhere
@@ -223,14 +236,14 @@ public:
     /**
     Force deriving from elasticity.
 
-    \return Nodal force. Shape ``[nnode, ndim]``.
+    \return Nodal force. Shape ``[nnode, ndim]``    .
     */
     auto fmaterial() const;
 
     /**
     Force deriving from damping.
 
-    \return Nodal force. Shape ``[nnode, ndim]``.
+    \return Nodal force. Shape ``[nnode, ndim]``    .
     */
     auto fdamp() const;
 

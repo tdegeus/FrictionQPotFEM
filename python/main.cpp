@@ -28,7 +28,9 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
     namespace SM = FrictionQPotFEM::UniformSingleLayer2d;
 
-    // sm.def("versionInfo", &SM::versionInfo, "Return version information.");
+    sm.def("versionInfo", &SM::versionInfo, "Return version information of library and its dependencies.");
+    sm.def("git", &SM::git, "Return git branch and hash at the time of building this library.");
+    sm.def("version", &SM::version, "Return version string.");
 
     py::class_<SM::System>(sm, "System")
 
