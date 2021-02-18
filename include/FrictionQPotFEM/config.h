@@ -53,3 +53,9 @@ Defines used in the library.
      FRICTIONQPOTFEM_VERSION_PATCH == z)
 
 #endif
+
+#ifndef FRICTIONQPOTFEM_GIT_HASH
+
+    #include "git.h"
+
+#endif

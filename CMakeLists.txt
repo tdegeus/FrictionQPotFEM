@@ -34,7 +34,6 @@ message(STATUS "Building FrictionQPotFEM v${_FRICTIONQPOTFEM_VERSION}")
 find_package(xtensor REQUIRED)
 find_package(GooseFEM REQUIRED)
 find_package(GMatElastoPlasticQPot REQUIRED)
-find_package(fmt REQUIRED)
 
 add_library(FrictionQPotFEM INTERFACE)
 
@@ -42,7 +41,7 @@ target_include_directories(FrictionQPotFEM INTERFACE
     $<INSTALL_INTERFACE:include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
-target_link_libraries(FrictionQPotFEM INTERFACE xtensor GooseFEM GMatElastoPlasticQPot fmt::fmt)
+target_link_libraries(FrictionQPotFEM INTERFACE xtensor GooseFEM GMatElastoPlasticQPot)
 
 # Installation
 # ============
@@ -72,6 +71,29 @@ set(CMAKE_SIZEOF_VOID_P ${_FRICTIONQPOTFEM})
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/FrictionQPotFEMConfig.cmake"
               "${CMAKE_CURRENT_BINARY_DIR}/FrictionQPotFEMConfigVersion.cmake"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/FrictionQPotFEM")
+
+# Adding git-hash to separate header
+# ==================================
+
+# Get the current working branch
+execute_process(
+    COMMAND git rev-parse --abbrev-ref HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_BRANCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+# Get the latest commit hash
+execute_process(
+    COMMAND git rev-parse HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/git.h"
+    "#define FRICTIONQPOTFEM_GIT_HASH \"${GIT_COMMIT_HASH}\"\n"
+    "#define FRICTIONQPOTFEM_GIT_BRANCH \"${GIT_BRANCH}\"\n")
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/git.h" DESTINATION "include/FrictionQPotFEM/")
 
 # Add builds
 # ==========
