@@ -12,6 +12,7 @@ dependencies:
 
   # build tools
   - cmake
+  - setuptools_scm
 
   # Python API
   - python
