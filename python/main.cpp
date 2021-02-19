@@ -11,6 +11,7 @@
 // #define GMATELASTOPLASTICQPOT_ENABLE_ASSERT
 // #define FRICTIONQPOTFEM_ENABLE_ASSERT
 
+#include <FrictionQPotFEM/version.h>
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
 
 namespace py = pybind11;
@@ -20,6 +21,12 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
     m.doc() = "Friction model based on GooseFEM and FrictionQPotFEM";
 
+    namespace M = FrictionQPotFEM;
+
+    m.def("version",
+          &M::version,
+          "Return version string.");
+
     // ---------------------------
     // FrictionQPotFEM.Cartesian2d
     // ---------------------------
@@ -28,9 +35,9 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
     namespace SM = FrictionQPotFEM::UniformSingleLayer2d;
 
-    sm.def("version_dependencies", &SM::version_dependencies, "Return version information of library and its dependencies.");
-    sm.def("git", &SM::git, "Return git branch and hash at the time of building this library.");
-    sm.def("version", &SM::version, "Return version string.");
+    sm.def("version_dependencies",
+           &SM::version_dependencies,
+           "Return version information of library and its dependencies.");
 
     py::class_<SM::System>(sm, "System")
 

@@ -16,6 +16,7 @@ Implementation in UniformSingleLayer2d.hpp
 #define FRICTIONQPOTFEM_UNIFORMSINGLELAYER2D_H
 
 #include "config.h"
+#include "version.h"
 
 #include <GMatElastoPlasticQPot/Cartesian2d.h>
 #include <GMatTensor/Cartesian2d.h>
@@ -41,23 +42,14 @@ namespace GM = GMatElastoPlasticQPot::Cartesian2d;
 namespace GT = GMatTensor::Cartesian2d;
 
 /**
-Return git branch and hash (at the time of configuring).
-
-\return ``{branch, hash}``
-*/
-inline std::vector<std::string> git();
-
-/**
-Return version as string.
-
-\return Version string, e.g. ``v0.5.2``.
-*/
-inline std::string version();
-
-/**
 Return versions of this library and of all of its dependencies.
+The output is a list of strings, e.g.::
 
-\return List of strings with version information.
+    "frictionqpotfem=0.7.1",
+    "goosefem=0.7.0",
+    ...
+
+\return List of strings.
 */
 inline std::vector<std::string> version_dependencies();
 

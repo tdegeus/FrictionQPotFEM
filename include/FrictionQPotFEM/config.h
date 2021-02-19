@@ -38,24 +38,4 @@ Defines used in the library.
             ": assertion failed (" #expr ") \n\t"); \
     }
 
-#define FRICTIONQPOTFEM_VERSION_MAJOR 0
-#define FRICTIONQPOTFEM_VERSION_MINOR 7
-#define FRICTIONQPOTFEM_VERSION_PATCH 0
-
-#define FRICTIONQPOTFEM_VERSION_AT_LEAST(x, y, z) \
-    (FRICTIONQPOTFEM_VERSION_MAJOR > x || (FRICTIONQPOTFEM_VERSION_MAJOR >= x && \
-    (FRICTIONQPOTFEM_VERSION_MINOR > y || (FRICTIONQPOTFEM_VERSION_MINOR >= y && \
-                                           FRICTIONQPOTFEM_VERSION_PATCH >= z))))
-
-#define FRICTIONQPOTFEM_VERSION(x, y, z) \
-    (FRICTIONQPOTFEM_VERSION_MAJOR == x && \
-     FRICTIONQPOTFEM_VERSION_MINOR == y && \
-     FRICTIONQPOTFEM_VERSION_PATCH == z)
-
-#endif
-
-#ifndef FRICTIONQPOTFEM_GIT_HASH
-
-    #include "git.h"
-
 #endif
