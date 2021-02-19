@@ -14,7 +14,20 @@ Implementation of UniformSingleLayer2d.h
 namespace FrictionQPotFEM {
 namespace UniformSingleLayer2d {
 
-inline std::vector<std::string> versionInfo()
+inline std::vector<std::string> git()
+{
+    return std::vector<std::string>{std::string(FRICTIONQPOTFEM_GIT_BRANCH),
+                                    std::string(FRICTIONQPOTFEM_GIT_HASH)};
+}
+
+inline std::string version()
+{
+    return std::to_string(FRICTIONQPOTFEM_VERSION_MAJOR) + "." +
+           std::to_string(FRICTIONQPOTFEM_VERSION_MINOR) + "." +
+           std::to_string(FRICTIONQPOTFEM_VERSION_PATCH);
+}
+
+inline std::vector<std::string> version_dependencies()
 {
     std::vector<std::string> ret;
 
@@ -49,19 +62,6 @@ inline std::vector<std::string> versionInfo()
         std::to_string(XTENSOR_VERSION_PATCH));
 
     return ret;
-}
-
-inline std::vector<std::string> git()
-{
-    return std::vector<std::string>{std::string(FRICTIONQPOTFEM_GIT_BRANCH),
-                                    std::string(FRICTIONQPOTFEM_GIT_HASH)};
-}
-
-inline std::string version()
-{
-    return std::to_string(FRICTIONQPOTFEM_VERSION_MAJOR) + "." +
-           std::to_string(FRICTIONQPOTFEM_VERSION_MINOR) + "." +
-           std::to_string(FRICTIONQPOTFEM_VERSION_PATCH);
 }
 
 inline System::System(
