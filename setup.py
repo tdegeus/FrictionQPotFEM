@@ -1,6 +1,3 @@
-desc = '''
-
-'''
 
 from setuptools import setup, Extension
 
@@ -28,6 +25,7 @@ include_dirs = [
 build = pyxtensor.BuildExt
 
 xsimd = pyxtensor.find_xsimd()
+
 if xsimd:
     if len(xsimd) > 0:
         include_dirs += [xsimd]
