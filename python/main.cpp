@@ -20,15 +20,15 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
     m.doc() = "Friction model based on GooseFEM and FrictionQPotFEM";
 
-    // ---------------------------------
+    // ---------------------------
     // FrictionQPotFEM.Cartesian2d
-    // ---------------------------------
+    // ---------------------------
 
     py::module sm = m.def_submodule("UniformSingleLayer2d", "UniformSingleLayer2d");
 
     namespace SM = FrictionQPotFEM::UniformSingleLayer2d;
 
-    sm.def("versionInfo", &SM::versionInfo, "Return version information of library and its dependencies.");
+    sm.def("version_dependencies", &SM::version_dependencies, "Return version information of library and its dependencies.");
     sm.def("git", &SM::git, "Return git branch and hash at the time of building this library.");
     sm.def("version", &SM::version, "Return version string.");
 

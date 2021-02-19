@@ -41,14 +41,7 @@ namespace GM = GMatElastoPlasticQPot::Cartesian2d;
 namespace GT = GMatTensor::Cartesian2d;
 
 /**
-Return versions of returned libraries.
-
-\return List of strings with version information.
-*/
-inline std::vector<std::string> versionInfo();
-
-/**
-Return git branch and hash (at the time of configuring)
+Return git branch and hash (at the time of configuring).
 
 \return ``{branch, hash}``
 */
@@ -60,6 +53,13 @@ Return version as string.
 \return Version string, e.g. ``v0.5.2``.
 */
 inline std::string version();
+
+/**
+Return versions of this library and of all of its dependencies.
+
+\return List of strings with version information.
+*/
+inline std::vector<std::string> version_dependencies();
 
 /**
 Class that uses GMatElastoPlasticQPot to evaluate stress everywhere
