@@ -25,6 +25,8 @@ Either:
 #define FRICTIONQPOTFEM_VERSION "@FRICTIONQPOTFEM_VERSION@"
 #endif
 
+#include <string>
+
 namespace FrictionQPotFEM {
 
 /**

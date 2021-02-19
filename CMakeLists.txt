@@ -15,13 +15,17 @@ option(BUILD_EXAMPLES "${PROJECT_NAME} Build examples" OFF)
 # Version
 # =======
 
-execute_process(
-    COMMAND python -c "from setuptools_scm import get_version; print(get_version())"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE FRICTIONQPOTFEM_VERSION
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
+IF(DEFINED ENV{PKG_VERSION})
+    set(FRICTIONQPOTFEM_VERSION $ENV{PKG_VERSION})
+else()
+    execute_process(
+        COMMAND python -c "from setuptools_scm import get_version; print(get_version())"
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE FRICTIONQPOTFEM_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
 
-message(STATUS "Building FrictionQPotFEM v${FRICTIONQPOTFEM_VERSION}")
+message(STATUS "Building FrictionQPotFEM ${FRICTIONQPOTFEM_VERSION}")
 
 # Set target
 # ==========
