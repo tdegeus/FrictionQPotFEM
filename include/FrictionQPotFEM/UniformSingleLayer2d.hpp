@@ -45,6 +45,15 @@ inline std::vector<std::string> version_dependencies()
         std::to_string(XTENSOR_VERSION_MINOR) + "." +
         std::to_string(XTENSOR_VERSION_PATCH));
 
+    #if defined(GOOSEFEM_EIGEN) || defined(EIGEN_WORLD_VERSION)
+
+        ret.push_back("eigen=" +
+            std::to_string(EIGEN_WORLD_VERSION) + "." +
+            std::to_string(EIGEN_MAJOR_VERSION) + "." +
+            std::to_string(EIGEN_MINOR_VERSION));
+
+    #endif
+
     return ret;
 }
 

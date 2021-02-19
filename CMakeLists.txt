@@ -1,3 +1,6 @@
+#
+# (c - MIT) T.W.J. de Geus (Tom) | www.geus.me | github.com/tdegeus/FrictionQPotFEM
+#
 
 cmake_minimum_required(VERSION 3.0)
 
@@ -76,7 +79,6 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/FrictionQPotFEMConfig.cmake"
 
 include("FrictionQPotFEMConfig.cmake")
 
-set(CTEST_TEST_TARGET_ALIAS RUN_ALL_TESTS)
 include(CTest)
 
 if(BUILD_TESTS)
