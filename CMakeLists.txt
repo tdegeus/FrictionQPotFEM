@@ -89,10 +89,12 @@ execute_process(
     OUTPUT_VARIABLE GIT_COMMIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+# Write a "git.h" overwrite with the current branch/hash
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/git.h"
     "#define FRICTIONQPOTFEM_GIT_HASH \"${GIT_COMMIT_HASH}\"\n"
     "#define FRICTIONQPOTFEM_GIT_BRANCH \"${GIT_BRANCH}\"\n")
 
+# Overwrite the installed "include/FrictionQPotFEM/git.h" dummy
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/git.h" DESTINATION "include/FrictionQPotFEM/")
 
 # Add builds
