@@ -10,6 +10,7 @@ Defines used in the library.
 #define FRICTIONQPOTFEM_CONFIG_H
 
 #include <string>
+#include <algorithm>
 
 #define Q(x) #x
 #define QUOTE(x) Q(x)
