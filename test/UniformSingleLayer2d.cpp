@@ -2,9 +2,21 @@
 #include <catch2/catch.hpp>
 #include <xtensor/xrandom.hpp>
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
+#include <iostream>
 
 TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
 {
+    SECTION("version")
+    {
+        std::cout << FrictionQPotFEM::version() << std::endl;
+
+        auto deps = FrictionQPotFEM::UniformSingleLayer2d::version_dependencies();
+
+        for (auto& i : deps) {
+            std::cout << i << std::endl;
+        }
+    }
+
     SECTION("System::plastic_signOfPerturbation")
     {
         GooseFEM::Mesh::Quad4::Regular mesh(3, 3);

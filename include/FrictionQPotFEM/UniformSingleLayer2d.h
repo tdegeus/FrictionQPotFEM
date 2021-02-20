@@ -1,7 +1,4 @@
 /**
-\file UniformSingleLayer2d.h
-
-\brief
 System in 2-d with:
 
 -   A weak, middle, layer.
@@ -9,7 +6,9 @@ System in 2-d with:
 
 Implementation in UniformSingleLayer2d.hpp
 
-(c - MIT) T.W.J. de Geus (Tom) | www.geus.me | github.com/tdegeus/FrictionQPotFEM
+\file UniformSingleLayer2d.h
+\copyright Copyright 2020. Tom de Geus. All rights reserved.
+\license This project is released under the GNU Public License (MIT).
 */
 
 #ifndef FRICTIONQPOTFEM_UNIFORMSINGLELAYER2D_H

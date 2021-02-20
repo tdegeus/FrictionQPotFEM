@@ -1,14 +1,18 @@
 /**
-\file config.h
-
-\brief
 Defines used in the library.
 
-(c - MIT) T.W.J. de Geus (Tom) | www.geus.me | github.com/tdegeus/FrictionQPotFEM
+\file config.h
+\copyright Copyright 2020. Tom de Geus. All rights reserved.
+\license This project is released under the GNU Public License (MIT).
 */
 
 #ifndef FRICTIONQPOTFEM_CONFIG_H
 #define FRICTIONQPOTFEM_CONFIG_H
+
+#include <string>
+
+#define Q(x) #x
+#define QUOTE(x) Q(x)
 
 #ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
 
