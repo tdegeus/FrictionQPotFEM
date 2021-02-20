@@ -165,18 +165,6 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             py::arg("elem_plastic"))
 
         .def(
-            "setMassMatrix",
-            &SM::HybridSystem::setMassMatrix,
-            "setMassMatrix",
-            py::arg("rho_elem"))
-
-        .def(
-            "setDampingMatrix",
-            &SM::HybridSystem::setDampingMatrix,
-            "setDampingMatrix",
-            py::arg("alpha_elem"))
-
-        .def(
             "setElastic",
             &SM::HybridSystem::setElastic,
             "setElastic",
@@ -190,29 +178,6 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             py::arg("K_elem"),
             py::arg("G_elem"),
             py::arg("epsy_elem"))
-
-        .def("setDt", &SM::HybridSystem::setDt, "setDt", py::arg("dt"))
-        .def("setU", &SM::HybridSystem::setU, "setU", py::arg("u"))
-        .def("setV", &SM::HybridSystem::setV, "setV", py::arg("v"))
-        .def("setA", &SM::HybridSystem::setA, "setA", py::arg("a"))
-        .def("quench", &SM::HybridSystem::quench, "quench")
-        .def("elastic", &SM::HybridSystem::elastic, "elastic")
-        .def("plastic", &SM::HybridSystem::plastic, "plastic")
-        .def("conn", &SM::HybridSystem::conn, "conn")
-        .def("coor", &SM::HybridSystem::coor, "coor")
-        .def("dofs", &SM::HybridSystem::dofs, "dofs")
-        .def("u", &SM::HybridSystem::u, "u")
-        .def("fmaterial", &SM::HybridSystem::fmaterial, "fmaterial")
-        .def("fdamp", &SM::HybridSystem::fdamp, "fdamp")
-        .def("residual", &SM::HybridSystem::residual, "residual")
-        .def("t", &SM::HybridSystem::t, "t")
-        .def("dV", &SM::HybridSystem::dV, "dV")
-        .def("vector", &SM::HybridSystem::vector, "vector")
-        .def("quad", &SM::HybridSystem::quad, "quad")
-        .def("material", &SM::HybridSystem::material, "material")
-        .def("Eps", &SM::HybridSystem::Eps, "Eps")
-        .def("Sig", &SM::HybridSystem::Sig, "Sig")
-        .def("timeStep", &SM::HybridSystem::timeStep, "timeStep")
 
         .def("material_elastic", &SM::HybridSystem::material_elastic, "material_elastic")
         .def("material_plastic", &SM::HybridSystem::material_plastic, "material_plastic")
@@ -250,14 +215,6 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             "plastic_Epsp",
             &SM::HybridSystem::plastic_Epsp,
             "plastic_Epsp")
-
-        .def(
-            "minimise",
-            &SM::HybridSystem::minimise,
-            "minimise",
-            py::arg("tol") = 1e-5,
-            py::arg("niter_tol") = 20,
-            py::arg("max_iter") = 1000000)
 
         .def("__repr__", [](const SM::HybridSystem&) {
             return "<FrictionQPotFEM.UniformSingleLayer2d.HybridSystem>";
@@ -303,7 +260,7 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             return "<FrictionQPotFEM.UniformSingleLayer2d.LocalTriggerFineLayerFull>";
         });
 
-    py::class_<SM::LocalTriggerFineLayer>(sm, "LocalTriggerFineLayer")
+    py::class_<SM::LocalTriggerFineLayer, SM::LocalTriggerFineLayerFull>(sm, "LocalTriggerFineLayer")
 
         .def(
             py::init<const SM::System&, size_t>(),
@@ -311,33 +268,6 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             py::arg("sys"),
             py::arg("roi") = 5)
 
-        .def(
-            "setState",
-            &SM::LocalTriggerFineLayer::setState,
-            py::arg("Eps"),
-            py::arg("Sig"),
-            py::arg("epsy"),
-            py::arg("ntest") = 100)
-
-        .def(
-            "setStateMinimalSearch",
-            &SM::LocalTriggerFineLayer::setStateMinimalSearch,
-            py::arg("Eps"),
-            py::arg("Sig"),
-            py::arg("epsy"))
-
-        .def(
-            "setStateSimpleShear",
-            &SM::LocalTriggerFineLayer::setStateSimpleShear,
-            py::arg("Eps"),
-            py::arg("Sig"),
-            py::arg("epsy"))
-
-        .def("barriers", &SM::LocalTriggerFineLayer::barriers)
-        .def("delta_u", &SM::LocalTriggerFineLayer::delta_u)
-
-        .def("u_s", &SM::LocalTriggerFineLayer::u_s)
-        .def("u_p", &SM::LocalTriggerFineLayer::u_p)
         .def("Eps_s", &SM::LocalTriggerFineLayer::Eps_s)
         .def("Eps_p", &SM::LocalTriggerFineLayer::Eps_p)
         .def("Sig_s", &SM::LocalTriggerFineLayer::Sig_s)
