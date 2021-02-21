@@ -41,106 +41,152 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
     py::class_<SM::System>(sm, "System")
 
-        .def(
-            py::init<
+        .def(py::init<
                 const xt::xtensor<double, 2>&,
                 const xt::xtensor<size_t, 2>&,
                 const xt::xtensor<size_t, 2>&,
                 const xt::xtensor<size_t, 1>&,
                 const xt::xtensor<size_t, 1>&,
                 const xt::xtensor<size_t, 1>&>(),
-            "System",
-            py::arg("coor"),
-            py::arg("conn"),
-            py::arg("dofs"),
-            py::arg("iip"),
-            py::arg("elem_elastic"),
-            py::arg("elem_plastic"))
+             "System",
+             py::arg("coor"),
+             py::arg("conn"),
+             py::arg("dofs"),
+             py::arg("iip"),
+             py::arg("elem_elastic"),
+             py::arg("elem_plastic"))
 
-        .def(
-            "setMassMatrix",
-            &SM::System::setMassMatrix,
-            "setMassMatrix",
-            py::arg("rho_elem"))
+        .def("setMassMatrix",
+             &SM::System::setMassMatrix,
+             "setMassMatrix",
+             py::arg("rho_elem"))
 
-        .def(
-            "setDampingMatrix",
-            &SM::System::setDampingMatrix,
-            "setDampingMatrix",
-            py::arg("alpha_elem"))
+        .def("setDampingMatrix",
+             &SM::System::setDampingMatrix,
+             "setDampingMatrix",
+             py::arg("alpha_elem"))
 
-        .def(
-            "setElastic",
-            &SM::System::setElastic,
-            "setElastic",
-            py::arg("K_elem"),
-            py::arg("G_elem"))
+        .def("setElastic",
+             &SM::System::setElastic,
+             "setElastic",
+             py::arg("K_elem"),
+             py::arg("G_elem"))
 
-        .def(
-            "setPlastic",
-            &SM::System::setPlastic,
-            "setPlastic",
-            py::arg("K_elem"),
-            py::arg("G_elem"),
-            py::arg("epsy_elem"))
+        .def("setPlastic",
+             &SM::System::setPlastic,
+             "setPlastic",
+             py::arg("K_elem"),
+             py::arg("G_elem"),
+             py::arg("epsy_elem"))
 
+        .def("isHomogeneousElastic", &SM::System::isHomogeneousElastic, "isHomogeneousElastic")
         .def("setDt", &SM::System::setDt, "setDt", py::arg("dt"))
         .def("setU", &SM::System::setU, "setU", py::arg("u"))
-        .def("setV", &SM::System::setU, "setV", py::arg("v"))
-        .def("setA", &SM::System::setU, "setA", py::arg("a"))
+        .def("setV", &SM::System::setV, "setV", py::arg("v"))
+        .def("setA", &SM::System::setA, "setA", py::arg("a"))
         .def("quench", &SM::System::quench, "quench")
         .def("elastic", &SM::System::elastic, "elastic")
         .def("plastic", &SM::System::plastic, "plastic")
         .def("conn", &SM::System::conn, "conn")
         .def("coor", &SM::System::coor, "coor")
         .def("dofs", &SM::System::dofs, "dofs")
+        .def("plastic_h", &SM::System::plastic_h, "plastic_h")
+        .def("plastic_dV", &SM::System::plastic_dV, "plastic_dV")
         .def("u", &SM::System::u, "u")
+        .def("v", &SM::System::v, "v")
+        .def("a", &SM::System::a, "a")
         .def("fmaterial", &SM::System::fmaterial, "fmaterial")
         .def("fdamp", &SM::System::fdamp, "fdamp")
         .def("residual", &SM::System::residual, "residual")
         .def("t", &SM::System::t, "t")
         .def("dV", &SM::System::dV, "dV")
+        .def("stiffness", &SM::System::stiffness, "stiffness")
         .def("vector", &SM::System::vector, "vector")
         .def("quad", &SM::System::quad, "quad")
         .def("material", &SM::System::material, "material")
-        .def("Eps", &SM::System::Eps, "Eps")
         .def("Sig", &SM::System::Sig, "Sig")
+        .def("Eps", &SM::System::Eps, "Eps")
+
+        .def("plastic_Sig", &SM::System::plastic_Sig, "plastic_Sig")
+        .def("plastic_Eps", &SM::System::plastic_Eps, "plastic_Eps")
+
+        .def("plastic_CurrentYieldLeft",
+             py::overload_cast<>(&SM::System::plastic_CurrentYieldLeft, py::const_),
+             "plastic_CurrentYieldLeft")
+
+        .def("plastic_CurrentYieldRight",
+             py::overload_cast<>(&SM::System::plastic_CurrentYieldRight, py::const_),
+             "plastic_CurrentYieldRight")
+
+        .def("plastic_CurrentYieldLeft",
+             py::overload_cast<size_t>(&SM::System::plastic_CurrentYieldLeft, py::const_),
+             "plastic_CurrentYieldLeft",
+             py::arg("offset"))
+
+        .def("plastic_CurrentYieldRight",
+             py::overload_cast<size_t>(&SM::System::plastic_CurrentYieldRight, py::const_),
+             "plastic_CurrentYieldRight",
+             py::arg("offset"))
+
+        .def("plastic_CurrentIndex",
+             &SM::System::plastic_CurrentIndex,
+             "plastic_CurrentIndex")
+
+        .def("plastic_Epsp",
+             &SM::System::plastic_Epsp,
+             "plastic_Epsp")
+
         .def("timeStep", &SM::System::timeStep, "timeStep")
 
-        .def("plastic_Eps", &SM::System::plastic_Eps, "plastic_Eps")
-        .def("plastic_Sig", &SM::System::plastic_Sig, "plastic_Sig")
+        .def("minimise",
+             &SM::System::minimise,
+             "minimise",
+             py::arg("tol") = 1e-5,
+             py::arg("niter_tol") = 20,
+             py::arg("max_iter") = 1000000)
 
-        .def(
-            "plastic_CurrentYieldLeft",
-            py::overload_cast<>(&SM::System::plastic_CurrentYieldLeft, py::const_),
-            "plastic_CurrentYieldLeft")
+        .def("plastic_signOfPerturbation",
+             &SM::System::plastic_signOfPerturbation,
+             "plastic_signOfPerturbation",
+             py::arg("delta_u"))
 
-        .def(
-            "plastic_CurrentYieldRight",
-            py::overload_cast<>(&SM::System::plastic_CurrentYieldRight, py::const_),
-            "plastic_CurrentYieldRight")
+        .def("addAffineSimpleShear",
+             &SM::System::addAffineSimpleShear,
+             "addAffineSimpleShear",
+             py::arg("delta_gamma"))
 
-        .def(
-            "plastic_CurrentYieldLeft",
-            py::overload_cast<size_t>(&SM::System::plastic_CurrentYieldLeft, py::const_),
-            "plastic_CurrentYieldLeft",
-            py::arg("offset"))
+        .def("addAffineSimpleShearCentered",
+             &SM::System::addAffineSimpleShearCentered,
+             "addAffineSimpleShearCentered",
+             py::arg("delta_gamma"))
 
-        .def(
-            "plastic_CurrentYieldRight",
-            py::overload_cast<size_t>(&SM::System::plastic_CurrentYieldRight, py::const_),
-            "plastic_CurrentYieldRight",
-            py::arg("offset"))
+        .def("addSimpleShearEventDriven",
+             &SM::System::addSimpleShearEventDriven,
+             "addSimpleShearEventDriven",
+             py::arg("deps"),
+             py::arg("kick"),
+             py::arg("direction") = +1.0,
+             py::arg("dry_run") = false)
 
-        .def(
-            "plastic_CurrentIndex",
-            &SM::System::plastic_CurrentIndex,
-            "plastic_CurrentIndex")
+        .def("addSimpleShearToFixedStress",
+             &SM::System::addSimpleShearToFixedStress,
+             "addSimpleShearToFixedStress",
+             py::arg("stress"),
+             py::arg("dry_run") = false)
 
-        .def(
-            "plastic_Epsp",
-            &SM::System::plastic_Epsp,
-            "plastic_Epsp")
+        .def("triggerElementWithLocalSimpleShear",
+             &SM::System::triggerElementWithLocalSimpleShear,
+             "triggerElementWithLocalSimpleShear",
+             py::arg("deps"),
+             py::arg("plastic_element"),
+             py::arg("trigger_weakest_integration_point") = true,
+             py::arg("amplify") = 1.0)
+
+        .def("plastic_ElementYieldBarrierForSimpleShear",
+             &SM::System::plastic_ElementYieldBarrierForSimpleShear,
+             "plastic_ElementYieldBarrierForSimpleShear",
+             py::arg("deps_kick") = 0.0,
+             py::arg("iquad") = 0)
 
         .def("__repr__", [](const SM::System&) {
             return "<FrictionQPotFEM.UniformSingleLayer2d.System>";
@@ -148,116 +194,66 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
     py::class_<SM::HybridSystem, SM::System>(sm, "HybridSystem")
 
-        .def(
-            py::init<
+        .def(py::init<
                 const xt::xtensor<double, 2>&,
                 const xt::xtensor<size_t, 2>&,
                 const xt::xtensor<size_t, 2>&,
                 const xt::xtensor<size_t, 1>&,
                 const xt::xtensor<size_t, 1>&,
                 const xt::xtensor<size_t, 1>&>(),
-            "HybridSystem",
-            py::arg("coor"),
-            py::arg("conn"),
-            py::arg("dofs"),
-            py::arg("iip"),
-            py::arg("elem_elastic"),
-            py::arg("elem_plastic"))
+             "HybridSystem",
+             py::arg("coor"),
+             py::arg("conn"),
+             py::arg("dofs"),
+             py::arg("iip"),
+             py::arg("elem_elastic"),
+             py::arg("elem_plastic"))
 
-        .def(
-            "setMassMatrix",
-            &SM::HybridSystem::setMassMatrix,
-            "setMassMatrix",
-            py::arg("rho_elem"))
+        .def("setElastic",
+             &SM::HybridSystem::setElastic,
+             "setElastic",
+             py::arg("K_elem"),
+             py::arg("G_elem"))
 
-        .def(
-            "setDampingMatrix",
-            &SM::HybridSystem::setDampingMatrix,
-            "setDampingMatrix",
-            py::arg("alpha_elem"))
-
-        .def(
-            "setElastic",
-            &SM::HybridSystem::setElastic,
-            "setElastic",
-            py::arg("K_elem"),
-            py::arg("G_elem"))
-
-        .def(
-            "setPlastic",
-            &SM::HybridSystem::setPlastic,
-            "setPlastic",
-            py::arg("K_elem"),
-            py::arg("G_elem"),
-            py::arg("epsy_elem"))
-
-        .def("setDt", &SM::HybridSystem::setDt, "setDt", py::arg("dt"))
-        .def("setU", &SM::HybridSystem::setU, "setU", py::arg("u"))
-        .def("setV", &SM::HybridSystem::setV, "setV", py::arg("v"))
-        .def("setA", &SM::HybridSystem::setA, "setA", py::arg("a"))
-        .def("quench", &SM::HybridSystem::quench, "quench")
-        .def("elastic", &SM::HybridSystem::elastic, "elastic")
-        .def("plastic", &SM::HybridSystem::plastic, "plastic")
-        .def("conn", &SM::HybridSystem::conn, "conn")
-        .def("coor", &SM::HybridSystem::coor, "coor")
-        .def("dofs", &SM::HybridSystem::dofs, "dofs")
-        .def("u", &SM::HybridSystem::u, "u")
-        .def("fmaterial", &SM::HybridSystem::fmaterial, "fmaterial")
-        .def("fdamp", &SM::HybridSystem::fdamp, "fdamp")
-        .def("residual", &SM::HybridSystem::residual, "residual")
-        .def("t", &SM::HybridSystem::t, "t")
-        .def("dV", &SM::HybridSystem::dV, "dV")
-        .def("vector", &SM::HybridSystem::vector, "vector")
-        .def("quad", &SM::HybridSystem::quad, "quad")
-        .def("material", &SM::HybridSystem::material, "material")
-        .def("Eps", &SM::HybridSystem::Eps, "Eps")
-        .def("Sig", &SM::HybridSystem::Sig, "Sig")
-        .def("timeStep", &SM::HybridSystem::timeStep, "timeStep")
+        .def("setPlastic",
+             &SM::HybridSystem::setPlastic,
+             "setPlastic",
+             py::arg("K_elem"),
+             py::arg("G_elem"),
+             py::arg("epsy_elem"))
 
         .def("material_elastic", &SM::HybridSystem::material_elastic, "material_elastic")
         .def("material_plastic", &SM::HybridSystem::material_plastic, "material_plastic")
-        .def("plastic_Eps", &SM::HybridSystem::plastic_Eps, "plastic_Eps")
+        .def("Sig", &SM::HybridSystem::Sig, "Sig")
+        .def("Eps", &SM::HybridSystem::Eps, "Eps")
         .def("plastic_Sig", &SM::HybridSystem::plastic_Sig, "plastic_Sig")
+        .def("plastic_Eps", &SM::HybridSystem::plastic_Eps, "plastic_Eps")
 
-        .def(
-            "plastic_CurrentYieldLeft",
-            py::overload_cast<>(&SM::HybridSystem::plastic_CurrentYieldLeft, py::const_),
-            "plastic_CurrentYieldLeft")
+        .def("plastic_CurrentYieldLeft",
+             py::overload_cast<>(&SM::HybridSystem::plastic_CurrentYieldLeft, py::const_),
+             "plastic_CurrentYieldLeft")
 
-        .def(
-            "plastic_CurrentYieldRight",
-            py::overload_cast<>(&SM::HybridSystem::plastic_CurrentYieldRight, py::const_),
-            "plastic_CurrentYieldRight")
+        .def("plastic_CurrentYieldRight",
+             py::overload_cast<>(&SM::HybridSystem::plastic_CurrentYieldRight, py::const_),
+             "plastic_CurrentYieldRight")
 
-        .def(
-            "plastic_CurrentYieldLeft",
-            py::overload_cast<size_t>(&SM::HybridSystem::plastic_CurrentYieldLeft, py::const_),
-            "plastic_CurrentYieldLeft",
-            py::arg("offset"))
+        .def("plastic_CurrentYieldLeft",
+             py::overload_cast<size_t>(&SM::HybridSystem::plastic_CurrentYieldLeft, py::const_),
+             "plastic_CurrentYieldLeft",
+             py::arg("offset"))
 
-        .def(
-            "plastic_CurrentYieldRight",
-            py::overload_cast<size_t>(&SM::HybridSystem::plastic_CurrentYieldRight, py::const_),
-            "plastic_CurrentYieldRight",
-            py::arg("offset"))
+        .def("plastic_CurrentYieldRight",
+             py::overload_cast<size_t>(&SM::HybridSystem::plastic_CurrentYieldRight, py::const_),
+             "plastic_CurrentYieldRight",
+             py::arg("offset"))
 
-        .def(
-            "plastic_CurrentIndex",
-            &SM::HybridSystem::plastic_CurrentIndex,
-            "plastic_CurrentIndex")
+        .def("plastic_CurrentIndex",
+             &SM::HybridSystem::plastic_CurrentIndex,
+             "plastic_CurrentIndex")
 
-        .def(
-            "plastic_Epsp",
-            &SM::HybridSystem::plastic_Epsp,
-            "plastic_Epsp")
-
-        .def(
-            "minimise",
-            &SM::HybridSystem::minimise,
-            "minimise",
-            py::arg("tol") = 1e-5,
-            py::arg("niter_tol") = 20,
-            py::arg("max_iter") = 1000000)
+        .def("plastic_Epsp",
+             &SM::HybridSystem::plastic_Epsp,
+             "plastic_Epsp")
 
         .def("__repr__", [](const SM::HybridSystem&) {
             return "<FrictionQPotFEM.UniformSingleLayer2d.HybridSystem>";
@@ -267,77 +263,49 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
         .def(py::init<const SM::System&>(), "LocalTriggerFineLayerFull")
 
-        .def(
-            "setState",
-            &SM::LocalTriggerFineLayerFull::setState,
-            py::arg("Eps"),
-            py::arg("Sig"),
-            py::arg("epsy"),
-            py::arg("ntest") = 100)
+        .def("setState",
+             &SM::LocalTriggerFineLayerFull::setState,
+             py::arg("Eps"),
+             py::arg("Sig"),
+             py::arg("epsy"),
+             py::arg("ntest") = 100)
 
-        .def(
-            "setStateMinimalSearch",
-            &SM::LocalTriggerFineLayerFull::setStateMinimalSearch,
-            py::arg("Eps"),
-            py::arg("Sig"),
-            py::arg("epsy"))
+        .def("setStateMinimalSearch",
+             &SM::LocalTriggerFineLayerFull::setStateMinimalSearch,
+             py::arg("Eps"),
+             py::arg("Sig"),
+             py::arg("epsy"))
 
-        .def(
-            "setStateSimpleShear",
-            &SM::LocalTriggerFineLayerFull::setStateSimpleShear,
-            py::arg("Eps"),
-            py::arg("Sig"),
-            py::arg("epsy"))
+        .def("setStateSimpleShear",
+             &SM::LocalTriggerFineLayerFull::setStateSimpleShear,
+             py::arg("Eps"),
+             py::arg("Sig"),
+             py::arg("epsy"))
 
         .def("barriers", &SM::LocalTriggerFineLayerFull::barriers)
+        .def("p", &SM::LocalTriggerFineLayerFull::p)
+        .def("s", &SM::LocalTriggerFineLayerFull::s)
         .def("delta_u", &SM::LocalTriggerFineLayerFull::delta_u)
-
         .def("u_s", &SM::LocalTriggerFineLayerFull::u_s)
         .def("u_p", &SM::LocalTriggerFineLayerFull::u_p)
         .def("Eps_s", &SM::LocalTriggerFineLayerFull::Eps_s)
         .def("Eps_p", &SM::LocalTriggerFineLayerFull::Eps_p)
         .def("Sig_s", &SM::LocalTriggerFineLayerFull::Sig_s)
         .def("Sig_p", &SM::LocalTriggerFineLayerFull::Sig_p)
+        .def("dgamma", &SM::LocalTriggerFineLayerFull::dgamma)
+        .def("dE", &SM::LocalTriggerFineLayerFull::dE)
 
         .def("__repr__", [](const SM::LocalTriggerFineLayerFull&) {
             return "<FrictionQPotFEM.UniformSingleLayer2d.LocalTriggerFineLayerFull>";
         });
 
-    py::class_<SM::LocalTriggerFineLayer>(sm, "LocalTriggerFineLayer")
+    py::class_<SM::LocalTriggerFineLayer, SM::LocalTriggerFineLayerFull>(sm, "LocalTriggerFineLayer")
 
-        .def(
-            py::init<const SM::System&, size_t>(),
-            "LocalTriggerFineLayer",
-            py::arg("sys"),
-            py::arg("roi") = 5)
+        .def(py::init<const SM::System&, size_t>(),
+             "LocalTriggerFineLayer",
+             py::arg("sys"),
+             py::arg("roi") = 5)
 
-        .def(
-            "setState",
-            &SM::LocalTriggerFineLayer::setState,
-            py::arg("Eps"),
-            py::arg("Sig"),
-            py::arg("epsy"),
-            py::arg("ntest") = 100)
-
-        .def(
-            "setStateMinimalSearch",
-            &SM::LocalTriggerFineLayer::setStateMinimalSearch,
-            py::arg("Eps"),
-            py::arg("Sig"),
-            py::arg("epsy"))
-
-        .def(
-            "setStateSimpleShear",
-            &SM::LocalTriggerFineLayer::setStateSimpleShear,
-            py::arg("Eps"),
-            py::arg("Sig"),
-            py::arg("epsy"))
-
-        .def("barriers", &SM::LocalTriggerFineLayer::barriers)
-        .def("delta_u", &SM::LocalTriggerFineLayer::delta_u)
-
-        .def("u_s", &SM::LocalTriggerFineLayer::u_s)
-        .def("u_p", &SM::LocalTriggerFineLayer::u_p)
         .def("Eps_s", &SM::LocalTriggerFineLayer::Eps_s)
         .def("Eps_p", &SM::LocalTriggerFineLayer::Eps_p)
         .def("Sig_s", &SM::LocalTriggerFineLayer::Sig_s)
