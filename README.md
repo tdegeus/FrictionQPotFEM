@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/tdegeus/FrictionQPotFEM/workflows/CI/badge.svg)](https://github.com/tdegeus/FrictionQPotFEM/actions)
 [![Doxygen -> gh-pages](https://github.com/tdegeus/FrictionQPotFEM/workflows/gh-pages/badge.svg)](https://tdegeus.github.io/FrictionQPotFEM)
+[![Conda Version](https://img.shields.io/conda/vn/conda-forge/frictionqpotfem.svg)](https://anaconda.org/conda-forge/frictionqpotfem)
 
 Friction simulations based on "GMatElastoPlasticQPot" and "GooseFEM"
 
