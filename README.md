@@ -56,6 +56,17 @@ python LoadCycle.py ../examples/LoadCycle.txt
 
 ## Change-log
 
+### v0.8.0
+
+*   Updating versioning. Python API: auto-overloading (#57)
+*   Using setuptools_scm to manage version (#56)
+*   Documenting version information. Adding eigen to version string.
+*   Renaming "versionInfo" -> "version_dependencies"
+*   Adding fdamp and setV/setA
+*   [CI] Switching to GCC 8 for the moment (#51)
+*   Examples: modifying to API change, removing namespace abbreviation.
+*   Removing GoosFEM alias
+
 ### v0.7.0
 
 *   Adding addAffineSimpleShearCentered (#41)
