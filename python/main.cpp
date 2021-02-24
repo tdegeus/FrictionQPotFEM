@@ -106,6 +106,7 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
         .def("vector", &SM::System::vector, "vector")
         .def("quad", &SM::System::quad, "quad")
         .def("material", &SM::System::material, "material")
+        .def("Energy", &SM::System::Energy, "Energy")
         .def("Sig", &SM::System::Sig, "Sig")
         .def("Eps", &SM::System::Eps, "Eps")
 

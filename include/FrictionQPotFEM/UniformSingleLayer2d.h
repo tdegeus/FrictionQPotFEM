@@ -300,6 +300,14 @@ public:
     auto material() const;
 
     /**
+    Elastic energy of each integration point.
+    Note: this function is put here by convenience as ``this.material().Energy()`` gave problems.
+
+    \return Integration point scalar. Shape: ``[nelem, nip]``.
+    */
+    auto Energy() const;
+
+    /**
     Stress tensor of each integration point.
 
     \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.

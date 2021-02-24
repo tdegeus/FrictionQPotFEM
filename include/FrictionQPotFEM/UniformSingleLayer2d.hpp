@@ -386,6 +386,11 @@ inline auto System::material() const
     return m_material;
 }
 
+inline auto System::Energy() const
+{
+    return m_material.Energy();
+}
+
 inline xt::xtensor<double, 4> System::Sig()
 {
     return m_Sig;
