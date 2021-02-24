@@ -35,11 +35,6 @@ Implementation in UniformSingleLayer2d.hpp
 namespace FrictionQPotFEM {
 namespace UniformSingleLayer2d {
 
-namespace GF = GooseFEM;
-namespace QD = GooseFEM::Element::Quad4;
-namespace GM = GMatElastoPlasticQPot::Cartesian2d;
-namespace GT = GMatTensor::Cartesian2d;
-
 /**
 Return versions of this library and of all of its dependencies.
 The output is a list of strings, e.g.::
@@ -544,11 +539,11 @@ protected:
     size_t m_nip; ///< Number of integration points.
     xt::xtensor<size_t, 1> m_elem_elas; ///< Elastic elements.
     xt::xtensor<size_t, 1> m_elem_plas; ///< Plastic elements.
-    QD::Quadrature m_quad; ///< Numerical quadrature.
-    GF::VectorPartitioned m_vector; ///< Convert vectors between 'nodevec', 'elemvec', ...
-    GF::MatrixDiagonalPartitioned m_M; ///< Mass matrix (diagonal)
-    GF::MatrixDiagonal m_D; ///< Damping matrix (diagonal)
-    GM::Array<2> m_material; ///< Material definition.
+    GooseFEM::Element::Quad4::Quadrature m_quad; ///< Numerical quadrature.
+    GooseFEM::VectorPartitioned m_vector; ///< Convert vectors between 'nodevec', 'elemvec', ...
+    GooseFEM::MatrixDiagonalPartitioned m_M; ///< Mass matrix (diagonal)
+    GooseFEM::MatrixDiagonal m_D; ///< Damping matrix (diagonal)
+    GMatElastoPlasticQPot::Cartesian2d::Array<2> m_material; ///< Material definition.
     xt::xtensor<double, 2> m_u; ///< Nodal displacements.
     xt::xtensor<double, 2> m_v; ///< Nodal velocities.
     xt::xtensor<double, 2> m_a; ///< Nodal accelerations.
@@ -563,8 +558,8 @@ protected:
     xt::xtensor<double, 2> m_fres; ///< Nodal force: residual force.
     xt::xtensor<double, 4> m_Eps; ///< Integration point tensor: strain.
     xt::xtensor<double, 4> m_Sig; ///< Integration point tensor: stress.
-    GF::MatrixPartitioned m_K; ///< Stiffness matrix.
-    GF::MatrixPartitionedSolver<> m_solve; ///< Solver to solve ``m_K \ m_fres``
+    GooseFEM::MatrixPartitioned m_K; ///< Stiffness matrix.
+    GooseFEM::MatrixPartitionedSolver<> m_solve; ///< Solver to solve ``m_K \ m_fres``
     double m_t = 0.0; ///< Current time.
     double m_dt = 0.0; ///< Time-step.
     bool m_allset = false; ///< Internal allocation check.
@@ -726,12 +721,12 @@ protected:
 
     xt::xtensor<size_t, 2> m_conn_elas; ///< Slice of System::m_conn for elastic elements.
     xt::xtensor<size_t, 2> m_conn_plas; ///< Slice of System::m_conn for plastic elements.
-    QD::Quadrature m_quad_elas; ///< Numerical quadrature for elastic elements.
-    QD::Quadrature m_quad_plas; ///< Numerical quadrature for plastic elements.
-    GF::VectorPartitioned m_vector_elas; ///< Convert vectors for elastic elements.
-    GF::VectorPartitioned m_vector_plas; ///< Convert vectors for plastic elements.
-    GM::Array<2> m_material_elas; ///< Material definition for elastic elements.
-    GM::Array<2> m_material_plas; ///< Material definition for plastic elements.
+    GooseFEM::Element::Quad4::Quadrature m_quad_elas; ///< Numerical quadrature for elastic elements.
+    GooseFEM::Element::Quad4::Quadrature m_quad_plas; ///< Numerical quadrature for plastic elements.
+    GooseFEM::VectorPartitioned m_vector_elas; ///< Convert vectors for elastic elements.
+    GooseFEM::VectorPartitioned m_vector_plas; ///< Convert vectors for plastic elements.
+    GMatElastoPlasticQPot::Cartesian2d::Array<2> m_material_elas; ///< Material definition for elastic elements.
+    GMatElastoPlasticQPot::Cartesian2d::Array<2> m_material_plas; ///< Material definition for plastic elements.
     xt::xtensor<double, 3> m_ue_plas; ///< Element vector for elastic elements (used for displacements).
     xt::xtensor<double, 3> m_fe_plas; ///< Element vector for plastic elements (used for forces).
     xt::xtensor<double, 2> m_felas; ///< Nodal force, deriving from elasticity of elastic elements.
@@ -740,7 +735,7 @@ protected:
     xt::xtensor<double, 4> m_Eps_plas; ///< Integration point tensor: strain for plastic elements.
     xt::xtensor<double, 4> m_Sig_elas; ///< Integration point tensor: stress for elastic elements.
     xt::xtensor<double, 4> m_Sig_plas; ///< Integration point tensor: stress for plastic elements.
-    GF::Matrix m_K_elas; ///< Stiffness matrix for elastic elements.
+    GooseFEM::Matrix m_K_elas; ///< Stiffness matrix for elastic elements.
     bool m_eval_full = true; ///< Keep track of the need to recompute full variables as System::m_Sig.
 
 protected:
@@ -1029,11 +1024,11 @@ protected:
         xt::xtensor<double, 2>& u,
         xt::xtensor<double, 4>& Eps,
         xt::xtensor<double, 4>& Sig,
-        GF::MatrixPartitioned& K,
-        GF::MatrixPartitionedSolver<>& solver,
-        const QD::Quadrature& quad,
-        const GF::VectorPartitioned& vector,
-        GM::Array<2>& material);
+        GooseFEM::MatrixPartitioned& K,
+        GooseFEM::MatrixPartitionedSolver<>& solver,
+        const GooseFEM::Element::Quad4::Quadrature& quad,
+        const GooseFEM::VectorPartitioned& vector,
+        GMatElastoPlasticQPot::Cartesian2d::Array<2>& material);
 
 protected:
 

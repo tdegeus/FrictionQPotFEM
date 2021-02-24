@@ -95,9 +95,9 @@ inline void System::initSystem(
         FRICTIONQPOTFEM_ASSERT(xt::all(xt::isin(m_iip, m_dofs)));
     #endif
 
-    m_vector = GF::VectorPartitioned(m_conn, m_dofs, m_iip);
+    m_vector = GooseFEM::VectorPartitioned(m_conn, m_dofs, m_iip);
 
-    m_quad = QD::Quadrature(m_vector.AsElement(m_coor));
+    m_quad = GooseFEM::Element::Quad4::Quadrature(m_vector.AsElement(m_coor));
     m_nip = m_quad.nip();
 
     m_u = m_vector.AllocateNodevec(0.0);
@@ -118,11 +118,11 @@ inline void System::initSystem(
     m_Eps = m_quad.AllocateQtensor<2>(0.0);
     m_Sig = m_quad.AllocateQtensor<2>(0.0);
 
-    m_M = GF::MatrixDiagonalPartitioned(m_conn, m_dofs, m_iip);
-    m_D = GF::MatrixDiagonal(m_conn, m_dofs);
-    m_K = GF::MatrixPartitioned(m_conn, m_dofs, m_iip);
+    m_M = GooseFEM::MatrixDiagonalPartitioned(m_conn, m_dofs, m_iip);
+    m_D = GooseFEM::MatrixDiagonal(m_conn, m_dofs);
+    m_K = GooseFEM::MatrixPartitioned(m_conn, m_dofs, m_iip);
 
-    m_material = GM::Array<2>({m_nelem, m_nip});
+    m_material = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem, m_nip});
 }
 
 inline void System::evalAllSet()
@@ -135,7 +135,10 @@ inline void System::setMassMatrix(const xt::xtensor<double, 1>& val_elem)
     FRICTIONQPOTFEM_ASSERT(!m_set_M);
     FRICTIONQPOTFEM_ASSERT(val_elem.size() == m_nelem);
 
-    QD::Quadrature nodalQuad(m_vector.AsElement(m_coor), QD::Nodal::xi(), QD::Nodal::w());
+    GooseFEM::Element::Quad4::Quadrature nodalQuad(
+        m_vector.AsElement(m_coor),
+        GooseFEM::Element::Quad4::Nodal::xi(),
+        GooseFEM::Element::Quad4::Nodal::w());
 
     xt::xtensor<double, 2> val_quad = xt::empty<double>({m_nelem, nodalQuad.nip()});
     for (size_t q = 0; q < nodalQuad.nip(); ++q) {
@@ -152,7 +155,10 @@ inline void System::setDampingMatrix(const xt::xtensor<double, 1>& val_elem)
     FRICTIONQPOTFEM_ASSERT(!m_set_D);
     FRICTIONQPOTFEM_ASSERT(val_elem.size() == m_nelem);
 
-    QD::Quadrature nodalQuad(m_vector.AsElement(m_coor), QD::Nodal::xi(), QD::Nodal::w());
+    GooseFEM::Element::Quad4::Quadrature nodalQuad(
+        m_vector.AsElement(m_coor),
+        GooseFEM::Element::Quad4::Nodal::xi(),
+        GooseFEM::Element::Quad4::Nodal::w());
 
     xt::xtensor<double, 2> val_quad = xt::empty<double>({m_nelem, nodalQuad.nip()});
     for (size_t q = 0; q < nodalQuad.nip(); ++q) {
@@ -170,7 +176,9 @@ inline void System::initMaterial()
         return;
     }
 
-    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(m_material.type(), GM::Type::Unset)));
+    FRICTIONQPOTFEM_REQUIRE(
+        xt::all(xt::not_equal(m_material.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
+
     m_material.setStrain(m_Eps);
 
     m_K.assemble(m_quad.Int_gradN_dot_tensor4_dot_gradNT_dV(m_material.Tangent()));
@@ -534,10 +542,10 @@ inline auto System::plastic_signOfPerturbation(const xt::xtensor<double, 2>& del
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(delta_u, {m_nnode, m_ndim}));
 
     auto u_0 = this->u();
-    auto eps_0 = GM::Epsd(this->plastic_Eps());
+    auto eps_0 = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
     auto u_pert = this->u() + delta_u;
     this->setU(u_pert);
-    auto eps_pert = GM::Epsd(this->plastic_Eps());
+    auto eps_pert = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
     this->setU(u_0);
 
     xt::xtensor<int, 2> sign = xt::sign(eps_pert - eps_0);
@@ -547,7 +555,7 @@ inline auto System::plastic_signOfPerturbation(const xt::xtensor<double, 2>& del
 inline auto System::plastic_signOfSimpleShearPerturbation(double perturbation)
 {
     auto u_0 = this->u();
-    auto eps_0 = GM::Epsd(this->plastic_Eps());
+    auto eps_0 = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
     auto u_pert = this->u();
 
     for (size_t n = 0; n < m_nnode; ++n) {
@@ -555,7 +563,7 @@ inline auto System::plastic_signOfSimpleShearPerturbation(double perturbation)
     }
 
     this->setU(u_pert);
-    auto eps_pert = GM::Epsd(this->plastic_Eps());
+    auto eps_pert = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
     this->setU(u_0);
 
     xt::xtensor<double, 2> sign = xt::sign(eps_pert - eps_0);
@@ -597,8 +605,8 @@ inline double System::addSimpleShearEventDriven(
 
     auto u_new = this->u();
     auto idx = this->plastic_CurrentIndex();
-    auto eps = GM::Epsd(this->plastic_Eps());
-    auto Epsd = GM::Deviatoric(this->plastic_Eps());
+    auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+    auto Epsd = GMatTensor::Cartesian2d::Deviatoric(this->plastic_Eps());
     auto epsxx = xt::view(Epsd, xt::all(), xt::all(), 0, 0);
     auto epsxy = xt::view(Epsd, xt::all(), xt::all(), 0, 1);
 
@@ -654,7 +662,7 @@ inline double System::addSimpleShearEventDriven(
     size_t e = index[0];
     size_t q = index[1];
 
-    eps = GM::Epsd(this->plastic_Eps());
+    eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
     auto idx_new = this->plastic_CurrentIndex();
 
     FRICTIONQPOTFEM_REQUIRE(std::abs(eps(e, q) - eps_new(e, q)) / eps_new(e, q) < 1e-4);
@@ -676,14 +684,14 @@ inline double System::addSimpleShearToFixedStress(double target_stress, bool dry
 
     xt::xtensor<double, 2> Epsbar = xt::average(this->Eps(), dV, {0, 1});
     xt::xtensor<double, 2> Sigbar = xt::average(this->Sig(), dV, {0, 1});
-    xt::xtensor<double, 2> Epsd = GM::Deviatoric(Epsbar);
+    xt::xtensor<double, 2> Epsd = GMatTensor::Cartesian2d::Deviatoric(Epsbar);
     double epsxx = Epsd(0, 0);
     double epsxy = Epsd(0, 1);
 
     FRICTIONQPOTFEM_ASSERT(Sigbar(0, 1) >= 0);
 
-    double eps = GM::Epsd(Epsbar)();
-    double sig = GM::Sigd(Sigbar)();
+    double eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)();
+    double sig = GMatElastoPlasticQPot::Cartesian2d::Sigd(Sigbar)();
     double direction = +1.0;
     if (target_stress < sig) {
         direction = -1.0;
@@ -706,7 +714,7 @@ inline double System::addSimpleShearToFixedStress(double target_stress, bool dry
     // ------------
 
     Sigbar = xt::average(this->Sig(), dV, {0, 1});
-    sig = GM::Sigd(Sigbar)();
+    sig = GMatElastoPlasticQPot::Cartesian2d::Sigd(Sigbar)();
 
     auto idx_new = this->plastic_CurrentIndex();
 
@@ -725,7 +733,7 @@ inline double System::triggerElementWithLocalSimpleShear(
     FRICTIONQPOTFEM_ASSERT(plastic_element < m_nelem_plas);
 
     auto idx = this->plastic_CurrentIndex();
-    auto eps = GM::Epsd(this->plastic_Eps());
+    auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
     auto up = m_vector.AsDofs_p(m_u);
 
     // distance to yielding on the positive side
@@ -741,7 +749,7 @@ inline double System::triggerElementWithLocalSimpleShear(
 
     // deviatoric strain at the selected quadrature-point
     xt::xtensor<double, 2> Eps = xt::view(this->plastic_Eps(), plastic_element, q);
-    xt::xtensor<double, 2> Epsd = GM::Deviatoric(Eps);
+    xt::xtensor<double, 2> Epsd = GMatTensor::Cartesian2d::Deviatoric(Eps);
 
     // new equivalent deviatoric strain: yield strain + small strain kick
     double eps_new = epsy(plastic_element, q) + deps_kick / 2.0;
@@ -762,7 +770,7 @@ inline double System::triggerElementWithLocalSimpleShear(
     //   (N.B. storing to nodes directly does not ensure periodicity)
     this->setU(m_vector.AsNode(udofs));
 
-    eps = GM::Epsd(this->plastic_Eps());
+    eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
     auto idx_new = this->plastic_CurrentIndex();
     auto up_new = m_vector.AsDofs_p(m_u);
 
@@ -792,14 +800,14 @@ System::plastic_ElementYieldBarrierForSimpleShear(double deps_kick, size_t iquad
 {
     FRICTIONQPOTFEM_ASSERT(iquad < m_nip);
 
-    auto eps = GM::Epsd(this->plastic_Eps());
+    auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
     auto epsy = this->plastic_CurrentYieldRight();
     auto deps = xt::eval(epsy - eps);
     xt::xtensor<double, 2> ret = xt::empty<double>({m_N, size_t(2)});
     auto isort = myargsort(deps, 1);
 
     auto Eps = this->plastic_Eps();
-    auto Epsd = GM::Deviatoric(Eps);
+    auto Epsd = GMatTensor::Cartesian2d::Deviatoric(Eps);
 
     for (size_t e = 0; e < m_N; ++e) {
         size_t q = isort(e, iquad);
@@ -837,11 +845,11 @@ inline void HybridSystem::initHybridSystem(
     m_conn_elas = xt::view(m_conn, xt::keep(m_elem_elas), xt::all());
     m_conn_plas = xt::view(m_conn, xt::keep(m_elem_plas), xt::all());
 
-    m_vector_elas = GF::VectorPartitioned(m_conn_elas, m_dofs, m_iip);
-    m_vector_plas = GF::VectorPartitioned(m_conn_plas, m_dofs, m_iip);
+    m_vector_elas = GooseFEM::VectorPartitioned(m_conn_elas, m_dofs, m_iip);
+    m_vector_plas = GooseFEM::VectorPartitioned(m_conn_plas, m_dofs, m_iip);
 
-    m_quad_elas = QD::Quadrature(m_vector_elas.AsElement(m_coor));
-    m_quad_plas = QD::Quadrature(m_vector_plas.AsElement(m_coor));
+    m_quad_elas = GooseFEM::Element::Quad4::Quadrature(m_vector_elas.AsElement(m_coor));
+    m_quad_plas = GooseFEM::Element::Quad4::Quadrature(m_vector_plas.AsElement(m_coor));
 
     m_ue_plas = m_vector_plas.AllocateElemvec(0.0);
     m_fe_plas = m_vector_plas.AllocateElemvec(0.0);
@@ -854,8 +862,8 @@ inline void HybridSystem::initHybridSystem(
     m_Eps_plas = m_quad_plas.AllocateQtensor<2>(0.0);
     m_Sig_plas = m_quad_plas.AllocateQtensor<2>(0.0);
 
-    m_material_elas = GM::Array<2>({m_nelem_elas, m_nip});
-    m_material_plas = GM::Array<2>({m_nelem_plas, m_nip});
+    m_material_elas = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem_elas, m_nip});
+    m_material_plas = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem_plas, m_nip});
 }
 
 inline void HybridSystem::setElastic(
@@ -868,10 +876,12 @@ inline void HybridSystem::setElastic(
     xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_elas, m_nip});
     xt::view(idx, xt::range(0, m_nelem_elas), xt::all()) = xt::arange<size_t>(m_nelem_elas).reshape({-1, 1});
     m_material_elas.setElastic(I, idx, K_elem, G_elem);
-    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(m_material_elas.type(), GM::Type::Unset)));
     m_material_elas.setStrain(m_Eps_elas);
+    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(
+        m_material_elas.type(),
+        GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
 
-    m_K_elas = GF::Matrix(m_conn_elas, m_dofs);
+    m_K_elas = GooseFEM::Matrix(m_conn_elas, m_dofs);
     m_K_elas.assemble(m_quad_elas.Int_gradN_dot_tensor4_dot_gradNT_dV(m_material_elas.Tangent()));
 }
 
@@ -886,8 +896,10 @@ inline void HybridSystem::setPlastic(
     xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
     xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) = xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
     m_material_plas.setCusp(I, idx, K_elem, G_elem, epsy_elem);
-    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(m_material_plas.type(), GM::Type::Unset)));
     m_material_plas.setStrain(m_Eps_plas);
+    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(
+        m_material_plas.type(),
+        GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
 }
 
 inline auto HybridSystem::material_elastic() const
@@ -982,14 +994,16 @@ inline LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(const System& sys)
     // Copy / allocate local variables
 
     auto m = sys.material();
-    GM::Array<2> material(m.shape());
+    GMatElastoPlasticQPot::Cartesian2d::Array<2> material(m.shape());
     material.setElastic(m.K(), m.G());
-    FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(material.type(), GM::Type::Elastic)));
+
+    FRICTIONQPOTFEM_ASSERT(
+        xt::all(xt::equal(material.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Elastic)));
 
     auto vector = sys.vector();
     auto K = sys.stiffness();
     auto quad = sys.quad();
-    GF::MatrixPartitionedSolver<> solver;
+    GooseFEM::MatrixPartitionedSolver<> solver;
 
     m_elem_plas = sys.plastic();
     m_nelem_plas = m_elem_plas.size();
@@ -1021,7 +1035,7 @@ inline LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(const System& sys)
 
     // Replicate mesh
 
-    GF::Mesh::Quad4::FineLayer mesh(sys.coor(), sys.conn());
+    GooseFEM::Mesh::Quad4::FineLayer mesh(sys.coor(), sys.conn());
 
     auto elmap = mesh.roll(1);
     size_t nconfig = m_elem_plas(m_nelem_plas - 1) - elmap(m_elem_plas(m_nelem_plas - 1));
@@ -1029,7 +1043,7 @@ inline LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(const System& sys)
 
     for (size_t roll = 0; roll < nroll; ++roll) {
         m_elemmap.push_back(mesh.roll(roll));
-        m_nodemap.push_back(GF::Mesh::elemmap2nodemap(m_elemmap[roll], coor, conn));
+        m_nodemap.push_back(GooseFEM::Mesh::elemmap2nodemap(m_elemmap[roll], coor, conn));
     }
 
     for (size_t e = 0; e < nconfig; ++e) {
@@ -1049,7 +1063,7 @@ inline LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(const System& sys)
             K, solver, quad, vector, material);
 
         for (size_t q = 0; q < m_nip; ++q) {
-            auto Epsd = GM::Deviatoric(xt::eval(xt::view(m_Eps_s[e], m_elem_plas(e), q)));
+            auto Epsd = GMatTensor::Cartesian2d::Deviatoric(xt::eval(xt::view(m_Eps_s[e], m_elem_plas(e), q)));
             double gamma = Epsd(0, 1);
             for (size_t roll = 0; roll < nroll; ++roll) {
                 auto map = mesh.roll(roll);
@@ -1072,7 +1086,7 @@ inline LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(const System& sys)
             K, solver, quad, vector, material);
 
         for (size_t q = 0; q < m_nip; ++q) {
-            auto Epsd = GM::Deviatoric(xt::eval(xt::view(m_Eps_p[e], m_elem_plas(e), q)));
+            auto Epsd = GMatTensor::Cartesian2d::Deviatoric(xt::eval(xt::view(m_Eps_p[e], m_elem_plas(e), q)));
             double E = Epsd(0, 0);
             for (size_t roll = 0; roll < nroll; ++roll) {
                 auto map = mesh.roll(roll);
@@ -1088,11 +1102,11 @@ inline void LocalTriggerFineLayerFull::computePerturbation(
     xt::xtensor<double, 2>& u,
     xt::xtensor<double, 4>& Eps,
     xt::xtensor<double, 4>& Sig,
-    GF::MatrixPartitioned& K,
-    GF::MatrixPartitionedSolver<>& solver,
-    const QD::Quadrature& quad,
-    const GF::VectorPartitioned& vector,
-    GM::Array<2>& material)
+    GooseFEM::MatrixPartitioned& K,
+    GooseFEM::MatrixPartitionedSolver<>& solver,
+    const GooseFEM::Element::Quad4::Quadrature& quad,
+    const GooseFEM::VectorPartitioned& vector,
+    GMatElastoPlasticQPot::Cartesian2d::Array<2>& material)
 {
     size_t trigger_element = m_elem_plas(trigger_plastic);
 
@@ -1211,7 +1225,7 @@ inline void LocalTriggerFineLayerFull::setState(
             double dgamma = m_dgamma(e, q);
             double dE = m_dE(e, q);
 
-            auto Epsd = GM::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
+            auto Epsd = GMatTensor::Cartesian2d::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
             double gamma = Epsd(0, 1);
             double E = Epsd(0, 0);
             double y = epsy(e, q);
@@ -1261,7 +1275,7 @@ inline void LocalTriggerFineLayerFull::setState(
                 for (size_t j = 0; j < P.shape(1); ++j) {
                     xt::xtensor<double, 4> sig = P(i, j) * Sig_p + S(i, j) * Sig_s + Sig_slice;
                     xt::xtensor<double, 4> deps = P(i, j) * Eps_p + S(i, j) * Eps_s;
-                    xt::xtensor<double, 2> w = GT::A2s_ddot_B2s(sig, deps);
+                    xt::xtensor<double, 2> w = GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
                     w *= dV_slice;
                     W(i, j) = xt::sum(w)();
                 }
@@ -1302,7 +1316,7 @@ inline void LocalTriggerFineLayerFull::setStateMinimalSearch(
             double dgamma = m_dgamma(e, q);
             double dE = m_dE(e, q);
 
-            auto Epsd = GM::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
+            auto Epsd = GMatTensor::Cartesian2d::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
             double gamma = Epsd(0, 1);
             double E = Epsd(0, 0);
             double y = epsy(e, q);
@@ -1352,7 +1366,7 @@ inline void LocalTriggerFineLayerFull::setStateMinimalSearch(
             for (size_t i = 0; i < S.size(); ++i) {
                 xt::xtensor<double, 4> sig = P[i] * Sig_p + S[i] * Sig_s + Sig_slice;
                 xt::xtensor<double, 4> deps = P[i] * Eps_p + S[i] * Eps_s;
-                xt::xtensor<double, 2> w = GT::A2s_ddot_B2s(sig, deps);
+                xt::xtensor<double, 2> w = GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
                 w *= dV_slice;
                 W[i] = xt::sum(w)();
             }
@@ -1388,7 +1402,7 @@ inline void LocalTriggerFineLayerFull::setStateSimpleShear(
 
             double dgamma = m_dgamma(e, q);
 
-            auto Epsd = GM::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
+            auto Epsd = GMatTensor::Cartesian2d::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
             double gamma = Epsd(0, 1);
             double E = Epsd(0, 0);
             double y = epsy(e, q);
@@ -1405,7 +1419,7 @@ inline void LocalTriggerFineLayerFull::setStateSimpleShear(
             for (size_t i = 0; i < S.size(); ++i) {
                 xt::xtensor<double, 4> sig = S[i] * Sig_s + Sig_slice;
                 xt::xtensor<double, 4> deps = S[i] * Eps_s;
-                xt::xtensor<double, 2> w = GT::A2s_ddot_B2s(sig, deps);
+                xt::xtensor<double, 2> w = GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
                 w *= dV_slice;
                 W[i] = xt::sum(w)();
             }
@@ -1455,7 +1469,7 @@ inline xt::xtensor<double, 2> LocalTriggerFineLayerFull::delta_u(size_t e, size_
 inline LocalTriggerFineLayer::LocalTriggerFineLayer(const System& sys, size_t roi) :
     LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(sys)
 {
-    GF::Mesh::Quad4::FineLayer mesh(sys.coor(), sys.conn());
+    GooseFEM::Mesh::Quad4::FineLayer mesh(sys.coor(), sys.conn());
 
     m_elemslice.resize(m_nelem_plas);
     m_Eps_s_slice.resize(m_nelem_plas);
