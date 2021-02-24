@@ -300,6 +300,16 @@ inline auto System::a() const
     return m_a;
 }
 
+inline auto System::mass() const
+{
+    return m_M;
+}
+
+inline auto System::damping() const
+{
+    return m_D;
+}
+
 inline double System::plastic_h() const
 {
     auto bot = xt::view(m_conn, xt::keep(m_elem_plas), 0);

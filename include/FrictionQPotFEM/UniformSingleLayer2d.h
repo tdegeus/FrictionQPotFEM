@@ -225,6 +225,20 @@ public:
     auto a() const;
 
     /**
+    Mass matrix, see System::m_M.
+
+    \return Mass matrix (diagonal, partitioned).
+    */
+    auto mass() const;
+
+    /**
+    Damping matrix, see System::m_D.
+
+    \return Damping matrix (diagonal).
+    */
+    auto damping() const;
+
+    /**
     Force deriving from elasticity.
 
     \return Nodal force. Shape ``[nnode, ndim]``    .
