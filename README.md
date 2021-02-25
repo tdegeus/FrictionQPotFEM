@@ -56,6 +56,12 @@ python LoadCycle.py ../examples/LoadCycle.txt
 
 ## Change-log
 
+### v0.9.0
+
+*   Adding convenience method "Energy"
+*   Removing namespace aliases
+*   Getting mass and damping matrix
+
 ### v0.8.0
 
 *   Updating versioning. Python API: auto-overloading (#57)
