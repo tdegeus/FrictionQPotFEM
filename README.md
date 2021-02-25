@@ -6,7 +6,7 @@
 
 Friction simulations based on "GMatElastoPlasticQPot" and "GooseFEM"
 
-# Testing
+## Testing
 
 ## Additional checks and balances
 
@@ -52,6 +52,24 @@ make
 ./examples/LoadCycle
 cp ../examples/LoadCycle.py .
 python LoadCycle.py ../examples/LoadCycle.txt
+```
+
+## Generating the docs
+
+### Basic
+
+```
+cd docs
+doxygen
+```
+
+### With dependencies
+
+For example using conda
+
+```
+cd docs
+( cat Doxyfile ; echo "INPUT += ${CONDA_PREFIX}/include/GooseFEM" ; echo "INPUT += ${CONDA_PREFIX}/include/GMatElastoPlasticQPot" ) | doxygen -
 ```
 
 ## Change-log

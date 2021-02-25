@@ -32,7 +32,10 @@ jobs:
 
     - name: Run doxygen
       working-directory: docs
-      run: doxygen
+      run: |
+        echo "INPUT += ${CONDA_PREFIX}/include/GooseFEM" >> Doxyfile
+        echo "INPUT += ${CONDA_PREFIX}/include/GMatElastoPlasticQPot" >> Doxyfile
+        doxygen
 
     - name: Deploy to GitHub Pages
       if: success()

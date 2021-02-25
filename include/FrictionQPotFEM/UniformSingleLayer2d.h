@@ -295,7 +295,7 @@ public:
     /**
     GMatElastoPlasticQPot Array definition.
 
-    \return GMatElastoPlasticQPot::Cartesian2d::Array<2>" (System::m_material).
+    \return GMatElastoPlasticQPot::Cartesian2d::Array <2> (System::m_material).
     */
     auto material() const;
 
