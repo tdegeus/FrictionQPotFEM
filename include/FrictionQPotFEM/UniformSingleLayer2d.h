@@ -305,7 +305,7 @@ public:
 
     \return Integration point scalar. Shape: ``[nelem, nip]``.
     */
-    auto Energy() const;
+    virtual xt::xtensor<double, 2> Energy();
 
     /**
     Stress tensor of each integration point.
@@ -695,6 +695,18 @@ public:
     \return GMatElastoPlasticQPot::Cartesian2d::Array<2>" (System::m_material_plas).
     */
     auto material_plastic() const;
+
+    /**
+    Elastic energy of each integration point.
+    Note: this function is put here by convenience as ``this.material().Energy()`` gave problems.
+    Note: involves re-evaluating the stress and strain,
+    as they are only known in the plastic elements.
+    No re-evaluation is needed if the method is class directly after HybridSystem::Eps
+    or HybridSystem::Sig.
+
+    \return Integration point scalar. Shape: ``[nelem, nip]``.
+    */
+    xt::xtensor<double, 2> Energy() override;
 
     /**
     Stress tensor of each integration point.

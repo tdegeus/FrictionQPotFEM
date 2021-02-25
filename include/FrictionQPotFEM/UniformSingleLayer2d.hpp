@@ -386,7 +386,7 @@ inline auto System::material() const
     return m_material;
 }
 
-inline auto System::Energy() const
+inline xt::xtensor<double, 2> System::Energy()
 {
     return m_material.Energy();
 }
@@ -915,6 +915,16 @@ inline auto HybridSystem::material_elastic() const
 inline auto HybridSystem::material_plastic() const
 {
     return m_material_plas;
+}
+
+inline xt::xtensor<double, 2> HybridSystem::Energy()
+{
+    if (m_eval_full) {
+        this->computeStress();
+        m_eval_full = false;
+    }
+
+    return m_material.Energy();
 }
 
 inline xt::xtensor<double, 4> HybridSystem::Sig()
