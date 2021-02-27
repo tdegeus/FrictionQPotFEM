@@ -86,7 +86,7 @@ jobs:
       run: python test/UniformSingleLayer2d_LocalTriggerFineLayer.py
 
     - name: Build doxygen-docs
-    if: runner.os == 'Linux'
+      if: runner.os == 'Linux'
       working-directory: build
       run: make docs
 
