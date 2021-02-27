@@ -43,7 +43,7 @@ jobs:
     - name: Basic GitHub action setup
       uses: actions/checkout@v2
 
-    - name: Set conda environment (Windows)
+    - name: Set conda environment
       uses: conda-incubator/setup-miniconda@v2
       with:
         mamba-version: "*"
