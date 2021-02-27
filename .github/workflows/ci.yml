@@ -85,11 +85,12 @@ jobs:
     - name: Run Python tests
       run: python test/UniformSingleLayer2d_LocalTriggerFineLayer.py
 
-    - name: Build the docs
+    - name: Build doxygen-docs
+    if: runner.os == 'Linux'
       working-directory: build
       run: make docs
 
-    - name: Check docs (error on warnings)
+    - name: Check doxygen-docs (error on warning)
       if: runner.os == 'Linux'
       working-directory: build
       run: make check_docs
