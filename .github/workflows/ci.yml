@@ -89,7 +89,8 @@ jobs:
 
       fail-fast: false
 
-      runs-on: ubuntu-latest
+      matrix:
+        runs-on: [windows-latest]
 
     defaults:
       run:
