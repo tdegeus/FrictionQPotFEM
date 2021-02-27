@@ -11,6 +11,8 @@ project(FrictionQPotFEM)
 
 option(BUILD_TESTS "${PROJECT_NAME} Build tests" OFF)
 option(BUILD_EXAMPLES "${PROJECT_NAME} Build examples" OFF)
+option(BUILD_DOCS "${PROJECT_NAME} Build docs" OFF)
+option(CHECK_DOCS "${PROJECT_NAME} Check docs" OFF)
 
 # Version
 # =======
@@ -92,4 +94,55 @@ endif()
 
 if(BUILD_EXAMPLES)
     add_subdirectory(examples)
+endif()
+
+if(CHECK_DOCS)
+    find_package(Doxygen REQUIRED)
+
+    set(DOXYGEN_EXCLUDE_SYMBOLS detail)
+    set(DOXYGEN_CASE_SENSE_NAMES YES)
+    set(DOXYGEN_QUIET YES)
+
+    set(DOXYGEN_ALIASES
+        "rst=\\verbatim embed:rst:leading-asterisk"
+        "endrst=\\endverbatim"
+        "license=@par License:")
+
+    doxygen_add_docs(check_docs "${CMAKE_CURRENT_SOURCE_DIR}/include")
+endif()
+
+if(BUILD_DOCS)
+    find_package(Doxygen REQUIRED)
+    find_package(GMatTensor REQUIRED)
+
+    get_target_property(GooseFEM_INCLUDE GooseFEM INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(GMatElastoPlasticQPot_INCLUDE GMatElastoPlasticQPot INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(GMatTensor_INCLUDE GMatTensor INTERFACE_INCLUDE_DIRECTORIES)
+
+    set(DOXYGEN_EXCLUDE_SYMBOLS detail)
+    set(DOXYGEN_GENERATE_TREEVIEW YES)
+    set(DOXYGEN_CASE_SENSE_NAMES YES)
+    set(DOXYGEN_JAVADOC_AUTOBRIEF YES)
+    set(DOXYGEN_MACRO_EXPANSION YES)
+    set(DOXYGEN_PREDEFINED IN_DOXYGEN)
+    set(DOXYGEN_SOURCE_BROWSER YES)
+    set(DOXYGEN_QUIET YES)
+    set(DOXYGEN_WARN_IF_UNDOCUMENTED NO)
+
+    set(DOXYGEN_ALIASES
+        "rst=\\verbatim embed:rst:leading-asterisk"
+        "endrst=\\endverbatim"
+        "license=@par License:")
+
+    set(DOXYGEN_STRIP_FROM_PATH
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${GooseFEM_INCLUDE}"
+        "${GMatElastoPlasticQPot_INCLUDE}"
+        "${GMatTensor_INCLUDE}")
+
+    doxygen_add_docs(docs
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${GooseFEM_INCLUDE}/GooseFEM"
+        "${GMatElastoPlasticQPot_INCLUDE}/GMatElastoPlasticQPot"
+        "${GMatTensor_INCLUDE}/GMatTensor")
 endif()

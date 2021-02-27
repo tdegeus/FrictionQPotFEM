@@ -9,7 +9,7 @@ on:
 
 jobs:
 
-  default-shell:
+  standard:
 
     strategy:
       fail-fast: false
@@ -82,3 +82,33 @@ jobs:
 
     - name: Run Python tests
       run: python test/UniformSingleLayer2d_LocalTriggerFineLayer.py
+
+  docs:
+
+    strategy:
+
+      fail-fast: false
+
+      runs-on: ubuntu-latest
+
+      defaults:
+        run:
+          shell: bash -l {0}
+
+      steps:
+
+      - name: Basic GitHub action setup
+        uses: actions/checkout@v2
+
+      - name: Set conda environment (using micromamba for speed)
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          environment-file: docs/environment.yaml
+          environment-name: myenv
+
+      - name: Configure using CMake
+        run: cmake -Bbuild -DCHECK_DOCS=1
+
+      - name: Run doxygen
+        working-directory: build
+        run: make check_docs
