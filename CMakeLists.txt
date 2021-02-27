@@ -11,8 +11,8 @@ project(FrictionQPotFEM)
 
 option(BUILD_TESTS "${PROJECT_NAME} Build tests" OFF)
 option(BUILD_EXAMPLES "${PROJECT_NAME} Build examples" OFF)
-option(BUILD_DOCS "${PROJECT_NAME} Build docs" OFF)
-option(CHECK_DOCS "${PROJECT_NAME} Check docs" OFF)
+option(BUILD_DOCS "${PROJECT_NAME} Build docs (include dependencies)" OFF)
+option(CHECK_DOCS "${PROJECT_NAME} Check docs (only this library, throw error for every warning)" OFF)
 
 # Version
 # =======
@@ -84,17 +84,22 @@ install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/FrictionQPotFEMConfig.cmake"
 # ==========
 
 include("FrictionQPotFEMConfig.cmake")
-
 include(CTest)
+
+# Tests
 
 if(BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)
 endif()
 
+# Examples
+
 if(BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
+
+# Check docs: only this library, throw error for every warning
 
 if(CHECK_DOCS)
     find_package(Doxygen REQUIRED)
@@ -111,6 +116,8 @@ if(CHECK_DOCS)
 
     doxygen_add_docs(check_docs "${CMAKE_CURRENT_SOURCE_DIR}/include")
 endif()
+
+# Build docs: include dependencies
 
 if(BUILD_DOCS)
     find_package(Doxygen REQUIRED)
