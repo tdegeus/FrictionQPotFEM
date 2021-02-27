@@ -30,9 +30,11 @@ jobs:
       working-directory: docs
       run: |
         echo "INPUT += ${CONDA_PREFIX}/include/GooseFEM" >> Doxyfile
+        echo "INPUT += ${CONDA_PREFIX}/include/GMatTensor" >> Doxyfile
         echo "INPUT += ${CONDA_PREFIX}/include/GMatElastoPlasticQPot" >> Doxyfile
         echo "STRIP_FROM_PATH += ${CONDA_PREFIX}/include" >> Doxyfile
         echo "STRIP_FROM_PATH += ${PWD}/../include" >> Doxyfile
+        cat Doxyfile
         doxygen
 
     - name: Deploy to GitHub Pages
