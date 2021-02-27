@@ -2,10 +2,9 @@ channels:
   - conda-forge
 dependencies:
   # dependencies
-  - gmatelastoplasticqpot
-  - goosefem
-  - fmt
   - xtensor
+  - goosefem
+  - gmatelastoplasticqpot
 
   # optional dependencies
   - xsimd
@@ -18,17 +17,19 @@ dependencies:
   - python
   - pyxtensor
 
-  # to run tests
+  # run tests
   - catch2
-  - goosefem
+  - fmt
   - python-goosefem
   - python-gmattensor
   - python-gmatelastoplasticqpot
   - numpy
-  - doxygen
 
-  # to run examples
+  # run examples
+  - fmt
   - highfive
   - h5py
   - matplotlib
 
+  # generate docs
+  - doxygen

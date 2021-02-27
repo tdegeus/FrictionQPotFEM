@@ -1,7 +1,8 @@
 channels:
   - conda-forge
 dependencies:
-  - cmake
-  - doxygen
   - goosefem
   - gmatelastoplasticqpot
+  - cmake
+  - setuptools_scm
+  - doxygen
