@@ -102,6 +102,7 @@ if(CHECK_DOCS)
     set(DOXYGEN_EXCLUDE_SYMBOLS detail)
     set(DOXYGEN_CASE_SENSE_NAMES YES)
     set(DOXYGEN_QUIET YES)
+    set(WARN_AS_ERROR YES)
 
     set(DOXYGEN_ALIASES
         "rst=\\verbatim embed:rst:leading-asterisk"
