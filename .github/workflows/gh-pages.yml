@@ -20,21 +20,19 @@ jobs:
     - name: Basic GitHub action setup
       uses: actions/checkout@v2
 
-    - name: Set conda environment "test"
-      uses: conda-incubator/setup-miniconda@v2
+    - name: Set conda environment (using micromamba for speed)
+      uses: mamba-org/provision-with-micromamba@main
       with:
-        mamba-version: "*"
-        channels: conda-forge,defaults
-        channel-priority: true
         environment-file: docs/environment.yaml
-        activate-environment: test
-        auto-activate-base: false
+        environment-name: myenv
 
     - name: Run doxygen
       working-directory: docs
       run: |
         echo "INPUT += ${CONDA_PREFIX}/include/GooseFEM" >> Doxyfile
         echo "INPUT += ${CONDA_PREFIX}/include/GMatElastoPlasticQPot" >> Doxyfile
+        echo "STRIP_FROM_PATH += ${CONDA_PREFIX}/include" >> Doxyfile
+        echo "STRIP_FROM_PATH += ${PWD}/../include" >> Doxyfile
         doxygen
 
     - name: Deploy to GitHub Pages
