@@ -26,23 +26,19 @@ jobs:
         environment-file: docs/environment.yaml
         environment-name: myenv
 
-    - name: Run doxygen
-      working-directory: docs
-      run: |
-        echo "INPUT += ${CONDA_PREFIX}/include/GooseFEM" >> Doxyfile
-        echo "INPUT += ${CONDA_PREFIX}/include/GMatTensor" >> Doxyfile
-        echo "INPUT += ${CONDA_PREFIX}/include/GMatElastoPlasticQPot" >> Doxyfile
-        echo "STRIP_FROM_PATH += ${CONDA_PREFIX}/include" >> Doxyfile
-        echo "STRIP_FROM_PATH += ${PWD}/../include" >> Doxyfile
-        cat Doxyfile
-        doxygen
+    - name: Configure using CMake
+      run: cmake -Bbuild -DBUILD_DOCS=1
+
+    - name: Build the docs
+      working-directory: build
+      run: make docs
 
     - name: Deploy to GitHub Pages
       if: success()
       uses: crazy-max/ghaction-github-pages@v2
       with:
         target_branch: gh-pages
-        build_dir: docs/html
+        build_dir: build/html
         jekyll: false
         keep_history: false
       env:

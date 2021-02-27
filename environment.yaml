@@ -25,6 +25,7 @@ dependencies:
   - python-gmattensor
   - python-gmatelastoplasticqpot
   - numpy
+  - doxygen
 
   # to run examples
   - highfive
