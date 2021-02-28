@@ -59,27 +59,27 @@ install(TARGETS FrictionQPotFEM EXPORT FrictionQPotFEM-targets)
 
 install(
     EXPORT FrictionQPotFEM-targets
-    FILE FrictionQPotFEMTargets.cmake
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/FrictionQPotFEM")
+    FILE "${PROJECT_NAME}Targets.cmake"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 
 set(_FRICTIONQPOTFEM ${CMAKE_SIZEOF_VOID_P})
 unset(CMAKE_SIZEOF_VOID_P)
 
 write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/FrictionQPotFEMConfigVersion.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
     VERSION ${FRICTIONQPOTFEM_VERSION}
     COMPATIBILITY AnyNewerVersion)
 
 set(CMAKE_SIZEOF_VOID_P ${_FRICTIONQPOTFEM})
 
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/FrictionQPotFEMConfig.cmake"
-              "${CMAKE_CURRENT_BINARY_DIR}/FrictionQPotFEMConfigVersion.cmake"
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/FrictionQPotFEM")
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake"
+              "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 
 # Add builds
 # ==========
 
-include("FrictionQPotFEMConfig.cmake")
+include("${PROJECT_NAME}Config.cmake")
 include(CTest)
 
 # Tests
