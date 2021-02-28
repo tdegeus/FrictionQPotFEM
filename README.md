@@ -74,6 +74,12 @@ cd docs
 
 ## Change-log
 
+### v0.9.1
+
+*   Python API: forcing copy of certain objects (#62)
+*   Using CMake for Doxygen (#61, #62)
+*   Adding dependencies to docs
+
 ### v0.9.0
 
 *   Adding convenience method "Energy"
