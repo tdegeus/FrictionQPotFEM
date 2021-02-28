@@ -1,8 +1,4 @@
-#
-# (c - MIT) T.W.J. de Geus (Tom) | www.geus.me | github.com/tdegeus/FrictionQPotFEM
-#
-
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 
 # Basic settings
 # ==============
@@ -141,6 +137,12 @@ if(BUILD_DOCS)
         "rst=\\verbatim embed:rst:leading-asterisk"
         "endrst=\\endverbatim"
         "license=@par License:")
+
+    set(DOXYGEN_STRIP_FROM_INC_PATH
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${GooseFEM_INCLUDE}"
+        "${GMatElastoPlasticQPot_INCLUDE}"
+        "${GMatTensor_INCLUDE}")
 
     set(DOXYGEN_STRIP_FROM_PATH
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
