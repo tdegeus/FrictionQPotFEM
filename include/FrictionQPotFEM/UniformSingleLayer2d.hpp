@@ -25,10 +25,7 @@ inline std::vector<std::string> version_dependencies()
         detail::unquote(std::string(QUOTE(GMATELASTOPLASTICQPOT_VERSION_MINOR))) + "." +
         detail::unquote(std::string(QUOTE(GMATELASTOPLASTICQPOT_VERSION_PATCH))));
 
-    ret.push_back("gmattensor=" +
-        detail::unquote(std::string(QUOTE(GMATTENSOR_VERSION_MAJOR))) + "." +
-        detail::unquote(std::string(QUOTE(GMATTENSOR_VERSION_MINOR))) + "." +
-        detail::unquote(std::string(QUOTE(GMATTENSOR_VERSION_PATCH))));
+    ret.push_back("gmattensor=" + GMatTensor::version());
 
     ret.push_back("qpot=" +
         detail::unquote(std::string(QUOTE(QPOT_VERSION_MAJOR))) + "." +

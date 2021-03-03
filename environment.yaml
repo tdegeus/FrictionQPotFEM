@@ -31,5 +31,6 @@ dependencies:
   - h5py
   - matplotlib
 
-  # generate docs
+  # build docs
   - doxygen
+  - mathjax

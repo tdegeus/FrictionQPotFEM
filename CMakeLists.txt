@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.1...3.19)
 
 # Basic settings
 # ==============
@@ -102,8 +102,10 @@ if(CHECK_DOCS)
 
     set(DOXYGEN_EXCLUDE_SYMBOLS detail)
     set(DOXYGEN_CASE_SENSE_NAMES YES)
+    set(DOXYGEN_USE_MATHJAX YES)
     set(DOXYGEN_QUIET YES)
-    set(WARN_AS_ERROR YES)
+    set(DOXYGEN_WARN_IF_UNDOCUMENTED YES)
+    set(DOXYGEN_WARN_AS_ERROR YES)
 
     set(DOXYGEN_ALIASES
         "rst=\\verbatim embed:rst:leading-asterisk"
@@ -124,11 +126,11 @@ if(BUILD_DOCS)
     get_target_property(GMatTensor_INCLUDE GMatTensor INTERFACE_INCLUDE_DIRECTORIES)
 
     set(DOXYGEN_EXCLUDE_SYMBOLS detail)
-    set(DOXYGEN_GENERATE_TREEVIEW YES)
     set(DOXYGEN_CASE_SENSE_NAMES YES)
+    set(DOXYGEN_USE_MATHJAX YES)
+    set(DOXYGEN_GENERATE_TREEVIEW YES)
     set(DOXYGEN_JAVADOC_AUTOBRIEF YES)
     set(DOXYGEN_MACRO_EXPANSION YES)
-    set(DOXYGEN_PREDEFINED IN_DOXYGEN)
     set(DOXYGEN_SOURCE_BROWSER YES)
     set(DOXYGEN_QUIET YES)
     set(DOXYGEN_WARN_IF_UNDOCUMENTED NO)
