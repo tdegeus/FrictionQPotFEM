@@ -37,7 +37,7 @@ They can be enabled by::
 
     #define FRICTIONQPOTFEM_ENABLE_ASSERT
 
-(before including FrictionQPotFEM/).
+(before including FrictionQPotFEM).
 The advantage is that:
 
 -   File and line-number are displayed if the assertion fails.

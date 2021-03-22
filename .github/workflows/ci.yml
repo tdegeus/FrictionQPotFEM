@@ -20,7 +20,6 @@ jobs:
             config: -DBUILD_TESTS=1 -DBUILD_EXAMPLES=1 -DBUILD_DOCS=1 -DCHECK_DOCS=1
             conda: environment.yaml
             prop: tests, examples & docs
-            compiler: gcc
             gcc: 8
           - runs-on: macos-latest
             config: -DBUILD_TESTS=1

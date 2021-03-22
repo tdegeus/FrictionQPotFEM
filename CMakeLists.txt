@@ -5,25 +5,21 @@ cmake_minimum_required(VERSION 3.1...3.19)
 
 project(FrictionQPotFEM)
 
-option(BUILD_TESTS "${PROJECT_NAME} Build tests" OFF)
-option(BUILD_EXAMPLES "${PROJECT_NAME} Build examples" OFF)
-option(BUILD_DOCS "${PROJECT_NAME} Build docs (include dependencies)" OFF)
-option(CHECK_DOCS "${PROJECT_NAME} Check docs (only this library, throw error for every warning)" OFF)
+option(BUILD_TESTS "${PROJECT_NAME}: Build tests" OFF)
+option(BUILD_EXAMPLES "${PROJECT_NAME}: Build examples" OFF)
+option(BUILD_DOCS "${PROJECT_NAME}: Build docs (include dependencies)" OFF)
+option(CHECK_DOCS "${PROJECT_NAME}: Check docs (only this library, throw error for every warning)" OFF)
 
 # Version
 # =======
 
-IF(DEFINED ENV{PKG_VERSION})
-    set(FRICTIONQPOTFEM_VERSION $ENV{PKG_VERSION})
-else()
-    execute_process(
-        COMMAND python -c "from setuptools_scm import get_version; print(get_version())"
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        OUTPUT_VARIABLE FRICTIONQPOTFEM_VERSION
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif()
+execute_process(
+    COMMAND python -c "from setuptools_scm import get_version; print(get_version())"
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE FRICTIONQPOTFEM_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-message(STATUS "Building FrictionQPotFEM ${FRICTIONQPOTFEM_VERSION}")
+message(STATUS "Building ${PROJECT_NAME} ${FRICTIONQPOTFEM_VERSION}")
 
 # Set target
 # ==========

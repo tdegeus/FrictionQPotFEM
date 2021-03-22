@@ -26,9 +26,9 @@ Either:
 
     From the root of this project. This is what ``setup.py`` does.
 
-Note that both ``CMakeLists.txt`` and ``setup.py`` will construct the version string using
-``setuptools_scm`` **unless** an environment ``PKG_VERSION`` is defined.
-If ``PKG_VERSION`` is defined the version string will be read from that variable.
+Note that both ``CMakeLists.txt`` and ``setup.py`` will construct the version using ``setuptools_scm``.
+Tip: use the environment variable ``SETUPTOOLS_SCM_PRETEND_VERSION``
+to overwrite the automatic version.
 */
 #ifndef FRICTIONQPOTFEM_VERSION
 #define FRICTIONQPOTFEM_VERSION "@FRICTIONQPOTFEM_VERSION@"
