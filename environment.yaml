@@ -19,7 +19,6 @@ dependencies:
 
   # run tests
   - catch2
-  - fmt
   - python-goosefem
   - python-gmattensor
   - python-gmatelastoplasticqpot

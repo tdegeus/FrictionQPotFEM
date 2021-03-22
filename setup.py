@@ -6,12 +6,9 @@ import os
 import pybind11
 import pyxtensor
 from os import environ
+from setuptools_scm import get_version
 
-version = environ.get('PKG_VERSION')
-
-if version is None:
-    from setuptools_scm import get_version
-    version = get_version()
+version = get_version()
 
 include_dirs = [
     os.path.abspath('include/'),
@@ -51,6 +48,6 @@ setup(
     author_email = 'tom@geus.me',
     url = 'https://github.com/tdegeus/FrictionQPotFEM',
     ext_modules = ext_modules,
-    install_requires = ['pybind11', 'pyxtensor'],
+    setup_requires = ['pybind11', 'pyxtensor'],
     cmdclass = {'build_ext': build},
     zip_safe = False)
