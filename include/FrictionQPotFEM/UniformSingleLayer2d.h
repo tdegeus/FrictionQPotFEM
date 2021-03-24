@@ -224,14 +224,14 @@ public:
 
     \return Mass matrix (diagonal, partitioned).
     */
-    auto mass() const;
+    auto& mass() const;
 
     /**
     Damping matrix, see System::m_D.
 
     \return Damping matrix (diagonal).
     */
-    auto damping() const;
+    auto& damping() const;
 
     /**
     Force deriving from elasticity.
@@ -274,7 +274,7 @@ public:
 
     \return Stiffness matrix (System::m_K).
     */
-    auto stiffness() const;
+    auto& stiffness() const;
 
     /**
     GooseFEM vector definition.
@@ -282,7 +282,7 @@ public:
 
     \return GooseFEM::VectorPartitioned (System::m_vector)
     */
-    auto vector() const;
+    auto& vector() const;
 
     /**
     GooseFEM quadrature definition.
@@ -290,14 +290,14 @@ public:
 
     \return GooseFEM::Element::Quad4::Quadrature (System::m_quad)
     */
-    auto quad() const;
+    auto& quad() const;
 
     /**
     GMatElastoPlasticQPot Array definition.
 
     \return GMatElastoPlasticQPot::Cartesian2d::Array <2> (System::m_material).
     */
-    auto material() const;
+    auto& material() const;
 
     /**
     Elastic energy of each integration point.
@@ -305,6 +305,7 @@ public:
 
     \return Integration point scalar. Shape: ``[nelem, nip]``.
     */
+    [[ deprecated ]]
     virtual xt::xtensor<double, 2> Energy();
 
     /**
