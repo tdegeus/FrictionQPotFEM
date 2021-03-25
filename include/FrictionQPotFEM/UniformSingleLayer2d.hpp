@@ -385,7 +385,7 @@ inline auto& System::material() const
 
 inline xt::xtensor<double, 2> System::Energy()
 {
-    std::cout << "Deprecated: use this.material().Energy()"  << std::endl;
+    FRICTIONQPOTFEM_WARNING_PYTHON("Deprecated: use this.material().Energy()");
     return m_material.Energy();
 }
 

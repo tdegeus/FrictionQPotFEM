@@ -24,6 +24,11 @@ Defines used in the library.
             std::string(file) + ':' + std::to_string(line) + \
             ": assertion failed (" #expr ") \n\t"); \
     }
+
+#define FRICTIONQPOTFEM_WARNING_IMPL(message, file, line) \
+    std::cout << \
+        std::string(file) + ':' + std::to_string(line) + \
+        ": " message ") \n\t"; \
 /**
 \endcond
 */
@@ -57,5 +62,35 @@ Assertions that cannot be disable.
 \throw std::runtime_error
 */
 #define FRICTIONQPOTFEM_REQUIRE(expr) FRICTIONQPOTFEM_ASSERT_IMPL(expr, __FILE__, __LINE__)
+
+/**
+All warnings are implemented as::
+
+    FRICTIONQPOTFEM_WARNING(...)
+
+They can be disabled by::
+
+    #define FRICTIONQPOTFEM_DISABLE_WARNING
+*/
+#ifdef FRICTIONQPOTFEM_DISABLE_WARNING
+#define FRICTIONQPOTFEM_WARNING(message)
+#else
+#define FRICTIONQPOTFEM_WARNING(message) FRICTIONQPOTFEM_WARNING_IMPL(message, __FILE__, __LINE__)
+#endif
+
+/**
+All warnings specific to the Python API are implemented as::
+
+    FRICTIONQPOTFEM_WARNING_PYTHON(...)
+
+They can be enabled by::
+
+    #define FRICTIONQPOTFEM_ENABLE_WARNING_PYTHON
+*/
+#ifdef FRICTIONQPOTFEM_ENABLE_WARNING_PYTHON
+#define FRICTIONQPOTFEM_WARNING_PYTHON(message) FRICTIONQPOTFEM_WARNING_IMPL(message, __FILE__, __LINE__)
+#else
+#define FRICTIONQPOTFEM_WARNING_PYTHON(message)
+#endif
 
 #endif

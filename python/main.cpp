@@ -10,6 +10,7 @@
 // #define QPOT_ENABLE_ASSERT
 // #define GMATELASTOPLASTICQPOT_ENABLE_ASSERT
 // #define FRICTIONQPOTFEM_ENABLE_ASSERT
+// #define FRICTIONQPOTFEM_ENABLE_WARNING_PYTHON
 
 #include <FrictionQPotFEM/version.h>
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
