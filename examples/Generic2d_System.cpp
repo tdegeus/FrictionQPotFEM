@@ -1,5 +1,5 @@
 
-#include <FrictionQPotFEM/UniformSingleLayer2d.h>
+#include <FrictionQPotFEM/Generic2d.h>
 #include <xtensor/xrandom.hpp>
 #include <xtensor/xcsv.hpp>
 #include <fstream>
@@ -51,7 +51,7 @@ int main()
 
     // Initialise system
 
-    FrictionQPotFEM::UniformSingleLayer2d::HybridSystem sys(coor, conn, dofs, iip, elastic, plastic);
+    FrictionQPotFEM::Generic2d::System sys(coor, conn, dofs, iip, elastic, plastic);
     sys.setMassMatrix(rho * xt::ones<double>({mesh.nelem()}));
     sys.setDampingMatrix(alpha * xt::ones<double>({mesh.nelem()}));
     sys.setElastic(K * xt::ones<double>({elastic.size()}), G * xt::ones<double>({elastic.size()}));
@@ -90,7 +90,7 @@ int main()
         ret(inc, 1) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Sigbar)();
     }
 
-    std::ofstream outfile("UniformSingleLayer2d_HybridSystem.txt");
+    std::ofstream outfile("UniformSingleLayer2d_System.txt");
     xt::dump_csv(outfile, ret);
     outfile.close();
 
