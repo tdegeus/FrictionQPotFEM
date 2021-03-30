@@ -74,6 +74,13 @@ cd docs
 
 ## Change-log
 
+### v0.10.0
+
+*   Branching common methods from UniformSingleLayer2d to Generic2d 
+    (UniformSingleLayer2d now only has one class based on the HybridSystem).
+*   Making returned references explicit.
+*   Adding deprecation warnings Energy() to Python API.
+
 ### v0.9.4
 
 *   Class members: pass by reference (instead of copy); works also in Python API
