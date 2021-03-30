@@ -353,22 +353,22 @@ inline auto System::dV() const
     return m_quad.dV();
 }
 
-inline auto& System::stiffness() const
+inline const GooseFEM::MatrixPartitioned& System::stiffness() const
 {
     return m_K;
 }
 
-inline auto& System::vector() const
+inline const GooseFEM::VectorPartitioned& System::vector() const
 {
     return m_vector;
 }
 
-inline auto& System::quad() const
+inline const GooseFEM::Element::Quad4::Quadrature& System::quad() const
 {
     return m_quad;
 }
 
-inline auto& System::material() const
+inline const GMatElastoPlasticQPot::Cartesian2d::Array<2>& System::material() const
 {
     return m_material;
 }
@@ -605,12 +605,17 @@ inline void HybridSystem::setPlastic(
         GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
 }
 
-inline auto& HybridSystem::material_elastic() const
+inline const GMatElastoPlasticQPot::Cartesian2d::Array<2>& HybridSystem::material() const
+{
+    return m_material;
+}
+
+inline const GMatElastoPlasticQPot::Cartesian2d::Array<2>& HybridSystem::material_elastic() const
 {
     return m_material_elas;
 }
 
-inline auto& HybridSystem::material_plastic() const
+inline const GMatElastoPlasticQPot::Cartesian2d::Array<2>& HybridSystem::material_plastic() const
 {
     return m_material_plas;
 }
