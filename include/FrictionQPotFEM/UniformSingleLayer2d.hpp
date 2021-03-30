@@ -61,13 +61,9 @@ inline xt::xtensor<double, 2> System::Energy()
 {
     FRICTIONQPOTFEM_WARNING_PYTHON(\
         "Deprecated: use this.material().Energy()."\
-        "Careful though: should be called after 'computeStress()'");
+        "Careful though: one has to call 'evalSystem()' every time after 'setU'");
 
-    if (m_eval_full) {
-        this->computeStress();
-        m_eval_full = false;
-    }
-
+    this->evalSystem();
     return m_material.Energy();
 }
 
