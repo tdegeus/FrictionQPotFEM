@@ -28,13 +28,15 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
           &M::version,
           "Return version string.");
 
-    // ---------------------------
-    // FrictionQPotFEM.Cartesian2d
-    // ---------------------------
+    // -------------------------
+    // FrictionQPotFEM.Generic2d
+    // -------------------------
 
-    py::module sm = m.def_submodule("UniformSingleLayer2d", "UniformSingleLayer2d");
+    {
 
-    namespace SM = FrictionQPotFEM::UniformSingleLayer2d;
+    py::module sm = m.def_submodule("Generic2d", "Generic2d");
+
+    namespace SM = FrictionQPotFEM::Generic2d;
 
     sm.def("version_dependencies",
            &SM::version_dependencies,
@@ -91,8 +93,6 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
         .def("conn", &SM::System::conn, "conn")
         .def("coor", &SM::System::coor, "coor")
         .def("dofs", &SM::System::dofs, "dofs")
-        .def("plastic_h", &SM::System::plastic_h, "plastic_h")
-        .def("plastic_dV", &SM::System::plastic_dV, "plastic_dV")
         .def("u", &SM::System::u, "u")
         .def("v", &SM::System::v, "v")
         .def("a", &SM::System::a, "a")
@@ -107,10 +107,8 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
         .def("vector", &SM::System::vector, "vector", py::return_value_policy::reference_internal)
         .def("quad", &SM::System::quad, "quad", py::return_value_policy::reference_internal)
         .def("material", &SM::System::material, "material", py::return_value_policy::reference_internal)
-        .def("Energy", &SM::System::Energy, "Energy")
         .def("Sig", &SM::System::Sig, "Sig")
         .def("Eps", &SM::System::Eps, "Eps")
-
         .def("plastic_Sig", &SM::System::plastic_Sig, "plastic_Sig")
         .def("plastic_Eps", &SM::System::plastic_Eps, "plastic_Eps")
 
@@ -148,6 +146,84 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              py::arg("tol") = 1e-5,
              py::arg("niter_tol") = 20,
              py::arg("max_iter") = 1000000)
+
+        .def("__repr__", [](const SM::System&) {
+            return "<FrictionQPotFEM.Generic2d.System>";
+        });
+
+    py::class_<SM::HybridSystem, SM::System>(sm, "HybridSystem")
+
+        .def(py::init<
+                const xt::xtensor<double, 2>&,
+                const xt::xtensor<size_t, 2>&,
+                const xt::xtensor<size_t, 2>&,
+                const xt::xtensor<size_t, 1>&,
+                const xt::xtensor<size_t, 1>&,
+                const xt::xtensor<size_t, 1>&>(),
+             "HybridSystem",
+             py::arg("coor"),
+             py::arg("conn"),
+             py::arg("dofs"),
+             py::arg("iip"),
+             py::arg("elem_elastic"),
+             py::arg("elem_plastic"))
+
+        .def("setElastic",
+             &SM::HybridSystem::setElastic,
+             "setElastic",
+             py::arg("K_elem"),
+             py::arg("G_elem"))
+
+        .def("setPlastic",
+             &SM::HybridSystem::setPlastic,
+             "setPlastic",
+             py::arg("K_elem"),
+             py::arg("G_elem"),
+             py::arg("epsy_elem"))
+
+        .def("material_elastic", &SM::HybridSystem::material_elastic, "material_elastic", py::return_value_policy::reference_internal)
+        .def("material_plastic", &SM::HybridSystem::material_plastic, "material_plastic", py::return_value_policy::reference_internal)
+        .def("Sig", &SM::HybridSystem::Sig, "Sig")
+        .def("Eps", &SM::HybridSystem::Eps, "Eps")
+        .def("plastic_Sig", &SM::HybridSystem::plastic_Sig, "plastic_Sig")
+        .def("plastic_Eps", &SM::HybridSystem::plastic_Eps, "plastic_Eps")
+
+        .def("__repr__", [](const SM::System&) {
+            return "<FrictionQPotFEM.Generic2d.HybridSystem>";
+        });
+
+    }
+
+    // ------------------------------------
+    // FrictionQPotFEM.UniformSingleLayer2d
+    // ------------------------------------
+
+    {
+
+    py::module sm = m.def_submodule("UniformSingleLayer2d", "UniformSingleLayer2d");
+
+    namespace SM = FrictionQPotFEM::UniformSingleLayer2d;
+
+    sm.def("version_dependencies",
+           &SM::version_dependencies,
+           "Return version information of library and its dependencies.");
+
+    py::class_<SM::System, FrictionQPotFEM::Generic2d::HybridSystem>(sm, "System")
+
+        .def(py::init<
+                const xt::xtensor<double, 2>&,
+                const xt::xtensor<size_t, 2>&,
+                const xt::xtensor<size_t, 2>&,
+                const xt::xtensor<size_t, 1>&,
+                const xt::xtensor<size_t, 1>&,
+                const xt::xtensor<size_t, 1>&>(),
+             "System",
+             py::arg("coor"),
+             py::arg("conn"),
+             py::arg("dofs"),
+             py::arg("iip"),
+             py::arg("elem_elastic"),
+             py::arg("elem_plastic"))
 
         .def("plastic_signOfPerturbation",
              &SM::System::plastic_signOfPerturbation,
@@ -194,73 +270,6 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
         .def("__repr__", [](const SM::System&) {
             return "<FrictionQPotFEM.UniformSingleLayer2d.System>";
-        });
-
-    py::class_<SM::HybridSystem, SM::System>(sm, "HybridSystem")
-
-        .def(py::init<
-                const xt::xtensor<double, 2>&,
-                const xt::xtensor<size_t, 2>&,
-                const xt::xtensor<size_t, 2>&,
-                const xt::xtensor<size_t, 1>&,
-                const xt::xtensor<size_t, 1>&,
-                const xt::xtensor<size_t, 1>&>(),
-             "HybridSystem",
-             py::arg("coor"),
-             py::arg("conn"),
-             py::arg("dofs"),
-             py::arg("iip"),
-             py::arg("elem_elastic"),
-             py::arg("elem_plastic"))
-
-        .def("setElastic",
-             &SM::HybridSystem::setElastic,
-             "setElastic",
-             py::arg("K_elem"),
-             py::arg("G_elem"))
-
-        .def("setPlastic",
-             &SM::HybridSystem::setPlastic,
-             "setPlastic",
-             py::arg("K_elem"),
-             py::arg("G_elem"),
-             py::arg("epsy_elem"))
-
-        .def("material_elastic", &SM::HybridSystem::material_elastic, "material_elastic", py::return_value_policy::copy)
-        .def("material_plastic", &SM::HybridSystem::material_plastic, "material_plastic", py::return_value_policy::copy)
-        .def("Sig", &SM::HybridSystem::Sig, "Sig")
-        .def("Eps", &SM::HybridSystem::Eps, "Eps")
-        .def("plastic_Sig", &SM::HybridSystem::plastic_Sig, "plastic_Sig")
-        .def("plastic_Eps", &SM::HybridSystem::plastic_Eps, "plastic_Eps")
-
-        .def("plastic_CurrentYieldLeft",
-             py::overload_cast<>(&SM::HybridSystem::plastic_CurrentYieldLeft, py::const_),
-             "plastic_CurrentYieldLeft")
-
-        .def("plastic_CurrentYieldRight",
-             py::overload_cast<>(&SM::HybridSystem::plastic_CurrentYieldRight, py::const_),
-             "plastic_CurrentYieldRight")
-
-        .def("plastic_CurrentYieldLeft",
-             py::overload_cast<size_t>(&SM::HybridSystem::plastic_CurrentYieldLeft, py::const_),
-             "plastic_CurrentYieldLeft",
-             py::arg("offset"))
-
-        .def("plastic_CurrentYieldRight",
-             py::overload_cast<size_t>(&SM::HybridSystem::plastic_CurrentYieldRight, py::const_),
-             "plastic_CurrentYieldRight",
-             py::arg("offset"))
-
-        .def("plastic_CurrentIndex",
-             &SM::HybridSystem::plastic_CurrentIndex,
-             "plastic_CurrentIndex")
-
-        .def("plastic_Epsp",
-             &SM::HybridSystem::plastic_Epsp,
-             "plastic_Epsp")
-
-        .def("__repr__", [](const SM::HybridSystem&) {
-            return "<FrictionQPotFEM.UniformSingleLayer2d.HybridSystem>";
         });
 
     py::class_<SM::LocalTriggerFineLayerFull>(sm, "LocalTriggerFineLayerFull")
@@ -319,4 +328,5 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             return "<FrictionQPotFEM.UniformSingleLayer2d.LocalTriggerFineLayer>";
         });
 
+    }
 }

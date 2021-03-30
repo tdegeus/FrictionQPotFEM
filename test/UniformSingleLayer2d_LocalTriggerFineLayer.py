@@ -208,7 +208,7 @@ Sig = mat.Stress()
 # Effect of perturbation
 # ----------------------
 
-sys = model.HybridSystem(coor, conn, dofs, iip, elastic, plastic)
+sys = model.System(coor, conn, dofs, iip, elastic, plastic)
 sys.setElastic(10 * np.ones(len(elastic)), 1 * np.ones(len(elastic)))
 sys.setPlastic(10 * np.ones(len(plastic)), 1 * np.ones(len(plastic)), np.cumsum(np.ones(5 * len(plastic)).reshape(5, -1), axis=0))
 sys.setMassMatrix(np.ones(nelem))
