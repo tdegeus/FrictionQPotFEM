@@ -1,11 +1,11 @@
 
 #include <catch2/catch.hpp>
 #include <xtensor/xrandom.hpp>
-#include <FrictionQPotFEM/UniformSingleLayer2d.h>
+#include <FrictionQPotFEM/Generic2d.h>
 
 #define ISCLOSE(a, b) REQUIRE_THAT((a), Catch::WithinAbs((b), 1e-8));
 
-TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_historic", "UniformSingleLayer2d.h")
+TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
 {
     SECTION("System vs. HybridSystem")
     {
@@ -308,8 +308,8 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_historic", "UniformSingleLayer2
 
         // Initialise system
 
-        FrictionQPotFEM::UniformSingleLayer2d::System full(coor, conn, dofs, iip, elastic, plastic);
-        FrictionQPotFEM::UniformSingleLayer2d::HybridSystem reduced(coor, conn, dofs, iip, elastic, plastic);
+        FrictionQPotFEM::Generic2d::System full(coor, conn, dofs, iip, elastic, plastic);
+        FrictionQPotFEM::Generic2d::HybridSystem reduced(coor, conn, dofs, iip, elastic, plastic);
 
         full.setMassMatrix(rho * xt::ones<double>({mesh.nelem()}));
         reduced.setMassMatrix(rho * xt::ones<double>({mesh.nelem()}));

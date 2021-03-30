@@ -281,7 +281,7 @@ public:
 
     \return Stiffness matrix (System::m_K).
     */
-    auto& stiffness() const;
+    const GooseFEM::MatrixPartitioned& stiffness() const;
 
     /**
     GooseFEM vector definition.
@@ -289,7 +289,7 @@ public:
 
     \return GooseFEM::VectorPartitioned (System::m_vector)
     */
-    auto& vector() const;
+    const GooseFEM::VectorPartitioned& vector() const;
 
     /**
     GooseFEM quadrature definition.
@@ -297,15 +297,14 @@ public:
 
     \return GooseFEM::Element::Quad4::Quadrature (System::m_quad)
     */
-    auto& quad() const;
+    const GooseFEM::Element::Quad4::Quadrature& quad() const;
 
     /**
     GMatElastoPlasticQPot Array definition.
-    \todo Careful: not updated from HybridSystem. Add override?
 
     \return GMatElastoPlasticQPot::Cartesian2d::Array <2> (System::m_material).
     */
-    auto& material() const;
+    virtual const GMatElastoPlasticQPot::Cartesian2d::Array<2>& material() const;
 
     /**
     Stress tensor of each integration point.
@@ -554,18 +553,27 @@ public:
         const xt::xtensor<double, 2>& epsy_elem) override;
 
     /**
+    GMatElastoPlasticQPot Array definition.
+    Warning: if reading the current state from this variable you have to call
+    computeStress() (or Sig() or Eps()) to update the state.
+
+    \return GMatElastoPlasticQPot::Cartesian2d::Array <2> (System::m_material).
+    */
+    const GMatElastoPlasticQPot::Cartesian2d::Array<2>& material() const override;
+
+    /**
     GMatElastoPlasticQPot Array definition for the elastic elements.
 
     \return GMatElastoPlasticQPot::Cartesian2d::Array<2>" (System::m_material_elas).
     */
-    auto& material_elastic() const;
+    const GMatElastoPlasticQPot::Cartesian2d::Array<2>& material_elastic() const;
 
     /**
     GMatElastoPlasticQPot Array definition for the plastic elements.
 
     \return GMatElastoPlasticQPot::Cartesian2d::Array<2>" (System::m_material_plas).
     */
-    auto& material_plastic() const;
+    const GMatElastoPlasticQPot::Cartesian2d::Array<2>& material_plastic() const;
 
     /**
     Stress tensor of each integration point.
