@@ -181,6 +181,7 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              py::arg("G_elem"),
              py::arg("epsy_elem"))
 
+        .def("evalSystem", &SM::HybridSystem::evalSystem, "evalSystem")
         .def("material_elastic", &SM::HybridSystem::material_elastic, "material_elastic", py::return_value_policy::reference_internal)
         .def("material_plastic", &SM::HybridSystem::material_plastic, "material_plastic", py::return_value_policy::reference_internal)
         .def("Sig", &SM::HybridSystem::Sig, "Sig")

@@ -2,7 +2,7 @@
 Generic system of elastic and plastic elements.
 Implementation in Generic2d.hpp.
 
-\file Generic.h
+\file Generic2d.h
 \copyright Copyright 2020. Tom de Geus. All rights reserved.
 \license This project is released under the MIT License.
 */
@@ -151,7 +151,7 @@ public:
     computed during timeStep(). Internally on the system of unknown DOFs is solved, so any
     change to the response forces is ignored.
 
-    \param fex ``[nnode, ndim]``.
+    \param fext ``[nnode, ndim]``.
     */
     void setFext(const xt::xtensor<double, 2>& fext);
 
@@ -304,7 +304,7 @@ public:
 
     \return GMatElastoPlasticQPot::Cartesian2d::Array <2> (System::m_material).
     */
-    virtual const GMatElastoPlasticQPot::Cartesian2d::Array<2>& material() const;
+    const GMatElastoPlasticQPot::Cartesian2d::Array<2>& material() const;
 
     /**
     Stress tensor of each integration point.
@@ -518,6 +518,15 @@ Thereby:
     System::Sig and System::Eps are for free.
 -   Plastic: methods as HybridSystem::plastic_Sig, HybridSystem::plastic_Epsp, etc.
     do not require slicing (which is needed in System::plastic_Sig, etc.).
+
+\warning
+As described, some variables of System will not be updated on the fly but have to be evaluated
+before use (that is exactly where the speed-up comes from).
+The overrides of Sig() and Eps() automatically take care of this and can be called without
+any consideration (except of course it involves some computations).
+For the following cases, one has to call evalSystem() after updating #u in order to get access
+to the current state:
+-   material()
 */
 class HybridSystem : public System {
 
@@ -553,13 +562,11 @@ public:
         const xt::xtensor<double, 2>& epsy_elem) override;
 
     /**
-    GMatElastoPlasticQPot Array definition.
-    Warning: if reading the current state from this variable you have to call
-    computeStress() (or Sig() or Eps()) to update the state.
-
-    \return GMatElastoPlasticQPot::Cartesian2d::Array <2> (System::m_material).
+    Evaluate the full System.
+    Call this function after setU() if you want to use material().
+    Note that in theory the same goes for Sig() and Eps(), but those call evalSystem() internally.
     */
-    const GMatElastoPlasticQPot::Cartesian2d::Array<2>& material() const override;
+    void evalSystem();
 
     /**
     GMatElastoPlasticQPot Array definition for the elastic elements.

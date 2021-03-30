@@ -244,9 +244,6 @@ protected:
 
 };
 
-// Alias to make backward compatible, deprecate in the future
-using HybridSystem = System;
-
 /**
 Trigger element by a linear combination of simple shear and a pure shear perturbations.
 The contribution of both perturbation is computed as the minimal

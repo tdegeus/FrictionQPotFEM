@@ -605,11 +605,6 @@ inline void HybridSystem::setPlastic(
         GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
 }
 
-inline const GMatElastoPlasticQPot::Cartesian2d::Array<2>& HybridSystem::material() const
-{
-    return m_material;
-}
-
 inline const GMatElastoPlasticQPot::Cartesian2d::Array<2>& HybridSystem::material_elastic() const
 {
     return m_material_elas;
@@ -620,23 +615,24 @@ inline const GMatElastoPlasticQPot::Cartesian2d::Array<2>& HybridSystem::materia
     return m_material_plas;
 }
 
+inline void HybridSystem::evalSystem()
+{
+    if (!m_eval_full) {
+        return;
+    }
+    this->computeStress();
+    m_eval_full = false;
+}
+
 inline xt::xtensor<double, 4> HybridSystem::Sig()
 {
-    if (m_eval_full) {
-        this->computeStress();
-        m_eval_full = false;
-    }
-
+    this->evalSystem();
     return m_Sig;
 }
 
 inline xt::xtensor<double, 4> HybridSystem::Eps()
 {
-    if (m_eval_full) {
-        this->computeStress();
-        m_eval_full = false;
-    }
-
+    this->evalSystem();
     return m_Eps;
 }
 

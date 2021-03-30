@@ -90,7 +90,7 @@ int main()
         ret(inc, 1) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Sigbar)();
     }
 
-    std::ofstream outfile("UniformSingleLayer2d_System.txt");
+    std::ofstream outfile("Generic2d_HybridSystem.txt");
     xt::dump_csv(outfile, ret);
     outfile.close();
 
