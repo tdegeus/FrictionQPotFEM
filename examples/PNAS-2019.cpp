@@ -15,9 +15,9 @@ int main(int argc, char *argv[])
 {
     MYASSERT(argc == 2);
 
-    H5Easy::File data(argv[1], H5Easy::File::ReadWrite);
+    H5Easy::File data(argv[1], H5Easy::File::ReadOnly);
 
-    FrictionQPotFEM::UniformSingleLayer2d::HybridSystem sys(
+    FrictionQPotFEM::UniformSingleLayer2d::System sys(
         H5Easy::load<xt::xtensor<double, 2>>(data, "/coor"),
         H5Easy::load<xt::xtensor<size_t, 2>>(data, "/conn"),
         H5Easy::load<xt::xtensor<size_t, 2>>(data, "/dofs"),

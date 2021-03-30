@@ -51,7 +51,7 @@ int main()
 
     // Initialise system
 
-    FrictionQPotFEM::UniformSingleLayer2d::HybridSystem sys(coor, conn, dofs, iip, elastic, plastic);
+    FrictionQPotFEM::UniformSingleLayer2d::System sys(coor, conn, dofs, iip, elastic, plastic);
     sys.setMassMatrix(rho * xt::ones<double>({mesh.nelem()}));
     sys.setDampingMatrix(alpha * xt::ones<double>({mesh.nelem()}));
     sys.setElastic(K * xt::ones<double>({elastic.size()}), G * xt::ones<double>({elastic.size()}));
