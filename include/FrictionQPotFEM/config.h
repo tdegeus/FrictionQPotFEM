@@ -93,4 +93,9 @@ They can be enabled by::
 #define FRICTIONQPOTFEM_WARNING_PYTHON(message)
 #endif
 
+/**
+Friction simulations based on a disorder potential energy landscape and the finite element method.
+*/
+namespace FrictionQPotFEM { }
+
 #endif
