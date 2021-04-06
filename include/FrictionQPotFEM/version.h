@@ -31,7 +31,7 @@ Tip: use the environment variable ``SETUPTOOLS_SCM_PRETEND_VERSION``
 to overwrite the automatic version.
 */
 #ifndef FRICTIONQPOTFEM_VERSION
-#define FRICTIONQPOTFEM_VERSION "@FRICTIONQPOTFEM_VERSION@"
+#define FRICTIONQPOTFEM_VERSION "@FrictionQPotFEM_VERSION@"
 #endif
 
 namespace FrictionQPotFEM {
