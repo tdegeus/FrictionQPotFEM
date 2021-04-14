@@ -23,10 +23,11 @@ inline System::System(
     const xt::xtensor<size_t, 2>& dofs,
     const xt::xtensor<size_t, 1>& iip,
     const std::vector<xt::xtensor<size_t, 1>>& elem,
+    const std::vector<xt::xtensor<size_t, 1>>& node,
     const xt::xtensor<bool, 1>& layer_is_plastic,
-    const xt::xtensor<bool, 1>& layer_is_plastic)
+    const xt::xtensor<bool, 1>& node_is_virtual)
 {
-    this->init(coor, conn, dofs, elem, layer_is_plastic)
+    this->init(coor, conn, dofs, iip, elem, node, layer_is_plastic, node_is_virtual);
 }
 
 inline void System::init(
@@ -55,67 +56,93 @@ inline void System::init(
 
     m_layer_has_drive.fill(false);
 
-    size_t nplas = 0;
-    size_t nelas = 0;
+    size_t n_elem_plas = 0;
+    size_t n_elem_elas = 0;
+    size_t n_layer_plas = 0;
+    size_t n_layer_elas = 0;
 
     for (size_t i = 0; i < elem.size(); ++i) {
         if (m_layer_is_plastic(i)) {
-            nplas += elem[i].size();
+            n_elem_plas += elem[i].size();
+            n_layer_plas++;
         }
         else {
-            nelas += elem[i].size();
+            n_elem_elas += elem[i].size();
+            n_layer_elas++;
         }
     }
 
-    xt::xtensor<size_t, 1> plas = xt::empty<size_t>({nplas});
-    xt::xtensor<size_t, 1> elas = xt::empty<size_t>({nelas});
-    m_slice_plas = xt::empty<size_t>({nplas + size_t(1)});
-    m_slice_elas = xt::empty<size_t>({nelas + size_t(1)});
+    xt::xtensor<size_t, 1> plas = xt::empty<size_t>({n_elem_plas});
+    xt::xtensor<size_t, 1> elas = xt::empty<size_t>({n_elem_elas});
+    m_slice_plas = xt::empty<size_t>({n_layer_plas + size_t(1)});
+    m_slice_elas = xt::empty<size_t>({n_layer_elas + size_t(1)});
     m_slice_plas(0) = 0;
     m_slice_elas(0) = 0;
 
-    nplas = 0;
-    nelas = 0;
+    n_elem_plas = 0;
+    n_elem_elas = 0;
+    n_layer_plas = 0;
+    n_layer_elas = 0;
 
-    for (size_t i = 0; i < elem.size(); ++i) {
+    for (size_t i = 0; i < m_n_layer; ++i) {
         if (m_layer_is_plastic(i)) {
-            m_slice_index(i) = nplas;
-            m_slice_plas(nplas + 1) = nplas + elem[i].size();
-            xt::view(plas, xt::range(m_slice_plas(nplas), m_slice_plas(nplas + 1))) = elem[i];
-            nplas += elem[i].size();
+            m_slice_index(i) = n_layer_plas;
+            m_slice_plas(n_layer_plas + 1) = n_elem_plas + elem[i].size();
+            xt::view(plas, xt::range(m_slice_plas(n_layer_plas), m_slice_plas(n_layer_plas + 1))) = elem[i];
+            n_elem_plas += elem[i].size();
+            n_layer_plas++;
         }
         else {
-            m_slice_index(i) = nelas;
-            m_slice_elas(nelas + 1) = nelas + elem[i].size();
-            xt::view(elas, xt::range(m_slice_elas(nelas), m_slice_elas(nelas + 1))) = elem[i];
-            nelas += elem[i].size();
+            m_slice_index(i) = n_layer_elas;
+            m_slice_elas(n_layer_elas + 1) = n_elem_elas + elem[i].size();
+            xt::view(elas, xt::range(m_slice_elas(n_layer_elas), m_slice_elas(n_layer_elas + 1))) = elem[i];
+            n_elem_elas += elem[i].size();
+            n_layer_elas++;
         }
     }
 
     this->initHybridSystem(coor, conn, dofs, iip, elas, plas);
+
+    // sanity check nodes per layer
+    #ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
+    for (size_t i = 0; i < m_n_layer; ++i) {
+        auto e = this->layerElements(i);
+        auto n = xt::unique(xt::view(m_conn, xt::keep(e)));
+        FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(xt::sort(n), xt::sort(node[i]))));
+    }
+    #endif
+
+    // sanity check elements per layer + slice of elas/plas element sets
+    #ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
+    for (size_t i = 0; i < m_n_layer; ++i) {
+        xt::xtensor<size_t, 1> e;
+        size_t j = m_slice_index(i);
+        if (m_layer_is_plastic(i)) {
+            e = xt::view(m_elem_plas, xt::range(m_slice_plas(j), m_slice_plas(j + 1)));
+        }
+        else {
+            e = xt::view(m_elem_elas, xt::range(m_slice_elas(j), m_slice_elas(j + 1)));
+        }
+        FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(xt::sort(e), xt::sort(elem[i]))));
+    }
+    #endif
 }
 
 inline xt::xtensor<size_t, 1> System::layerElements(size_t i) const
 {
-    FRICTIONQPOTFEM_ASSERT(i < m_layer_is_plastic.size());
-    size_t j = m_slice_index(i);
-
-    if (m_layer_is_plastic(i)) {
-        return xt::view(m_elem_plas, xt::range(m_slice_plas(j), m_slice_plas(j + 1)));
-    }
-
-    return xt::view(m_elem_elas, xt::range(m_slice_elas(j), m_slice_elas(j + 1)));
+    FRICTIONQPOTFEM_ASSERT(i < m_n_layer);
+    return m_layer_elem[i];
 }
 
 inline xt::xtensor<size_t, 1> System::layerNodes(size_t i) const
 {
-    auto elem = this->layerElements(i);
-    return xt::unique(xt::view(m_conn, xt::keep(elem)));
+    FRICTIONQPOTFEM_ASSERT(i < m_n_layer);
+    return m_layer_node[i];
 }
 
 inline bool System::layerIsPlastic(size_t i) const
 {
-    FRICTIONQPOTFEM_ASSERT(i < m_layer_is_plastic.size());
+    FRICTIONQPOTFEM_ASSERT(i < m_n_layer);
     return m_layer_is_plastic(i);
 }
 
