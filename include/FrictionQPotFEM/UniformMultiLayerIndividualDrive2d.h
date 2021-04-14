@@ -40,7 +40,7 @@ inline std::vector<std::string> version_dependencies();
 /**
 Class that uses GMatElastoPlasticQPot to evaluate stress everywhere
 */
-class System : protected Generic2d::HybridSystem {
+class System : public Generic2d::HybridSystem {
 
 public:
 
