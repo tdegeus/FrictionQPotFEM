@@ -95,19 +95,19 @@ public:
     bool layerIsPlastic(size_t i) const;
 
     /**
-    Update the mean displacement of a layer.
+    Set the stiffness of spring connecting the mean displacement of a layer to the drive frame.
 
-    \param ubar Mean position of the i-th layer.
-    \param i Index of the layer.
+    \param k The stiffness (taken the same for all layers)
     */
-    void layerSetUbar(double ubar, size_t i);
+    void setDriveStiffness(double k);
 
     /**
-    Compute force deriving from the drive.
-    The force is applied as a force density for each of the layers for which the position
-    was specified (at least once) using layerSetUbar().
+    Update the mean displacement of a layer.
+
+    \param i Index of the layer.
+    \param ubar Mean position of the i-th layer.
     */
-    void computeForceDrive();
+    void layerSetUbar(size_t i, xt::xtensor<double, 1>& ubar);
 
     /**
     Set nodal displacements.
@@ -118,6 +118,11 @@ public:
     \param u ``[nnode, ndim]``.
     */
     void setU(const xt::xtensor<double, 2>& u) override;
+
+    /**
+    \return Force related to the driving frame.
+    */
+    xt::xtensor<double, 2> fdrive() const;
 
     /**
     Make a time-step: apply velocity-Verlet integration.
@@ -135,6 +140,13 @@ public:
     void timeStep() override;
 
 protected:
+
+    /**
+    Compute force deriving from the drive.
+    The force is applied as a force density for each of the layers for which the position
+    was specified (at least once) using layerSetUbar().
+    */
+    void computeForceDrive();
 
     /**
     Constructor alias (as convenience for derived classes).
@@ -162,7 +174,9 @@ protected:
     xt::xtensor<size_t, 1> m_slice_plas; ///< How to slice elastic(): start and end index
     xt::xtensor<size_t, 1> m_slice_elas; ///< How to slice plastic(): start and end index
     xt::xtensor<bool, 1> m_layer_has_drive; ///< Per layer ``true`` if the mean position is be controlled.
-    xt::xtensor<double, 1> m_layer_ubar; ///< Per layer, the mean position.
+    double m_k_drive = 1.0; ///< Stiffness of the drive control frame
+    xt::xtensor<double, 2> m_layer_ubar; ///< Per layer, the mean position.
+    xt::xtensor<double, 2> m_fdrive; ///< Force related to driving frame
 
 };
 
