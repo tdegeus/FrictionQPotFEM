@@ -22,7 +22,8 @@ add_executable(${test_name}
     Generic2d.cpp
     Generic2d_historic.cpp
     UniformSingleLayer2d.cpp
-    UniformSingleLayer2d_LocalTrigger.cpp)
+    UniformSingleLayer2d_LocalTrigger.cpp
+    UniformMultiLayerIndividualDrive2d.cpp)
 
 target_link_libraries(${test_name} PRIVATE
     Catch2::Catch2
