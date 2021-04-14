@@ -124,11 +124,12 @@ public:
 
     /**
     Set nodal displacements.
-    Internally, this updates System::m_fmaterial by calling System::computeForceMaterial.
+    Internally, this updates:
+    -   #m_fmaterial by calling computeForceMaterial().
 
     \param u ``[nnode, ndim]``.
     */
-    void setU(const xt::xtensor<double, 2>& u);
+    virtual void setU(const xt::xtensor<double, 2>& u);
 
     /**
     Set nodal velocities.
@@ -386,13 +387,15 @@ public:
     Make a time-step: apply velocity-Verlet integration.
     Forces are computed where needed as follows:
 
-    -   After updating the displacement System::computeForceMaterial is evaluated to update
-        System::m_fmaterial.
+    -   After updating the displacement:
 
-    -   After update the velocity, System::m_fdamp is computed directly using the
-        damping matrix System::m_D
+        -   #m_fmaterial by calling computeForceMaterial().
+
+    -   After updating the velocity:
+
+        -   #m_fdamp directly using #m_D
     */
-    void timeStep();
+    virtual void timeStep();
 
     /**
     Minimise energy: run System::timeStep until a mechanical equilibrium has been reached.
