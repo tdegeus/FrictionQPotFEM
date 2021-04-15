@@ -242,6 +242,14 @@ public:
     auto fext() const;
 
     /**
+    Internal force.
+    Note: computed during timeStep().
+
+    \return Nodal force. Shape ``[nnode, ndim]``    .
+    */
+    auto fint() const;
+
+    /**
     Force deriving from elasticity.
 
     \return Nodal force. Shape ``[nnode, ndim]``    .

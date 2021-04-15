@@ -102,6 +102,14 @@ public:
     void setDriveStiffness(double k);
 
     /**
+    Get the mean displacement of a layer.
+
+    \param i Index of the layer.
+    \return [ndim]
+    */
+    xt::xtensor<double, 1> layerUbar(size_t i) const;
+
+    /**
     Update the mean displacement of a layer.
 
     \param i Index of the layer.

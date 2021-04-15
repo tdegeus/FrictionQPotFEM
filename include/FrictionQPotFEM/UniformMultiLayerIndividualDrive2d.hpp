@@ -148,6 +148,25 @@ inline bool System::layerIsPlastic(size_t i) const
     return m_layer_is_plastic(i);
 }
 
+inline xt::xtensor<double, 1> System::layerUbar(size_t i) const
+{
+    FRICTIONQPOTFEM_ASSERT(i < m_n_layer);
+
+    xt::xtensor<double, 1> ret = xt::zeros<double>({size_t(2)});
+    size_t norm = 0;
+
+    for (auto& n : m_layer_node[i]) {
+        if (!m_node_is_virtual(n)) {
+            for (size_t d = 0; d < 2; ++d) {
+                ret(d) += m_u(n, d);
+            }
+            norm++;
+        }
+    }
+
+    return ret / static_cast<double>(norm);;
+}
+
 inline void System::layerSetUbar(size_t i, xt::xtensor<double, 1>& ubar)
 {
     FRICTIONQPOTFEM_ASSERT(i < m_n_layer);
@@ -192,7 +211,7 @@ inline void System::computeForceDrive()
 
         std::array<double, 2> f;
         for (size_t d = 0; d < 2; ++d) {
-            f[d] = m_k_drive * (m_layer_ubar(i, d) - ubar[d]);
+            f[d] = m_k_drive * (ubar[d] - m_layer_ubar(i, d));
         }
 
         for (auto& n : m_layer_node[i]) {
@@ -203,6 +222,9 @@ inline void System::computeForceDrive()
             }
         }
     }
+
+    auto dofval = m_vector.AssembleDofs(m_fdrive);
+    m_vector.asNode(dofval, m_fdrive);
 }
 
 inline void System::setU(const xt::xtensor<double, 2>& u)

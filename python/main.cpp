@@ -101,6 +101,7 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
         .def("mass", &SM::System::mass, "mass", py::return_value_policy::reference_internal)
         .def("damping", &SM::System::damping, "damping", py::return_value_policy::reference_internal)
         .def("fext", &SM::System::fext, "fext")
+        .def("fint", &SM::System::fint, "fint")
         .def("fmaterial", &SM::System::fmaterial, "fmaterial")
         .def("fdamp", &SM::System::fdamp, "fdamp")
         .def("residual", &SM::System::residual, "residual")
@@ -388,6 +389,11 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              &SM::System::setDriveStiffness,
              "setDriveStiffness",
              py::arg("k"))
+
+        .def("layerUbar",
+             &SM::System::layerUbar,
+             "layerUbar",
+             py::arg("i"))
 
         .def("layerSetUbar",
              &SM::System::layerSetUbar,

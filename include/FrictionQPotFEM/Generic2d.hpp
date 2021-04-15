@@ -323,6 +323,11 @@ inline auto System::fext() const
     return m_fext;
 }
 
+inline auto System::fint() const
+{
+    return m_fint;
+}
+
 inline auto System::fmaterial() const
 {
     return m_fmaterial;
