@@ -18,8 +18,8 @@ stitch.push_back(x0, layer_elas.conn())
 stitch.push_back(x1, layer_plas.conn())
 stitch.push_back(x2, layer_elas.conn())
 
-drive0 = stitch.nodeset(np.setdiff1d(np.arange(layer_elas.nnode()), layer_elas.nodesRightEdge()), 0)
-drive1 = stitch.nodeset(np.setdiff1d(np.arange(layer_elas.nnode()), layer_elas.nodesRightEdge()), 2)
+# drive0 = stitch.nodeset(np.setdiff1d(np.arange(layer_elas.nnode()), layer_elas.nodesRightEdge()), 0)
+# drive1 = stitch.nodeset(np.setdiff1d(np.arange(layer_elas.nnode()), layer_elas.nodesRightEdge()), 2)
 
 left = stitch.nodeset([
     layer_elas.nodesLeftOpenEdge(),
@@ -63,6 +63,7 @@ ubar = np.zeros((3, 2))
 drive = np.zeros((3, 2), dtype=bool)
 ubar[2, 0] = 0.5
 drive[2, 0] = True
+drive[0, 0] = True
 
 u = system.u()
 u[stitch.nodemap(2), 0] = 0.0
@@ -72,10 +73,13 @@ system.layerSetUbar(ubar, drive)
 
 fdrive = system.fdrive()
 
-for i in range(50000):
-    system.timeStep()
+# for i in range(50000):
+#     system.timeStep()
 
-print(system.residual())
+# print(system.residual())
+print(system.minimise())
+print(system.layerUbar())
+print(system.u())
 
 
 # # vector = system.vector()
