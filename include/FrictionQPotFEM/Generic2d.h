@@ -402,7 +402,7 @@ public:
 
         -   #m_fdamp directly using #m_D
     */
-    virtual void timeStep();
+    void timeStep();
 
     /**
     Minimise energy: run System::timeStep until a mechanical equilibrium has been reached.
