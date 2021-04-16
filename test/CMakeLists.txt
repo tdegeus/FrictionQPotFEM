@@ -10,7 +10,7 @@ set(ASSERT ON)
 set(DEBUG OFF)
 option(XSIMD "Use xsimd optimisations" OFF)
 
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
 set(test_name "unit-tests")
 
@@ -19,10 +19,10 @@ find_package(xtensor REQUIRED)
 
 add_executable(${test_name}
     main.cpp
-    Generic2d.cpp
-    Generic2d_historic.cpp
-    UniformSingleLayer2d.cpp
-    UniformSingleLayer2d_LocalTrigger.cpp
+    # Generic2d.cpp
+    # Generic2d_historic.cpp
+    # UniformSingleLayer2d.cpp
+    # UniformSingleLayer2d_LocalTrigger.cpp
     UniformMultiLayerIndividualDrive2d.cpp)
 
 target_link_libraries(${test_name} PRIVATE
