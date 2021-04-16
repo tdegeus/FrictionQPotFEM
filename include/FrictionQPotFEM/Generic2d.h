@@ -124,8 +124,7 @@ public:
 
     /**
     Set nodal displacements.
-    Internally, this updates:
-    -   #m_fmaterial by calling computeForceMaterial().
+    Internally, this updates this relevant forces using updated_u().
 
     \param u ``[nnode, ndim]``.
     */
@@ -133,7 +132,7 @@ public:
 
     /**
     Set nodal velocities.
-    Internally, this updates System::m_fdamp.
+    Internally, this updates this relevant forces using updated_v().
 
     \param v ``[nnode, ndim]``.
     */
