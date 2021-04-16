@@ -392,15 +392,8 @@ public:
 
     /**
     Make a time-step: apply velocity-Verlet integration.
-    Forces are computed where needed as follows:
-
-    -   After updating the displacement:
-
-        -   #m_fmaterial by calling computeForceMaterial().
-
-    -   After updating the velocity:
-
-        -   #m_fdamp directly using #m_D
+    Forces are computed where needed using:
+    updated_u(), updated_v(), and computeInternalExternalResidualForce().
     */
     void timeStep();
 
