@@ -222,10 +222,8 @@ inline void System::computeForceDrive()
     m_vector.asNode(m_vector.AssembleDofs(m_ue), m_fdrive);
 }
 
-inline void System::setU(const xt::xtensor<double, 2>& u)
+inline void System::updated_u()
 {
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, {m_nnode, m_ndim}));
-    xt::noalias(m_u) = u;
     this->computeForceMaterial();
     this->computeForceDrive();
 }
@@ -235,70 +233,11 @@ inline xt::xtensor<double, 2> System::fdrive() const
     return m_fdrive;
 }
 
-inline void System::timeStep()
+inline void System::computeInternalExternalResidualForce()
 {
-    FRICTIONQPOTFEM_ASSERT(m_allset);
-
-    // history
-
-    m_t += m_dt;
-
-    xt::noalias(m_v_n) = m_v;
-    xt::noalias(m_a_n) = m_a;
-
-    // new displacement
-
-    xt::noalias(m_u) = m_u + m_dt * m_v + 0.5 * std::pow(m_dt, 2.0) * m_a;
-    this->computeForceMaterial();
-    this->computeForceDrive();
-
-    // estimate new velocity, update corresponding force
-
-    xt::noalias(m_v) = m_v_n + m_dt * m_a_n;
-
-    m_D.dot(m_v, m_fdamp);
-
-    // compute residual force & solve
-
     xt::noalias(m_fint) = m_fdrive + m_fmaterial + m_fdamp;
-
     m_vector.copy_p(m_fint, m_fext);
-
     xt::noalias(m_fres) = m_fext - m_fint;
-
-    m_M.solve(m_fres, m_a);
-
-    // re-estimate new velocity, update corresponding force
-
-    xt::noalias(m_v) = m_v_n + 0.5 * m_dt * (m_a_n + m_a);
-
-    m_D.dot(m_v, m_fdamp);
-
-    // compute residual force & solve
-
-    xt::noalias(m_fint) = m_fdrive + m_fmaterial + m_fdamp;
-
-    m_vector.copy_p(m_fint, m_fext);
-
-    xt::noalias(m_fres) = m_fext - m_fint;
-
-    m_M.solve(m_fres, m_a);
-
-    // new velocity, update corresponding force
-
-    xt::noalias(m_v) = m_v_n + 0.5 * m_dt * (m_a_n + m_a);
-
-    m_D.dot(m_v, m_fdamp);
-
-    // compute residual force & solve
-
-    xt::noalias(m_fint) = m_fdrive + m_fmaterial + m_fdamp;
-
-    m_vector.copy_p(m_fint, m_fext);
-
-    xt::noalias(m_fres) = m_fext - m_fint;
-
-    m_M.solve(m_fres, m_a);
 }
 
 } // namespace UniformMultiLayerIndividualDrive2d

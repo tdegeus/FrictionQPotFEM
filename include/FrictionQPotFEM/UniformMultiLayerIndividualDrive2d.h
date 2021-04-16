@@ -113,34 +113,9 @@ public:
     void layerSetUbar(const xt::xtensor<double, 2>& ubar, const xt::xtensor<bool, 2> prescribe);
 
     /**
-    Set nodal displacements.
-    Internally, this updates:
-    -   #m_fmaterial by calling computeForceMaterial().
-    -   #m_fdrive by calling computeForceDrive().
-
-    \param u ``[nnode, ndim]``.
-    */
-    void setU(const xt::xtensor<double, 2>& u) override;
-
-    /**
     \return Force related to the driving frame.
     */
     xt::xtensor<double, 2> fdrive() const;
-
-    /**
-    Make a time-step: apply velocity-Verlet integration.
-    Forces are computed where needed as follows:
-
-    -   After updating the displacement:
-
-        -   #m_fmaterial by calling computeForceMaterial().
-        -   #m_fdrive by calling computeForceDrive().
-
-    -   After updating the velocity:
-
-        -   #m_fdamp directly using #m_D
-    */
-    void timeStep() override;
 
 protected:
 
@@ -150,6 +125,21 @@ protected:
     was specified (at least once) using layerSetUbar().
     */
     void computeForceDrive();
+
+    /**
+    Evaluate relevant forces when m_u is updates.
+    */
+    void updated_u() override;
+
+    /**
+    Compute:
+    -   m_fint = m_fdrive + m_fmaterial + m_fdamp
+    -   m_fext[iip] = m_fint[iip]
+    -   m_fres = m_fext - m_fint
+
+    Internal rule: all relevant forces are expected to be updated before this function is called.
+    */
+    void computeInternalExternalResidualForce() override;
 
     /**
     Constructor alias (as convenience for derived classes).

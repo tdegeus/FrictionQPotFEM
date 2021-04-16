@@ -129,7 +129,7 @@ public:
 
     \param u ``[nnode, ndim]``.
     */
-    virtual void setU(const xt::xtensor<double, 2>& u);
+    void setU(const xt::xtensor<double, 2>& u);
 
     /**
     Set nodal velocities.
@@ -492,25 +492,45 @@ protected:
     void initMaterial();
 
     /**
-    Set System::m_allset = ``true`` if all prerequisites are satisfied.
+    Set m_allset = ``true`` if all prerequisites are satisfied.
     */
     void evalAllSet();
 
     /**
     Compute strain and stress tensors.
-    Uses System::m_u to update System::m_Sig and System::m_Eps.
+    Uses m_u to update m_Sig and m_Eps.
     */
     void computeStress();
 
     /**
-    Update System::m_fmaterial based on the current displacement field System::m_u.
-    This implies taking the gradient of the stress tensor, System::m_Sig,
-    computed using System::computeStress.
+    Evaluate relevant forces when m_u is updates.
+    */
+    virtual void updated_u();
 
-    Internal rule: This function is always evaluated after an update of System::m_u.
-    This is taken care off by calling System::setU, and never updating System::m_u directly.
+    /**
+    Evaluate relevant forces when m_v is updates.
+    */
+    virtual void updated_v();
+
+    /**
+    Update m_fmaterial based on the current displacement field m_u.
+    This implies taking the gradient of the stress tensor, m_Sig,
+    computed using computeStress.
+
+    Internal rule: This function is always evaluated after an update of m_u.
+    This is taken care off by calling setU, and never updating m_u directly.
     */
     virtual void computeForceMaterial();
+
+    /**
+    Compute:
+    -   m_fint = m_fmaterial + m_fdamp
+    -   m_fext[iip] = m_fint[iip]
+    -   m_fres = m_fext - m_fint
+
+    Internal rule: all relevant forces are expected to be updated before this function is called.
+    */
+    virtual void computeInternalExternalResidualForce();
 
 };
 
