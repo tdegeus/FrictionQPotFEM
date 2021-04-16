@@ -407,18 +407,9 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              py::arg("ubar"),
              py::arg("prescribe"))
 
-        .def("setU",
-             &SM::System::setU,
-             "setU",
-             py::arg("u"))
-
         .def("fdrive",
              &SM::System::fdrive,
              "fdrive")
-
-        .def("timeStep",
-             &SM::System::timeStep,
-             "timeStep")
 
         .def("__repr__", [](const SM::System&) {
             return "<FrictionQPotFEM.UniformMultiLayerIndividualDrive2d.System>";
