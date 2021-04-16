@@ -58,7 +58,6 @@ public:
     \param elem Elements per layer.
     \param node Nodes per layer.
     \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
-    \param node_is_virtual Per node specify if it is virtual or not.
     */
     System(
         const xt::xtensor<double, 2>& coor,
@@ -67,8 +66,7 @@ public:
         const xt::xtensor<size_t, 1>& iip,
         const std::vector<xt::xtensor<size_t, 1>>& elem,
         const std::vector<xt::xtensor<size_t, 1>>& node,
-        const xt::xtensor<bool, 1>& layer_is_plastic,
-        const xt::xtensor<bool, 1>& node_is_virtual);
+        const xt::xtensor<bool, 1>& layer_is_plastic);
 
     /**
     Return the nodes belonging to the i-th layer.
@@ -102,20 +100,17 @@ public:
     void setDriveStiffness(double k);
 
     /**
-    Get the mean displacement of a layer.
-
-    \param i Index of the layer.
-    \return [ndim]
+    \return The mean displacement of each layer [nlayer, ndim].
     */
-    xt::xtensor<double, 1> layerUbar(size_t i) const;
+    xt::xtensor<double, 2> layerUbar() const;
 
     /**
-    Update the mean displacement of a layer.
+    Set the mean displacement per layer.
 
-    \param i Index of the layer.
-    \param ubar Mean position of the i-th layer.
+    \param ubar The target mean position of each layer [nlayer, ndim].
+    \param prescribe For each entry ``ubar`` set ``true`` to 'enforce' the position [nlayer, ndim].
     */
-    void layerSetUbar(size_t i, xt::xtensor<double, 1>& ubar);
+    void layerSetUbar(const xt::xtensor<double, 2>& ubar, const xt::xtensor<bool, 2> prescribe);
 
     /**
     Set nodal displacements.
@@ -168,23 +163,26 @@ protected:
         const xt::xtensor<size_t, 1>& iip,
         const std::vector<xt::xtensor<size_t, 1>>& elem,
         const std::vector<xt::xtensor<size_t, 1>>& node,
-        const xt::xtensor<bool, 1>& layer_is_plastic,
-        const xt::xtensor<bool, 1>& node_is_virtual);
+        const xt::xtensor<bool, 1>& layer_is_plastic);
 
 protected:
 
     size_t m_n_layer; ///< Number of layers.
     std::vector<xt::xtensor<size_t, 1>> m_layer_node; ///< Nodes per layer.
     std::vector<xt::xtensor<size_t, 1>> m_layer_elem; ///< Elements per layer.
-    xt::xtensor<bool, 1> m_node_is_virtual; ///< Per node ``true`` is the layer is plastic.
     xt::xtensor<bool, 1> m_layer_is_plastic; ///< Per layer ``true`` is the layer is plastic.
     xt::xtensor<size_t, 1> m_slice_index; ///< Per layer the index in m_slice_plas or m_slice_elas.
     xt::xtensor<size_t, 1> m_slice_plas; ///< How to slice elastic(): start and end index
     xt::xtensor<size_t, 1> m_slice_elas; ///< How to slice plastic(): start and end index
-    xt::xtensor<bool, 1> m_layer_has_drive; ///< Per layer ``true`` if the mean position is be controlled.
+
     double m_k_drive = 1.0; ///< Stiffness of the drive control frame
-    xt::xtensor<double, 2> m_layer_ubar; ///< Per layer, the mean position.
+    xt::xtensor<bool, 2> m_layer_ubar_set; ///< See `prescribe` in layerSetUbar()
+    xt::xtensor<double, 2> m_layer_ubar_target; ///< Per layer, the prescribed mean position.
+    xt::xtensor<double, 2> m_layer_ubar_value; ///< Per layer, the prescribed mean position.
     xt::xtensor<double, 2> m_fdrive; ///< Force related to driving frame
+    xt::xtensor<double, 2> m_layer_dV1; ///< volume per layer (same of all dimensions)
+    xt::xtensor<double, 2> m_dV; ///< copy of m_quad.dV()
+    xt::xtensor<double, 3> m_uq; ///< qvector
 
 };
 

@@ -24,10 +24,9 @@ inline System::System(
     const xt::xtensor<size_t, 1>& iip,
     const std::vector<xt::xtensor<size_t, 1>>& elem,
     const std::vector<xt::xtensor<size_t, 1>>& node,
-    const xt::xtensor<bool, 1>& layer_is_plastic,
-    const xt::xtensor<bool, 1>& node_is_virtual)
+    const xt::xtensor<bool, 1>& layer_is_plastic)
 {
-    this->init(coor, conn, dofs, iip, elem, node, layer_is_plastic, node_is_virtual);
+    this->init(coor, conn, dofs, iip, elem, node, layer_is_plastic);
 }
 
 inline void System::init(
@@ -37,24 +36,23 @@ inline void System::init(
     const xt::xtensor<size_t, 1>& iip,
     const std::vector<xt::xtensor<size_t, 1>>& elem,
     const std::vector<xt::xtensor<size_t, 1>>& node,
-    const xt::xtensor<bool, 1>& layer_is_plastic,
-    const xt::xtensor<bool, 1>& node_is_virtual)
+    const xt::xtensor<bool, 1>& layer_is_plastic)
 {
     FRICTIONQPOTFEM_ASSERT(layer_is_plastic.size() == elem.size());
     FRICTIONQPOTFEM_ASSERT(layer_is_plastic.size() == node.size());
-    FRICTIONQPOTFEM_ASSERT(node_is_virtual.size() == coor.shape(0));
 
     m_n_layer = node.size();
     m_layer_node = node;
     m_layer_elem = elem;
-    m_node_is_virtual = node_is_virtual;
     m_layer_is_plastic = layer_is_plastic;
 
-    m_layer_has_drive.resize({m_n_layer});
-    m_layer_ubar.resize({m_n_layer, size_t(2)});
+    m_layer_ubar_set.resize({m_n_layer, size_t(2)});
+    m_layer_ubar_target.resize({m_n_layer, size_t(2)});
+    m_layer_ubar_value.resize({m_n_layer, size_t(2)});
+    m_layer_dV1.resize({m_n_layer, size_t(2)});
     m_slice_index.resize({m_n_layer});
 
-    m_layer_has_drive.fill(false);
+    m_layer_ubar_set.fill(false);
 
     size_t n_elem_plas = 0;
     size_t n_elem_elas = 0;
@@ -104,6 +102,21 @@ inline void System::init(
     this->initHybridSystem(coor, conn, dofs, iip, elas, plas);
 
     m_fdrive = m_vector.allocate_nodevec(0.0);
+    m_uq = m_quad.allocate_qtensor<1>(0.0);
+    m_dV = m_quad.dV();
+
+    size_t nip = m_quad.nip();
+    m_layer_dV1.fill(0.0);
+
+    for (size_t i = 0; i < m_n_layer; ++i) {
+        for (auto& e : m_layer_elem[i]) {
+            for (size_t q = 0; q < nip; ++q) {
+                for (size_t d = 0; d < 2; ++d) {
+                    m_layer_dV1(i, d) += m_dV(e, q);
+                }
+            }
+        }
+    }
 
     // sanity check nodes per layer
     #ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
@@ -148,33 +161,19 @@ inline bool System::layerIsPlastic(size_t i) const
     return m_layer_is_plastic(i);
 }
 
-inline xt::xtensor<double, 1> System::layerUbar(size_t i) const
+inline xt::xtensor<double, 2> System::layerUbar() const
 {
-    FRICTIONQPOTFEM_ASSERT(i < m_n_layer);
-
-    xt::xtensor<double, 1> ret = xt::zeros<double>({size_t(2)});
-    size_t norm = 0;
-
-    for (auto& n : m_layer_node[i]) {
-        if (!m_node_is_virtual(n)) {
-            for (size_t d = 0; d < 2; ++d) {
-                ret(d) += m_u(n, d);
-            }
-            norm++;
-        }
-    }
-
-    return ret / static_cast<double>(norm);;
+    return m_layer_ubar_value;
 }
 
-inline void System::layerSetUbar(size_t i, xt::xtensor<double, 1>& ubar)
+inline void System::layerSetUbar(
+    const xt::xtensor<double, 2>& ubar,
+    const xt::xtensor<bool, 2> prescribe)
 {
-    FRICTIONQPOTFEM_ASSERT(i < m_n_layer);
-    FRICTIONQPOTFEM_ASSERT(ubar.size() == 2);
-    for (size_t d = 0; d < 2; ++d) {
-        m_layer_ubar(i, d) = ubar(d);
-    }
-    m_layer_has_drive(i) = true;
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layer_ubar_target.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(prescribe, m_layer_ubar_set.shape()));
+    xt::noalias(m_layer_ubar_target) = ubar;
+    xt::noalias(m_layer_ubar_set) = prescribe;
     this->computeForceDrive();
 }
 
@@ -185,46 +184,42 @@ inline void System::setDriveStiffness(double k)
 
 inline void System::computeForceDrive()
 {
-    m_fdrive.fill(0.0);
+    m_layer_ubar_value.fill(0.0);
+    size_t nip = m_quad.nip();
+
+    m_vector.asElement(m_u, m_ue);
+    m_quad.interpQuad_vector(m_ue, m_uq);
 
     for (size_t i = 0; i < m_n_layer; ++i) {
-
-        if (!m_layer_has_drive(i)) {
-            continue;
-        }
-
-        std::array<double, 2> ubar = {0.0, 0.0};
-        size_t norm = 0;
-
-        for (auto& n : m_layer_node[i]) {
-            if (!m_node_is_virtual(n)) {
-                for (size_t d = 0; d < 2; ++d) {
-                    ubar[d] += m_u(n, d);
-                }
-                norm++;
-            }
-        }
-
-        for (size_t d = 0; d < 2; ++d) {
-            ubar[d] /= static_cast<double>(norm);
-        }
-
-        std::array<double, 2> f;
-        for (size_t d = 0; d < 2; ++d) {
-            f[d] = m_k_drive * (ubar[d] - m_layer_ubar(i, d));
-        }
-
-        for (auto& n : m_layer_node[i]) {
-            if (!m_node_is_virtual(n)) {
-                for (size_t d = 0; d < 2; ++d) {
-                    m_fdrive(n, d) += f[d];
+        for (auto& e : m_layer_elem[i]) {
+            for (size_t d = 0; d < 2; ++d) {
+                for (size_t q = 0; q < nip; ++q) {
+                    m_layer_ubar_value(i, d) += m_uq(e, q, d) * m_dV(e, q);
                 }
             }
         }
     }
 
-    auto dofval = m_vector.AssembleDofs(m_fdrive);
-    m_vector.asNode(dofval, m_fdrive);
+    m_layer_ubar_value /= m_layer_dV1;
+
+    m_uq.fill(0.0);
+
+    for (size_t i = 0; i < m_n_layer; ++i) {
+        if (m_layer_ubar_set(i, 0) || m_layer_ubar_set(i, 1)) {
+            for (auto& e : m_layer_elem[i]) {
+                for (size_t d = 0; d < 2; ++d) {
+                    if (m_layer_ubar_set(i, d)) {
+                        for (size_t q = 0; q < nip; ++q) {
+                            m_uq(e, q, d) = m_k_drive * (m_layer_ubar_value(i, d) - m_layer_ubar_target(i, d));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    m_quad.int_N_vector_dV(m_uq, m_ue);
+    m_vector.asNode(m_vector.AssembleDofs(m_ue), m_fdrive);
 }
 
 inline void System::setU(const xt::xtensor<double, 2>& u)

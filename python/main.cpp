@@ -186,8 +186,17 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              py::arg("epsy_elem"))
 
         .def("evalSystem", &SM::HybridSystem::evalSystem, "evalSystem")
-        .def("material_elastic", &SM::HybridSystem::material_elastic, "material_elastic", py::return_value_policy::reference_internal)
-        .def("material_plastic", &SM::HybridSystem::material_plastic, "material_plastic", py::return_value_policy::reference_internal)
+
+        .def("material_elastic",
+            &SM::HybridSystem::material_elastic,
+            "material_elastic",
+            py::return_value_policy::reference_internal)
+
+        .def("material_plastic",
+            &SM::HybridSystem::material_plastic,
+            "material_plastic",
+            py::return_value_policy::reference_internal)
+
         .def("Sig", &SM::HybridSystem::Sig, "Sig")
         .def("Eps", &SM::HybridSystem::Eps, "Eps")
         .def("plastic_Sig", &SM::HybridSystem::plastic_Sig, "plastic_Sig")
@@ -358,7 +367,6 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
                 const xt::xtensor<size_t, 1>&,
                 const std::vector<xt::xtensor<size_t, 1>>&,
                 const std::vector<xt::xtensor<size_t, 1>>&,
-                const xt::xtensor<bool, 1>&,
                 const xt::xtensor<bool, 1>&>(),
              "System",
              py::arg("coor"),
@@ -367,8 +375,7 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              py::arg("iip"),
              py::arg("elem"),
              py::arg("node"),
-             py::arg("layer_is_plastic"),
-             py::arg("node_is_virtual"))
+             py::arg("layer_is_plastic"))
 
         .def("layerNodes",
              &SM::System::layerNodes,
@@ -392,14 +399,13 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
         .def("layerUbar",
              &SM::System::layerUbar,
-             "layerUbar",
-             py::arg("i"))
+             "layerUbar")
 
         .def("layerSetUbar",
              &SM::System::layerSetUbar,
              "layerSetUbar",
-             py::arg("i"),
-             py::arg("ubar"))
+             py::arg("ubar"),
+             py::arg("prescribe"))
 
         .def("setU",
              &SM::System::setU,
