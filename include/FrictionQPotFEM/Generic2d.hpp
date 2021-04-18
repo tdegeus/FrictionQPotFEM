@@ -240,6 +240,11 @@ inline void System::setU(const xt::xtensor<double, 2>& u)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, {m_nnode, m_ndim}));
     xt::noalias(m_u) = u;
+    this->updated_u();
+}
+
+inline void System::updated_u()
+{
     this->computeForceMaterial();
 }
 
@@ -247,6 +252,10 @@ inline void System::setV(const xt::xtensor<double, 2>& v)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(v, {m_nnode, m_ndim}));
     xt::noalias(m_v) = v;
+}
+
+inline void System::updated_v()
+{
     m_D.dot(m_v, m_fdamp);
 }
 
@@ -321,6 +330,11 @@ inline auto& System::damping() const
 inline auto System::fext() const
 {
     return m_fext;
+}
+
+inline auto System::fint() const
+{
+    return m_fint;
 }
 
 inline auto System::fmaterial() const
@@ -441,6 +455,12 @@ inline void System::computeForceMaterial()
     m_vector.assembleNode(m_fe, m_fmaterial);
 }
 
+inline void System::computeInternalExternalResidualForce()
+{
+    xt::noalias(m_fint) = m_fmaterial + m_fdamp;
+    m_vector.copy_p(m_fint, m_fext);
+    xt::noalias(m_fres) = m_fext - m_fint;
+}
 
 inline void System::timeStep()
 {
@@ -449,61 +469,42 @@ inline void System::timeStep()
     // history
 
     m_t += m_dt;
-
     xt::noalias(m_v_n) = m_v;
     xt::noalias(m_a_n) = m_a;
 
     // new displacement
 
     xt::noalias(m_u) = m_u + m_dt * m_v + 0.5 * std::pow(m_dt, 2.0) * m_a;
-    this->computeForceMaterial();
+    this->updated_u();
 
     // estimate new velocity, update corresponding force
 
     xt::noalias(m_v) = m_v_n + m_dt * m_a_n;
-
-    m_D.dot(m_v, m_fdamp);
+    this->updated_v();
 
     // compute residual force & solve
 
-    xt::noalias(m_fint) = m_fmaterial + m_fdamp;
-
-    m_vector.copy_p(m_fint, m_fext);
-
-    xt::noalias(m_fres) = m_fext - m_fint;
-
+    this->computeInternalExternalResidualForce();
     m_M.solve(m_fres, m_a);
 
     // re-estimate new velocity, update corresponding force
 
     xt::noalias(m_v) = m_v_n + 0.5 * m_dt * (m_a_n + m_a);
-
-    m_D.dot(m_v, m_fdamp);
+    this->updated_v();
 
     // compute residual force & solve
 
-    xt::noalias(m_fint) = m_fmaterial + m_fdamp;
-
-    m_vector.copy_p(m_fint, m_fext);
-
-    xt::noalias(m_fres) = m_fext - m_fint;
-
+    this->computeInternalExternalResidualForce();
     m_M.solve(m_fres, m_a);
 
     // new velocity, update corresponding force
 
     xt::noalias(m_v) = m_v_n + 0.5 * m_dt * (m_a_n + m_a);
-
-    m_D.dot(m_v, m_fdamp);
+    this->updated_v();
 
     // compute residual force & solve
 
-    xt::noalias(m_fint) = m_fmaterial + m_fdamp;
-
-    m_vector.copy_p(m_fint, m_fext);
-
-    xt::noalias(m_fres) = m_fext - m_fint;
-
+    this->computeInternalExternalResidualForce();
     m_M.solve(m_fres, m_a);
 }
 

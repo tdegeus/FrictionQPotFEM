@@ -8,6 +8,7 @@ endif()
 
 set(WARNINGS ON)
 set(ASSERT OFF)
+set(ALIGN OFF)
 
 set(CMAKE_BUILD_TYPE Release)
 
@@ -24,14 +25,11 @@ foreach(testsourcefile ${APP_SOURCES})
     set(HIGHFIVE_USE_XTENSOR 1)
 
     find_package(xtensor REQUIRED)
-    find_package(xsimd REQUIRED)
     find_package(HighFive REQUIRED)
     find_package(fmt REQUIRED)
 
     target_link_libraries(${testname} PUBLIC
         FrictionQPotFEM
-        xtensor::optimize
-        xtensor::use_xsimd
         fmt::fmt
         HighFive)
 
@@ -41,6 +39,11 @@ foreach(testsourcefile ${APP_SOURCES})
 
     if(ASSERT)
         target_link_libraries(${testname} PRIVATE FrictionQPotFEM::assert)
+    endif()
+
+    if(ALIGN)
+        find_package(xsimd REQUIRED)
+        target_link_libraries(${testname} PRIVATE xtensor::use_xsimd xtensor::optimize)
     endif()
 
 endforeach()

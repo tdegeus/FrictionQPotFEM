@@ -124,7 +124,7 @@ public:
 
     /**
     Set nodal displacements.
-    Internally, this updates System::m_fmaterial by calling System::computeForceMaterial.
+    Internally, this updates this relevant forces using updated_u().
 
     \param u ``[nnode, ndim]``.
     */
@@ -132,7 +132,7 @@ public:
 
     /**
     Set nodal velocities.
-    Internally, this updates System::m_fdamp.
+    Internally, this updates this relevant forces using updated_v().
 
     \param v ``[nnode, ndim]``.
     */
@@ -239,6 +239,14 @@ public:
     \return Nodal force. Shape ``[nnode, ndim]``    .
     */
     auto fext() const;
+
+    /**
+    Internal force.
+    Note: computed during timeStep().
+
+    \return Nodal force. Shape ``[nnode, ndim]``    .
+    */
+    auto fint() const;
 
     /**
     Force deriving from elasticity.
@@ -384,13 +392,8 @@ public:
 
     /**
     Make a time-step: apply velocity-Verlet integration.
-    Forces are computed where needed as follows:
-
-    -   After updating the displacement System::computeForceMaterial is evaluated to update
-        System::m_fmaterial.
-
-    -   After update the velocity, System::m_fdamp is computed directly using the
-        damping matrix System::m_D
+    Forces are computed where needed using:
+    updated_u(), updated_v(), and computeInternalExternalResidualForce().
     */
     void timeStep();
 
@@ -481,25 +484,45 @@ protected:
     void initMaterial();
 
     /**
-    Set System::m_allset = ``true`` if all prerequisites are satisfied.
+    Set m_allset = ``true`` if all prerequisites are satisfied.
     */
     void evalAllSet();
 
     /**
     Compute strain and stress tensors.
-    Uses System::m_u to update System::m_Sig and System::m_Eps.
+    Uses m_u to update m_Sig and m_Eps.
     */
     void computeStress();
 
     /**
-    Update System::m_fmaterial based on the current displacement field System::m_u.
-    This implies taking the gradient of the stress tensor, System::m_Sig,
-    computed using System::computeStress.
+    Evaluate relevant forces when m_u is updated.
+    */
+    virtual void updated_u();
 
-    Internal rule: This function is always evaluated after an update of System::m_u.
-    This is taken care off by calling System::setU, and never updating System::m_u directly.
+    /**
+    Evaluate relevant forces when m_v is updated.
+    */
+    virtual void updated_v();
+
+    /**
+    Update m_fmaterial based on the current displacement field m_u.
+    This implies taking the gradient of the stress tensor, m_Sig,
+    computed using computeStress.
+
+    Internal rule: This function is always evaluated after an update of m_u.
+    This is taken care off by calling setU, and never updating m_u directly.
     */
     virtual void computeForceMaterial();
+
+    /**
+    Compute:
+    -   m_fint = m_fmaterial + m_fdamp
+    -   m_fext[iip] = m_fint[iip]
+    -   m_fres = m_fext - m_fint
+
+    Internal rule: all relevant forces are expected to be updated before this function is called.
+    */
+    virtual void computeInternalExternalResidualForce();
 
 };
 

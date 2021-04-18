@@ -14,6 +14,7 @@
 
 #include <FrictionQPotFEM/version.h>
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
+#include <FrictionQPotFEM/UniformMultiLayerIndividualDrive2d.h>
 
 namespace py = pybind11;
 
@@ -100,6 +101,7 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
         .def("mass", &SM::System::mass, "mass", py::return_value_policy::reference_internal)
         .def("damping", &SM::System::damping, "damping", py::return_value_policy::reference_internal)
         .def("fext", &SM::System::fext, "fext")
+        .def("fint", &SM::System::fint, "fint")
         .def("fmaterial", &SM::System::fmaterial, "fmaterial")
         .def("fdamp", &SM::System::fdamp, "fdamp")
         .def("residual", &SM::System::residual, "residual")
@@ -184,8 +186,17 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              py::arg("epsy_elem"))
 
         .def("evalSystem", &SM::HybridSystem::evalSystem, "evalSystem")
-        .def("material_elastic", &SM::HybridSystem::material_elastic, "material_elastic", py::return_value_policy::reference_internal)
-        .def("material_plastic", &SM::HybridSystem::material_plastic, "material_plastic", py::return_value_policy::reference_internal)
+
+        .def("material_elastic",
+            &SM::HybridSystem::material_elastic,
+            "material_elastic",
+            py::return_value_policy::reference_internal)
+
+        .def("material_plastic",
+            &SM::HybridSystem::material_plastic,
+            "material_plastic",
+            py::return_value_policy::reference_internal)
+
         .def("Sig", &SM::HybridSystem::Sig, "Sig")
         .def("Eps", &SM::HybridSystem::Eps, "Eps")
         .def("plastic_Sig", &SM::HybridSystem::plastic_Sig, "plastic_Sig")
@@ -329,6 +340,79 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
         .def("__repr__", [](const SM::LocalTriggerFineLayer&) {
             return "<FrictionQPotFEM.UniformSingleLayer2d.LocalTriggerFineLayer>";
+        });
+
+    }
+
+    // --------------------------------------------------
+    // FrictionQPotFEM.UniformMultiLayerIndividualDrive2d
+    // --------------------------------------------------
+
+    {
+
+    py::module sm = m.def_submodule("UniformMultiLayerIndividualDrive2d", "UniformMultiLayerIndividualDrive2d");
+
+    namespace SM = FrictionQPotFEM::UniformMultiLayerIndividualDrive2d;
+
+    sm.def("version_dependencies",
+           &SM::version_dependencies,
+           "Return version information of library and its dependencies.");
+
+    py::class_<SM::System, FrictionQPotFEM::Generic2d::HybridSystem>(sm, "System")
+
+        .def(py::init<
+                const xt::xtensor<double, 2>&,
+                const xt::xtensor<size_t, 2>&,
+                const xt::xtensor<size_t, 2>&,
+                const xt::xtensor<size_t, 1>&,
+                const std::vector<xt::xtensor<size_t, 1>>&,
+                const std::vector<xt::xtensor<size_t, 1>>&,
+                const xt::xtensor<bool, 1>&>(),
+             "System",
+             py::arg("coor"),
+             py::arg("conn"),
+             py::arg("dofs"),
+             py::arg("iip"),
+             py::arg("elem"),
+             py::arg("node"),
+             py::arg("layer_is_plastic"))
+
+        .def("layerNodes",
+             &SM::System::layerNodes,
+             "layerNodes",
+             py::arg("i"))
+
+        .def("layerElements",
+             &SM::System::layerElements,
+             "layerElements",
+             py::arg("i"))
+
+        .def("layerIsPlastic",
+             &SM::System::layerIsPlastic,
+             "layerIsPlastic",
+             py::arg("i"))
+
+        .def("setDriveStiffness",
+             &SM::System::setDriveStiffness,
+             "setDriveStiffness",
+             py::arg("k"))
+
+        .def("layerUbar",
+             &SM::System::layerUbar,
+             "layerUbar")
+
+        .def("layerSetUbar",
+             &SM::System::layerSetUbar,
+             "layerSetUbar",
+             py::arg("ubar"),
+             py::arg("prescribe"))
+
+        .def("fdrive",
+             &SM::System::fdrive,
+             "fdrive")
+
+        .def("__repr__", [](const SM::System&) {
+            return "<FrictionQPotFEM.UniformMultiLayerIndividualDrive2d.System>";
         });
 
     }

@@ -7,7 +7,7 @@ dependencies:
   - gmatelastoplasticqpot
 
   # optional dependencies
-  - xsimd
+  # - xsimd
 
   # build tools
   - cmake

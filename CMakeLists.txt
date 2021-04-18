@@ -116,10 +116,39 @@ endif()
 if(BUILD_DOCS)
     find_package(Doxygen REQUIRED)
     find_package(GMatTensor REQUIRED)
+    find_package(QPot REQUIRED)
 
     get_target_property(GooseFEM_INCLUDE GooseFEM INTERFACE_INCLUDE_DIRECTORIES)
     get_target_property(GMatElastoPlasticQPot_INCLUDE GMatElastoPlasticQPot INTERFACE_INCLUDE_DIRECTORIES)
     get_target_property(GMatTensor_INCLUDE GMatTensor INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(QPot_INCLUDE QPot INTERFACE_INCLUDE_DIRECTORIES)
+
+    set(${PROJECT_NAME}_DOCS_INCL
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}"
+        "${GooseFEM_INCLUDE}/GooseFEM"
+        "${GMatElastoPlasticQPot_INCLUDE}/GMatElastoPlasticQPot"
+        "${GMatTensor_INCLUDE}/GMatTensor"
+        "${QPot_INCLUDE}/QPot")
+
+    set(${PROJECT_NAME}_DOCS_STRIP
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${GooseFEM_INCLUDE}"
+        "${GMatElastoPlasticQPot_INCLUDE}"
+        "${GMatTensor_INCLUDE}"
+        "${QPot_INCLUDE}")
+
+    # deal with strange doxygen bug
+    string(REGEX REPLACE "(.*)(include)" "\\1" GooseFEM_STRIP ${GooseFEM_INCLUDE})
+    string(REGEX REPLACE "(.*)(include)" "\\1" GMatElastoPlasticQPot_STRIP ${GMatElastoPlasticQPot_INCLUDE})
+    string(REGEX REPLACE "(.*)(include)" "\\1" GMatTensor_STRIP ${GMatTensor_INCLUDE})
+    string(REGEX REPLACE "(.*)(include)" "\\1" QPot_STRIP ${QPot_INCLUDE})
+
+    set(${PROJECT_NAME}_DOCS_STRIP_INC
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
+        "${GooseFEM_STRIP}"
+        "${GMatElastoPlasticQPot_STRIP}"
+        "${GMatTensor_STRIP}"
+        "${QPot_STRIP}")
 
     set(DOXYGEN_EXCLUDE_SYMBOLS detail)
     set(DOXYGEN_CASE_SENSE_NAMES YES)
@@ -141,21 +170,7 @@ if(BUILD_DOCS)
         "endrst=\\endverbatim"
         "license=@par License:")
 
-    set(DOXYGEN_STRIP_FROM_INC_PATH
-        "${CMAKE_CURRENT_SOURCE_DIR}/include"
-        "${GooseFEM_INCLUDE}"
-        "${GMatElastoPlasticQPot_INCLUDE}"
-        "${GMatTensor_INCLUDE}")
-
-    set(DOXYGEN_STRIP_FROM_PATH
-        "${CMAKE_CURRENT_SOURCE_DIR}/include"
-        "${GooseFEM_INCLUDE}"
-        "${GMatElastoPlasticQPot_INCLUDE}"
-        "${GMatTensor_INCLUDE}")
-
-    doxygen_add_docs(docs
-        "${CMAKE_CURRENT_SOURCE_DIR}/include"
-        "${GooseFEM_INCLUDE}/GooseFEM"
-        "${GMatElastoPlasticQPot_INCLUDE}/GMatElastoPlasticQPot"
-        "${GMatTensor_INCLUDE}/GMatTensor")
+    set(DOXYGEN_STRIP_FROM_INC_PATH ${${PROJECT_NAME}_DOCS_STRIP_INC})
+    set(DOXYGEN_STRIP_FROM_PATH ${${PROJECT_NAME}_DOCS_STRIP})
+    doxygen_add_docs(docs ${${PROJECT_NAME}_DOCS_INCL})
 endif()
