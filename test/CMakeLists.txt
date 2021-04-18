@@ -8,7 +8,7 @@ endif()
 
 set(ASSERT ON)
 set(DEBUG OFF)
-option(XSIMD "Use xsimd optimisations" OFF)
+set(ALIGN OFF)
 
 set(CMAKE_BUILD_TYPE Release)
 
@@ -30,13 +30,6 @@ target_link_libraries(${test_name} PRIVATE
     FrictionQPotFEM
     FrictionQPotFEM::compiler_warnings)
 
-if (NOT (WIN32 AND (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")))
-    target_link_libraries(${test_name} PRIVATE xtensor::optimize)
-else()
-    message(STATUS "Skipping 'xtensor::optimize' because of known bug on Windows/clang.")
-endif()
-
-
 if(ASSERT)
     target_link_libraries(${test_name} PRIVATE FrictionQPotFEM::assert)
 endif()
@@ -45,9 +38,9 @@ if(DEBUG)
     target_link_libraries(${test_name} PRIVATE FrictionQPotFEM::debug)
 endif()
 
-if(XSIMD)
+if(ALIGN)
     find_package(xsimd REQUIRED)
-    target_link_libraries(${test_name} PRIVATE xtensor::use_xsimd)
+    target_link_libraries(${test_name} PRIVATE xtensor::use_xsimd xtensor::optimize)
 endif()
 
 add_test(NAME ${test_name} COMMAND ${test_name})
