@@ -495,12 +495,12 @@ protected:
     void computeStress();
 
     /**
-    Evaluate relevant forces when m_u is updates.
+    Evaluate relevant forces when m_u is updated.
     */
     virtual void updated_u();
 
     /**
-    Evaluate relevant forces when m_v is updates.
+    Evaluate relevant forces when m_v is updated.
     */
     virtual void updated_v();
 

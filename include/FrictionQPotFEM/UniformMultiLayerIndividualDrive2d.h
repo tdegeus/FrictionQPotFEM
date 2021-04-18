@@ -127,7 +127,7 @@ protected:
     void computeForceDrive();
 
     /**
-    Evaluate relevant forces when m_u is updates.
+    Evaluate relevant forces when m_u is updated.
     */
     void updated_u() override;
 
@@ -166,7 +166,7 @@ protected:
     size_t m_n_layer; ///< Number of layers.
     std::vector<xt::xtensor<size_t, 1>> m_layer_node; ///< Nodes per layer.
     std::vector<xt::xtensor<size_t, 1>> m_layer_elem; ///< Elements per layer.
-    xt::xtensor<bool, 1> m_layer_is_plastic; ///< Per layer ``true`` is the layer is plastic.
+    xt::xtensor<bool, 1> m_layer_is_plastic; ///< Per layer ``true`` if the layer is plastic.
     xt::xtensor<size_t, 1> m_slice_index; ///< Per layer the index in m_slice_plas or m_slice_elas.
     xt::xtensor<size_t, 1> m_slice_plas; ///< How to slice elastic(): start and end index
     xt::xtensor<size_t, 1> m_slice_elas; ///< How to slice plastic(): start and end index
@@ -176,7 +176,7 @@ protected:
     xt::xtensor<double, 2> m_layer_ubar_target; ///< Per layer, the prescribed mean position.
     xt::xtensor<double, 2> m_layer_ubar_value; ///< Per layer, the prescribed mean position.
     xt::xtensor<double, 2> m_fdrive; ///< Force related to driving frame
-    xt::xtensor<double, 2> m_layer_dV1; ///< volume per layer (same of all dimensions)
+    xt::xtensor<double, 2> m_layer_dV1; ///< volume per layer (as vector, same for all dimensions)
     xt::xtensor<double, 2> m_dV; ///< copy of m_quad.dV()
     xt::xtensor<double, 3> m_uq; ///< qvector
 
