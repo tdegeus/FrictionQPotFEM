@@ -8,7 +8,7 @@ endif()
 
 set(ASSERT ON)
 set(DEBUG OFF)
-option(XSIMD "Use xsimd optimisations" ON)
+option(XSIMD "Use xsimd optimisations" OFF)
 
 set(CMAKE_BUILD_TYPE Release)
 
