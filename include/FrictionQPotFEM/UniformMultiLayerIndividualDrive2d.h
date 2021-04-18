@@ -144,7 +144,13 @@ protected:
     /**
     Constructor alias (as convenience for derived classes).
 
-    \copydoc System::System()
+    \param coor Nodal coordinates.
+    \param conn Connectivity.
+    \param dofs DOFs per node.
+    \param iip DOFs whose displacement is fixed.
+    \param elem Elements per layer.
+    \param node Nodes per layer.
+    \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
     */
     void init(
         const xt::xtensor<double, 2>& coor,
