@@ -16,6 +16,7 @@ dependencies:
 
   # Python API
   - python
+  - pip
   - pyxtensor
 
   # run tests
