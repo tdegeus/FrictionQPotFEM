@@ -74,6 +74,14 @@ cd docs
 
 ## Change-log
 
+### v0.11.0
+
+*   Integrating Python API in CMake (#73)
+*   Minor update multi-layer example. Temporarily switch off trigger test on GCC (#72)
+*   Adding multi-layered simulations (#69)
+*   Updating doxygen-awesome
+*   Minor CMake updates
+
 ### v0.10.0
 
 *   Branching common methods from UniformSingleLayer2d to Generic2d 
