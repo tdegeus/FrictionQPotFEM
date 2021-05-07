@@ -124,7 +124,7 @@ public:
 
     /**
     Set nodal displacements.
-    Internally, this updates this relevant forces using updated_u().
+    Internally, this updates the relevant forces using updated_u().
 
     \param u ``[nnode, ndim]``.
     */
@@ -132,7 +132,7 @@ public:
 
     /**
     Set nodal velocities.
-    Internally, this updates this relevant forces using updated_v().
+    Internally, this updates the relevant forces using updated_v().
 
     \param v ``[nnode, ndim]``.
     */
