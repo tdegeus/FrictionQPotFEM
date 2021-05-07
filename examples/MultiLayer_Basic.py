@@ -5,18 +5,11 @@ import FrictionQPotFEM.UniformMultiLayerIndividualDrive2d as model
 layer_elas = gf.Mesh.Quad4.Regular(20, 6)
 layer_plas = gf.Mesh.Quad4.Regular(20, 1)
 
-stitch = gf.Mesh.Stitch()
+stitch = gf.Mesh.Vstack()
 
-x0 = layer_elas.coor()
-x1 = layer_plas.coor()
-x2 = layer_elas.coor()
-
-x1[:, 1] += np.max(x0[:, 1])
-x2[:, 1] += np.max(x1[:, 1])
-
-stitch.push_back(x0, layer_elas.conn())
-stitch.push_back(x1, layer_plas.conn())
-stitch.push_back(x2, layer_elas.conn())
+stitch.push_back(layer_elas.coor(), layer_elas.conn(), layer_elas.nodesBottomEdge(), layer_elas.nodesTopEdge())
+stitch.push_back(layer_plas.coor(), layer_plas.conn(), layer_plas.nodesBottomEdge(), layer_plas.nodesTopEdge())
+stitch.push_back(layer_elas.coor(), layer_elas.conn(), layer_elas.nodesBottomEdge(), layer_elas.nodesTopEdge())
 
 left = stitch.nodeset([
     layer_elas.nodesLeftOpenEdge(),
