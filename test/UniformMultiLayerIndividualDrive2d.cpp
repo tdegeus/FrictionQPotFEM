@@ -119,6 +119,68 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         REQUIRE(xt::allclose(f, sys.fdrive()));
     }
 
+    SECTION("Drive, distribute")
+    {
+        GooseFEM::Mesh::Quad4::Regular mesh(5, 1);
+
+        size_t nlayer = 5;
+        GooseFEM::Mesh::Vstack stitch;
+        for (size_t i = 0; i < nlayer; ++i) {
+            stitch.push_back(mesh.coor(), mesh.conn(), mesh.nodesBottomEdge(), mesh.nodesTopEdge());
+        }
+
+        xt::xtensor<bool, 1> is_plastic = {false, true, false, true, false};
+        std::vector<xt::xtensor<size_t, 1>> elem;
+        std::vector<xt::xtensor<size_t, 1>> node;
+        for (size_t i = 0; i < nlayer; ++i) {
+            elem.push_back(stitch.elemmap(i));
+            node.push_back(stitch.nodemap(i));
+        }
+
+        auto dofs = GooseFEM::Mesh::dofs(stitch.coor().shape(0), stitch.coor().shape(1));
+        auto bottom = stitch.nodeset(mesh.nodesBottomEdge(), 0);
+        auto iip = xt::ravel(xt::view(dofs, xt::keep(bottom)));
+
+        FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
+            stitch.coor(), stitch.conn(), dofs, iip, elem, node, is_plastic);
+
+        auto nelas = sys.elastic().size();
+        auto nplas = sys.plastic().size();
+
+        sys.setDt(1.0);
+        sys.setMassMatrix(xt::eval(xt::ones<double>({stitch.nelem()})));
+        sys.setDampingMatrix(xt::eval(xt::ones<double>({stitch.nelem()})));
+
+        sys.setElastic(
+            xt::eval(xt::ones<double>({nelas})),
+            xt::eval(xt::ones<double>({nelas})));
+
+        sys.setPlastic(
+            xt::eval(xt::ones<double>({nplas})),
+            xt::eval(xt::ones<double>({nplas})),
+            xt::eval(xt::ones<double>({nplas, 1ul}) * 100.0));
+
+        xt::xtensor<bool, 2> drive = xt::zeros<bool>({5, 2});
+        xt::xtensor<double, 2> u_target = xt::zeros<double>({5, 2});
+
+        drive(2, 0) = true;
+        drive(4, 0) = true;
+
+        u_target(2, 0) = 1.0;
+        u_target(4, 0) = 2.0;
+
+        sys.setDriveStiffness(1.0);
+        sys.layerSetDistributeUbar(u_target, drive);
+
+        xt::xtensor<double, 2> u = xt::zeros<double>({stitch.nnode(), stitch.ndim()});
+        auto n2 = stitch.nodemap(2);
+        auto n4 = stitch.nodemap(4);
+        xt::view(u, xt::keep(n2), 0) = 1.0;
+        xt::view(u, xt::keep(n4), 0) = 2.0;
+
+        REQUIRE(xt::allclose(sys.u(), u));
+    }
+
     SECTION("Simple example")
     {
         GooseFEM::Mesh::Quad4::Regular layer_elas(20, 6);

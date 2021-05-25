@@ -107,10 +107,22 @@ public:
     /**
     Set the mean displacement per layer.
 
+    \tparam S e.g. `xt::xtensor<double, 2>`
+    \tparam T e.g. `xt::xtensor<bool, 2>`
     \param ubar The target mean position of each layer [nlayer, ndim].
-    \param prescribe For each entry ``ubar`` set ``true`` to 'enforce' the position [nlayer, ndim].
+    \param prescribe For each entry `ubar` set `true` to 'enforce' the position [nlayer, ndim].
     */
-    void layerSetUbar(const xt::xtensor<double, 2>& ubar, const xt::xtensor<bool, 2> prescribe);
+    template <class S, class T>
+    void layerSetUbar(const S& ubar, const T& prescribe);
+
+    /**
+    \copydoc layerSetUbar(const S&, const T&)
+
+    Note that the displacement is updated such that the mean of each prescribed layer is equal
+    to the prescribed mean.
+    */
+    template <class S, class T>
+    void layerSetDistributeUbar(const S& ubar, const T& prescribe);
 
     /**
     \return Force related to the driving frame.

@@ -166,15 +166,51 @@ inline xt::xtensor<double, 2> System::layerUbar() const
     return m_layer_ubar_value;
 }
 
-inline void System::layerSetUbar(
-    const xt::xtensor<double, 2>& ubar,
-    const xt::xtensor<bool, 2> prescribe)
+template <class S, class T>
+inline void System::layerSetUbar(const S& ubar, const T& prescribe)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layer_ubar_target.shape()));
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(prescribe, m_layer_ubar_set.shape()));
-    xt::noalias(m_layer_ubar_target) = ubar;
-    xt::noalias(m_layer_ubar_set) = prescribe;
+    m_layer_ubar_target = ubar;
+    m_layer_ubar_set = prescribe;
     this->computeForceDrive();
+}
+
+template <class S, class T>
+inline void System::layerSetDistributeUbar(const S& ubar, const T& prescribe)
+{
+    this->layerSetUbar(ubar, prescribe);
+
+    m_layer_ubar_value.fill(0.0);
+    size_t nip = m_quad.nip();
+
+    m_vector.asElement(m_u, m_ue);
+    m_quad.interpQuad_vector(m_ue, m_uq);
+
+    for (size_t i = 0; i < m_n_layer; ++i) {
+        for (auto& e : m_layer_elem[i]) {
+            for (size_t d = 0; d < 2; ++d) {
+                for (size_t q = 0; q < nip; ++q) {
+                    m_layer_ubar_value(i, d) += m_uq(e, q, d) * m_dV(e, q);
+                }
+            }
+        }
+    }
+
+    m_layer_ubar_value /= m_layer_dV1;
+
+    for (size_t i = 0; i < m_n_layer; ++i) {
+        for (size_t d = 0; d < 2; ++d) {
+            if (m_layer_ubar_set(i, d)) {
+                double du = m_layer_ubar_target(i, d) - m_layer_ubar_value(i, d);
+                for (auto& n : m_layer_node[i]) {
+                    m_u(n, d) += du;
+                }
+            }
+        }
+    }
+
+    this->updated_u();
 }
 
 inline void System::setDriveStiffness(double k)
