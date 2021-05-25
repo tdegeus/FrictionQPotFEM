@@ -144,8 +144,8 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
             stitch.coor(), stitch.conn(), dofs, iip, elem, node, is_plastic);
 
-        auto nelas = sys.elastic().size();
-        auto nplas = sys.plastic().size();
+        size_t nelas = sys.elastic().size();
+        size_t nplas = sys.plastic().size();
 
         sys.setDt(1.0);
         sys.setMassMatrix(xt::eval(xt::ones<double>({stitch.nelem()})));
@@ -158,7 +158,7 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         sys.setPlastic(
             xt::eval(xt::ones<double>({nplas})),
             xt::eval(xt::ones<double>({nplas})),
-            xt::eval(xt::ones<double>({nplas, 1ul}) * 100.0));
+            xt::eval(xt::ones<double>({nplas, size_t(1)}) * 100.0));
 
         xt::xtensor<bool, 2> drive = xt::zeros<bool>({5, 2});
         xt::xtensor<double, 2> u_target = xt::zeros<double>({5, 2});
