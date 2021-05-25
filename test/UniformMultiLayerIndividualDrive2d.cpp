@@ -11,24 +11,10 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         GooseFEM::Mesh::Quad4::Regular mesh(5, 1);
 
         size_t nlayer = 5;
-
-        auto x0 = mesh.coor();
-        auto x1 = mesh.coor();
-        auto x2 = mesh.coor();
-        auto x3 = mesh.coor();
-        auto x4 = mesh.coor();
-
-        xt::view(x1, xt::all(), 1) += 1.0;
-        xt::view(x2, xt::all(), 1) += 2.0;
-        xt::view(x3, xt::all(), 1) += 3.0;
-        xt::view(x4, xt::all(), 1) += 4.0;
-
-        GooseFEM::Mesh::Stitch stitch;
-        stitch.push_back(x0, mesh.conn());
-        stitch.push_back(x1, mesh.conn());
-        stitch.push_back(x2, mesh.conn());
-        stitch.push_back(x3, mesh.conn());
-        stitch.push_back(x4, mesh.conn());
+        GooseFEM::Mesh::Vstack stitch;
+        for (size_t i = 0; i < nlayer; ++i) {
+            stitch.push_back(mesh.coor(), mesh.conn(), mesh.nodesBottomEdge(), mesh.nodesTopEdge());
+        }
 
         xt::xtensor<bool, 1> is_plastic = {false, true, false, true, false};
         std::vector<xt::xtensor<size_t, 1>> elem;
@@ -55,24 +41,10 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         GooseFEM::Mesh::Quad4::Regular mesh(5, 1);
 
         size_t nlayer = 5;
-
-        auto x0 = mesh.coor();
-        auto x1 = mesh.coor();
-        auto x2 = mesh.coor();
-        auto x3 = mesh.coor();
-        auto x4 = mesh.coor();
-
-        xt::view(x1, xt::all(), 1) += 1.0;
-        xt::view(x2, xt::all(), 1) += 2.0;
-        xt::view(x3, xt::all(), 1) += 3.0;
-        xt::view(x4, xt::all(), 1) += 4.0;
-
-        GooseFEM::Mesh::Stitch stitch;
-        stitch.push_back(x0, mesh.conn());
-        stitch.push_back(x1, mesh.conn());
-        stitch.push_back(x2, mesh.conn());
-        stitch.push_back(x3, mesh.conn());
-        stitch.push_back(x4, mesh.conn());
+        GooseFEM::Mesh::Vstack stitch;
+        for (size_t i = 0; i < nlayer; ++i) {
+            stitch.push_back(mesh.coor(), mesh.conn(), mesh.nodesBottomEdge(), mesh.nodesTopEdge());
+        }
 
         xt::xtensor<bool, 1> is_plastic = {false, true, false, true, false};
         std::vector<xt::xtensor<size_t, 1>> elem;
