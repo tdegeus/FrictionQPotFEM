@@ -213,6 +213,25 @@ inline void System::layerSetDistributeUbar(const S& ubar, const T& prescribe)
     this->updated_u();
 }
 
+template <class T, class S>
+inline void System::addAffineSimpleShear(double delta_gamma, const S& prescribe, const T& height)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(prescribe, m_layer_ubar_set.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(height, {m_n_layer}));
+
+    m_layer_ubar_set = prescribe;
+
+    for (size_t i = 0; i < m_n_layer; ++i) {
+        m_layer_ubar_target(i, 0) += 2.0 * delta_gamma * height(i);
+    }
+
+    for (size_t n = 0; n < m_nnode; ++n) {
+        m_u(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - m_coor(0, 1));
+    }
+
+    this->updated_u();
+}
+
 inline void System::setDriveStiffness(double k)
 {
     m_k_drive = k;

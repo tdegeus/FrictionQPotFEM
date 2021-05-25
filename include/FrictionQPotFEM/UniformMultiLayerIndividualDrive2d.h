@@ -125,6 +125,22 @@ public:
     void layerSetDistributeUbar(const S& ubar, const T& prescribe);
 
     /**
+    Simple shear increment:
+    -   Distributes the displacement uniformly.
+    -   Updates the displacement of the (relevant) loading frames.
+
+    Note that the height of each node is taken relative to `coor[0, 1]`.
+
+    \tparam S e.g. `xt::xtensor<bool, 2>`
+    \tparam T e.g. `xt::xtensor<double, 1>`
+    \param delta_gamma Simple strain to add.
+    \param prescribe For each entry `ubar` set `true` to 'enforce' the position [nlayer, ndim].
+    \param height The height of the loading frame per layer [nlayer].
+    */
+    template <class T, class S>
+    void addAffineSimpleShear(double delta_gamma, const S& prescribe, const T& height);
+
+    /**
     \return Force related to the driving frame.
     */
     xt::xtensor<double, 2> fdrive() const;
