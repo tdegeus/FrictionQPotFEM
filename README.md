@@ -74,6 +74,11 @@ cd docs
 
 ## Change-log
 
+### v0.11.1
+
+*   Multi-layers: apply simple shear drive
+*   Multi-layers: distribute drive displacement
+
 ### v0.11.0
 
 *   Integrating Python API in CMake (#73)
