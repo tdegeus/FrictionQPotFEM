@@ -413,6 +413,13 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              py::arg("ubar"),
              py::arg("prescribe"))
 
+        .def("addAffineSimpleShear",
+             &SM::System::addAffineSimpleShear<xt::xtensor<bool, 2>, xt::xtensor<double, 1>>,
+             "addAffineSimpleShear",
+             py::arg("delta_gamma"),
+             py::arg("prescribe"),
+             py::arg("height"))
+
         .def("fdrive",
              &SM::System::fdrive,
              "fdrive")
