@@ -251,9 +251,9 @@ inline void System::computeForceDrive()
     m_quad.interpQuad_vector(m_ue, m_uq);
 
     for (size_t i = 0; i < m_n_layer; ++i) {
-        if (m_layer_ubar_set(i, 0) || m_layer_ubar_set(i, 1)) {
-            for (auto& e : m_layer_elem[i]) {
-                for (size_t d = 0; d < 2; ++d) {
+        for (size_t d = 0; d < 2; ++d) {
+            if (m_layer_ubar_set(i, d)) {
+                for (auto& e : m_layer_elem[i]) {
                     for (size_t q = 0; q < nip; ++q) {
                         m_layer_ubar_value(i, d) += m_uq(e, q, d) * m_dV(e, q);
                     }
