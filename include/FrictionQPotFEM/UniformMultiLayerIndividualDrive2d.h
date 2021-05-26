@@ -150,7 +150,7 @@ public:
     Force of each of the driving springs
     \return [nlayer, ndim].
     */
-    xt::xtensor<double, 2> fdrivespring();
+    xt::xtensor<double, 2> fdrivespring() const;
 
 protected:
 
