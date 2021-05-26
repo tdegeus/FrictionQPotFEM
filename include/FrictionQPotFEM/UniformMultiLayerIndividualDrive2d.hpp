@@ -180,24 +180,7 @@ template <class S, class T>
 inline void System::layerSetDistributeUbar(const S& ubar, const T& prescribe)
 {
     this->layerSetUbar(ubar, prescribe);
-
-    m_layer_ubar_value.fill(0.0);
-    size_t nip = m_quad.nip();
-
-    m_vector.asElement(m_u, m_ue);
-    m_quad.interpQuad_vector(m_ue, m_uq);
-
-    for (size_t i = 0; i < m_n_layer; ++i) {
-        for (auto& e : m_layer_elem[i]) {
-            for (size_t d = 0; d < 2; ++d) {
-                for (size_t q = 0; q < nip; ++q) {
-                    m_layer_ubar_value(i, d) += m_uq(e, q, d) * m_dV(e, q);
-                }
-            }
-        }
-    }
-
-    m_layer_ubar_value /= m_layer_dV1;
+    this->computeForceDrive(); // update the mean displacement per layer
 
     for (size_t i = 0; i < m_n_layer; ++i) {
         for (size_t d = 0; d < 2; ++d) {
@@ -275,6 +258,23 @@ inline void System::computeForceDrive()
 
     m_quad.int_N_vector_dV(m_uq, m_ue);
     m_vector.asNode(m_vector.AssembleDofs(m_ue), m_fdrive);
+}
+
+inline xt::xtensor<double, 2> System::fdrivespring()
+{
+    this->computeForceDrive(); // update the mean displacement per layer
+
+    xt::xtensor<double, 2> ret = xt::zeros<double>({m_n_layer, size_t(2)});
+
+    for (size_t i = 0; i < m_n_layer; ++i) {
+        for (size_t d = 0; d < 2; ++d) {
+            if (m_layer_ubar_set(i, d)) {
+                ret(i, d) = m_k_drive * (m_layer_ubar_target(i, d) - m_layer_ubar_value(i, d));
+            }
+        }
+    }
+
+    return ret;
 }
 
 inline void System::updated_u()
