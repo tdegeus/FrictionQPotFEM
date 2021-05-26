@@ -215,8 +215,9 @@ inline void System::addAffineSimpleShear(double delta_gamma, const S& prescribe,
     this->updated_u();
 }
 
-inline void System::setDriveStiffness(double k)
+inline void System::setDriveStiffness(double k, bool symmetric)
 {
+    m_drive_spring_symmetric = symmetric;
     m_k_drive = k;
 }
 
@@ -248,9 +249,11 @@ inline void System::computeForceDrive()
         for (size_t d = 0; d < 2; ++d) {
             if (m_layer_ubar_set(i, d)) {
                 double f = m_k_drive * (m_layer_ubar_value(i, d) - m_layer_ubar_target(i, d));
-                for (auto& e : m_layer_elem[i]) {
-                    for (size_t q = 0; q < nip; ++q) {
-                        m_uq(e, q, d) = f;
+                if (m_drive_spring_symmetric || f < 0) { // buckle under compression
+                    for (auto& e : m_layer_elem[i]) {
+                        for (size_t q = 0; q < nip; ++q) {
+                            m_uq(e, q, d) = f;
+                        }
                     }
                 }
             }
