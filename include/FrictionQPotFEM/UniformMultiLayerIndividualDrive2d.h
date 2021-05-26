@@ -141,9 +141,16 @@ public:
     void addAffineSimpleShear(double delta_gamma, const S& prescribe, const T& height);
 
     /**
-    \return Force related to the driving frame.
+    Force related to the driving frame.
+    \return nodevec [nnode, ndim].
     */
     xt::xtensor<double, 2> fdrive() const;
+
+    /**
+    Force of each of the driving springs
+    \return [nlayer, ndim].
+    */
+    xt::xtensor<double, 2> fdrivespring();
 
 protected:
 
