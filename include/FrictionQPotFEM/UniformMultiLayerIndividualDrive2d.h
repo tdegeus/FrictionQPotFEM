@@ -103,9 +103,12 @@ public:
     void setDriveStiffness(double k, bool symmetric = true);
 
     /**
-    \return The mean displacement of each layer [nlayer, ndim].
+    The mean displacement of each layer.
+    Requires to recompute the average displacements as they are normally only computed on
+    the driven DOFs.
+    \return Average per layer [nlayer, ndim]
     */
-    xt::xtensor<double, 2> layerUbar() const;
+    xt::xtensor<double, 2> layerUbar();
 
     /**
     Set the mean displacement per layer.

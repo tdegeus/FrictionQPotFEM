@@ -161,8 +161,27 @@ inline bool System::layerIsPlastic(size_t i) const
     return m_layer_is_plastic(i);
 }
 
-inline xt::xtensor<double, 2> System::layerUbar() const
+inline xt::xtensor<double, 2> System::layerUbar()
 {
+    m_layer_ubar_value.fill(0.0);
+    size_t nip = m_quad.nip();
+
+    m_vector.asElement(m_u, m_ue);
+    m_quad.interpQuad_vector(m_ue, m_uq);
+
+    for (size_t i = 0; i < m_n_layer; ++i) {
+        for (auto& e : m_layer_elem[i]) {
+            for (size_t d = 0; d < 2; ++d) {
+                for (size_t q = 0; q < nip; ++q) {
+                    m_layer_ubar_value(i, d) += m_uq(e, q, d) * m_dV(e, q);
+                }
+            }
+        }
+    }
+
+    m_layer_ubar_value /= m_layer_dV1;
+
+
     return m_layer_ubar_value;
 }
 
@@ -180,7 +199,6 @@ template <class S, class T>
 inline void System::layerSetDistributeUbar(const S& ubar, const T& prescribe)
 {
     this->layerSetUbar(ubar, prescribe);
-    this->computeForceDrive(); // update the mean displacement per layer
 
     for (size_t i = 0; i < m_n_layer; ++i) {
         for (size_t d = 0; d < 2; ++d) {
@@ -223,6 +241,9 @@ inline void System::setDriveStiffness(double k, bool symmetric)
 
 inline void System::computeForceDrive()
 {
+    // compute the average displacement per layer
+    // (skip all layers that are not driven, the average displacement will never be used)
+
     m_layer_ubar_value.fill(0.0);
     size_t nip = m_quad.nip();
 
@@ -242,6 +263,8 @@ inline void System::computeForceDrive()
     }
 
     m_layer_ubar_value /= m_layer_dV1;
+
+    // compute the driving force
 
     m_uq.fill(0.0);
 
