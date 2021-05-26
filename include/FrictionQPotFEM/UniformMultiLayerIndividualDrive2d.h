@@ -96,8 +96,11 @@ public:
     Set the stiffness of spring connecting the mean displacement of a layer to the drive frame.
 
     \param k The stiffness (taken the same for all layers)
+    \param symmetric
+        If `true` the spring is a normal spring.
+        If `false` the spring has no stiffness under compression.
     */
-    void setDriveStiffness(double k);
+    void setDriveStiffness(double k, bool symmetric = true);
 
     /**
     \return The mean displacement of each layer [nlayer, ndim].
@@ -206,6 +209,7 @@ protected:
     xt::xtensor<size_t, 1> m_slice_plas; ///< How to slice elastic(): start and end index
     xt::xtensor<size_t, 1> m_slice_elas; ///< How to slice plastic(): start and end index
 
+    bool m_drive_spring_symmetric = true; ///< If false the drive spring buckles in compression
     double m_k_drive = 1.0; ///< Stiffness of the drive control frame
     xt::xtensor<bool, 2> m_layer_ubar_set; ///< See `prescribe` in layerSetUbar()
     xt::xtensor<double, 2> m_layer_ubar_target; ///< Per layer, the prescribed mean position.

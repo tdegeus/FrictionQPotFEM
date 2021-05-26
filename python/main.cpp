@@ -395,7 +395,8 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
         .def("setDriveStiffness",
              &SM::System::setDriveStiffness,
              "setDriveStiffness",
-             py::arg("k"))
+             py::arg("k"),
+             py::arg("symmetric") = true)
 
         .def("layerUbar",
              &SM::System::layerUbar,
