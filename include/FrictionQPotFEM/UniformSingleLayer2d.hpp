@@ -133,7 +133,6 @@ inline double System::addSimpleShearEventDriven(
     FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
     FRICTIONQPOTFEM_REQUIRE(direction == +1.0 || direction == -1.0);
 
-    auto u_new = this->u();
     auto idx = this->plastic_CurrentIndex();
     auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
     auto Epsd = GMatTensor::Cartesian2d::Deviatoric(this->plastic_Eps());
@@ -181,9 +180,9 @@ inline double System::addSimpleShearEventDriven(
 
     // add as affine deformation gradient to the system
     for (size_t n = 0; n < m_nnode; ++n) {
-        u_new(n, 0) += direction * dux * (m_coor(n, 1) - m_coor(0, 1));
+        m_u(n, 0) += direction * dux * (m_coor(n, 1) - m_coor(0, 1));
     }
-    this->setU(u_new);
+    this->updated_u();
 
     // sanity check
     // ------------
