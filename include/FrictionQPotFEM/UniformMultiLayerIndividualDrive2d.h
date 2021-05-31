@@ -149,6 +149,9 @@ public:
     /**
     Add event driven simple shear step.
 
+    \param prescribe For each entry `ubar` set `true` to 'enforce' the position [nlayer, ndim].
+    \param height The height of the loading frame per layer [nlayer].
+
     \param deps
         Size of the local stain kick to apply.
 
@@ -165,7 +168,10 @@ public:
     \return
         xy-component of the deformation gradient that is applied to the system.
     */
+    template <class T, class S>
     double addSimpleShearEventDriven(
+        const S& prescribe,
+        const T& height,
         double deps,
         bool kick,
         double direction = +1.0,
