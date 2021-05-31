@@ -128,7 +128,8 @@ public:
 
     \param u ``[nnode, ndim]``.
     */
-    void setU(const xt::xtensor<double, 2>& u);
+    template <class T>
+    void setU(const T& u);
 
     /**
     Set nodal velocities.
@@ -136,14 +137,16 @@ public:
 
     \param v ``[nnode, ndim]``.
     */
-    void setV(const xt::xtensor<double, 2>& v);
+    template <class T>
+    void setV(const T& v);
 
     /**
     Set nodal accelerations.
 
     \param a ``[nnode, ndim]``.
     */
-    void setA(const xt::xtensor<double, 2>& a);
+    template <class T>
+    void setA(const T& a);
 
     /**
     Set external force.
@@ -153,7 +156,8 @@ public:
 
     \param fext ``[nnode, ndim]``.
     */
-    void setFext(const xt::xtensor<double, 2>& fext);
+    template <class T>
+    void setFext(const T& fext);
 
     /**
     Set nodal velocities and accelerations equal to zero.

@@ -236,7 +236,8 @@ inline void System::setDt(double dt)
     this->evalAllSet();
 }
 
-inline void System::setU(const xt::xtensor<double, 2>& u)
+template <class T>
+inline void System::setU(const T& u)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, {m_nnode, m_ndim}));
     xt::noalias(m_u) = u;
@@ -248,7 +249,8 @@ inline void System::updated_u()
     this->computeForceMaterial();
 }
 
-inline void System::setV(const xt::xtensor<double, 2>& v)
+template <class T>
+inline void System::setV(const T& v)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(v, {m_nnode, m_ndim}));
     xt::noalias(m_v) = v;
@@ -259,13 +261,15 @@ inline void System::updated_v()
     m_D.dot(m_v, m_fdamp);
 }
 
-inline void System::setA(const xt::xtensor<double, 2>& a)
+template <class T>
+inline void System::setA(const T& a)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(a, {m_nnode, m_ndim}));
     xt::noalias(m_a) = a;
 }
 
-inline void System::setFext(const xt::xtensor<double, 2>& fext)
+template <class T>
+inline void System::setFext(const T& fext)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(fext, {m_nnode, m_ndim}));
     xt::noalias(m_fext) = fext;
