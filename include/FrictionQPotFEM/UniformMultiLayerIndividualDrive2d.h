@@ -147,37 +147,6 @@ public:
     void addAffineSimpleShear(double delta_gamma, const S& prescribe, const T& height);
 
     /**
-    Add event driven simple shear step.
-
-    \param prescribe For each entry `ubar` set `true` to 'enforce' the position [nlayer, ndim].
-    \param height The height of the loading frame per layer [nlayer].
-
-    \param deps
-        Size of the local stain kick to apply.
-
-    \param kick
-        If ``false``, increment displacements to ``deps / 2`` of yielding again.
-        If ``true``, increment displacements by a affine simple shear increment ``deps``.
-
-    \param direction
-        If ``+1``: apply shear to the right. If ``-1`` applying shear to the left.
-
-    \param dry_run
-        If ``true`` do not apply displacement, do not check.
-
-    \return
-        xy-component of the deformation gradient that is applied to the system.
-    */
-    template <class T, class S>
-    double addSimpleShearEventDriven(
-        const S& prescribe,
-        const T& height,
-        double deps,
-        bool kick,
-        double direction = +1.0,
-        bool dry_run = false);
-
-    /**
     Force related to the driving frame.
     \return nodevec [nnode, ndim].
     */
@@ -190,15 +159,6 @@ public:
     xt::xtensor<double, 2> fdrivespring() const;
 
 protected:
-
-    /**
-    Get the sign of the equivalent strain increment upon a displacement perturbation,
-    for each integration point of each plastic element.
-
-    \param perturbation xy-component of the deformation gradient to use to perturb.
-    \return Sign of the perturbation. Shape: [System::m_nelem, System::m_nip].
-    */
-    auto plastic_signOfSimpleShearPerturbation(double perturbation);
 
     /**
     Compute force deriving from the drive.
