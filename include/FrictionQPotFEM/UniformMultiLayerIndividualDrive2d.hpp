@@ -233,6 +233,99 @@ inline void System::addAffineSimpleShear(double delta_gamma, const S& prescribe,
     this->updated_u();
 }
 
+inline auto System::plastic_signOfSimpleShearPerturbation(double perturbation)
+{
+    auto u_0 = this->u();
+    auto eps_0 = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+    auto u_pert = this->u();
+
+    for (size_t n = 0; n < m_nnode; ++n) {
+        u_pert(n, 0) += perturbation * (m_coor(n, 1) - m_coor(0, 1));
+    }
+
+    this->setU(u_pert);
+    auto eps_pert = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+    this->setU(u_0);
+
+    xt::xtensor<double, 2> sign = xt::sign(eps_pert - eps_0);
+    return sign;
+}
+
+inline double System::addSimpleShearEventDriven(
+    double deps_kick, bool kick, double direction, bool dry_run)
+{
+    FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
+    FRICTIONQPOTFEM_REQUIRE(direction == +1.0 || direction == -1.0);
+
+    auto idx = this->plastic_CurrentIndex();
+    auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+    auto Epsd = GMatTensor::Cartesian2d::Deviatoric(this->plastic_Eps());
+    auto epsxx = xt::view(Epsd, xt::all(), xt::all(), 0, 0);
+    auto epsxy = xt::view(Epsd, xt::all(), xt::all(), 0, 1);
+
+    // distance to yielding: "deps"
+    // (event a positive kick can lead to a decreasing equivalent strain)
+    xt::xtensor<double, 2> sign = this->plastic_signOfSimpleShearPerturbation(direction * deps_kick);
+    xt::xtensor<double, 2> epsy_l = xt::abs(this->plastic_CurrentYieldLeft());
+    xt::xtensor<double, 2> epsy_r = xt::abs(this->plastic_CurrentYieldRight());
+    xt::xtensor<double, 2> epsy = xt::where(sign > 0, epsy_r, epsy_l);
+    xt::xtensor<double, 2> deps = xt::abs(eps - epsy);
+
+    // no kick & current strain sufficiently close the next yield strain: don't move
+    if (!kick && xt::amin(deps)() < deps_kick / 2.0) {
+        return 0.0;
+    }
+
+    // set yield strain close to next yield strain
+    xt::xtensor<double, 2> eps_new = epsy + sign * (-deps_kick / 2.0);
+
+    // or, apply a kick instead
+    if (kick) {
+        eps_new = eps + sign * deps_kick;
+    }
+
+    // compute shear strain increments
+    // - two possible solutions
+    //   (the factor two is needed as "dgamma" is the xy-component of the deformation gradient)
+    xt::xtensor<double, 2> dgamma =
+        2.0 * (-1.0 * direction * epsxy + xt::sqrt(xt::pow(eps_new, 2.0) - xt::pow(epsxx, 2.0)));
+    xt::xtensor<double, 2> dgamma_n =
+        2.0 * (-1.0 * direction * epsxy - xt::sqrt(xt::pow(eps_new, 2.0) - xt::pow(epsxx, 2.0)));
+    // - discard irrelevant solutions
+    dgamma_n = xt::where(dgamma_n <= 0.0, dgamma, dgamma_n);
+    // - select lowest
+    dgamma = xt::where(dgamma_n < dgamma, dgamma_n, dgamma);
+    // - select minimal
+    double dux = xt::amin(dgamma)();
+
+    if (dry_run) {
+        return direction * dux;
+    }
+
+    // add as affine deformation gradient to the system
+    for (size_t n = 0; n < m_nnode; ++n) {
+        m_u(n, 0) += direction * dux * (m_coor(n, 1) - m_coor(0, 1));
+    }
+    this->updated_u();
+
+    // sanity check
+    // ------------
+
+    auto index = xt::unravel_index(xt::argmin(dgamma)(), dgamma.shape());
+    size_t e = index[0];
+    size_t q = index[1];
+
+    eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+    auto idx_new = this->plastic_CurrentIndex();
+
+    FRICTIONQPOTFEM_REQUIRE(std::abs(eps(e, q) - eps_new(e, q)) / eps_new(e, q) < 1e-4);
+    if (!kick) {
+        FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(idx, idx_new)));
+    }
+
+    return direction * dux;
+}
+
 inline void System::setDriveStiffness(double k, bool symmetric)
 {
     m_drive_spring_symmetric = symmetric;
