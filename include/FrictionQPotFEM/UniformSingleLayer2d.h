@@ -55,6 +55,9 @@ public:
     /**
     Define the geometry, including boundary conditions and element sets.
 
+    \tparam C Type of nodal coordinates, e.g. `xt::xtensor<double, 2>`
+    \tparam E Type of connectivity and DOFs, e.g. `xt::xtensor<size_t, 2>`
+    \tparam L Type of node/element lists, e.g. `xt::xtensor<size_t, 1>`
     \param coor Nodal coordinates.
     \param conn Connectivity.
     \param dofs DOFs per node.
@@ -62,13 +65,14 @@ public:
     \param elem_elastic Elastic elements.
     \param elem_plastic Plastic elements.
     */
+    template <class C, class E, class L>
     System(
-        const xt::xtensor<double, 2>& coor,
-        const xt::xtensor<size_t, 2>& conn,
-        const xt::xtensor<size_t, 2>& dofs,
-        const xt::xtensor<size_t, 1>& iip,
-        const xt::xtensor<size_t, 1>& elem_elastic,
-        const xt::xtensor<size_t, 1>& elem_plastic);
+        const C& coor,
+        const E& conn,
+        const E& dofs,
+        const L& iip,
+        const L& elem_elastic,
+        const L& elem_plastic);
 
     /**
     Element height of all elements along the weak layer.
@@ -234,13 +238,14 @@ protected:
     \param elem_elastic Elastic elements.
     \param elem_plastic Plastic elements.
     */
+    template <class C, class E, class L>
     void init(
-        const xt::xtensor<double, 2>& coor,
-        const xt::xtensor<size_t, 2>& conn,
-        const xt::xtensor<size_t, 2>& dofs,
-        const xt::xtensor<size_t, 1>& iip,
-        const xt::xtensor<size_t, 1>& elem_elastic,
-        const xt::xtensor<size_t, 1>& elem_plastic);
+        const C& coor,
+        const E& conn,
+        const E& dofs,
+        const L& iip,
+        const L& elem_elastic,
+        const L& elem_plastic);
 
 };
 

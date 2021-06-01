@@ -17,24 +17,26 @@ inline std::vector<std::string> version_dependencies()
     return Generic2d::version_dependencies();
 }
 
+template <class C, class E, class L>
 inline System::System(
-    const xt::xtensor<double, 2>& coor,
-    const xt::xtensor<size_t, 2>& conn,
-    const xt::xtensor<size_t, 2>& dofs,
-    const xt::xtensor<size_t, 1>& iip,
-    const xt::xtensor<size_t, 1>& elem_elastic,
-    const xt::xtensor<size_t, 1>& elem_plastic)
+    const C& coor,
+    const E& conn,
+    const E& dofs,
+    const L& iip,
+    const L& elem_elastic,
+    const L& elem_plastic)
 {
     this->init(coor, conn, dofs, iip, elem_elastic, elem_plastic);
 }
 
+template <class C, class E, class L>
 inline void System::init(
-    const xt::xtensor<double, 2>& coor,
-    const xt::xtensor<size_t, 2>& conn,
-    const xt::xtensor<size_t, 2>& dofs,
-    const xt::xtensor<size_t, 1>& iip,
-    const xt::xtensor<size_t, 1>& elem_elastic,
-    const xt::xtensor<size_t, 1>& elem_plastic)
+    const C& coor,
+    const E& conn,
+    const E& dofs,
+    const L& iip,
+    const L& elem_elastic,
+    const L& elem_plastic)
 {
     this->initHybridSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
 }

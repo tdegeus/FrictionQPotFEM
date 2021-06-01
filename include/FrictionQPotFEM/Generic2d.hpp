@@ -46,24 +46,26 @@ inline std::vector<std::string> version_dependencies()
     return ret;
 }
 
+template <class C, class E, class L>
 inline System::System(
-    const xt::xtensor<double, 2>& coor,
-    const xt::xtensor<size_t, 2>& conn,
-    const xt::xtensor<size_t, 2>& dofs,
-    const xt::xtensor<size_t, 1>& iip,
-    const xt::xtensor<size_t, 1>& elem_elastic,
-    const xt::xtensor<size_t, 1>& elem_plastic)
+    const C& coor,
+    const E& conn,
+    const E& dofs,
+    const L& iip,
+    const L& elem_elastic,
+    const L& elem_plastic)
 {
     this->initSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
 }
 
+template <class C, class E, class L>
 inline void System::initSystem(
-        const xt::xtensor<double, 2>& coor,
-        const xt::xtensor<size_t, 2>& conn,
-        const xt::xtensor<size_t, 2>& dofs,
-        const xt::xtensor<size_t, 1>& iip,
-        const xt::xtensor<size_t, 1>& elem_elastic,
-        const xt::xtensor<size_t, 1>& elem_plastic)
+        const C& coor,
+        const E& conn,
+        const E& dofs,
+        const L& iip,
+        const L& elem_elastic,
+        const L& elem_plastic)
 {
     m_coor = coor;
     m_conn = conn;
@@ -124,7 +126,8 @@ inline void System::evalAllSet()
     m_allset = m_set_M && m_set_D && m_set_elas && m_set_plas && m_dt > 0.0;
 }
 
-inline void System::setMassMatrix(const xt::xtensor<double, 1>& val_elem)
+template <class T>
+inline void System::setMassMatrix(const T& val_elem)
 {
     FRICTIONQPOTFEM_ASSERT(!m_set_M);
     FRICTIONQPOTFEM_ASSERT(val_elem.size() == m_nelem);
@@ -144,7 +147,8 @@ inline void System::setMassMatrix(const xt::xtensor<double, 1>& val_elem)
     this->evalAllSet();
 }
 
-inline void System::setDampingMatrix(const xt::xtensor<double, 1>& val_elem)
+template <class T>
+inline void System::setDampingMatrix(const T& val_elem)
 {
     FRICTIONQPOTFEM_ASSERT(!m_set_D);
     FRICTIONQPOTFEM_ASSERT(val_elem.size() == m_nelem);
@@ -529,24 +533,26 @@ inline size_t System::minimise(double tol, size_t niter_tol, size_t max_iter)
     FRICTIONQPOTFEM_REQUIRE(false);
 }
 
+template <class C, class E, class L>
 inline HybridSystem::HybridSystem(
-    const xt::xtensor<double, 2>& coor,
-    const xt::xtensor<size_t, 2>& conn,
-    const xt::xtensor<size_t, 2>& dofs,
-    const xt::xtensor<size_t, 1>& iip,
-    const xt::xtensor<size_t, 1>& elem_elastic,
-    const xt::xtensor<size_t, 1>& elem_plastic)
+    const C& coor,
+    const E& conn,
+    const E& dofs,
+    const L& iip,
+    const L& elem_elastic,
+    const L& elem_plastic)
 {
     this->initHybridSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
 }
 
+template <class C, class E, class L>
 inline void HybridSystem::initHybridSystem(
-    const xt::xtensor<double, 2>& coor,
-    const xt::xtensor<size_t, 2>& conn,
-    const xt::xtensor<size_t, 2>& dofs,
-    const xt::xtensor<size_t, 1>& iip,
-    const xt::xtensor<size_t, 1>& elem_elastic,
-    const xt::xtensor<size_t, 1>& elem_plastic)
+    const C& coor,
+    const E& conn,
+    const E& dofs,
+    const L& iip,
+    const L& elem_elastic,
+    const L& elem_plastic)
 {
     this->initSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
 

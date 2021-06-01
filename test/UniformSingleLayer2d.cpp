@@ -25,7 +25,7 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
             mesh.coor(),
             mesh.conn(),
             mesh.dofs(),
-            xt::arange<size_t>(mesh.nnode() * mesh.ndim()),
+            xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
             xt::xtensor<size_t, 1>{0, 1, 2, 6, 7, 8},
             xt::xtensor<size_t, 1>{3, 4, 5});
 
@@ -61,7 +61,7 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
             mesh.coor(),
             mesh.conn(),
             mesh.dofs(),
-            xt::arange<size_t>(mesh.nnode() * mesh.ndim()),
+            xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
             xt::xtensor<size_t, 1>{0, 1, 2, 6, 7, 8},
             xt::xtensor<size_t, 1>{3, 4, 5});
 
@@ -95,7 +95,7 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
             mesh.coor(),
             mesh.conn(),
             mesh.dofs(),
-            xt::arange<size_t>(mesh.nnode() * mesh.ndim()),
+            xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
             xt::xtensor<size_t, 1>{0, 1, 2, 6, 7, 8},
             xt::xtensor<size_t, 1>{3, 4, 5});
 
@@ -137,7 +137,7 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
             mesh.coor(),
             mesh.conn(),
             mesh.dofs(),
-            xt::arange<size_t>(mesh.nnode() * mesh.ndim()),
+            xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
             xt::xtensor<size_t, 1>{},
             xt::xtensor<size_t, 1>{0});
 
@@ -211,7 +211,7 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
             mesh.coor(),
             mesh.conn(),
             mesh.dofs(),
-            xt::arange<size_t>(mesh.nnode() * mesh.ndim()),
+            xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
             xt::xtensor<size_t, 1>{},
             xt::xtensor<size_t, 1>{0});
 

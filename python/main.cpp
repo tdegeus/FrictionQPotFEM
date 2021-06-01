@@ -52,12 +52,12 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
     py::class_<SM::System>(sm, "System")
 
         .def(py::init<
-                const xt::xtensor<double, 2>&,
-                const xt::xtensor<size_t, 2>&,
-                const xt::xtensor<size_t, 2>&,
-                const xt::xtensor<size_t, 1>&,
-                const xt::xtensor<size_t, 1>&,
-                const xt::xtensor<size_t, 1>&>(),
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<size_t, 2>&,
+                const xt::pytensor<size_t, 2>&,
+                const xt::pytensor<size_t, 1>&,
+                const xt::pytensor<size_t, 1>&,
+                const xt::pytensor<size_t, 1>&>(),
              "System",
              py::arg("coor"),
              py::arg("conn"),
@@ -67,12 +67,12 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              py::arg("elem_plastic"))
 
         .def("setMassMatrix",
-             &SM::System::setMassMatrix,
+             &SM::System::setMassMatrix<xt::pytensor<double, 1>>,
              "setMassMatrix",
              py::arg("rho_elem"))
 
         .def("setDampingMatrix",
-             &SM::System::setDampingMatrix,
+             &SM::System::setDampingMatrix<xt::pytensor<double, 1>>,
              "setDampingMatrix",
              py::arg("alpha_elem"))
 
@@ -164,12 +164,12 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
     py::class_<SM::HybridSystem, SM::System>(sm, "HybridSystem")
 
         .def(py::init<
-                const xt::xtensor<double, 2>&,
-                const xt::xtensor<size_t, 2>&,
-                const xt::xtensor<size_t, 2>&,
-                const xt::xtensor<size_t, 1>&,
-                const xt::xtensor<size_t, 1>&,
-                const xt::xtensor<size_t, 1>&>(),
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<size_t, 2>&,
+                const xt::pytensor<size_t, 2>&,
+                const xt::pytensor<size_t, 1>&,
+                const xt::pytensor<size_t, 1>&,
+                const xt::pytensor<size_t, 1>&>(),
              "HybridSystem",
              py::arg("coor"),
              py::arg("conn"),
@@ -231,12 +231,12 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
     py::class_<SM::System, FrictionQPotFEM::Generic2d::HybridSystem>(sm, "System")
 
         .def(py::init<
-                const xt::xtensor<double, 2>&,
-                const xt::xtensor<size_t, 2>&,
-                const xt::xtensor<size_t, 2>&,
-                const xt::xtensor<size_t, 1>&,
-                const xt::xtensor<size_t, 1>&,
-                const xt::xtensor<size_t, 1>&>(),
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<size_t, 2>&,
+                const xt::pytensor<size_t, 2>&,
+                const xt::pytensor<size_t, 1>&,
+                const xt::pytensor<size_t, 1>&,
+                const xt::pytensor<size_t, 1>&>(),
              "System",
              py::arg("coor"),
              py::arg("conn"),

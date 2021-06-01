@@ -14,7 +14,7 @@ TEST_CASE("FrictionQPotFEM::Generic2d", "Generic2d.h")
             mesh.coor(),
             mesh.conn(),
             mesh.dofs(),
-            xt::arange<size_t>(mesh.nnode() * mesh.ndim()),
+            xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
             xt::xtensor<size_t, 1>{},
             xt::xtensor<size_t, 1>{0});
 
@@ -36,7 +36,7 @@ TEST_CASE("FrictionQPotFEM::Generic2d", "Generic2d.h")
             mesh.coor(),
             mesh.conn(),
             mesh.dofs(),
-            xt::arange<size_t>(mesh.nnode() * mesh.ndim()),
+            xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
             xt::xtensor<size_t, 1>{},
             xt::xtensor<size_t, 1>{0});
 
