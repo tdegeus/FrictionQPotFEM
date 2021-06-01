@@ -532,8 +532,6 @@ inline size_t System::timeStepsUntilEvent(double tol, size_t niter_tol, size_t m
             this->quench();
             return iiter;
         }
-
-        idx_n = idx;
     }
 
     FRICTIONQPOTFEM_REQUIRE(false);
