@@ -16,6 +16,9 @@ dependencies:
 
   # Python API
   - python
+  - numpy
+  - xtensor-python
+  - pybind11
   - pyxtensor
 
   # run tests
