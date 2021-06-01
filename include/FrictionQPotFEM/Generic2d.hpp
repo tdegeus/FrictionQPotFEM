@@ -516,6 +516,31 @@ inline void System::timeStep()
     m_M.solve(m_fres, m_a);
 }
 
+inline size_t System::timeStepsUntilEvent(double tol, size_t niter_tol, size_t max_iter)
+{
+    GooseFEM::Iterate::StopList stop(niter_tol);
+
+    auto idx_n = this->plastic_CurrentIndex();
+
+    for (size_t iiter = 1; iiter < max_iter; ++iiter) {
+
+        this->timeStep();
+
+        auto idx = this->plastic_CurrentIndex();
+
+        if (xt::any(xt::not_equal(idx, idx_n))) {
+            return iiter;
+        }
+
+        if (stop.stop(this->residual(), tol)) {
+            this->quench();
+            return 0;
+        }
+    }
+
+    FRICTIONQPOTFEM_REQUIRE(false);
+}
+
 inline size_t System::minimise(double tol, size_t niter_tol, size_t max_iter)
 {
     GooseFEM::Iterate::StopList stop(niter_tol);
