@@ -7,17 +7,17 @@ import FrictionQPotFEM.UniformSingleLayer2d as model
 
 def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
 
-    fext = vector.AllocateNodevec(0.0)
-    disp = vector.AllocateNodevec(0.0)
+    fext = np.zeros(vector.shape_nodevec())
+    disp = np.zeros(vector.shape_nodevec())
 
     # pre-stress
-    Sigstar = quad.AllocateQtensor(2, 0.0)
+    Sigstar = np.zeros(quad.shape_qtensor(2))
     for q in range(nip):
         Sigstar[trigger, q, :, :] = sigma_star_test
         Sigstar[trigger, q, :, :] = sigma_star_test
 
     # strain, stress, tangent
-    Eps = quad.AllocateQtensor(2, 0.0)
+    Eps = np.zeros(quad.shape_qtensor(2))
     Sig = - Sigstar
 
     # residual force
