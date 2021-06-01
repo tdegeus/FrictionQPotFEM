@@ -74,6 +74,14 @@ cd docs
 
 ## Change-log
 
+### v0.11.2
+
+*   Using xtensor-python (#79)
+*   Multi-layers: skipping of computations where possible
+*   Multi-layers: return ubar
+*   Multi-layers: Allow asymmetric drive spring
+*   Multi-layers: Get driving force per layer
+
 ### v0.11.1
 
 *   Multi-layers: apply simple shear drive
