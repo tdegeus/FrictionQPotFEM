@@ -518,7 +518,7 @@ inline size_t System::timeStepsUntilEvent(double tol, size_t niter_tol, size_t m
 
     auto idx_n = this->plastic_CurrentIndex();
 
-    for (size_t iiter = 0; iiter < max_iter ; ++iiter) {
+    for (size_t iiter = 1; iiter < max_iter; ++iiter) {
 
         this->timeStep();
 
@@ -530,7 +530,7 @@ inline size_t System::timeStepsUntilEvent(double tol, size_t niter_tol, size_t m
 
         if (stop.stop(this->residual(), tol)) {
             this->quench();
-            return iiter;
+            return 0;
         }
     }
 
