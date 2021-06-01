@@ -57,6 +57,9 @@ public:
     /**
     Define the geometry, including boundary conditions and element sets.
 
+    \tparam C Type of nodal coordinates, e.g. `xt::xtensor<double, 2>`
+    \tparam E Type of connectivity and DOFs, e.g. `xt::xtensor<size_t, 2>`
+    \tparam L Type of node/element lists, e.g. `xt::xtensor<size_t, 1>`
     \param coor Nodal coordinates.
     \param conn Connectivity.
     \param dofs DOFs per node.
@@ -64,27 +67,31 @@ public:
     \param elem_elastic Elastic elements.
     \param elem_plastic Plastic elements.
     */
+    template <class C, class E, class L>
     System(
-        const xt::xtensor<double, 2>& coor,
-        const xt::xtensor<size_t, 2>& conn,
-        const xt::xtensor<size_t, 2>& dofs,
-        const xt::xtensor<size_t, 1>& iip,
-        const xt::xtensor<size_t, 1>& elem_elastic,
-        const xt::xtensor<size_t, 1>& elem_plastic);
+        const C& coor,
+        const E& conn,
+        const E& dofs,
+        const L& iip,
+        const L& elem_elastic,
+        const L& elem_plastic);
 
     /**
     Set mass matrix, based on certain density (taken uniform per element).
 
+    \tparam T e.g. `xt::xtensor<double, 1>`.
     \param rho_elem Density per element.
     */
-    void setMassMatrix(const xt::xtensor<double, 1>& rho_elem);
+    template <class T>
+    void setMassMatrix(const T& rho_elem);
 
     /**
     Set damping matrix, based on certain density (taken uniform per element).
 
     \param alpha_elem Damping per element.
     */
-    void setDampingMatrix(const xt::xtensor<double, 1>& alpha_elem);
+    template <class T>
+    void setDampingMatrix(const T& alpha_elem);
 
     /**
     Set material parameters for the elastic elements
@@ -467,6 +474,9 @@ protected:
     /**
     Constructor alias, useful for derived classes.
 
+    \tparam C Type of nodal coordinates, e.g. `xt::xtensor<double, 2>`
+    \tparam E Type of connectivity and DOFs, e.g. `xt::xtensor<size_t, 2>`
+    \tparam L Type of node/element lists, e.g. `xt::xtensor<size_t, 1>`
     \param coor Nodal coordinates.
     \param conn Connectivity.
     \param dofs DOFs per node.
@@ -474,13 +484,14 @@ protected:
     \param elem_elastic Elastic elements.
     \param elem_plastic Plastic elements.
     */
+    template <class C, class E, class L>
     void initSystem(
-        const xt::xtensor<double, 2>& coor,
-        const xt::xtensor<size_t, 2>& conn,
-        const xt::xtensor<size_t, 2>& dofs,
-        const xt::xtensor<size_t, 1>& iip,
-        const xt::xtensor<size_t, 1>& elem_elastic,
-        const xt::xtensor<size_t, 1>& elem_plastic);
+        const C& coor,
+        const E& conn,
+        const E& dofs,
+        const L& iip,
+        const L& elem_elastic,
+        const L& elem_plastic);
 
     /**
     If all material points are specified: initialise strain and set stiffness matrix.
@@ -564,6 +575,9 @@ public:
     /**
     Define the geometry, including boundary conditions and element sets.
 
+    \tparam C Type of nodal coordinates, e.g. `xt::xtensor<double, 2>`
+    \tparam E Type of connectivity and DOFs, e.g. `xt::xtensor<size_t, 2>`
+    \tparam L Type of node/element lists, e.g. `xt::xtensor<size_t, 1>`
     \param coor Nodal coordinates.
     \param conn Connectivity.
     \param dofs DOFs per node.
@@ -571,13 +585,14 @@ public:
     \param elem_elastic Elastic elements.
     \param elem_plastic Plastic elements.
     */
+    template <class C, class E, class L>
     HybridSystem(
-        const xt::xtensor<double, 2>& coor,
-        const xt::xtensor<size_t, 2>& conn,
-        const xt::xtensor<size_t, 2>& dofs,
-        const xt::xtensor<size_t, 1>& iip,
-        const xt::xtensor<size_t, 1>& elem_elastic,
-        const xt::xtensor<size_t, 1>& elem_plastic);
+        const C& coor,
+        const E& conn,
+        const E& dofs,
+        const L& iip,
+        const L& elem_elastic,
+        const L& elem_plastic);
 
     void setElastic(
         const xt::xtensor<double, 1>& K_elem,
@@ -664,6 +679,9 @@ protected:
     /**
     Constructor alias, useful for derived classes.
 
+    \tparam C Type of nodal coordinates, e.g. `xt::xtensor<double, 2>`
+    \tparam E Type of connectivity and DOFs, e.g. `xt::xtensor<size_t, 2>`
+    \tparam L Type of node/element lists, e.g. `xt::xtensor<size_t, 1>`
     \param coor Nodal coordinates.
     \param conn Connectivity.
     \param dofs DOFs per node.
@@ -671,13 +689,14 @@ protected:
     \param elem_elastic Elastic elements.
     \param elem_plastic Plastic elements.
     */
+    template <class C, class E, class L>
     void initHybridSystem(
-        const xt::xtensor<double, 2>& coor,
-        const xt::xtensor<size_t, 2>& conn,
-        const xt::xtensor<size_t, 2>& dofs,
-        const xt::xtensor<size_t, 1>& iip,
-        const xt::xtensor<size_t, 1>& elem_elastic,
-        const xt::xtensor<size_t, 1>& elem_plastic);
+        const C& coor,
+        const E& conn,
+        const E& dofs,
+        const L& iip,
+        const L& elem_elastic,
+        const L& elem_plastic);
 
     /**
     Update System::m_fmaterial based on the current displacement field System::m_u.
