@@ -16,7 +16,9 @@ dependencies:
 
   # Python API
   - python
+  - numpy
   - pip
+  - xtensor-python
   - pyxtensor
 
   # run tests
@@ -24,7 +26,6 @@ dependencies:
   - python-goosefem
   - python-gmattensor
   - python-gmatelastoplasticqpot
-  - numpy
 
   # run examples
   - fmt

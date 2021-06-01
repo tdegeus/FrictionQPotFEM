@@ -5,6 +5,11 @@
 */
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
+#define FORCE_IMPORT_ARRAY
+#include <xtensor-python/pyarray.hpp>
+#include <xtensor-python/pytensor.hpp>
 #include <pyxtensor/pyxtensor.hpp>
 
 // #define QPOT_ENABLE_ASSERT
@@ -20,6 +25,7 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(FrictionQPotFEM, m)
 {
+     xt::import_numpy();
 
     m.doc() = "Friction model based on GooseFEM and FrictionQPotFEM";
 
@@ -85,10 +91,10 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
         .def("isHomogeneousElastic", &SM::System::isHomogeneousElastic, "isHomogeneousElastic")
         .def("setDt", &SM::System::setDt, "setDt", py::arg("dt"))
-        .def("setU", &SM::System::setU, "setU", py::arg("u"))
-        .def("setV", &SM::System::setV, "setV", py::arg("v"))
-        .def("setA", &SM::System::setA, "setA", py::arg("a"))
-        .def("setFext", &SM::System::setFext, "setFext", py::arg("fext"))
+        .def("setU", &SM::System::setU<xt::pytensor<double, 2>>, "setU", py::arg("u"))
+        .def("setV", &SM::System::setV<xt::pytensor<double, 2>>, "setV", py::arg("v"))
+        .def("setA", &SM::System::setA<xt::pytensor<double, 2>>, "setA", py::arg("a"))
+        .def("setFext", &SM::System::setFext<xt::pytensor<double, 2>>, "setFext", py::arg("fext"))
         .def("quench", &SM::System::quench, "quench")
         .def("elastic", &SM::System::elastic, "elastic")
         .def("plastic", &SM::System::plastic, "plastic")
