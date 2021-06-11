@@ -69,6 +69,12 @@ public:
         const xt::xtensor<bool, 1>& layer_is_plastic);
 
     /**
+     * Return number of layers.
+     * \return Number of layers.
+     */
+    size_t nlayers() const;
+
+    /**
     Return the nodes belonging to the i-th layer.
 
     \param i Index of the layer.
