@@ -74,6 +74,20 @@ cd docs
 
 ## Change-log
 
+### v0.11.4
+
+*   Removing myargsort workaround (#86)
+*   Bugfix: bug manifesting itself only in the Python API (#85)
+*   Adding function to set time
+*   Adding code to get the number of layers
+*   Doxystyle update
+
+### v0.11.3
+
+*   Function to run time-steps until the next plastic event (#82)
+*   Wider application of xt::pytensor (#81)
+*   Removing deprecated GooseFEM functions from tests (#80)
+
 ### v0.11.2
 
 *   Using xtensor-python (#79)
