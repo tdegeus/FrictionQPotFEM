@@ -219,7 +219,7 @@ inline void System::layerSetDistributeUbar(const S& ubar, const T& prescribe)
     this->updated_u();
 }
 
-template <class T, class S>
+template <class S, class T>
 inline void System::addAffineSimpleShear(double delta_gamma, const S& prescribe, const T& height)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(prescribe, m_layer_ubar_set.shape()));
