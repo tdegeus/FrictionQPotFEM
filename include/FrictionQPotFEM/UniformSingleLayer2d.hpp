@@ -315,19 +315,6 @@ inline double System::triggerElementWithLocalSimpleShear(
     return dgamma;
 }
 
-namespace detail {
-    inline xt::xtensor<size_t, 2> myargsort(xt::xtensor<double, 2>& A, size_t axis)
-    {
-        if (A.shape(0) == 1) {
-            xt::xtensor<double, 1> a = xt::view(A, 0, xt::all());
-            xt::xtensor<size_t, 2> ret = xt::empty<size_t>(A.shape());
-            xt::view(ret, 0, xt::all()) = xt::argsort(a, axis);
-            return ret;
-        }
-        return xt::argsort(A, axis);
-    }
-}
-
 inline xt::xtensor<double, 2> System::plastic_ElementYieldBarrierForSimpleShear(
     double deps_kick, size_t iquad)
 {
@@ -337,7 +324,7 @@ inline xt::xtensor<double, 2> System::plastic_ElementYieldBarrierForSimpleShear(
     auto epsy = this->plastic_CurrentYieldRight();
     auto deps = xt::eval(epsy - eps);
     xt::xtensor<double, 2> ret = xt::empty<double>({m_N, size_t(2)});
-    auto isort = detail::myargsort(deps, 1);
+    auto isort = xt::argsort(deps, 1);
 
     auto Eps = this->plastic_Eps();
     auto Epsd = GMatTensor::Cartesian2d::Deviatoric(Eps);
