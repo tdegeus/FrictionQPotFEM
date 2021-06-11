@@ -125,6 +125,11 @@ public:
     bool isHomogeneousElastic() const;
 
     /**
+     * Set time.
+     */
+    void setT(double t);
+
+    /**
     Set time step. Using for example in System::timeStep and System::minimise.
     */
     void setDt(double dt);

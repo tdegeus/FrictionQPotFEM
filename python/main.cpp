@@ -91,6 +91,7 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
         .def("isHomogeneousElastic", &SM::System::isHomogeneousElastic, "isHomogeneousElastic")
         .def("setDt", &SM::System::setDt, "setDt", py::arg("dt"))
+        .def("setT", &SM::System::setT, "setT", py::arg("t"))
         .def("setU", &SM::System::setU<xt::pytensor<double, 2>>, "setU", py::arg("u"))
         .def("setV", &SM::System::setV<xt::pytensor<double, 2>>, "setV", py::arg("v"))
         .def("setA", &SM::System::setA<xt::pytensor<double, 2>>, "setA", py::arg("a"))

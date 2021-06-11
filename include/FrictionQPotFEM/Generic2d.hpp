@@ -234,6 +234,11 @@ inline bool System::isHomogeneousElastic() const
     return xt::allclose(K, K.data()[0]) && xt::allclose(G, G.data()[0]);
 }
 
+inline void System::setT(double t)
+{
+    m_t = t;
+}
+
 inline void System::setDt(double dt)
 {
     m_dt = dt;
