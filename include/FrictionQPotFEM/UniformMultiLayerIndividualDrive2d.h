@@ -149,7 +149,7 @@ public:
     \param prescribe For each entry `ubar` set `true` to 'enforce' the position [nlayer, ndim].
     \param height The height of the loading frame per layer [nlayer].
     */
-    template <class T, class S>
+    template <class S, class T>
     void addAffineSimpleShear(double delta_gamma, const S& prescribe, const T& height);
 
     /**
