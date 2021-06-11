@@ -364,7 +364,7 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
            &SM::version_dependencies,
            "Return version information of library and its dependencies.");
 
-    py::class_<SM::System, FrictionQPotFEM::Generic2d::HybridSystem>(sm, "System")
+    py::class_<SM::System, FrictionQPotFEM::Generic2d::HybridSystem> cls(sm, "System");
 
         .def(py::init<
                 const xt::xtensor<double, 2>&,
@@ -382,6 +382,10 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              py::arg("elem"),
              py::arg("node"),
              py::arg("layer_is_plastic"))
+
+        .def("nlayers",
+             &SM::System::nlayers,
+             "nlayers")
 
         .def("layerNodes",
              &SM::System::layerNodes,

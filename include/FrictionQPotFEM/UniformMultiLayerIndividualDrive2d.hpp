@@ -143,6 +143,11 @@ inline void System::init(
     #endif
 }
 
+inline size_t System::nlayers() const
+{
+    return m_n_layer;
+}
+
 inline xt::xtensor<size_t, 1> System::layerElements(size_t i) const
 {
     FRICTIONQPOTFEM_ASSERT(i < m_n_layer);
