@@ -17,16 +17,9 @@ inline std::vector<std::string> version_dependencies()
     std::vector<std::string> ret;
 
     ret.push_back("frictionqpotfem=" + version());
-
     ret.push_back("goosefem=" + GooseFEM::version());
-
-    ret.push_back("gmatelastoplasticqpot=" +
-        detail::unquote(std::string(QUOTE(GMATELASTOPLASTICQPOT_VERSION_MAJOR))) + "." +
-        detail::unquote(std::string(QUOTE(GMATELASTOPLASTICQPOT_VERSION_MINOR))) + "." +
-        detail::unquote(std::string(QUOTE(GMATELASTOPLASTICQPOT_VERSION_PATCH))));
-
+    ret.push_back("gmatelastoplasticqpot=" + GMatElastoPlasticQPot::version());
     ret.push_back("gmattensor=" + GMatTensor::version());
-
     ret.push_back("qpot=" + QPot::version());
 
     ret.push_back("xtensor=" +
