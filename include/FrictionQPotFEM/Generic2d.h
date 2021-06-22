@@ -14,6 +14,7 @@ Implementation in Generic2d.hpp.
 #include "version.h"
 
 #include <GMatElastoPlasticQPot/Cartesian2d.h>
+#include <GMatElastoPlasticQPot/version.h>
 #include <GMatTensor/Cartesian2d.h>
 #include <GooseFEM/GooseFEM.h>
 #include <GooseFEM/Matrix.h>
