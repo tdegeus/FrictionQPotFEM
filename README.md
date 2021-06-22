@@ -74,6 +74,12 @@ cd docs
 
 ## Change-log
 
+### v0.11.5
+
+*   `addSimpleShearToFixedStress`: making assertion on elastic step optional in 
+    `addElasticSimpleShearToFixedStress` (#88)
+*   Using GMatElastoPlasticQPot::version() (#87)
+
 ### v0.11.4
 
 *   Removing myargsort workaround (#86)
