@@ -282,6 +282,12 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              py::arg("stress"),
              py::arg("dry_run") = false)
 
+        .def("addElasticSimpleShearToFixedStress",
+             &SM::System::addElasticSimpleShearToFixedStress,
+             "addElasticSimpleShearToFixedStress",
+             py::arg("stress"),
+             py::arg("dry_run") = false)
+
         .def("triggerElementWithLocalSimpleShear",
              &SM::System::triggerElementWithLocalSimpleShear,
              "triggerElementWithLocalSimpleShear",

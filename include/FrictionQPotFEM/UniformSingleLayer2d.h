@@ -156,7 +156,6 @@ public:
     Add simple shear until a target equivalent macroscopic stress has been reached.
     Depending of the target stress compared to the current equivalent macroscopic stress,
     the shear can be either to the left or to the right.
-    Throws if yielding is triggered before the stress was reached.
 
     \param stress
         Target stress (equivalent deviatoric value of the macroscopic stress tensor).
@@ -168,6 +167,15 @@ public:
         xy-component of the deformation gradient that is applied to the system.
     */
     double addSimpleShearToFixedStress(
+        double stress,
+        bool dry_run = false);
+
+    /**
+    \copydoc addSimpleShearToFixedStress(double, bool)
+
+    \throw Throws if yielding is triggered before the stress was reached.
+    */
+    double addElasticSimpleShearToFixedStress(
         double stress,
         bool dry_run = false);
 

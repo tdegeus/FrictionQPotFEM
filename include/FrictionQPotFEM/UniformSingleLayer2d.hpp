@@ -209,7 +209,6 @@ inline double System::addSimpleShearToFixedStress(double target_stress, bool dry
     FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
 
     auto u_new = this->u();
-    auto idx = this->plastic_CurrentIndex();
     auto dV = m_quad.AsTensor<2>(this->dV());
     double G = m_material.G().data()[0];
 
@@ -247,12 +246,17 @@ inline double System::addSimpleShearToFixedStress(double target_stress, bool dry
     Sigbar = xt::average(this->Sig(), dV, {0, 1});
     sig = GMatElastoPlasticQPot::Cartesian2d::Sigd(Sigbar)();
 
-    auto idx_new = this->plastic_CurrentIndex();
-
-    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(idx, idx_new)));
     FRICTIONQPOTFEM_REQUIRE(std::abs(target_stress - sig) / sig < 1e-4);
 
     return direction * dgamma;
+}
+
+inline double System::addElasticSimpleShearToFixedStress(double target_stress, bool dry_run)
+{
+    auto idx = this->plastic_CurrentIndex();
+    auto ret = this->addSimpleShearToFixedStress(target_stress, dry_run);
+    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(idx,  this->plastic_CurrentIndex())));
+    return ret;
 }
 
 inline double System::triggerElementWithLocalSimpleShear(
