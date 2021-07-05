@@ -227,6 +227,7 @@ protected:
     xt::xtensor<double, 2> m_layer_dV1; ///< volume per layer (as vector, same for all dimensions)
     xt::xtensor<double, 2> m_dV; ///< copy of m_quad.dV()
     xt::xtensor<double, 3> m_uq; ///< qvector
+    xt::xtensor<double, 1> m_ud; ///< dofval
 
 };
 

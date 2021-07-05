@@ -102,6 +102,7 @@ inline void System::init(
     this->initHybridSystem(coor, conn, dofs, iip, elas, plas);
 
     m_fdrive = m_vector.allocate_nodevec(0.0);
+    m_ud = m_vector.allocate_dofval(0.0);
     m_uq = m_quad.allocate_qtensor<1>(0.0);
     m_dV = m_quad.dV();
 
@@ -289,7 +290,8 @@ inline void System::computeForceDrive()
     }
 
     m_quad.int_N_vector_dV(m_uq, m_ue);
-    m_vector.asNode(m_vector.AssembleDofs(m_ue), m_fdrive);
+    m_vector.assembleDofs(m_ue, m_ud);
+    m_vector.asNode(m_ud, m_fdrive);
 }
 
 inline xt::xtensor<double, 2> System::fdrivespring() const
