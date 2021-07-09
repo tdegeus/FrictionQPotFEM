@@ -74,6 +74,15 @@ cd docs
 
 ## Change-log
 
+### v0.12.0
+
+*   Bugfix & API extension: initializing target ubar and returning its value
+*   API change: renaming "fdrivespring" -> "layerFdrive"
+*   API change: renaming "layerSetUbar" -> "layerSetTargetUbar" and "layerSetDistributeUbar" -> "layerSetTargetUbarAndDistribute"
+*   API change: renaming "nlayers" -> "nlayer"
+*   API change: returning isplastic for all layers
+*   Minor efficiency update: avoiding temporary (#89)
+
 ### v0.11.5
 
 *   `addSimpleShearToFixedStress`: making assertion on elastic step optional in 
