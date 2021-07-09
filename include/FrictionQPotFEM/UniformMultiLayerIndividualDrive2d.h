@@ -91,12 +91,10 @@ public:
     xt::xtensor<size_t, 1> layerElements(size_t i) const;
 
     /**
-    Return if a layer is elastic (``false``) or plastic (``true``).
-
-    \param i Index of the layer.
-    \return boolean
-    */
-    bool layerIsPlastic(size_t i) const;
+     *  Return if a layer is elastic (``false``) or plastic (``true``).
+     *  \return [#nlayer].
+     */
+    xt::xtensor<bool, 1> layerIsPlastic() const;
 
     /**
     Set the stiffness of spring connecting the mean displacement of a layer to the drive frame.

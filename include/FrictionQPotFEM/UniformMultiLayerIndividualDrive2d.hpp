@@ -161,10 +161,9 @@ inline xt::xtensor<size_t, 1> System::layerNodes(size_t i) const
     return m_layer_node[i];
 }
 
-inline bool System::layerIsPlastic(size_t i) const
+inline xt::xtensor<bool, 1> System::layerIsPlastic() const
 {
-    FRICTIONQPOTFEM_ASSERT(i < m_n_layer);
-    return m_layer_is_plastic(i);
+    return m_layer_is_plastic;
 }
 
 inline xt::xtensor<double, 2> System::layerUbar()
