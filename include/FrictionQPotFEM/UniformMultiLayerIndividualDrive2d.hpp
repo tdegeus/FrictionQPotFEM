@@ -52,6 +52,7 @@ inline void System::init(
     m_layer_dV1.resize({m_n_layer, size_t(2)});
     m_slice_index.resize({m_n_layer});
 
+    m_layer_ubar_target.fill(0.0);
     m_layer_ubar_set.fill(false);
 
     size_t n_elem_plas = 0;
@@ -186,12 +187,16 @@ inline xt::xtensor<double, 2> System::layerUbar()
 
     m_layer_ubar_value /= m_layer_dV1;
 
-
     return m_layer_ubar_value;
 }
 
+inline xt::xtensor<double, 2> System::layerTargetUbar() const
+{
+    return m_layer_ubar_target;
+}
+
 template <class S, class T>
-inline void System::layerSetUbar(const S& ubar, const T& prescribe)
+inline void System::layerSetTargetUbar(const S& ubar, const T& prescribe)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layer_ubar_target.shape()));
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(prescribe, m_layer_ubar_set.shape()));

@@ -115,6 +115,12 @@ public:
     xt::xtensor<double, 2> layerUbar();
 
     /**
+     *  Get the target mean displacement per layer.
+     *  \return [#nlayer, 2]
+     */
+    xt::xtensor<double, 2> layerTargetUbar() const;
+
+    /**
     Set the mean displacement per layer.
 
     \tparam S e.g. `xt::xtensor<double, 2>`
