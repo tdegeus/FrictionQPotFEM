@@ -428,12 +428,15 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
         .def("layerSetUbar",
              &SM::System::layerSetUbar<xt::xtensor<double, 2>, xt::xtensor<bool, 2>>,
              "layerSetUbar",
+        .def("layerSetTargetUbar",
+             &SM::System::layerSetTargetUbar<xt::xtensor<double, 2>, xt::xtensor<bool, 2>>,
+             "layerSetTargetUbar",
              py::arg("ubar"),
              py::arg("prescribe"))
 
-        .def("layerSetDistributeUbar",
-             &SM::System::layerSetDistributeUbar<xt::xtensor<double, 2>, xt::xtensor<bool, 2>>,
-             "layerSetDistributeUbar",
+        .def("layerSetTargetUbarAndDistribute",
+             &SM::System::layerSetTargetUbarAndDistribute<xt::xtensor<double, 2>, xt::xtensor<bool, 2>>,
+             "layerSetTargetUbarAndDistribute",
              py::arg("ubar"),
              py::arg("prescribe"))
 

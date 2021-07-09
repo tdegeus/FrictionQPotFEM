@@ -201,9 +201,9 @@ inline void System::layerSetUbar(const S& ubar, const T& prescribe)
 }
 
 template <class S, class T>
-inline void System::layerSetDistributeUbar(const S& ubar, const T& prescribe)
+inline void System::layerSetTargetUbarAndDistribute(const S& ubar, const T& prescribe)
 {
-    this->layerSetUbar(ubar, prescribe);
+    this->layerSetTargetUbar(ubar, prescribe);
 
     for (size_t i = 0; i < m_n_layer; ++i) {
         for (size_t d = 0; d < 2; ++d) {

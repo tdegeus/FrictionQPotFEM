@@ -123,16 +123,16 @@ public:
     \param prescribe For each entry `ubar` set `true` to 'enforce' the position [nlayer, ndim].
     */
     template <class S, class T>
-    void layerSetUbar(const S& ubar, const T& prescribe);
+    void layerSetTargetUbar(const S& ubar, const T& prescribe);
 
     /**
-    \copydoc layerSetUbar(const S&, const T&)
+    \copydoc layerSetTargetUbar(const S&, const T&)
 
     Note that the displacement is updated such that the mean of each prescribed layer is equal
     to the prescribed mean.
     */
     template <class S, class T>
-    void layerSetDistributeUbar(const S& ubar, const T& prescribe);
+    void layerSetTargetUbarAndDistribute(const S& ubar, const T& prescribe);
 
     /**
     Simple shear increment:
@@ -167,7 +167,7 @@ protected:
     /**
     Compute force deriving from the drive.
     The force is applied as a force density for each of the layers for which the position
-    was specified (at least once) using layerSetUbar().
+    was specified (at least once) using layerSetTargetUbar().
     */
     void computeForceDrive();
 
@@ -218,7 +218,7 @@ protected:
 
     bool m_drive_spring_symmetric = true; ///< If false the drive spring buckles in compression
     double m_k_drive = 1.0; ///< Stiffness of the drive control frame
-    xt::xtensor<bool, 2> m_layer_ubar_set; ///< See `prescribe` in layerSetUbar()
+    xt::xtensor<bool, 2> m_layer_ubar_set; ///< See `prescribe` in layerSetTargetUbar()
     xt::xtensor<double, 2> m_layer_ubar_target; ///< Per layer, the prescribed mean position.
     xt::xtensor<double, 2> m_layer_ubar_value; ///< Per layer, the prescribed mean position.
     xt::xtensor<double, 2> m_fdrive; ///< Force related to driving frame
