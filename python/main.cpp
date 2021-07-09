@@ -413,8 +413,7 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
         .def("layerIsPlastic",
              &SM::System::layerIsPlastic,
-             "layerIsPlastic",
-             py::arg("i"))
+             "layerIsPlastic")
 
         .def("setDriveStiffness",
              &SM::System::setDriveStiffness,
