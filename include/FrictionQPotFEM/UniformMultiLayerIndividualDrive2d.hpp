@@ -293,7 +293,7 @@ inline void System::computeForceDrive()
     m_vector.asNode(m_ud, m_fdrive);
 }
 
-inline xt::xtensor<double, 2> System::fdrivespring() const
+inline xt::xtensor<double, 2> System::layerFdrive() const
 {
     xt::xtensor<double, 2> ret = xt::zeros<double>({m_n_layer, size_t(2)});
 

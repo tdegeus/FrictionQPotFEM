@@ -451,9 +451,9 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              &SM::System::fdrive,
              "fdrive")
 
-        .def("fdrivespring",
-             &SM::System::fdrivespring,
-             "fdrivespring")
+        .def("layerFdrive",
+             &SM::System::layerFdrive,
+             "layerFdrive")
 
         .def("__repr__", [](const SM::System&) {
             return "<FrictionQPotFEM.UniformMultiLayerIndividualDrive2d.System>";
