@@ -72,7 +72,7 @@ public:
      * Return number of layers.
      * \return Number of layers.
      */
-    size_t nlayers() const;
+    size_t nlayer() const;
 
     /**
     Return the nodes belonging to the i-th layer.

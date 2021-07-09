@@ -144,7 +144,7 @@ inline void System::init(
     #endif
 }
 
-inline size_t System::nlayers() const
+inline size_t System::nlayer() const
 {
     return m_n_layer;
 }
