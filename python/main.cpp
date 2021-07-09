@@ -425,9 +425,10 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              &SM::System::layerUbar,
              "layerUbar")
 
-        .def("layerSetUbar",
-             &SM::System::layerSetUbar<xt::xtensor<double, 2>, xt::xtensor<bool, 2>>,
-             "layerSetUbar",
+        .def("layerTargetUbar",
+             &SM::System::layerTargetUbar,
+             "layerTargetUbar")
+
         .def("layerSetTargetUbar",
              &SM::System::layerSetTargetUbar<xt::xtensor<double, 2>, xt::xtensor<bool, 2>>,
              "layerSetTargetUbar",
