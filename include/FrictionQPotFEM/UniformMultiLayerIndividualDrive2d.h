@@ -160,7 +160,7 @@ public:
     Force of each of the driving springs
     \return [nlayer, ndim].
     */
-    xt::xtensor<double, 2> fdrivespring() const;
+    xt::xtensor<double, 2> layerFdrive() const;
 
 protected:
 
