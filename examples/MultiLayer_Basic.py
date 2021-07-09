@@ -56,7 +56,7 @@ drive = np.zeros((3, 2), dtype=bool)
 ubar[2, 0] = 0.5
 drive[2, 0] = True
 
-system.layerSetUbar(ubar, drive)
+system.layerSetTargetUbar(ubar, drive)
 
 system.minimise()
 
