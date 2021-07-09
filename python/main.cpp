@@ -397,9 +397,9 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              py::arg("node"),
              py::arg("layer_is_plastic"))
 
-        .def("nlayers",
-             &SM::System::nlayers,
-             "nlayers")
+        .def("nlayer",
+             &SM::System::nlayer,
+             "nlayer")
 
         .def("layerNodes",
              &SM::System::layerNodes,
