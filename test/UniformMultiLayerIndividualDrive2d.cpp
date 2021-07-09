@@ -31,9 +31,7 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
             stitch.coor(), stitch.conn(), dofs, iip, elem, node, is_plastic);
 
-        for (size_t i = 0; i < is_plastic.size(); ++i) {
-            REQUIRE(is_plastic(i) == sys.layerIsPlastic(i));
-        }
+        REQUIRE(xt::all(xt::equal(is_plastic, sys.layerIsPlastic())));
     }
 
     SECTION("Drive")
@@ -70,7 +68,7 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         u_target(2, 0) = 1.0;
         u_target(4, 0) = 2.0;
 
-        sys.layerSetUbar(u_target, drive);
+        sys.layerSetTargetUbar(u_target, drive);
 
         sys.setDriveStiffness(1.0);
 
@@ -170,7 +168,7 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         u_target(4, 0) = 2.0;
 
         sys.setDriveStiffness(1.0);
-        sys.layerSetDistributeUbar(u_target, drive);
+        sys.layerSetTargetUbarAndDistribute(u_target, drive);
 
         xt::xtensor<double, 2> u = xt::zeros<double>({stitch.nnode(), stitch.ndim()});
         auto n2 = stitch.nodemap(2);
@@ -257,7 +255,7 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         drive(0, 0) = true;
         drive(2, 0) = true;
         u_target(2, 0) = 0.1;
-        sys.layerSetUbar(u_target, drive);
+        sys.layerSetTargetUbar(u_target, drive);
 
         sys.minimise();
 
