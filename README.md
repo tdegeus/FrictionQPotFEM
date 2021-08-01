@@ -74,6 +74,10 @@ cd docs
 
 ## Change-log
 
+### v0.12.1
+
+*   timeStepsUntilEvent: allow using a maximum number of iterations
+
 ### v0.12.0
 
 *   Bugfix & API extension: initializing target ubar and returning its value
