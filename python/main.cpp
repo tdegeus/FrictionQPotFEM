@@ -10,7 +10,6 @@
 #define FORCE_IMPORT_ARRAY
 #include <xtensor-python/pyarray.hpp>
 #include <xtensor-python/pytensor.hpp>
-#include <pyxtensor/pyxtensor.hpp>
 
 // #define QPOT_ENABLE_ASSERT
 // #define GMATELASTOPLASTICQPOT_ENABLE_ASSERT
