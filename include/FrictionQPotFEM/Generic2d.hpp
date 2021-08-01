@@ -516,11 +516,12 @@ inline void System::timeStep()
 
 inline size_t System::timeStepsUntilEvent(double tol, size_t niter_tol, size_t max_iter)
 {
+    size_t iiter;
     GooseFEM::Iterate::StopList stop(niter_tol);
 
     auto idx_n = this->plastic_CurrentIndex();
 
-    for (size_t iiter = 1; iiter < max_iter; ++iiter) {
+    for (iiter = 1; iiter < max_iter; ++iiter) {
 
         this->timeStep();
 
@@ -536,7 +537,7 @@ inline size_t System::timeStepsUntilEvent(double tol, size_t niter_tol, size_t m
         }
     }
 
-    FRICTIONQPOTFEM_REQUIRE(false);
+    return iiter;
 }
 
 inline size_t System::minimise(double tol, size_t niter_tol, size_t max_iter)
