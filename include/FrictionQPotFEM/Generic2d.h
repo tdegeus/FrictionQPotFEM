@@ -415,21 +415,22 @@ public:
     void timeStep();
 
     /**
-    Perform a series of time-steps until the next plastic event, or equilibrium.
-
-    \param tol
-        Relative force tolerance for equilibrium. See System::residual for definition.
-
-    \param niter_tol
-        Enforce the residual check for ``niter_tol`` consecutive increments.
-
-    \param max_iter
-        Maximum number of iterations. Throws ``std::runtime_error`` otherwise.
-
-    \return
-        The number of iterations.
-        `0` is returned if there was no plastic activity and the residual was reached.
-    */
+     *  Perform a series of time-steps until the next plastic event, equilibrium, or the maximum
+     *  number of iterations.
+     *  
+     *  \param tol 
+     *      Relative force tolerance for equilibrium. See System::residual for definition.
+     *  
+     *  \param niter_tol 
+     *      Enforce the residual check for ``niter_tol`` consecutive increments.
+     *  
+     *  \param max_iter 
+     *      Maximum number of iterations. Throws ``std::runtime_error`` otherwise.
+     *  
+     *  \return
+     *      The number of iterations.
+     *      `0` is returned if there was no plastic activity and the residual was reached.
+     */
     size_t timeStepsUntilEvent(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 1000000);
 
     /**
