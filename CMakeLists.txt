@@ -10,7 +10,7 @@ option(BUILD_TESTS "${PROJECT_NAME}: Build tests" OFF)
 option(BUILD_EXAMPLES "${PROJECT_NAME}: Build examples" OFF)
 option(BUILD_PYTHON "${PROJECT_NAME}: Build Python API" OFF)
 option(BUILD_DOCS "${PROJECT_NAME}: Build docs (include dependencies)" OFF)
-option(USE_SIMD "${PROJECT_NAME}: Use xsimd and -march=native if available" OFF)
+option(USE_SIMD "${PROJECT_NAME} - Python: Use xsimd and -march=native if available" OFF)
 
 execute_process(
     COMMAND python -c "from setuptools_scm import get_version; print(get_version())"
