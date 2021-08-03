@@ -1,8 +1,8 @@
 /**
-See FrictionQPotFEM::UniformSingleLayer2d.
-Implementation in UniformSingleLayer2d.hpp.
+See FrictionQPotFEM::UniformMultiLayerIndividualDrive2d.
+Implementation in UniformMultiLayerIndividualDrive2d.hpp.
 
-\file UniformSingleLayer2d.h
+\file UniformMultiLayerIndividualDrive2d.h
 \copyright Copyright 2020. Tom de Geus. All rights reserved.
 \license This project is released under the GNU Public License (MIT).
 */
