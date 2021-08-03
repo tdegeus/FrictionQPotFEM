@@ -460,4 +460,43 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
         });
 
     }
+
+    // --------------------------------------------------
+    // FrictionQPotFEM.UniformMultiLayerLeverDrive2d
+    // --------------------------------------------------
+
+    {
+
+    py::module sm = m.def_submodule("UniformMultiLayerLeverDrive2d", "UniformMultiLayerLeverDrive2d");
+
+    namespace SM = FrictionQPotFEM::UniformMultiLayerLeverDrive2d;
+
+    sm.def("version_dependencies",
+           &SM::version_dependencies,
+           "Return version information of library and its dependencies.");
+
+    py::class_<SM::System, FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System>(sm, "System")
+
+        .def(py::init<
+                const xt::xtensor<double, 2>&,
+                const xt::xtensor<size_t, 2>&,
+                const xt::xtensor<size_t, 2>&,
+                const xt::xtensor<size_t, 1>&,
+                const std::vector<xt::xtensor<size_t, 1>>&,
+                const std::vector<xt::xtensor<size_t, 1>>&,
+                const xt::xtensor<bool, 1>&>(),
+             "System",
+             py::arg("coor"),
+             py::arg("conn"),
+             py::arg("dofs"),
+             py::arg("iip"),
+             py::arg("elem"),
+             py::arg("node"),
+             py::arg("layer_is_plastic"))
+
+        .def("__repr__", [](const SM::System&) {
+            return "<FrictionQPotFEM.UniformMultiLayerLeverDrive2d.System>";
+        });
+
+    }
 }
