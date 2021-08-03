@@ -447,6 +447,13 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              py::arg("prescribe"),
              py::arg("height"))
 
+        .def("addShearToLoadFrame",
+             &SM::System::addShearToLoadFrame<xt::xtensor<bool, 2>, xt::xtensor<double, 1>>,
+             "addShearToLoadFrame",
+             py::arg("delta_gamma"),
+             py::arg("prescribe"),
+             py::arg("height"))
+
         .def("fdrive",
              &SM::System::fdrive,
              "fdrive")

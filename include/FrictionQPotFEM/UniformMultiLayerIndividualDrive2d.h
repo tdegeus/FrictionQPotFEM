@@ -157,6 +157,19 @@ public:
     void addAffineSimpleShear(double delta_gamma, const S& prescribe, const T& height);
 
     /**
+     *  Add to the relevant loading frames.
+     *  Note that in contrast to addAffineSimpleShear() this function does not displace
+     *  the layers at the same time.
+     *  \tparam S e.g. `xt::xtensor<bool, 2>`
+     *  \tparam T e.g. `xt::xtensor<double, 1>`
+     *  \param delta_gamma Simple strain to add.
+     *  \param prescribe For each entry `ubar` set `true` to 'enforce' the position [nlayer, ndim].
+     *  \param height The height of the loading frame per layer [nlayer].
+     */
+    template <class S, class T>
+    void addShearToLoadFrame(double delta_gamma, const S& prescribe, const T& height);
+
+    /**
     Force related to the driving frame.
     \return nodevec [nnode, ndim].
     */
