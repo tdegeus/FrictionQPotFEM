@@ -208,25 +208,23 @@ inline xt::xtensor<double, 2> System::layerTargetUbar() const
     return m_layer_ubar_target;
 }
 
-template <class S, class T>
-inline void System::layerSetTargetUbar(const S& ubar, const T& prescribe)
+template <class S>
+inline void System::layerSetTargetUbar(const S& ubar)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layer_ubar_target.shape()));
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(prescribe, m_layer_ubar_set.shape()));
     m_layer_ubar_target = ubar;
-    m_layer_ubar_set = prescribe;
     this->computeForceDrive();
 }
 
 template <class S, class T>
-inline void System::layerSetTargetUbarAndDistribute(const S& ubar, const T& prescribe)
+inline void System::layerSetUbar(const S& ubar, const T& prescribe)
 {
-    this->layerSetTargetUbar(ubar, prescribe);
+    auto current = this->layerUbar();
 
     for (size_t i = 0; i < m_n_layer; ++i) {
         for (size_t d = 0; d < 2; ++d) {
-            if (m_layer_ubar_set(i, d)) {
-                double du = m_layer_ubar_target(i, d) - m_layer_ubar_value(i, d);
+            if (prescribe(i, d)) {
+                double du = ubar(i, d) - current(i, d);
                 for (auto& n : m_layer_node[i]) {
                     m_u(n, d) += du;
                 }

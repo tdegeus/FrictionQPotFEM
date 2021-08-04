@@ -137,24 +137,29 @@ public:
     xt::xtensor<double, 2> layerTargetUbar() const;
 
     /**
-    Set the mean displacement per layer.
-
-    \tparam S e.g. `xt::xtensor<double, 2>`
-    \tparam T e.g. `xt::xtensor<bool, 2>`
-    \param ubar The target mean position of each layer [nlayer, ndim].
-    \param prescribe For each entry `ubar` set `true` to 'enforce' the position [nlayer, ndim].
-    */
-    template <class S, class T>
-    void layerSetTargetUbar(const S& ubar, const T& prescribe);
+     *  Set the target average displacement per layer.
+     *  Layers that have an active driving spring will feel a force
+     *  (if its average displacment is different from the target displacement),
+     *  see layerActivateDrive().
+     *
+     *  \tparam S e.g. `xt::xtensor<double, 2>`
+     *
+     *  \param ubar The target average position of each layer [nlayer, 2].
+     */
+    template <class S>
+    void layerSetTargetUbar(const S& ubar);
 
     /**
-    \copydoc layerSetTargetUbar(const S&, const T&)
-
-    Note that the displacement is updated such that the mean of each prescribed layer is equal
-    to the prescribed mean.
-    */
+     *  Move the layer such that the average displacment is exactly equal to its input value.
+     *
+     *  \tparam S e.g. `xt::xtensor<double, 2>`
+     *  \tparam T e.g. `xt::xtensor<bool, 2>`
+     *
+     *  \param ubar The target average position of each layer [nlayer, 2].
+     *  \param prescribe Per layers/degree-of-freedom specify if its average is modified [nlayer, 2].
+     */
     template <class S, class T>
-    void layerSetTargetUbarAndDistribute(const S& ubar, const T& prescribe);
+    void layerSetUbar(const S& ubar, const T& prescribe);
 
     /**
     Simple shear increment:
