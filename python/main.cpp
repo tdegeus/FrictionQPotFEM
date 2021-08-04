@@ -19,6 +19,7 @@
 #include <FrictionQPotFEM/version.h>
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
 #include <FrictionQPotFEM/UniformMultiLayerIndividualDrive2d.h>
+#include <FrictionQPotFEM/UniformMultiLayerLeverDrive2d.h>
 
 namespace py = pybind11;
 
