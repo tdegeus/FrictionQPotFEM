@@ -140,6 +140,7 @@ python -m pip install . -vv
 ## v0.12.3
 
 *   Avoiding setuptools_scm dependency if SETUPTOOLS_SCM_PRETEND_VERSION is defined
+*   Multi-layer: add shear without distributing it
 
 ## v0.12.2
 
