@@ -243,6 +243,21 @@ inline void System::addAffineSimpleShear(double delta_gamma, const S& prescribe,
     this->updated_u();
 }
 
+template <class S, class T>
+inline void System::addShearToLoadFrame(double delta_gamma, const S& prescribe, const T& height)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(prescribe, m_layer_ubar_set.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(height, {m_n_layer}));
+
+    m_layer_ubar_set = prescribe;
+
+    for (size_t i = 0; i < m_n_layer; ++i) {
+        m_layer_ubar_target(i, 0) += 2.0 * delta_gamma * height(i);
+    }
+
+    this->updated_u();
+}
+
 inline void System::setDriveStiffness(double k, bool symmetric)
 {
     m_drive_spring_symmetric = symmetric;
