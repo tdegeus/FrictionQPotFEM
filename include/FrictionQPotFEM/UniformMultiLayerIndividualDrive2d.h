@@ -105,31 +105,33 @@ public:
      *      If `true` the spring is a normal spring.
      *      If `false` the spring has no stiffness under compression.
      */
-    void setDriveStiffness(double k, bool symmetric = true);
+    void layerSetDriveStiffness(double k, bool symmetric = true);
 
     /**
      *  Turn on (or off) springs connecting
      *  the mean displacement of a layer ("ubar") to the drive frame.
      *
+     *  \tparam S e.g. `xt::xtensor<double, 2>`
+     *
      *  \param activate
      *      For each layer and each degree-of-freedom specify if
      *      the spring is active (`true`) or not (`false`)
-     *      [nlayer, ndim].
+     *      [nlayer, 2].
      */
     template <class S>
-    void setDrive(const S& active);
+    void layerActivateDrive(const S& active);
 
     /**
      *  Read the average displacement of each layer.
      *  Requires to recompute the average displacements
      *  (as they are normally only computed on the driven DOFs).
      *
-     *  \return Average displacememt per layer [nlayer, ndim]
+     *  \return Average displacememt per layer [nlayer, 2]
      */
     xt::xtensor<double, 2> layerUbar();
 
     /**
-     *  Get the target mean displacement per layer.
+     *  Get the target average displacement per layer.
      *  \return [#nlayer, 2]
      */
     xt::xtensor<double, 2> layerTargetUbar() const;

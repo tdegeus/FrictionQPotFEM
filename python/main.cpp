@@ -415,15 +415,15 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             &SM::System::layerIsPlastic,
             "layerIsPlastic");
 
-    cls.def("setDriveStiffness",
-            &SM::System::setDriveStiffness,
-            "setDriveStiffness",
+    cls.def("layerSetDriveStiffness",
+            &SM::System::layerSetDriveStiffness,
+            "layerSetDriveStiffness",
             py::arg("k"),
             py::arg("symmetric") = true);
 
-    cls.def("setDrive",
-            &SM::System::setDrive<xt::pytensor<double, 2>>,
-            "setDrive",
+    cls.def("layerActivateDrive",
+            &SM::System::layerActivateDrive<xt::pytensor<double, 2>>,
+            "layerActivateDrive",
             py::arg("active"));
 
     cls.def("layerUbar",
