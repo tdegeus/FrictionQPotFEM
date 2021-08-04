@@ -421,6 +421,11 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
              py::arg("k"),
              py::arg("symmetric") = true)
 
+        .def("setDrive",
+             &SM::System::setDrive<xt::pytensor<double, 2>>,
+             "setDrive",
+             py::arg("active"))
+
         .def("layerUbar",
              &SM::System::layerUbar,
              "layerUbar")

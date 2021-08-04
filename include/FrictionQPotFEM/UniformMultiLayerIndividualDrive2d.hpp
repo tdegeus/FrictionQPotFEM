@@ -249,6 +249,13 @@ inline void System::setDriveStiffness(double k, bool symmetric)
     m_k_drive = k;
 }
 
+template <class S>
+inline void System::setDrive(const S& active)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layer_ubar_set.shape()));
+    m_layer_ubar_set = active;
+}
+
 inline void System::computeForceDrive()
 {
     // compute the average displacement per layer

@@ -49,16 +49,16 @@ public:
     virtual ~System() {};
 
     /**
-    Define basic geometry.
-
-    \param coor Nodal coordinates.
-    \param conn Connectivity.
-    \param dofs DOFs per node.
-    \param iip DOFs whose displacement is fixed.
-    \param elem Elements per layer.
-    \param node Nodes per layer.
-    \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
-    */
+     *  Define basic geometry.
+     *
+     *  \param coor Nodal coordinates.
+     *  \param conn Connectivity.
+     *  \param dofs DOFs per node.
+     *  \param iip DOFs whose displacement is fixed.
+     *  \param elem Elements per layer.
+     *  \param node Nodes per layer.
+     *  \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
+     */
     System(
         const xt::xtensor<double, 2>& coor,
         const xt::xtensor<size_t, 2>& conn,
@@ -75,19 +75,19 @@ public:
     size_t nlayer() const;
 
     /**
-    Return the nodes belonging to the i-th layer.
-
-    \param i Index of the layer.
-    \return List of node numbers.
-    */
+     *  Return the nodes belonging to the i-th layer.
+     *
+     *  \param i Index of the layer.
+     *  \return List of node numbers.
+     */
     xt::xtensor<size_t, 1> layerNodes(size_t i) const;
 
     /**
-    Return the elements belonging to the i-th layer.
-
-    \param i Index of the layer.
-    \return List of element numbers.
-    */
+     *  Return the elements belonging to the i-th layer.
+     *
+     *  \param i Index of the layer.
+     *  \return List of element numbers.
+     */
     xt::xtensor<size_t, 1> layerElements(size_t i) const;
 
     /**
@@ -97,14 +97,27 @@ public:
     xt::xtensor<bool, 1> layerIsPlastic() const;
 
     /**
-    Set the stiffness of spring connecting the mean displacement of a layer to the drive frame.
-
-    \param k The stiffness (taken the same for all layers)
-    \param symmetric
-        If `true` the spring is a normal spring.
-        If `false` the spring has no stiffness under compression.
-    */
+     *  Set the properties of all springs connecting
+     *  the mean displacement of a layer ("ubar") to the drive frame.
+     *
+     *  \param k The stiffness (taken the same for all layers).
+     *  \param symmetric
+     *      If `true` the spring is a normal spring.
+     *      If `false` the spring has no stiffness under compression.
+     */
     void setDriveStiffness(double k, bool symmetric = true);
+
+    /**
+     *  Turn on (or off) springs connecting
+     *  the mean displacement of a layer ("ubar") to the drive frame.
+     *
+     *  \param activate
+     *      For each layer and each degree-of-freedom specify if
+     *      the spring is active (`true`) or not (`false`)
+     *      [nlayer, ndim].
+     */
+    template <class S>
+    void setDrive(const S& active);
 
     /**
     The mean displacement of each layer.
