@@ -167,6 +167,19 @@ inline xt::xtensor<bool, 1> System::layerIsPlastic() const
     return m_layer_is_plastic;
 }
 
+inline void System::setDriveStiffness(double k, bool symmetric)
+{
+    m_drive_spring_symmetric = symmetric;
+    m_k_drive = k;
+}
+
+template <class S>
+inline void System::setDrive(const S& active)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layer_ubar_set.shape()));
+    m_layer_ubar_set = active;
+}
+
 inline xt::xtensor<double, 2> System::layerUbar()
 {
     m_layer_ubar_value.fill(0.0);
@@ -241,19 +254,6 @@ inline void System::addAffineSimpleShear(double delta_gamma, const S& prescribe,
     }
 
     this->updated_u();
-}
-
-inline void System::setDriveStiffness(double k, bool symmetric)
-{
-    m_drive_spring_symmetric = symmetric;
-    m_k_drive = k;
-}
-
-template <class S>
-inline void System::setDrive(const S& active)
-{
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layer_ubar_set.shape()));
-    m_layer_ubar_set = active;
 }
 
 inline void System::computeForceDrive()

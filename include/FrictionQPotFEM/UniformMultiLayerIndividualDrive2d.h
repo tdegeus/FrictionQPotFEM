@@ -120,11 +120,12 @@ public:
     void setDrive(const S& active);
 
     /**
-    The mean displacement of each layer.
-    Requires to recompute the average displacements as they are normally only computed on
-    the driven DOFs.
-    \return Average per layer [nlayer, ndim]
-    */
+     *  Read the average displacement of each layer.
+     *  Requires to recompute the average displacements
+     *  (as they are normally only computed on the driven DOFs).
+     *
+     *  \return Average displacememt per layer [nlayer, ndim]
+     */
     xt::xtensor<double, 2> layerUbar();
 
     /**
