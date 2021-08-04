@@ -137,6 +137,14 @@ python -m pip install . -vv
 
 # Change-log
 
+## v0.12.3
+
+*   Avoiding setuptools_scm dependency if SETUPTOOLS_SCM_PRETEND_VERSION is defined
+
+## v0.12.2
+
+*   setup.py: use CMAKE_ARGS environment variable; removing pyxtensor dependency
+
 ## v0.12.1
 
 *   timeStepsUntilEvent: allow using a maximum number of iterations
