@@ -173,8 +173,8 @@ inline void System::layerSetDriveStiffness(double k, bool symmetric)
     m_k_drive = k;
 }
 
-template <class S>
-inline void System::layerActivateDrive(const S& active)
+template <class T>
+inline void System::layerActivateDrive(const T& active)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layer_ubar_set.shape()));
     m_layer_ubar_set = active;
@@ -208,8 +208,8 @@ inline xt::xtensor<double, 2> System::layerTargetUbar() const
     return m_layer_ubar_target;
 }
 
-template <class S>
-inline void System::layerSetTargetUbar(const S& ubar)
+template <class T>
+inline void System::layerSetTargetUbar(const T& ubar)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layer_ubar_target.shape()));
     m_layer_ubar_target = ubar;
@@ -235,23 +235,22 @@ inline void System::layerSetUbar(const S& ubar, const T& prescribe)
     this->updated_u();
 }
 
-template <class S, class T>
-inline void System::addAffineSimpleShear(double delta_gamma, const S& prescribe, const T& height)
+inline void System::addAffineSimpleShear(double delta_gamma)
 {
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(prescribe, m_layer_ubar_set.shape()));
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(height, {m_n_layer}));
-
-    m_layer_ubar_set = prescribe;
-
-    for (size_t i = 0; i < m_n_layer; ++i) {
-        m_layer_ubar_target(i, 0) += 2.0 * delta_gamma * height(i);
-    }
-
     for (size_t n = 0; n < m_nnode; ++n) {
         m_u(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - m_coor(0, 1));
     }
-
     this->updated_u();
+}
+
+template <class T>
+inline void System::layerTagetUbar_addAffineSimpleShear(double delta_gamma, const T& height)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(height, {m_n_layer}));
+    for (size_t i = 0; i < m_n_layer; ++i) {
+        m_layer_ubar_target(i, 0) += 2.0 * delta_gamma * height(i);
+    }
+    this->computeForceDrive();
 }
 
 inline void System::computeForceDrive()

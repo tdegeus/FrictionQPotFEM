@@ -1,11 +1,11 @@
 /**
-See FrictionQPotFEM::UniformMultiLayerIndividualDrive2d.
-Implementation in UniformMultiLayerIndividualDrive2d.hpp.
-
-\file UniformMultiLayerIndividualDrive2d.h
-\copyright Copyright 2020. Tom de Geus. All rights reserved.
-\license This project is released under the GNU Public License (MIT).
-*/
+ *  See FrictionQPotFEM::UniformMultiLayerIndividualDrive2d.
+ *  Implementation in UniformMultiLayerIndividualDrive2d.hpp.
+ *
+ *  \file UniformMultiLayerIndividualDrive2d.h
+ *  \copyright Copyright 2020. Tom de Geus. All rights reserved.
+ *  \license This project is released under the GNU Public License (MIT).
+ */
 
 #ifndef FRICTIONQPOTFEM_UNIFORMMULTILAYERINDIVIDUALDRIVE2D_H
 #define FRICTIONQPOTFEM_UNIFORMMULTILAYERINDIVIDUALDRIVE2D_H
@@ -17,29 +17,29 @@ Implementation in UniformMultiLayerIndividualDrive2d.hpp.
 namespace FrictionQPotFEM {
 
 /**
-System in 2-d with:
-
--   Several weak layers.
--   Each layer driven independently through a spring.
--   Uniform elasticity.
-*/
+ *  System in 2-d with:
+ *
+ *  -   Several weak layers.
+ *  -   Each layer driven independently through a spring.
+ *  -   Uniform elasticity.
+ */
 namespace UniformMultiLayerIndividualDrive2d {
 
 /**
-Return versions of this library and of all of its dependencies.
-The output is a list of strings, e.g.::
-
-    "frictionqpotfem=0.7.1",
-    "goosefem=0.7.0",
-    ...
-
-\return List of strings.
-*/
+ *  Return versions of this library and of all of its dependencies.
+ *  The output is a list of strings, e.g.::
+ *
+ *      "frictionqpotfem=0.7.1",
+ *      "goosefem=0.7.0",
+ *      ...
+ *
+ *  \return List of strings.
+ */
 inline std::vector<std::string> version_dependencies();
 
 /**
-Class that uses GMatElastoPlasticQPot to evaluate stress everywhere
-*/
+ *  Class that uses GMatElastoPlasticQPot to evaluate stress everywhere
+ */
 class System : public Generic2d::HybridSystem {
 
 public:
@@ -118,8 +118,8 @@ public:
      *      the spring is active (`true`) or not (`false`)
      *      [nlayer, 2].
      */
-    template <class S>
-    void layerActivateDrive(const S& active);
+    template <class T>
+    void layerActivateDrive(const T& active);
 
     /**
      *  Read the average displacement of each layer.
@@ -146,8 +146,8 @@ public:
      *
      *  \param ubar The target average position of each layer [nlayer, 2].
      */
-    template <class S>
-    void layerSetTargetUbar(const S& ubar);
+    template <class T>
+    void layerSetTargetUbar(const T& ubar);
 
     /**
      *  Move the layer such that the average displacment is exactly equal to its input value.
@@ -155,75 +155,97 @@ public:
      *  \tparam S e.g. `xt::xtensor<double, 2>`
      *  \tparam T e.g. `xt::xtensor<bool, 2>`
      *
-     *  \param ubar The target average position of each layer [nlayer, 2].
-     *  \param prescribe Per layers/degree-of-freedom specify if its average is modified [nlayer, 2].
+     *  \param ubar
+     *      The target average position of each layer [nlayer, 2].
+     *
+     *  \param prescribe
+     *      Per layers/degree-of-freedom specify if its average is modified [nlayer, 2].
+     *      Note that this not modify which of the driving springs is active or not,
+     *      that can only be changed using layerActivateDrive().
      */
     template <class S, class T>
     void layerSetUbar(const S& ubar, const T& prescribe);
 
     /**
-    Simple shear increment:
-    -   Distributes the displacement uniformly.
-    -   Updates the displacement of the (relevant) loading frames.
-
-    Note that the height of each node is taken relative to `coor[0, 1]`.
-
-    \tparam S e.g. `xt::xtensor<bool, 2>`
-    \tparam T e.g. `xt::xtensor<double, 1>`
-    \param delta_gamma Simple strain to add.
-    \param prescribe For each entry `ubar` set `true` to 'enforce' the position [nlayer, ndim].
-    \param height The height of the loading frame per layer [nlayer].
-    */
-    template <class S, class T>
-    void addAffineSimpleShear(double delta_gamma, const S& prescribe, const T& height);
+     *  Add affine simple shear to all the nodes of the body.
+     *  The displacement of the bottom boundary is zero,
+     *  while it is maximal for the top boundary.
+     *  The input is the strain value,
+     *  the shear component of deformation gradient is twice that.
+     *
+     *  \param delta_gamma Affine strain to add.
+     */
+    void addAffineSimpleShear(double delta_gamma);
 
     /**
-    Force related to the driving frame.
-    \return nodevec [nnode, ndim].
-    */
+     *  Add simple shear to each of the target average displacements.
+     *  In particular \f$ \bar{u}_x^i = 2 \Delta \gamma h_i \f$
+     *  with \f$ \bar{u}_x^i \f$ the \f$ x \f$-component of the target average displacement
+     *  of layer \f$ i \f$.
+     *
+     *  \tparam T e.g. `xt::xtensor<double, 1>`
+     *
+     *  \param delta_gamma Affine strain to add.
+     *  \param height The height \f$ h_i \f$ of the loading frame of each layer [nlayer].
+     */
+    template <class T>
+    void layerTagetUbar_addAffineSimpleShear(double delta_gamma, const T& height);
+
+    /**
+     *  Nodal force induced by the driving springs.
+     *  The only non-zero contribution comes from:
+     *  -   springs that are active, see layerActivateDrive(), and
+     *  -   layers whose average displacement is different from its target value.
+     *
+     *  \return nodevec [nnode, ndim].
+     */
     xt::xtensor<double, 2> fdrive() const;
 
     /**
-    Force of each of the driving springs
-    \return [nlayer, ndim].
-    */
+     *  Force of each of the driving springs.
+     *  The only non-zero contribution comes from:
+     *  -   springs that are active, see layerActivateDrive(), and
+     *  -   layers whose average displacement is different from its target value.
+     *
+     *  \return [nlayer, ndim].
+     */
     xt::xtensor<double, 2> layerFdrive() const;
 
 protected:
 
     /**
-    Compute force deriving from the drive.
-    The force is applied as a force density for each of the layers for which the position
-    was specified (at least once) using layerSetTargetUbar().
-    */
+     *  Compute force deriving from the driving frame.
+     *  The force is applied as a force density for each of the layers whose driving spring
+     *  was activated, see layerActivateDrive().
+     */
     void computeForceDrive();
 
     /**
-    Evaluate relevant forces when m_u is updated.
-    */
+     *  Evaluate relevant forces when m_u is updated.
+     */
     void updated_u() override;
 
     /**
-    Compute:
-    -   m_fint = m_fdrive + m_fmaterial + m_fdamp
-    -   m_fext[iip] = m_fint[iip]
-    -   m_fres = m_fext - m_fint
-
-    Internal rule: all relevant forces are expected to be updated before this function is called.
-    */
+     *  Compute:
+     *  -   m_fint = m_fdrive + m_fmaterial + m_fdamp
+     *  -   m_fext[iip] = m_fint[iip]
+     *  -   m_fres = m_fext - m_fint
+     *
+     *  Internal rule: all relevant forces are expected to be updated before this function is called.
+     */
     void computeInternalExternalResidualForce() override;
 
     /**
-    Constructor alias (as convenience for derived classes).
-
-    \param coor Nodal coordinates.
-    \param conn Connectivity.
-    \param dofs DOFs per node.
-    \param iip DOFs whose displacement is fixed.
-    \param elem Elements per layer.
-    \param node Nodes per layer.
-    \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
-    */
+     *  Constructor alias (as convenience for derived classes).
+     *
+     *  \param coor Nodal coordinates.
+     *  \param conn Connectivity.
+     *  \param dofs DOFs per node.
+     *  \param iip DOFs whose displacement is fixed.
+     *  \param elem Elements per layer.
+     *  \param node Nodes per layer.
+     *  \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
+     */
     void init(
         const xt::xtensor<double, 2>& coor,
         const xt::xtensor<size_t, 2>& conn,

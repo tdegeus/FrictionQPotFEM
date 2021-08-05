@@ -446,10 +446,14 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             py::arg("prescribe"));
 
     cls.def("addAffineSimpleShear",
-            &SM::System::addAffineSimpleShear<xt::xtensor<bool, 2>, xt::xtensor<double, 1>>,
+            &SM::System::addAffineSimpleShear,
             "addAffineSimpleShear",
+            py::arg("delta_gamma"));
+
+    cls.def("layerTagetUbar_addAffineSimpleShear",
+            &SM::System::layerTagetUbar_addAffineSimpleShear<xt::pytensor<double, 1>>,
+            "layerTagetUbar_addAffineSimpleShear",
             py::arg("delta_gamma"),
-            py::arg("prescribe"),
             py::arg("height"));
 
     cls.def("fdrive",
