@@ -1,8 +1,8 @@
 /**
-\file UniformMultiLayerIndividualDrive2d.hpp
-\copyright Copyright 2020. Tom de Geus. All rights reserved.
-\license This project is released under the GNU Public License (MIT).
-*/
+ *  \file UniformMultiLayerIndividualDrive2d.hpp
+ *  \copyright Copyright 2020. Tom de Geus. All rights reserved.
+ *  \license This project is released under the GNU Public License (MIT).
+ */
 
 #ifndef FRICTIONQPOTFEM_UNIFORMMULTILAYERINDIVIDUALDRIVE2D_HPP
 #define FRICTIONQPOTFEM_UNIFORMMULTILAYERINDIVIDUALDRIVE2D_HPP
@@ -171,6 +171,7 @@ inline void System::layerSetDriveStiffness(double k, bool symmetric)
 {
     m_drive_spring_symmetric = symmetric;
     m_drive_k = k;
+    this->updated_u(); // updates forces
 }
 
 template <class T>
@@ -178,6 +179,7 @@ inline void System::layerSetTargetActive(const T& active)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
     m_layerdrive_active = active;
+    this->updated_u(); // updates forces
 }
 
 inline xt::xtensor<double, 2> System::layerUbar()
@@ -222,7 +224,7 @@ inline void System::layerSetTargetUbar(const T& ubar)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
     m_layerdrive_targetubar = ubar;
-    this->computeForceDrive();
+    this->updated_target_ubar(); // the average displacement and other forces do not change
 }
 
 template <class S, class T>
@@ -241,7 +243,7 @@ inline void System::layerSetUbar(const S& ubar, const T& prescribe)
         }
     }
 
-    this->updated_u();
+    this->updated_u(); // updates average displacement and all forces
 }
 
 inline void System::addAffineSimpleShear(double delta_gamma)
@@ -249,7 +251,7 @@ inline void System::addAffineSimpleShear(double delta_gamma)
     for (size_t n = 0; n < m_nnode; ++n) {
         m_u(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - m_coor(0, 1));
     }
-    this->updated_u();
+    this->updated_u(); // updates average displacement and all forces
 }
 
 template <class T>
@@ -259,10 +261,10 @@ inline void System::layerTagetUbar_addAffineSimpleShear(double delta_gamma, cons
     for (size_t i = 0; i < m_n_layer; ++i) {
         m_layerdrive_targetubar(i, 0) += 2.0 * delta_gamma * height(i);
     }
-    this->computeForceDrive();
+    this->updated_target_ubar(); // the average displacement and other forces do not change
 }
 
-inline void System::computeForceDrive()
+inline void System::computeLayerUbarActive()
 {
     m_layer_ubar.fill(0.0);
     size_t nip = m_quad.nip();
@@ -283,15 +285,17 @@ inline void System::computeForceDrive()
     }
 
     m_layer_ubar /= m_layer_dV1;
+}
 
-    // compute the driving force
-
-    m_uq.fill(0.0);
+inline void System::computeForceFromTargetUbar()
+{
+    m_uq.fill(0.0); // pre-allocated value that an be freely used
+    size_t nip = m_quad.nip();
 
     for (size_t i = 0; i < m_n_layer; ++i) {
         for (size_t d = 0; d < 2; ++d) {
-            if (m_layer_ubar_set(i, d)) {
-                double f = m_k_drive * (m_layer_ubar_value(i, d) - m_layer_ubar_target(i, d));
+            if (m_layerdrive_active(i, d)) {
+                double f = m_drive_k * (m_layer_ubar(i, d) - m_layerdrive_targetubar(i, d));
                 if (m_drive_spring_symmetric || f < 0) { // buckle under compression
                     for (auto& e : m_layer_elem[i]) {
                         for (size_t q = 0; q < nip; ++q) {
@@ -314,8 +318,8 @@ inline xt::xtensor<double, 2> System::layerFdrive() const
 
     for (size_t i = 0; i < m_n_layer; ++i) {
         for (size_t d = 0; d < 2; ++d) {
-            if (m_layer_ubar_set(i, d)) {
-                ret(i, d) = m_k_drive * (m_layer_ubar_target(i, d) - m_layer_ubar_value(i, d));
+            if (m_layerdrive_active(i, d)) {
+                ret(i, d) = m_drive_k * (m_layerdrive_targetubar(i, d) - m_layer_ubar(i, d));
             }
         }
     }
@@ -323,10 +327,16 @@ inline xt::xtensor<double, 2> System::layerFdrive() const
     return ret;
 }
 
+inline void System::updated_target_ubar()
+{
+    this->computeForceFromTargetUbar();
+}
+
 inline void System::updated_u()
 {
+    this->computeLayerUbarActive();
+    this->computeForceFromTargetUbar();
     this->computeForceMaterial();
-    this->computeForceDrive();
 }
 
 inline xt::xtensor<double, 2> System::fdrive() const

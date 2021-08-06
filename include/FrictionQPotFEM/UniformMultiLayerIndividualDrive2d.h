@@ -38,7 +38,22 @@ namespace UniformMultiLayerIndividualDrive2d {
 inline std::vector<std::string> version_dependencies();
 
 /**
- *  Class that uses GMatElastoPlasticQPot to evaluate stress everywhere
+ *  System that comprises several layers (elastic or plastic).
+ *  The average displacement of each layer can be coupled to a prescribed target value
+ *  using a linear spring (to set its stiffness use layerSetDriveStiffness()).
+ *  Each layer has one spring per degree-of-freedom, and each spring can be switched on
+ *  individually using layerSetTargetActive().
+ *  By default all springs are inactive (their stiffness is effectively zero).
+ *
+ *  Terminology:
+ *  -   `ubar`: the average displacement per layer [#nlayer, 2],
+ *              see layerUbar() and layerSetUbar().
+ *
+ *  -   `target_ubar`: the target average displacement per layer [#nlayer, 2],
+ *                     see layerTargetUbar() and layerSetTargetUbar().
+ *
+ *  -   `target_active`: per layer/DOF the average displacement is only enforced if the spring
+ *                       is active, see layerTargetActive() and layerSetTargetActive().
  */
 class System : public Generic2d::HybridSystem {
 
@@ -76,7 +91,6 @@ public:
 
     /**
      *  Return the nodes belonging to the i-th layer.
-     *
      *  \param i Index of the layer.
      *  \return List of node numbers.
      */
@@ -84,23 +98,23 @@ public:
 
     /**
      *  Return the elements belonging to the i-th layer.
-     *
      *  \param i Index of the layer.
      *  \return List of element numbers.
      */
     xt::xtensor<size_t, 1> layerElements(size_t i) const;
 
     /**
-     *  Return if a layer is elastic (``false``) or plastic (``true``).
+     *  Return if a layer is elastic (`false`) or plastic (`true`).
      *  \return [#nlayer].
      */
     xt::xtensor<bool, 1> layerIsPlastic() const;
 
     /**
-     *  Set the properties of all springs connecting
-     *  the mean displacement of a layer ("ubar") to the drive frame.
+     *  Set the stiffness of the springs connecting
+     *  the average displacement of a layer ("ubar") to its set target value.
+     *  Note that the stiffness of all springs is taken the same.
      *
-     *  \param k The stiffness (taken the same for all layers).
+     *  \param k The stiffness.
      *  \param symmetric
      *      If `true` the spring is a normal spring.
      *      If `false` the spring has no stiffness under compression.
@@ -109,29 +123,28 @@ public:
 
     /**
      *  Turn on (or off) springs connecting
-     *  the mean displacement of a layer ("ubar") to the drive frame.
+     *  the average displacement of a layer ("ubar") to its set target value.
      *
-     *  \tparam S e.g. `xt::xtensor<double, 2>`
+     *  \tparam T e.g. `xt::xtensor<bool, 2>`
      *
-     *  \param activate
+     *  \param active
      *      For each layer and each degree-of-freedom specify if
-     *      the spring is active (`true`) or not (`false`)
-     *      [nlayer, 2].
+     *      the spring is active (`true`) or not (`false`) [#nlayer, 2].
      */
     template <class T>
     void layerSetTargetActive(const T& active);
 
     /**
-     *  Read the average displacement of each layer.
+     *  List the average displacement of each layer.
      *  Requires to recompute the average displacements
      *  (as they are normally only computed on the driven DOFs).
      *
-     *  \return Average displacememt per layer [nlayer, 2]
+     *  \return Average displacement per layer [#nlayer, 2]
      */
     xt::xtensor<double, 2> layerUbar();
 
     /**
-     *  Get the target average displacement per layer.
+     *  List the target average displacement per layer.
      *  \return [#nlayer, 2]
      */
     xt::xtensor<double, 2> layerTargetUbar() const;
@@ -144,30 +157,30 @@ public:
 
     /**
      *  Set the target average displacement per layer.
-     *  Layers that have an active driving spring will feel a force
-     *  (if its average displacment is different from the target displacement),
-     *  see layerActivateDrive().
+     *  Only layers that have an active driving spring will feel a force
+     *  (if its average displacement is different from the target displacement),
+     *  see layerSetTargetActive().
      *
      *  \tparam S e.g. `xt::xtensor<double, 2>`
      *
-     *  \param ubar The target average position of each layer [nlayer, 2].
+     *  \param ubar The target average position of each layer [#nlayer, 2].
      */
     template <class T>
     void layerSetTargetUbar(const T& ubar);
 
     /**
-     *  Move the layer such that the average displacment is exactly equal to its input value.
+     *  Move the layer such that the average displacement is exactly equal to its input value.
      *
      *  \tparam S e.g. `xt::xtensor<double, 2>`
      *  \tparam T e.g. `xt::xtensor<bool, 2>`
      *
      *  \param ubar
-     *      The target average position of each layer [nlayer, 2].
+     *      The target average position of each layer [#nlayer, 2].
      *
      *  \param prescribe
-     *      Per layers/degree-of-freedom specify if its average is modified [nlayer, 2].
+     *      Per layers/degree-of-freedom specify if its average is modified [#nlayer, 2].
      *      Note that this not modify which of the driving springs is active or not,
-     *      that can only be changed using layerActivateDrive().
+     *      that can only be changed using layerSetTargetActive().
      */
     template <class S, class T>
     void layerSetUbar(const S& ubar, const T& prescribe);
@@ -192,7 +205,7 @@ public:
      *  \tparam T e.g. `xt::xtensor<double, 1>`
      *
      *  \param delta_gamma Affine strain to add.
-     *  \param height The height \f$ h_i \f$ of the loading frame of each layer [nlayer].
+     *  \param height The height \f$ h_i \f$ of the loading frame of each layer [#nlayer].
      */
     template <class T>
     void layerTagetUbar_addAffineSimpleShear(double delta_gamma, const T& height);
@@ -200,7 +213,7 @@ public:
     /**
      *  Nodal force induced by the driving springs.
      *  The only non-zero contribution comes from:
-     *  -   springs that are active, see layerActivateDrive(), and
+     *  -   springs that are active, see layerSetTargetActive(), and
      *  -   layers whose average displacement is different from its target value.
      *
      *  \return nodevec [nnode, ndim].
@@ -210,21 +223,34 @@ public:
     /**
      *  Force of each of the driving springs.
      *  The only non-zero contribution comes from:
-     *  -   springs that are active, see layerActivateDrive(), and
+     *  -   springs that are active, see layerSetTargetActive(), and
      *  -   layers whose average displacement is different from its target value.
      *
-     *  \return [nlayer, ndim].
+     *  \return [#nlayer, ndim].
      */
     xt::xtensor<double, 2> layerFdrive() const;
 
 protected:
 
     /**
-     *  Compute force deriving from the driving frame.
-     *  The force is applied as a force density for each of the layers whose driving spring
-     *  was activated, see layerActivateDrive().
+     *  Compute the average displacement of all layers with an active driving spring.
      */
-    void computeForceDrive();
+    void computeLayerUbarActive();
+
+    /**
+     *  Compute force deriving from the activate springs between the average displacement of
+     *  the layer and its target value.
+     *  The force is applied as a force density.
+     *
+     *  Internal rule: computeLayerUbarActive() is called before this function,
+     *  if the displacement changed since the last time the average was computed.
+     */
+    void computeForceFromTargetUbar();
+
+    /**
+     *  Evaluate relevant when the target ubar is updated (but m_u remains unchanged).
+     */
+    void updated_target_ubar();
 
     /**
      *  Evaluate relevant forces when m_u is updated.
