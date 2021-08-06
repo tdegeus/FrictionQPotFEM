@@ -119,7 +119,7 @@ public:
      *      [nlayer, 2].
      */
     template <class T>
-    void layerActivateDrive(const T& active);
+    void layerSetTargetActive(const T& active);
 
     /**
      *  Read the average displacement of each layer.
@@ -135,6 +135,12 @@ public:
      *  \return [#nlayer, 2]
      */
     xt::xtensor<double, 2> layerTargetUbar() const;
+
+    /**
+     *  List if the driving spring is activate.
+     *  \return [#nlayer, 2]
+     */
+    xt::xtensor<bool, 2> layerTargetActive() const;
 
     /**
      *  Set the target average displacement per layer.
@@ -266,10 +272,10 @@ protected:
     xt::xtensor<size_t, 1> m_slice_elas; ///< How to slice plastic(): start and end index
 
     bool m_drive_spring_symmetric = true; ///< If false the drive spring buckles in compression
-    double m_k_drive = 1.0; ///< Stiffness of the drive control frame
-    xt::xtensor<bool, 2> m_layer_ubar_set; ///< See `prescribe` in layerSetTargetUbar()
-    xt::xtensor<double, 2> m_layer_ubar_target; ///< Per layer, the prescribed mean position.
-    xt::xtensor<double, 2> m_layer_ubar_value; ///< Per layer, the prescribed mean position.
+    double m_drive_k = 1.0; ///< Stiffness of the drive control frame
+    xt::xtensor<bool, 2> m_layerdrive_active; ///< See `prescribe` in layerSetTargetUbar()
+    xt::xtensor<double, 2> m_layerdrive_targetubar; ///< Per layer, the prescribed average position.
+    xt::xtensor<double, 2> m_layer_ubar; ///< See computeLayerUbarActive().
     xt::xtensor<double, 2> m_fdrive; ///< Force related to driving frame
     xt::xtensor<double, 2> m_layer_dV1; ///< volume per layer (as vector, same for all dimensions)
     xt::xtensor<double, 2> m_dV; ///< copy of m_quad.dV()

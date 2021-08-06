@@ -46,14 +46,14 @@ inline void System::init(
     m_layer_elem = elem;
     m_layer_is_plastic = layer_is_plastic;
 
-    m_layer_ubar_set.resize({m_n_layer, size_t(2)});
-    m_layer_ubar_target.resize({m_n_layer, size_t(2)});
-    m_layer_ubar_value.resize({m_n_layer, size_t(2)});
+    m_layerdrive_active.resize({m_n_layer, size_t(2)});
+    m_layerdrive_targetubar.resize({m_n_layer, size_t(2)});
+    m_layer_ubar.resize({m_n_layer, size_t(2)});
     m_layer_dV1.resize({m_n_layer, size_t(2)});
     m_slice_index.resize({m_n_layer});
 
-    m_layer_ubar_target.fill(0.0);
-    m_layer_ubar_set.fill(false);
+    m_layerdrive_targetubar.fill(0.0);
+    m_layerdrive_active.fill(false);
 
     size_t n_elem_plas = 0;
     size_t n_elem_elas = 0;
@@ -170,19 +170,23 @@ inline xt::xtensor<bool, 1> System::layerIsPlastic() const
 inline void System::layerSetDriveStiffness(double k, bool symmetric)
 {
     m_drive_spring_symmetric = symmetric;
-    m_k_drive = k;
+    m_drive_k = k;
 }
 
 template <class T>
-inline void System::layerActivateDrive(const T& active)
+inline void System::layerSetTargetActive(const T& active)
 {
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layer_ubar_set.shape()));
-    m_layer_ubar_set = active;
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
+    m_layerdrive_active = active;
 }
 
 inline xt::xtensor<double, 2> System::layerUbar()
 {
-    m_layer_ubar_value.fill(0.0);
+    // Recompute needed because computeLayerUbarActive() only computes the average
+    // on layers with an active spring.
+    // This function, in contrast, returns the average on all layers.
+
+    m_layer_ubar.fill(0.0);
     size_t nip = m_quad.nip();
 
     m_vector.asElement(m_u, m_ue);
@@ -192,27 +196,32 @@ inline xt::xtensor<double, 2> System::layerUbar()
         for (auto& e : m_layer_elem[i]) {
             for (size_t d = 0; d < 2; ++d) {
                 for (size_t q = 0; q < nip; ++q) {
-                    m_layer_ubar_value(i, d) += m_uq(e, q, d) * m_dV(e, q);
+                    m_layer_ubar(i, d) += m_uq(e, q, d) * m_dV(e, q);
                 }
             }
         }
     }
 
-    m_layer_ubar_value /= m_layer_dV1;
+    m_layer_ubar /= m_layer_dV1;
 
-    return m_layer_ubar_value;
+    return m_layer_ubar;
 }
 
 inline xt::xtensor<double, 2> System::layerTargetUbar() const
 {
-    return m_layer_ubar_target;
+    return m_layerdrive_targetubar;
+}
+
+inline xt::xtensor<bool, 2> System::layerTargetActive() const
+{
+    return m_layerdrive_active;
 }
 
 template <class T>
 inline void System::layerSetTargetUbar(const T& ubar)
 {
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layer_ubar_target.shape()));
-    m_layer_ubar_target = ubar;
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
+    m_layerdrive_targetubar = ubar;
     this->computeForceDrive();
 }
 
@@ -248,17 +257,14 @@ inline void System::layerTagetUbar_addAffineSimpleShear(double delta_gamma, cons
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(height, {m_n_layer}));
     for (size_t i = 0; i < m_n_layer; ++i) {
-        m_layer_ubar_target(i, 0) += 2.0 * delta_gamma * height(i);
+        m_layerdrive_targetubar(i, 0) += 2.0 * delta_gamma * height(i);
     }
     this->computeForceDrive();
 }
 
 inline void System::computeForceDrive()
 {
-    // compute the average displacement per layer
-    // (skip all layers that are not driven, the average displacement will never be used)
-
-    m_layer_ubar_value.fill(0.0);
+    m_layer_ubar.fill(0.0);
     size_t nip = m_quad.nip();
 
     m_vector.asElement(m_u, m_ue);
@@ -266,17 +272,17 @@ inline void System::computeForceDrive()
 
     for (size_t i = 0; i < m_n_layer; ++i) {
         for (size_t d = 0; d < 2; ++d) {
-            if (m_layer_ubar_set(i, d)) {
+            if (m_layerdrive_active(i, d)) {
                 for (auto& e : m_layer_elem[i]) {
                     for (size_t q = 0; q < nip; ++q) {
-                        m_layer_ubar_value(i, d) += m_uq(e, q, d) * m_dV(e, q);
+                        m_layer_ubar(i, d) += m_uq(e, q, d) * m_dV(e, q);
                     }
                 }
             }
         }
     }
 
-    m_layer_ubar_value /= m_layer_dV1;
+    m_layer_ubar /= m_layer_dV1;
 
     // compute the driving force
 

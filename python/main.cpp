@@ -421,9 +421,9 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
             py::arg("k"),
             py::arg("symmetric") = true);
 
-    cls.def("layerActivateDrive",
-            &SM::System::layerActivateDrive<xt::pytensor<double, 2>>,
-            "layerActivateDrive",
+    cls.def("layerSetTargetActive",
+            &SM::System::layerSetTargetActive<xt::pytensor<double, 2>>,
+            "layerSetTargetActive",
             py::arg("active"));
 
     cls.def("layerUbar",
@@ -433,6 +433,10 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
     cls.def("layerTargetUbar",
             &SM::System::layerTargetUbar,
             "layerTargetUbar");
+
+    cls.def("layerTargetActive",
+            &SM::System::layerTargetActive,
+            "layerTargetActive");
 
     cls.def("layerSetTargetUbar",
             &SM::System::layerSetTargetUbar<xt::xtensor<double, 2>>,
