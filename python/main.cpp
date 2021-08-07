@@ -19,6 +19,7 @@
 #include <FrictionQPotFEM/version.h>
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
 #include <FrictionQPotFEM/UniformMultiLayerIndividualDrive2d.h>
+#include <FrictionQPotFEM/UniformMultiLayerLeverDrive2d.h>
 
 namespace py = pybind11;
 
@@ -369,17 +370,17 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
 
     {
 
-    py::module sm = m.def_submodule("UniformMultiLayerIndividualDrive2d", "UniformMultiLayerIndividualDrive2d");
+    py::module mod = m.def_submodule("UniformMultiLayerIndividualDrive2d", "UniformMultiLayerIndividualDrive2d");
 
     namespace SM = FrictionQPotFEM::UniformMultiLayerIndividualDrive2d;
 
-    sm.def("version_dependencies",
-           &SM::version_dependencies,
-           "Return version information of library and its dependencies.");
+    mod.def("version_dependencies",
+            &SM::version_dependencies,
+            "Return version information of library and its dependencies.");
 
-    py::class_<SM::System, FrictionQPotFEM::Generic2d::HybridSystem>(sm, "System")
+    py::class_<SM::System, FrictionQPotFEM::Generic2d::HybridSystem> cls(mod, "System");
 
-        .def(py::init<
+    cls.def(py::init<
                 const xt::xtensor<double, 2>&,
                 const xt::xtensor<size_t, 2>&,
                 const xt::xtensor<size_t, 2>&,
@@ -387,84 +388,147 @@ PYBIND11_MODULE(FrictionQPotFEM, m)
                 const std::vector<xt::xtensor<size_t, 1>>&,
                 const std::vector<xt::xtensor<size_t, 1>>&,
                 const xt::xtensor<bool, 1>&>(),
-             "System",
-             py::arg("coor"),
-             py::arg("conn"),
-             py::arg("dofs"),
-             py::arg("iip"),
-             py::arg("elem"),
-             py::arg("node"),
-             py::arg("layer_is_plastic"))
+            "System",
+            py::arg("coor"),
+            py::arg("conn"),
+            py::arg("dofs"),
+            py::arg("iip"),
+            py::arg("elem"),
+            py::arg("node"),
+            py::arg("layer_is_plastic"));
 
-        .def("nlayer",
-             &SM::System::nlayer,
-             "nlayer")
+    cls.def("nlayer",
+            &SM::System::nlayer,
+            "nlayer");
 
-        .def("layerNodes",
-             &SM::System::layerNodes,
-             "layerNodes",
-             py::arg("i"))
+    cls.def("layerNodes",
+            &SM::System::layerNodes,
+            "layerNodes",
+            py::arg("i"));
 
-        .def("layerElements",
-             &SM::System::layerElements,
-             "layerElements",
-             py::arg("i"))
+    cls.def("layerElements",
+            &SM::System::layerElements,
+            "layerElements",
+            py::arg("i"));
 
-        .def("layerIsPlastic",
-             &SM::System::layerIsPlastic,
-             "layerIsPlastic")
+    cls.def("layerIsPlastic",
+            &SM::System::layerIsPlastic,
+            "layerIsPlastic");
 
-        .def("setDriveStiffness",
-             &SM::System::setDriveStiffness,
-             "setDriveStiffness",
-             py::arg("k"),
-             py::arg("symmetric") = true)
+    cls.def("layerSetDriveStiffness",
+            &SM::System::layerSetDriveStiffness,
+            "layerSetDriveStiffness",
+            py::arg("k"),
+            py::arg("symmetric") = true);
 
-        .def("layerUbar",
-             &SM::System::layerUbar,
-             "layerUbar")
+    cls.def("layerSetTargetActive",
+            &SM::System::layerSetTargetActive<xt::pytensor<double, 2>>,
+            "layerSetTargetActive",
+            py::arg("active"));
 
-        .def("layerTargetUbar",
-             &SM::System::layerTargetUbar,
-             "layerTargetUbar")
+    cls.def("layerUbar",
+            &SM::System::layerUbar,
+            "layerUbar");
 
-        .def("layerSetTargetUbar",
-             &SM::System::layerSetTargetUbar<xt::xtensor<double, 2>, xt::xtensor<bool, 2>>,
-             "layerSetTargetUbar",
-             py::arg("ubar"),
-             py::arg("prescribe"))
+    cls.def("layerTargetUbar",
+            &SM::System::layerTargetUbar,
+            "layerTargetUbar");
 
-        .def("layerSetTargetUbarAndDistribute",
-             &SM::System::layerSetTargetUbarAndDistribute<xt::xtensor<double, 2>, xt::xtensor<bool, 2>>,
-             "layerSetTargetUbarAndDistribute",
-             py::arg("ubar"),
-             py::arg("prescribe"))
+    cls.def("layerTargetActive",
+            &SM::System::layerTargetActive,
+            "layerTargetActive");
 
-        .def("addAffineSimpleShear",
-             &SM::System::addAffineSimpleShear<xt::xtensor<bool, 2>, xt::xtensor<double, 1>>,
-             "addAffineSimpleShear",
-             py::arg("delta_gamma"),
-             py::arg("prescribe"),
-             py::arg("height"))
+    cls.def("layerSetTargetUbar",
+            &SM::System::layerSetTargetUbar<xt::xtensor<double, 2>>,
+            "layerSetTargetUbar",
+            py::arg("ubar"));
 
-        .def("addShearToLoadFrame",
-             &SM::System::addShearToLoadFrame<xt::xtensor<bool, 2>, xt::xtensor<double, 1>>,
-             "addShearToLoadFrame",
-             py::arg("delta_gamma"),
-             py::arg("prescribe"),
-             py::arg("height"))
+    cls.def("layerSetUbar",
+            &SM::System::layerSetUbar<xt::xtensor<double, 2>, xt::xtensor<bool, 2>>,
+            "layerSetUbar",
+            py::arg("ubar"),
+            py::arg("prescribe"));
 
-        .def("fdrive",
-             &SM::System::fdrive,
-             "fdrive")
+    cls.def("addAffineSimpleShear",
+            &SM::System::addAffineSimpleShear,
+            "addAffineSimpleShear",
+            py::arg("delta_gamma"));
 
-        .def("layerFdrive",
-             &SM::System::layerFdrive,
-             "layerFdrive")
+    cls.def("layerTagetUbar_addAffineSimpleShear",
+            &SM::System::layerTagetUbar_addAffineSimpleShear<xt::pytensor<double, 1>>,
+            "layerTagetUbar_addAffineSimpleShear",
+            py::arg("delta_gamma"),
+            py::arg("height"));
 
-        .def("__repr__", [](const SM::System&) {
-            return "<FrictionQPotFEM.UniformMultiLayerIndividualDrive2d.System>";
-        });
+    cls.def("fdrive",
+            &SM::System::fdrive,
+            "fdrive");
+
+    cls.def("layerFdrive",
+            &SM::System::layerFdrive,
+            "layerFdrive");
+
+    cls.def("__repr__", [](const SM::System&) {
+        return "<FrictionQPotFEM.UniformMultiLayerIndividualDrive2d.System>";
+    });
+
+    }
+
+    // --------------------------------------------------
+    // FrictionQPotFEM.UniformMultiLayerLeverDrive2d
+    // --------------------------------------------------
+
+    {
+
+    py::module mod = m.def_submodule("UniformMultiLayerLeverDrive2d", "UniformMultiLayerLeverDrive2d");
+
+    namespace SM = FrictionQPotFEM::UniformMultiLayerLeverDrive2d;
+
+    mod.def("version_dependencies",
+            &SM::version_dependencies,
+            "Return version information of library and its dependencies.");
+
+    py::class_<SM::System, FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System> cls(mod, "System");
+
+    cls.def(py::init<
+                const xt::xtensor<double, 2>&,
+                const xt::xtensor<size_t, 2>&,
+                const xt::xtensor<size_t, 2>&,
+                const xt::xtensor<size_t, 1>&,
+                const std::vector<xt::xtensor<size_t, 1>>&,
+                const std::vector<xt::xtensor<size_t, 1>>&,
+                const xt::xtensor<bool, 1>&>(),
+            "System",
+            py::arg("coor"),
+            py::arg("conn"),
+            py::arg("dofs"),
+            py::arg("iip"),
+            py::arg("elem"),
+            py::arg("node"),
+            py::arg("layer_is_plastic"));
+
+    cls.def("setLeverProperties",
+            &SM::System::setLeverProperties<xt::pytensor<double, 1>>,
+            "setLeverProperties",
+            py::arg("H"),
+            py::arg("hi"));
+
+    cls.def("setLeverTarget",
+            &SM::System::setLeverTarget,
+            "setLeverTarget",
+            py::arg("u"));
+
+    cls.def("leverTarget",
+            &SM::System::leverTarget,
+            "leverTarget");
+
+    cls.def("leverPosition",
+            &SM::System::leverPosition,
+            "leverPosition");
+
+    cls.def("__repr__", [](const SM::System&) {
+        return "<FrictionQPotFEM.UniformMultiLayerLeverDrive2d.System>";
+    });
 
     }
 }

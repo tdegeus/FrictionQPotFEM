@@ -22,7 +22,8 @@ set(exec
     Generic2d.cpp
     Generic2d_historic.cpp
     UniformSingleLayer2d.cpp
-    UniformMultiLayerIndividualDrive2d.cpp)
+    UniformMultiLayerIndividualDrive2d.cpp
+    UniformMultiLayerLeverDrive2d.cpp)
 
 # WIP: skip because of a vague bug
 if (NOT ${CMAKE_COMPILER_IS_GNUCXX})

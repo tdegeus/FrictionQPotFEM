@@ -10,57 +10,52 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
     {
         GooseFEM::Mesh::Quad4::Regular mesh(5, 1);
 
-        size_t nlayer = 5;
+        xt::xtensor<bool, 1> is_plastic = {false, true, false, true, false};
+        size_t nlayer = is_plastic.size();
         GooseFEM::Mesh::Vstack stitch;
         for (size_t i = 0; i < nlayer; ++i) {
             stitch.push_back(mesh.coor(), mesh.conn(), mesh.nodesBottomEdge(), mesh.nodesTopEdge());
         }
 
-        xt::xtensor<bool, 1> is_plastic = {false, true, false, true, false};
-        std::vector<xt::xtensor<size_t, 1>> elem;
-        std::vector<xt::xtensor<size_t, 1>> node;
-        for (size_t i = 0; i < nlayer; ++i) {
-            elem.push_back(stitch.elemmap(i));
-            node.push_back(stitch.nodemap(i));
-        }
-
-        auto dofs = GooseFEM::Mesh::dofs(stitch.coor().shape(0), stitch.coor().shape(1));
+        auto dofs = stitch.dofs();
         auto bottom = stitch.nodeset(mesh.nodesBottomEdge(), 0);
         auto iip = xt::ravel(xt::view(dofs, xt::keep(bottom)));
 
         FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
-            stitch.coor(), stitch.conn(), dofs, iip, elem, node, is_plastic);
+            stitch.coor(), stitch.conn(), dofs, iip, stitch.elemmap(), stitch.nodemap(), is_plastic);
 
         REQUIRE(xt::all(xt::equal(is_plastic, sys.layerIsPlastic())));
     }
 
-    SECTION("Drive")
+    SECTION("Force from drive")
     {
         GooseFEM::Mesh::Quad4::Regular mesh(5, 1);
 
-        size_t nlayer = 5;
+        xt::xtensor<bool, 1> is_plastic = {false, true, false, true, false};
+        size_t nlayer = is_plastic.size();
         GooseFEM::Mesh::Vstack stitch;
         for (size_t i = 0; i < nlayer; ++i) {
             stitch.push_back(mesh.coor(), mesh.conn(), mesh.nodesBottomEdge(), mesh.nodesTopEdge());
         }
 
-        xt::xtensor<bool, 1> is_plastic = {false, true, false, true, false};
-        std::vector<xt::xtensor<size_t, 1>> elem;
-        std::vector<xt::xtensor<size_t, 1>> node;
-        for (size_t i = 0; i < nlayer; ++i) {
-            elem.push_back(stitch.elemmap(i));
-            node.push_back(stitch.nodemap(i));
-        }
-
-        auto dofs = GooseFEM::Mesh::dofs(stitch.coor().shape(0), stitch.coor().shape(1));
+        auto dofs = stitch.dofs();
         auto bottom = stitch.nodeset(mesh.nodesBottomEdge(), 0);
         auto iip = xt::ravel(xt::view(dofs, xt::keep(bottom)));
 
         FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
-            stitch.coor(), stitch.conn(), dofs, iip, elem, node, is_plastic);
+            stitch.coor(), stitch.conn(), dofs, iip, stitch.elemmap(), stitch.nodemap(), is_plastic);
 
-        xt::xtensor<bool, 2> drive = xt::zeros<bool>({5, 2});
-        xt::xtensor<double, 2> u_target = xt::zeros<double>({5, 2});
+        // to pass internal fail safes
+        size_t nelas = sys.elastic().size();
+        size_t nplas = sys.plastic().size();
+        sys.setMassMatrix(xt::ones<double>({stitch.nelem()}));
+        sys.setDampingMatrix(xt::ones<double>({stitch.nelem()}));
+        sys.setElastic(xt::ones<double>({nelas}), xt::ones<double>({nelas}));
+        sys.setPlastic(xt::ones<double>({nplas}), xt::ones<double>({nplas}), xt::ones<double>({nplas, size_t(1)}));
+        sys.setDt(1.0);
+
+        xt::xtensor<bool, 2> drive = xt::zeros<bool>({nlayer, size_t(2)});
+        xt::xtensor<double, 2> u_target = xt::zeros<double>({nlayer, size_t(2)});
 
         drive(2, 0) = true;
         drive(4, 0) = true;
@@ -68,9 +63,9 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         u_target(2, 0) = 1.0;
         u_target(4, 0) = 2.0;
 
-        sys.layerSetTargetUbar(u_target, drive);
-
-        sys.setDriveStiffness(1.0);
+        sys.layerSetDriveStiffness(1.0);
+        sys.layerSetTargetActive(drive);
+        sys.layerSetTargetUbar(u_target);
 
         xt::xtensor<double, 2> f = xt::zeros<double>({stitch.nnode(), stitch.ndim()});
 
@@ -117,30 +112,23 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         REQUIRE(xt::allclose(f, sys.fdrive()));
     }
 
-    SECTION("Drive, distribute")
+    SECTION("Force from drive: prescribe mean of each layer")
     {
         GooseFEM::Mesh::Quad4::Regular mesh(5, 1);
 
-        size_t nlayer = 5;
+        xt::xtensor<bool, 1> is_plastic = {false, true, false, true, false};
+        size_t nlayer = is_plastic.size();
         GooseFEM::Mesh::Vstack stitch;
         for (size_t i = 0; i < nlayer; ++i) {
             stitch.push_back(mesh.coor(), mesh.conn(), mesh.nodesBottomEdge(), mesh.nodesTopEdge());
         }
 
-        xt::xtensor<bool, 1> is_plastic = {false, true, false, true, false};
-        std::vector<xt::xtensor<size_t, 1>> elem;
-        std::vector<xt::xtensor<size_t, 1>> node;
-        for (size_t i = 0; i < nlayer; ++i) {
-            elem.push_back(stitch.elemmap(i));
-            node.push_back(stitch.nodemap(i));
-        }
-
-        auto dofs = GooseFEM::Mesh::dofs(stitch.coor().shape(0), stitch.coor().shape(1));
+        auto dofs = stitch.dofs();
         auto bottom = stitch.nodeset(mesh.nodesBottomEdge(), 0);
         auto iip = xt::ravel(xt::view(dofs, xt::keep(bottom)));
 
         FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
-            stitch.coor(), stitch.conn(), dofs, iip, elem, node, is_plastic);
+            stitch.coor(), stitch.conn(), dofs, iip, stitch.elemmap(), stitch.nodemap(), is_plastic);
 
         size_t nelas = sys.elastic().size();
         size_t nplas = sys.plastic().size();
@@ -167,8 +155,10 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         u_target(2, 0) = 1.0;
         u_target(4, 0) = 2.0;
 
-        sys.setDriveStiffness(1.0);
-        sys.layerSetTargetUbarAndDistribute(u_target, drive);
+        sys.layerSetDriveStiffness(1.0);
+        sys.layerSetTargetActive(drive);
+        sys.layerSetTargetUbar(u_target);
+        sys.layerSetUbar(u_target, drive);
 
         xt::xtensor<double, 2> u = xt::zeros<double>({stitch.nnode(), stitch.ndim()});
         auto n2 = stitch.nodemap(2);
@@ -177,6 +167,8 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         xt::view(u, xt::keep(n4), 0) = 2.0;
 
         REQUIRE(xt::allclose(sys.u(), u));
+        REQUIRE(xt::allclose(sys.fdrive(), 0.0));
+        REQUIRE(xt::allclose(sys.layerFdrive(), 0.0));
     }
 
     SECTION("Simple example")
@@ -248,18 +240,20 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         sys.setElastic(10.0 * xt::ones<double>({elas.size()}), 1.0 * xt::ones<double>({elas.size()}));
         sys.setPlastic(10.0 * xt::ones<double>({plas.size()}), 1.0 * xt::ones<double>({plas.size()}), epsy);
         sys.setDt(0.1);
-        sys.setDriveStiffness(1.0);
 
         xt::xtensor<bool, 2> drive = xt::zeros<bool>({3, 2});
         xt::xtensor<double, 2> u_target = xt::zeros<double>({3, 2});
         drive(0, 0) = true;
         drive(2, 0) = true;
         u_target(2, 0) = 0.1;
-        sys.layerSetTargetUbar(u_target, drive);
+
+        sys.layerSetDriveStiffness(1.0);
+        sys.layerSetTargetActive(drive);
+        sys.layerSetTargetUbar(u_target);
 
         sys.minimise();
 
-        u_target(1, 0) = 0.05; // expected result
+        u_target(1, 0) = 0.05; // expected result (layer not prescribed)
 
         REQUIRE(xt::allclose(u_target, sys.layerUbar(), 5e-2, 5e-3));
     }
