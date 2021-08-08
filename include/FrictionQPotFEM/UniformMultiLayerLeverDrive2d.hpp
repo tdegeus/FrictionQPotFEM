@@ -26,6 +26,18 @@ inline System::System(
     const std::vector<xt::xtensor<size_t, 1>>& node,
     const xt::xtensor<bool, 1>& layer_is_plastic)
 {
+    this->init_lever(coor, conn, dofs, iip, elem, node, layer_is_plastic);
+}
+
+inline void System::init_lever(
+    const xt::xtensor<double, 2>& coor,
+    const xt::xtensor<size_t, 2>& conn,
+    const xt::xtensor<size_t, 2>& dofs,
+    const xt::xtensor<size_t, 1>& iip,
+    const std::vector<xt::xtensor<size_t, 1>>& elem,
+    const std::vector<xt::xtensor<size_t, 1>>& node,
+    const xt::xtensor<bool, 1>& layer_is_plastic)
+{
     this->init(coor, conn, dofs, iip, elem, node, layer_is_plastic);
 
     m_lever_hi.resize({m_n_layer});
