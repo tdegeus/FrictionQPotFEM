@@ -103,22 +103,22 @@ make install
 conda install -c conda-forge python-frictionpotfem
 ```
 
-Note that *xsimd* and hardware optimisations are **not enabled**. 
+Note that *xsimd* and hardware optimisations are **not enabled**.
 To enable them you have to compile on your system, as is discussed next.
 
 ## From source
 
->   You need *xtensor*, *xtensor-python* and optionally *xsimd* as prerequisites. 
->   Additionally, Python needs to know how to find them. 
+>   You need *xtensor*, *xtensor-python* and optionally *xsimd* as prerequisites.
+>   Additionally, Python needs to know how to find them.
 >   The easiest is to use *conda* to get the prerequisites:
-> 
+>
 >   ```bash
 >   conda install -c conda-forge xtensor-python
 >   conda install -c conda-forge xsimd
 >   ```
->   
->   If you then compile and install with the same environment 
->   you should be good to go. 
+>
+>   If you then compile and install with the same environment
+>   you should be good to go.
 >   Otherwise, a bit of manual labour might be needed to
 >   treat the dependencies.
 
@@ -136,6 +136,30 @@ python -m pip install . -vv
 ```
 
 # Change-log
+
+## v0.13.0
+
+Multi-layer: overhaul, adding drive with a lever (#95, #96)
+
+*   Simplifying tests
+*   Adding "UniformMultiLayerLeverDrive2d"
+
+*   Changing protected functions "UniformMultiLayerIndividualDrive2d":
+    *   Splitting "computeForceDrive" -> "computeLayerUbarActive"/"computeForceFromTargetUbar"
+    *   Adding "updated_target_ubar"
+
+*   Changing API "UniformMultiLayerIndividualDrive2d":
+
+    *   Renaming "layerSetTargetUbarAndDistribute" -> "layerSetUbar"
+    *   Renaming "setDriveStiffness" -> "layerSetDriveStiffness"
+    *   Adding "layerSetTargetActive" to activate driving springs
+    *   Adding "layerTargetActive"
+    *   Adding "layerTagetUbar_addAffineSimpleShear" that only affects the driving frame
+    *   "addAffineSimpleShear" (only affects body)
+    *   "layerSetTargetUbar" (activation of springs now in "layerSetTargetActive")
+
+*   Internal renaming
+*   Code-style update
 
 ## v0.12.3
 
@@ -161,7 +185,7 @@ python -m pip install . -vv
 
 ## v0.11.5
 
-*   `addSimpleShearToFixedStress`: making assertion on elastic step optional in 
+*   `addSimpleShearToFixedStress`: making assertion on elastic step optional in
     `addElasticSimpleShearToFixedStress` (#88)
 *   Using GMatElastoPlasticQPot::version() (#87)
 
@@ -202,7 +226,7 @@ python -m pip install . -vv
 
 ## v0.10.0
 
-*   Branching common methods from UniformSingleLayer2d to Generic2d 
+*   Branching common methods from UniformSingleLayer2d to Generic2d
     (UniformSingleLayer2d now only has one class based on the HybridSystem).
 *   Making returned references explicit.
 *   Adding deprecation warnings Energy() to Python API.
@@ -248,7 +272,7 @@ python -m pip install . -vv
 *   Compute sign of displacement perturbation
 *   Add affine shear step
 *   Adding "currentYield*" offset overload
-*   LocalTrigger: adding option to evaluate only small slice; making energy relative to the  
+*   LocalTrigger: adding option to evaluate only small slice; making energy relative to the
     volume of a plastic element (not to that of the system); adding simple-shear search
 *   Splitting tests in several sources, enable Windows CI
 *   Trigger: most output
@@ -258,7 +282,7 @@ python -m pip install . -vv
     -   Changing call of parent constructor
 *   Deprecated local energy barriers (#33)
 *   Implementation triggering of smallest energy barrier (#31)
-    -   API Change: Removing "init" functions, using constructors directly. 
+    -   API Change: Removing "init" functions, using constructors directly.
         Adding stiffness matrix.
     -   Adding triggering protocol
 *    Exploring energy barrier upon trigger (#30)
