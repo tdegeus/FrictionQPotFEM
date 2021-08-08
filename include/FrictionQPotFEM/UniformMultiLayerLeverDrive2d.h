@@ -108,6 +108,27 @@ public:
 protected:
 
     /**
+     *  Define basic geometry.
+     *  This function class UniformMultiLayerIndividualDrive2d::init().
+     *
+     *  \param coor Nodal coordinates.
+     *  \param conn Connectivity.
+     *  \param dofs DOFs per node.
+     *  \param iip DOFs whose displacement is fixed.
+     *  \param elem Elements per layer.
+     *  \param node Nodes per layer.
+     *  \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
+     */
+    void init_lever(
+        const xt::xtensor<double, 2>& coor,
+        const xt::xtensor<size_t, 2>& conn,
+        const xt::xtensor<size_t, 2>& dofs,
+        const xt::xtensor<size_t, 1>& iip,
+        const std::vector<xt::xtensor<size_t, 1>>& elem,
+        const std::vector<xt::xtensor<size_t, 1>>& node,
+        const xt::xtensor<bool, 1>& layer_is_plastic);
+
+    /**
      *  Evaluate relevant forces when m_u is updated.
      *  The assumption is made that the lever has no inertia:
      *  its position is computed by assuming that the sum of moments acting on it is zero.
