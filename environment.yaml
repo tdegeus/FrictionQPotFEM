@@ -1,38 +1,24 @@
 channels:
   - conda-forge
 dependencies:
-  # dependencies
-  - xtensor
-  - goosefem
-  - gmatelastoplasticqpot
-
-  # optional dependencies
-  # - xsimd
-
-  # build tools
+  - catch2
   - cmake
+  - doxygen
+  - fmt
+  - gmatelastoplasticqpot
+  - goosefem
+  - h5py
+  - highfive
+  - mathjax
+  - matplotlib
   - ninja
-  - setuptools_scm
-
-  # Python API
-  - python
   - numpy
   - pip
-  - xtensor-python
-  - pyxtensor
-
-  # run tests
-  - catch2
-  - python-goosefem
-  - python-gmattensor
+  - python
   - python-gmatelastoplasticqpot
-
-  # run examples
-  - fmt
-  - highfive
-  - h5py
-  - matplotlib
-
-  # build docs
-  - doxygen
-  - mathjax
+  - python-gmattensor
+  - python-goosefem
+  - pyxtensor
+  - setuptools_scm
+  - xtensor
+  - xtensor-python
