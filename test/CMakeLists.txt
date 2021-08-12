@@ -6,13 +6,27 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     find_package(FrictionQPotFEM REQUIRED CONFIG)
 endif()
 
-set(ASSERT ON)
-set(DEBUG OFF)
-set(ALIGN OFF)
+if(NOT USE_WARNINGS)
+    set(USE_WARNINGS 1)
+endif()
 
-set(CMAKE_BUILD_TYPE Release)
+if(NOT USE_ASSERT)
+    set(USE_ASSERT 1)
+endif()
 
-set(test_name "unit-tests")
+if(NOT USE_DEBUG)
+    set(USE_DEBUG 1)
+endif()
+
+if(NOT USE_SIMD)
+    set(USE_SIMD 0)
+endif()
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(testname "unit-tests")
 
 find_package(Catch2 REQUIRED)
 find_package(xtensor REQUIRED)
@@ -30,24 +44,32 @@ if (NOT ${CMAKE_COMPILER_IS_GNUCXX})
     list(APPEND exec UniformSingleLayer2d_LocalTrigger.cpp)
 endif()
 
-add_executable(${test_name} ${exec})
+add_executable(${testname} ${exec})
 
-target_link_libraries(${test_name} PRIVATE
+target_link_libraries(${testname} PRIVATE
     Catch2::Catch2
     FrictionQPotFEM
     FrictionQPotFEM::compiler_warnings)
 
-if(ASSERT)
-    target_link_libraries(${test_name} PRIVATE FrictionQPotFEM::assert)
+if(USE_WARNINGS)
+    target_link_libraries(${testname} PRIVATE FrictionQPotFEM::warnings)
+    message(STATUS "Compiling ${PROJECT_NAME}-test with FrictionQPotFEM::warnings")
 endif()
 
-if(DEBUG)
-    target_link_libraries(${test_name} PRIVATE FrictionQPotFEM::debug)
+if(USE_ASSERT)
+    target_link_libraries(${testname} PRIVATE FrictionQPotFEM::assert)
+    message(STATUS "Compiling ${PROJECT_NAME}-test with FrictionQPotFEM::assert")
 endif()
 
-if(ALIGN)
+if(USE_DEBUG)
+    target_link_libraries(${testname} PRIVATE FrictionQPotFEM::debug)
+    message(STATUS "Compiling ${PROJECT_NAME}-test with FrictionQPotFEM::debug")
+endif()
+
+if(USE_SIMD)
     find_package(xsimd REQUIRED)
-    target_link_libraries(${test_name} PRIVATE xtensor::use_xsimd xtensor::optimize)
+    target_link_libraries(${testname} PRIVATE xtensor::use_xsimd xtensor::optimize)
+    message(STATUS "Compiling ${PROJECT_NAME}-test with hardware optimization")
 endif()
 
-add_test(NAME ${test_name} COMMAND ${test_name})
+add_test(NAME ${testname} COMMAND ${testname})
