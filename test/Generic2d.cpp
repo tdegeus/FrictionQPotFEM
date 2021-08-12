@@ -8,22 +8,22 @@ TEST_CASE("FrictionQPotFEM::Generic2d", "Generic2d.h")
 {
     SECTION("Compare System and HybridSystem")
     {
-        GooseFEM::Mesh::Quad4::Regular mesh(1, 1);
+        GooseFEM::Mesh::Quad4::Regular mesh(3, 3);
 
         FrictionQPotFEM::Generic2d::System full(
             mesh.coor(),
             mesh.conn(),
             mesh.dofs(),
             xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
-            xt::xtensor<size_t, 1>{},
-            xt::xtensor<size_t, 1>{0});
+            xt::xtensor<size_t, 1>{0, 1, 2, 3, 5, 6, 7, 8},
+            xt::xtensor<size_t, 1>{4});
 
-        full.setMassMatrix(xt::ones<double>({1}));
-        full.setDampingMatrix(xt::ones<double>({1}));
+        full.setMassMatrix(xt::ones<double>({mesh.nelem()}));
+        full.setDampingMatrix(xt::ones<double>({mesh.nelem()}));
 
         full.setElastic(
-            xt::xtensor<double, 1>{},
-            xt::xtensor<double, 1>{});
+            xt::ones<double>({8}),
+            xt::ones<double>({8}));
 
         full.setPlastic(
             xt::xtensor<double, 1>{1.0},
@@ -37,15 +37,15 @@ TEST_CASE("FrictionQPotFEM::Generic2d", "Generic2d.h")
             mesh.conn(),
             mesh.dofs(),
             xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
-            xt::xtensor<size_t, 1>{},
-            xt::xtensor<size_t, 1>{0});
+            xt::xtensor<size_t, 1>{0, 1, 2, 3, 5, 6, 7, 8},
+            xt::xtensor<size_t, 1>{4});
 
-        reduced.setMassMatrix(xt::ones<double>({1}));
-        reduced.setDampingMatrix(xt::ones<double>({1}));
+        reduced.setMassMatrix(xt::ones<double>({mesh.nelem()}));
+        reduced.setDampingMatrix(xt::ones<double>({mesh.nelem()}));
 
         reduced.setElastic(
-            xt::xtensor<double, 1>{},
-            xt::xtensor<double, 1>{});
+            xt::ones<double>({8}),
+            xt::ones<double>({8}));
 
         reduced.setPlastic(
             xt::xtensor<double, 1>{1.0},
@@ -66,12 +66,10 @@ TEST_CASE("FrictionQPotFEM::Generic2d", "Generic2d.h")
         reduced.setU(u);
 
         REQUIRE(xt::allclose(full.Eps(), reduced.Eps()));
-        REQUIRE(xt::allclose(full.Eps(), full.plastic_Eps()));
-        REQUIRE(xt::allclose(reduced.Eps(), reduced.plastic_Eps()));
+        REQUIRE(xt::allclose(full.plastic_Eps(), reduced.plastic_Eps()));
 
         REQUIRE(xt::allclose(full.Sig(), reduced.Sig()));
-        REQUIRE(xt::allclose(full.Sig(), full.plastic_Sig()));
-        REQUIRE(xt::allclose(reduced.Sig(), reduced.plastic_Sig()));
+        REQUIRE(xt::allclose(full.plastic_Sig(), reduced.plastic_Sig()));
 
         REQUIRE(xt::allclose(full.plastic_CurrentYieldLeft(), reduced.plastic_CurrentYieldLeft()));
         REQUIRE(xt::allclose(full.plastic_CurrentYieldRight(), reduced.plastic_CurrentYieldRight()));

@@ -131,27 +131,27 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
 
     SECTION("System::addSimpleShearEventDriven")
     {
-        GooseFEM::Mesh::Quad4::Regular mesh(1, 1);
+        GooseFEM::Mesh::Quad4::Regular mesh(3, 3);
 
         FrictionQPotFEM::UniformSingleLayer2d::System sys(
             mesh.coor(),
             mesh.conn(),
             mesh.dofs(),
             xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
-            xt::xtensor<size_t, 1>{},
-            xt::xtensor<size_t, 1>{0});
+            xt::xtensor<size_t, 1>{0, 1, 2, 6, 7, 8},
+            xt::xtensor<size_t, 1>{3, 4, 5});
 
-        sys.setMassMatrix(xt::ones<double>({1}));
-        sys.setDampingMatrix(xt::ones<double>({1}));
+        sys.setMassMatrix(xt::ones<double>({mesh.nelem()}));
+        sys.setDampingMatrix(xt::ones<double>({mesh.nelem()}));
 
         sys.setElastic(
-            xt::xtensor<double, 1>{},
-            xt::xtensor<double, 1>{});
+            xt::ones<double>({6}),
+            xt::ones<double>({6}));
 
         sys.setPlastic(
-            xt::xtensor<double, 1>{1.0},
-            xt::xtensor<double, 1>{1.0},
-            xt::xtensor<double, 2>{{1.0, 2.0, 3.0, 4.0}});
+            xt::xtensor<double, 1>{1.0, 1.0, 1.0},
+            xt::xtensor<double, 1>{1.0, 1.0, 1.0},
+            xt::xtensor<double, 2>{{1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}});
 
         sys.setDt(1.0);
 
@@ -205,27 +205,27 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
 
     SECTION("System::addSimpleShearToFixedStress")
     {
-        GooseFEM::Mesh::Quad4::Regular mesh(1, 1);
+        GooseFEM::Mesh::Quad4::Regular mesh(3, 3);
 
         FrictionQPotFEM::UniformSingleLayer2d::System sys(
             mesh.coor(),
             mesh.conn(),
             mesh.dofs(),
             xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
-            xt::xtensor<size_t, 1>{},
-            xt::xtensor<size_t, 1>{0});
+            xt::xtensor<size_t, 1>{0, 1, 2, 6, 7, 8},
+            xt::xtensor<size_t, 1>{3, 4, 5});
 
-        sys.setMassMatrix(xt::ones<double>({1}));
-        sys.setDampingMatrix(xt::ones<double>({1}));
+        sys.setMassMatrix(xt::ones<double>({mesh.nelem()}));
+        sys.setDampingMatrix(xt::ones<double>({mesh.nelem()}));
 
         sys.setElastic(
-            xt::xtensor<double, 1>{},
-            xt::xtensor<double, 1>{});
+            xt::ones<double>({6}),
+            xt::ones<double>({6}));
 
         sys.setPlastic(
-            xt::xtensor<double, 1>{1.0},
-            xt::xtensor<double, 1>{1.0},
-            xt::xtensor<double, 2>{{1.0, 2.0, 3.0, 4.0}});
+            xt::xtensor<double, 1>{1.0, 1.0, 1.0},
+            xt::xtensor<double, 1>{1.0, 1.0, 1.0},
+            xt::xtensor<double, 2>{{1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}});
 
         sys.setDt(1.0);
 

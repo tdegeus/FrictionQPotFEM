@@ -610,6 +610,10 @@ inline void HybridSystem::setElastic(
 {
     System::setElastic(K_elem, G_elem);
 
+    if (m_nelem_elas == 0) {
+        return;
+    }
+
     xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_elas, m_nip});
     xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_elas, m_nip});
     xt::view(idx, xt::range(0, m_nelem_elas), xt::all()) = xt::arange<size_t>(m_nelem_elas).reshape({-1, 1});
@@ -629,6 +633,10 @@ inline void HybridSystem::setPlastic(
     const xt::xtensor<double, 2>& epsy_elem)
 {
     System::setPlastic(K_elem, G_elem, epsy_elem);
+
+    if (m_nelem_plas == 0) {
+        return;
+    }
 
     xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_plas, m_nip});
     xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
