@@ -378,8 +378,12 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
                 ISCLOSE(full.residual(), reduced.residual());
 
                 std::cout << "residual = " << reduced.residual() << ", " << full.residual() << std::endl;
+                double tmp = full.residual();
+                std::cout << "tmp = " << tmp << std::endl;
+                bool smp = stop.stop(tmp, 1e-5);
+                std::cout << "smp = " << smp << std::endl;
 
-                if (stop.stop(full.residual(), 1e-5)) {
+                if (smp) {
                     std::cout << "iiter = " << iiter << std::endl;
                     break;
                 }
