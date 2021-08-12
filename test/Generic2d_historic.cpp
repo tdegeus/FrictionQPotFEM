@@ -368,9 +368,13 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
                 std::cout << "reduced.timeStep()" << std::endl;
                 reduced.timeStep();
 
+                std::cout << "REQUIRE(xt::allclose(full.fmaterial(), reduced.fmaterial()));" << std::endl;
                 REQUIRE(xt::allclose(full.fmaterial(), reduced.fmaterial()));
+                std::cout << "REQUIRE(xt::allclose(full.u(), reduced.u()));" << std::endl;
                 REQUIRE(xt::allclose(full.u(), reduced.u()));
+                std::cout << "REQUIRE(full.t() == Approx(reduced.t()));" << std::endl;
                 REQUIRE(full.t() == Approx(reduced.t()));
+                std::cout << "ISCLOSE(full.residual(), reduced.residual());" << std::endl;
                 ISCLOSE(full.residual(), reduced.residual());
 
                 std::cout << "residual = " << reduced.residual() << ", " << full.residual() << std::endl;
