@@ -1,4 +1,5 @@
-
+#include <stdexcept> // can be removed for QPot > 0.9.6
+#include <string> // can be removed for QPot > 0.9.6
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
 #include <highfive/H5Easy.hpp>
 #include <fmt/core.h>

@@ -1,4 +1,5 @@
-
+#include <stdexcept> // can be removed for QPot > 0.9.6
+#include <string> // can be removed for QPot > 0.9.6
 #include <FrictionQPotFEM/Generic2d.h>
 #include <xtensor/xrandom.hpp>
 #include <xtensor/xcsv.hpp>
