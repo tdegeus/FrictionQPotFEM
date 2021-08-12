@@ -610,18 +610,16 @@ inline void HybridSystem::setElastic(
 {
     System::setElastic(K_elem, G_elem);
 
-    if (m_nelem_elas == 0) {
-        return;
+    if (m_nelem_elas > 0) {
+        xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_elas, m_nip});
+        xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_elas, m_nip});
+        xt::view(idx, xt::range(0, m_nelem_elas), xt::all()) = xt::arange<size_t>(m_nelem_elas).reshape({-1, 1});
+        m_material_elas.setElastic(I, idx, K_elem, G_elem);
+        m_material_elas.setStrain(m_Eps_elas);
+        FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(
+            m_material_elas.type(),
+            GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
     }
-
-    xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_elas, m_nip});
-    xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_elas, m_nip});
-    xt::view(idx, xt::range(0, m_nelem_elas), xt::all()) = xt::arange<size_t>(m_nelem_elas).reshape({-1, 1});
-    m_material_elas.setElastic(I, idx, K_elem, G_elem);
-    m_material_elas.setStrain(m_Eps_elas);
-    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(
-        m_material_elas.type(),
-        GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
 
     m_K_elas = GooseFEM::Matrix(m_conn_elas, m_dofs);
     m_K_elas.assemble(m_quad_elas.Int_gradN_dot_tensor4_dot_gradNT_dV(m_material_elas.Tangent()));
@@ -634,18 +632,16 @@ inline void HybridSystem::setPlastic(
 {
     System::setPlastic(K_elem, G_elem, epsy_elem);
 
-    if (m_nelem_plas == 0) {
-        return;
+    if (m_nelem_plas > 0) {
+        xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_plas, m_nip});
+        xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
+        xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) = xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
+        m_material_plas.setCusp(I, idx, K_elem, G_elem, epsy_elem);
+        m_material_plas.setStrain(m_Eps_plas);
+        FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(
+            m_material_plas.type(),
+            GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
     }
-
-    xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_plas, m_nip});
-    xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
-    xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) = xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
-    m_material_plas.setCusp(I, idx, K_elem, G_elem, epsy_elem);
-    m_material_plas.setStrain(m_Eps_plas);
-    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(
-        m_material_plas.type(),
-        GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
 }
 
 inline const GMatElastoPlasticQPot::Cartesian2d::Array<2>& HybridSystem::material_elastic() const

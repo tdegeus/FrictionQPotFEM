@@ -67,6 +67,10 @@ jobs:
       working-directory: build
       run: cmake --build .
 
+    - name: Debug
+      working-directory: build
+      run: ./test/unit-tests
+
     - name: Run C++ ${{ matrix.prop }}
       working-directory: build
       run: ctest --output-on-failure

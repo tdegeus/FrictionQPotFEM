@@ -340,6 +340,8 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
 
         for (size_t inc = 0 ; inc < dF.shape(0); ++inc) {
 
+            std::cout << "inc = " << inc << std::endl;
+
             REQUIRE(xt::allclose(full.u(), reduced.u()));
 
             auto u = full.u();
@@ -357,9 +359,13 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
 
             REQUIRE(xt::allclose(full.u(), reduced.u()));
 
+            std::cout << "starting iterations" << std::endl;
+
             for (size_t iiter = 0; iiter < 99999 ; ++iiter) {
 
+                std::cout << "full.timeStep()" << std::endl;
                 full.timeStep();
+                std::cout << "reduced.timeStep()" << std::endl;
                 reduced.timeStep();
 
                 REQUIRE(xt::allclose(full.fmaterial(), reduced.fmaterial()));
@@ -367,7 +373,10 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
                 REQUIRE(full.t() == Approx(reduced.t()));
                 ISCLOSE(full.residual(), reduced.residual());
 
+                std::cout << "residual = " << reduced.residual() << ", " << full.residual() << std::endl;
+
                 if (stop.stop(full.residual(), 1e-5)) {
+                    std::cout << "iiter = " << iiter << std::endl;
                     break;
                 }
             }
