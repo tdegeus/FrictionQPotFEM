@@ -17,15 +17,15 @@ jobs:
         runs-on: [ubuntu-latest, macos-latest, windows-latest]
         include:
           - runs-on: ubuntu-latest
-            config: -DBUILD_TESTS=1 -DBUILD_EXAMPLES=1 -DBUILD_DOCS=1
+            config: -DBUILD_TESTS=1 -DBUILD_EXAMPLES=1 -DBUILD_DOCS=1 -DUSE_ASSERT=0
             conda: environment.yaml
             prop: tests, examples & docs
           - runs-on: macos-latest
-            config: -DBUILD_TESTS=1
+            config: -DBUILD_TESTS=1 -DUSE_ASSERT=0
             conda: .ci_environment_tests.yaml
             prop: tests
           - runs-on: windows-latest
-            config: -DBUILD_TESTS=1
+            config: -DBUILD_TESTS=1 -DUSE_ASSERT=0
             conda: .ci_environment_tests.yaml
             prop: tests
 
