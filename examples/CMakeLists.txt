@@ -1,55 +1,57 @@
+cmake_minimum_required(VERSION 3.16..3.21)
 
-cmake_minimum_required(VERSION 3.16)
+set(MYPROJECT "${PROJECT_NAME}-examples")
 
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     project(FrictionQPotFEM-examples)
     find_package(FrictionQPotFEM REQUIRED CONFIG)
-    option(USE_ASSERT "${PROJECT_NAME}: Build with FrictionQPotFEM::assert" ON)
-    option(USE_DEBUG "${PROJECT_NAME}: Build with FrictionQPotFEM::debug" OFF)
-    option(USE_SIMD "${PROJECT_NAME}: Use xsimd and -march=native if available" OFF)
+    option(USE_ASSERT "${PROJECT_NAME}: Build with assertions" ON)
+    option(USE_DEBUG "${PROJECT_NAME}: Build in debug mode" OFF)
+    option(USE_SIMD "${PROJECT_NAME}: Build with hardware optimization" OFF)
+    set(MYPROJECT "${PROJECT_NAME}")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+set(HIGHFIVE_USE_BOOST 0)
+set(HIGHFIVE_USE_XTENSOR 1)
+
+find_package(xtensor REQUIRED)
+find_package(HighFive REQUIRED)
+find_package(fmt REQUIRED)
+
+add_library(mytarget INTERFACE IMPORTED)
+
+target_link_libraries(mytarget INTERFACE
+    FrictionQPotFEM
+    FrictionQPotFEM::compiler_warnings
+    fmt::fmt
+    HighFive)
+
+if(USE_ASSERT)
+    target_link_libraries(mytarget INTERFACE FrictionQPotFEM::assert)
+    message(STATUS "Compiling ${MYPROJECT} with assertions")
+endif()
+
+if(USE_DEBUG)
+    target_link_libraries(mytarget INTERFACE FrictionQPotFEM::debug)
+    message(STATUS "Compiling ${MYPROJECT} in debug mode")
+endif()
+
+if(USE_SIMD)
+    find_package(xsimd REQUIRED)
+    target_link_libraries(mytarget INTERFACE xtensor::use_xsimd xtensor::optimize)
+    message(STATUS "Compiling ${MYPROJECT} with hardware optimization")
+endif()
+
 file(GLOB APP_SOURCES *.cpp)
 
-foreach(testsourcefile ${APP_SOURCES})
-
-    string(REPLACE ".cpp" "" testname ${testsourcefile})
-    get_filename_component(testname ${testname} NAME)
-
-    add_executable(${testname} ${testsourcefile})
-
-    set(HIGHFIVE_USE_BOOST 0)
-    set(HIGHFIVE_USE_XTENSOR 1)
-
-    find_package(xtensor REQUIRED)
-    find_package(HighFive REQUIRED)
-    find_package(fmt REQUIRED)
-
-    target_link_libraries(${testname} PUBLIC
-        FrictionQPotFEM
-        FrictionQPotFEM::compiler_warnings
-        fmt::fmt
-        HighFive)
-
-    if(USE_ASSERT)
-        target_link_libraries(${testname} PRIVATE FrictionQPotFEM::assert)
-        message(STATUS "Compiling ${PROJECT_NAME}-examples(${testname}) with FrictionQPotFEM::assert")
-    endif()
-
-    if(USE_DEBUG)
-        target_link_libraries(${testname} PRIVATE FrictionQPotFEM::debug)
-        message(STATUS "Compiling ${PROJECT_NAME}-examples(${testname}) with FrictionQPotFEM::debug")
-    endif()
-
-    if(USE_SIMD)
-        find_package(xsimd REQUIRED)
-        target_link_libraries(${testname} PRIVATE xtensor::use_xsimd xtensor::optimize)
-        message(STATUS "Compiling ${PROJECT_NAME}-examples(${testname}) with hardware optimization")
-    endif()
-
+foreach(mysource ${APP_SOURCES})
+    string(REPLACE ".cpp" "" myexec ${mysource})
+    get_filename_component(myexec ${myexec} NAME)
+    add_executable(${myexec} ${mysource})
+    target_link_libraries(${myexec} PRIVATE mytarget)
 endforeach()
 
