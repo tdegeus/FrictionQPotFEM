@@ -4,13 +4,14 @@ cmake_minimum_required(VERSION 3.16)
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     project(FrictionQPotFEM-examples)
     find_package(FrictionQPotFEM REQUIRED CONFIG)
+    option(USE_ASSERT "${PROJECT_NAME}: Build with FrictionQPotFEM::assert" ON)
+    option(USE_DEBUG "${PROJECT_NAME}: Build with FrictionQPotFEM::debug" OFF)
+    option(USE_SIMD "${PROJECT_NAME}: Use xsimd and -march=native if available" OFF)
 endif()
 
-set(WARNINGS ON)
-set(ASSERT OFF)
-set(ALIGN OFF)
-
-set(CMAKE_BUILD_TYPE Release)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
 
 file(GLOB APP_SOURCES *.cpp)
 
@@ -30,20 +31,24 @@ foreach(testsourcefile ${APP_SOURCES})
 
     target_link_libraries(${testname} PUBLIC
         FrictionQPotFEM
+        FrictionQPotFEM::compiler_warnings
         fmt::fmt
         HighFive)
 
-    if(WARNINGS)
-        target_link_libraries(${testname} PRIVATE FrictionQPotFEM::compiler_warnings)
-    endif()
-
-    if(ASSERT)
+    if(USE_ASSERT)
         target_link_libraries(${testname} PRIVATE FrictionQPotFEM::assert)
+        message(STATUS "Compiling ${PROJECT_NAME}-examples(${testname}) with FrictionQPotFEM::assert")
     endif()
 
-    if(ALIGN)
+    if(USE_DEBUG)
+        target_link_libraries(${testname} PRIVATE FrictionQPotFEM::debug)
+        message(STATUS "Compiling ${PROJECT_NAME}-examples(${testname}) with FrictionQPotFEM::debug")
+    endif()
+
+    if(USE_SIMD)
         find_package(xsimd REQUIRED)
         target_link_libraries(${testname} PRIVATE xtensor::use_xsimd xtensor::optimize)
+        message(STATUS "Compiling ${PROJECT_NAME}-examples(${testname}) with hardware optimization")
     endif()
 
 endforeach()
