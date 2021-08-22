@@ -535,8 +535,8 @@ protected:
     std::vector<xt::xtensor<double, 4>> m_Eps_p; ///< Strain field for pure shear perturbation.
     std::vector<xt::xtensor<double, 4>> m_Sig_s; ///< Stress field for simple shear perturbation.
     std::vector<xt::xtensor<double, 4>> m_Sig_p; ///< Stress field for pure shear perturbation.
-    std::vector<xt::xtensor<double, 1>> m_nodemap; ///< Node-map for the roll.
-    std::vector<xt::xtensor<double, 1>> m_elemmap; ///< Element-map for the roll.
+    std::vector<xt::xtensor<size_t, 1>> m_nodemap; ///< Node-map for the roll.
+    std::vector<xt::xtensor<size_t, 1>> m_elemmap; ///< Element-map for the roll.
 
     xt::xtensor<double, 2> m_dV; ///< Integration point volume.
     double m_V; ///< Volume of a plastic element: assumed homogeneous!
