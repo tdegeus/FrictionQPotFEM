@@ -171,7 +171,8 @@ inline void System::layerSetDriveStiffness(double k, bool symmetric)
 {
     m_drive_spring_symmetric = symmetric;
     m_drive_k = k;
-    this->updated_u(); // updates forces
+    this->computeLayerUbarActive();
+    this->computeForceFromTargetUbar();
 }
 
 template <class T>
@@ -179,7 +180,8 @@ inline void System::layerSetTargetActive(const T& active)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
     m_layerdrive_active = active;
-    this->updated_u(); // updates forces
+    this->computeLayerUbarActive();
+    this->computeForceFromTargetUbar();
 }
 
 inline xt::xtensor<double, 2> System::layerUbar()
@@ -224,7 +226,7 @@ inline void System::layerSetTargetUbar(const T& ubar)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
     m_layerdrive_targetubar = ubar;
-    this->updated_target_ubar(); // the average displacement and other forces do not change
+    this->computeForceFromTargetUbar(); // the average displacement and other forces do not change
 }
 
 template <class S, class T>
@@ -243,7 +245,11 @@ inline void System::layerSetUbar(const S& ubar, const T& prescribe)
         }
     }
 
-    this->updated_u(); // updates average displacement and all forces
+    this->computeLayerUbarActive();
+    this->computeForceFromTargetUbar();
+    if (m_allset) {
+        this->computeForceMaterial();
+    }
 }
 
 inline void System::addAffineSimpleShear(double delta_gamma)
@@ -251,7 +257,12 @@ inline void System::addAffineSimpleShear(double delta_gamma)
     for (size_t n = 0; n < m_nnode; ++n) {
         m_u(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - m_coor(0, 1));
     }
-    this->updated_u(); // updates average displacement and all forces
+
+    this->computeLayerUbarActive();
+    this->computeForceFromTargetUbar();
+    if (m_allset) {
+        this->computeForceMaterial();
+    }
 }
 
 template <class T>
@@ -261,7 +272,7 @@ inline void System::layerTagetUbar_addAffineSimpleShear(double delta_gamma, cons
     for (size_t i = 0; i < m_n_layer; ++i) {
         m_layerdrive_targetubar(i, 0) += 2.0 * delta_gamma * height(i);
     }
-    this->updated_target_ubar(); // the average displacement and other forces do not change
+    this->computeForceFromTargetUbar(); // the average displacement and other forces do not change
 }
 
 inline void System::computeLayerUbarActive()
@@ -325,11 +336,6 @@ inline xt::xtensor<double, 2> System::layerFdrive() const
     }
 
     return ret;
-}
-
-inline void System::updated_target_ubar()
-{
-    this->computeForceFromTargetUbar();
 }
 
 inline void System::updated_u()
