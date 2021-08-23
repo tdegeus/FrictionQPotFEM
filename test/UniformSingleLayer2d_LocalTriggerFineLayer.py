@@ -210,7 +210,7 @@ Sig = mat.Stress()
 
 sys = model.System(coor, conn, dofs, iip, elastic, plastic)
 sys.setElastic(10 * np.ones(len(elastic)), 1 * np.ones(len(elastic)))
-sys.setPlastic(10 * np.ones(len(plastic)), 1 * np.ones(len(plastic)), np.cumsum(np.ones(5 * len(plastic)).reshape(5, -1), axis=0))
+sys.setPlastic(10 * np.ones(len(plastic)), 1 * np.ones(len(plastic)), np.cumsum(np.ones(50 * len(plastic)).reshape(len(plastic), -1), axis=0))
 sys.setMassMatrix(np.ones(nelem))
 sys.setDampingMatrix(np.ones(nelem))
 sys.setDt(1)
