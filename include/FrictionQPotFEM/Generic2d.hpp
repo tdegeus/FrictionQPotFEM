@@ -554,7 +554,9 @@ inline size_t System::minimise(double tol, size_t niter_tol, size_t max_iter)
         }
     }
 
-    FRICTIONQPOTFEM_REQUIRE(false);
+    bool converged = false;
+    FRICTIONQPOTFEM_REQUIRE(converged == true);
+    return std::numeric_limits<size_t>::max();
 }
 
 template <class C, class E, class L>
