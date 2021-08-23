@@ -225,6 +225,8 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         xt::view(iip, xt::range(2 * bottom.size(), 2 * bottom.size() + top.size())) =
             xt::view(dofs, xt::keep(top), 1);
 
+        iip = xt::unique(iip);
+
         auto elas = xt::concatenate(xt::xtuple(stitch.elemmap(0), stitch.elemmap(2)));
         auto plas = stitch.elemmap(1);
         xt::xtensor<bool, 1> is_plastic = {false, true, false};
