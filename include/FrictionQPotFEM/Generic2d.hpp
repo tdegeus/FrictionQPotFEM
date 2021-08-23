@@ -604,6 +604,8 @@ inline void HybridSystem::initHybridSystem(
 
     m_material_elas = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem_elas, m_nip});
     m_material_plas = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem_plas, m_nip});
+
+    m_K_elas = GooseFEM::Matrix(m_conn_elas, m_dofs);
 }
 
 inline void HybridSystem::setElastic(
@@ -611,6 +613,10 @@ inline void HybridSystem::setElastic(
     const xt::xtensor<double, 1>& G_elem)
 {
     System::setElastic(K_elem, G_elem);
+
+    if (m_nelem_elas == 0) {
+        return;
+    }
 
     xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_elas, m_nip});
     xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_elas, m_nip});
@@ -621,7 +627,6 @@ inline void HybridSystem::setElastic(
         m_material_elas.type(),
         GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
 
-    m_K_elas = GooseFEM::Matrix(m_conn_elas, m_dofs);
     m_K_elas.assemble(m_quad_elas.Int_gradN_dot_tensor4_dot_gradNT_dV(m_material_elas.Tangent()));
 }
 
@@ -631,6 +636,10 @@ inline void HybridSystem::setPlastic(
     const xt::xtensor<double, 2>& epsy_elem)
 {
     System::setPlastic(K_elem, G_elem, epsy_elem);
+
+    if (m_nelem_plas == 0) {
+        return;
+    }
 
     xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_plas, m_nip});
     xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
