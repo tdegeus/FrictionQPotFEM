@@ -248,11 +248,6 @@ protected:
     void computeForceFromTargetUbar();
 
     /**
-     *  Evaluate relevant when the target ubar is updated (but m_u remains unchanged).
-     */
-    void updated_target_ubar();
-
-    /**
      *  Evaluate relevant forces when m_u is updated.
      */
     void updated_u() override;
