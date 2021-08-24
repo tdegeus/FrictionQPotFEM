@@ -4,39 +4,9 @@
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xio.hpp>
 #include <FrictionQPotFEM/Generic2d.h>
+#include <GooseFEM/Iterate.h>
 
 #define ISCLOSE(a, b) REQUIRE_THAT((a), Catch::WithinAbs((b), 1e-8));
-
-class MyStopList {
-public:
-
-    MyStopList(size_t n = 1)
-    {
-        m_res.resize(n);
-        std::fill(m_res.begin(), m_res.end(), std::numeric_limits<double>::infinity());
-    }
-
-    void reset()
-    {
-        std::fill(m_res.begin(), m_res.end(), std::numeric_limits<double>::infinity());
-    }
-
-    bool stop(double res, double tol, double abstol)
-    {
-        std::rotate(m_res.begin(), m_res.begin() + 1, m_res.end());
-        m_res.back() = res;
-        if (m_res.front() > tol) {
-            return false;
-        }
-        if (std::is_sorted(m_res.cbegin(), m_res.cend(), std::greater<double>())) {
-            return true;
-        }
-        return std::all_of(m_res.cbegin(), m_res.cend(), [abstol](const auto& e) { return e < abstol; });
-    }
-
-private:
-    std::vector<double> m_res;
-};
 
 TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
 {
@@ -369,7 +339,7 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
         auto dV = full.quad().AsTensor<2>(full.dV());
         REQUIRE(xt::allclose(dV, reduced.quad().AsTensor<2>(reduced.dV())));
 
-        MyStopList stop(20); // todo: Patches GooseFEM's version, can be removed
+        GooseFEM::Iterate::StopList residuals(20);
 
         for (size_t inc = 0 ; inc < dF.shape(0); ++inc) {
 
@@ -400,7 +370,9 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
                 REQUIRE(full.t() == Approx(reduced.t()));
                 ISCLOSE(full.residual(), reduced.residual());
 
-                if (stop.stop(full.residual(), 1e-5, 1e-8)) {
+                residuals.roll_insert(full.residual());
+
+                if ((residuals.descending() && residuals.all_less(1e-5)) || residuals.all_less(1e-8)) {
                     break;
                 }
                 if (iiter >= 9999) {
@@ -411,7 +383,7 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
             full.quench();
             reduced.quench();
 
-            stop.reset();
+            residuals.reset();
 
             REQUIRE(xt::allclose(full.Eps(), reduced.Eps()));
             REQUIRE(xt::allclose(full.Sig(), reduced.Sig()));

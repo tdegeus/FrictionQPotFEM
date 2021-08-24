@@ -80,11 +80,8 @@ int main()
 
         sys.setU(u);
 
-        // todo: remove if when bug in GooseFEM::Iterate is solved
-        if (inc > 0) {
-            size_t niter = sys.minimise();
-            std::cout << inc << ", " << niter << std::endl;
-        }
+        size_t niter = sys.minimise();
+        std::cout << inc << ", " << niter << std::endl;
 
         xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         xt::xtensor<double, 2> Sigbar = xt::average(sys.Sig(), dV, {0, 1});
