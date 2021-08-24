@@ -137,6 +137,19 @@ python -m pip install . -vv
 
 # Change-log
 
+## v0.14.0
+
+*   Updating GooseFEM::Iterate -> minor stopping criterion change (#109)
+*   Fixing 'bug': computing forces only when possible (#108)
+*   HybridSystem: dealing with empty elastic or plastic definitions (#106)
+*   Improving assertion messages (#106)
+*   Minor bugfixes in UniformSingleLayer2d::LocalTrigger (#100)
+*   [CI] Using assertions
+*   [tests] Minor bugfixes (#106)
+*   [setup.py] Improve verbosity
+*   [CMake] Add CMake options USE_ASSERT, USE_DEBUG, USE_SIMD (#102)
+*   [CMake] Enable Python (deprecation) warnings
+
 ## v0.13.0
 
 Multi-layer: overhaul, adding drive with a lever (#95, #96)
