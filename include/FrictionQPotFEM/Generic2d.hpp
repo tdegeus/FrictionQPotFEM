@@ -516,8 +516,10 @@ inline void System::timeStep()
 
 inline size_t System::timeStepsUntilEvent(double tol, size_t niter_tol, size_t max_iter)
 {
+    FRICTIONQPOTFEM_REQUIRE(tol < 1.0);
     size_t iiter;
-    GooseFEM::Iterate::StopList stop(niter_tol);
+    double tol2 = tol * tol;
+    GooseFEM::Iterate::StopList residuals(niter_tol);
 
     auto idx_n = this->plastic_CurrentIndex();
 
@@ -531,7 +533,9 @@ inline size_t System::timeStepsUntilEvent(double tol, size_t niter_tol, size_t m
             return iiter;
         }
 
-        if (stop.stop(this->residual(), tol)) {
+        residuals.roll_insert(this->residual());
+
+        if ((residuals.descending() && residuals.all_less(tol)) || residuals.all_less(tol2)) {
             this->quench();
             return 0;
         }
@@ -542,13 +546,17 @@ inline size_t System::timeStepsUntilEvent(double tol, size_t niter_tol, size_t m
 
 inline size_t System::minimise(double tol, size_t niter_tol, size_t max_iter)
 {
-    GooseFEM::Iterate::StopList stop(niter_tol);
+    FRICTIONQPOTFEM_REQUIRE(tol < 1.0);
+    double tol2 = tol * tol;
+    GooseFEM::Iterate::StopList residuals(niter_tol);
 
     for (size_t iiter = 0; iiter < max_iter ; ++iiter) {
 
         this->timeStep();
 
-        if (stop.stop(this->residual(), tol)) {
+        residuals.roll_insert(this->residual());
+
+        if ((residuals.descending() && residuals.all_less(tol)) || residuals.all_less(tol2)) {
             this->quench();
             return iiter;
         }
