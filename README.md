@@ -139,6 +139,8 @@ python -m pip install . -vv
 
 ## v0.14.0
 
+*   [Python] Switching to scikit-build
+*   Renaming "test" -> "tests"
 *   Updating GooseFEM::Iterate -> minor stopping criterion change (#109)
 *   Fixing 'bug': computing forces only when possible (#108)
 *   HybridSystem: dealing with empty elastic or plastic definitions (#106)
