@@ -11,8 +11,6 @@
 #include <xtensor-python/pyarray.hpp>
 #include <xtensor-python/pytensor.hpp>
 
-#define FRICTIONQPOTFEM_ENABLE_WARNING_PYTHON
-
 #include <FrictionQPotFEM/version.h>
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
 #include <FrictionQPotFEM/UniformMultiLayerIndividualDrive2d.h>
@@ -20,7 +18,7 @@
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(FrictionQPotFEM, m)
+PYBIND11_MODULE(_FrictionQPotFEM, m)
 {
      xt::import_numpy();
 

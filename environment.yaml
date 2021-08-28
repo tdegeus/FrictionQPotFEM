@@ -13,12 +13,12 @@ dependencies:
   - matplotlib
   - ninja
   - numpy
-  - pip
+  - pybind11
   - python
   - python-gmatelastoplasticqpot
   - python-gmattensor
   - python-goosefem
-  - pyxtensor
+  - scikit-build
   - setuptools_scm
   - xtensor
   - xtensor-python
