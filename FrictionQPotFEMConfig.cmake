@@ -61,7 +61,7 @@ if(NOT TARGET FrictionQPotFEM::warnings)
     set_property(
         TARGET FrictionQPotFEM::warnings
         PROPERTY INTERFACE_COMPILE_DEFINITIONS
-        FRICTIONQPOTFEM_WARNING_PYTHON)
+        FRICTIONQPOTFEM_ENABLE_WARNING_PYTHON)
 endif()
 
 # Define support target "FrictionQPotFEM::assert"
