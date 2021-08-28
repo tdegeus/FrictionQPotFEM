@@ -54,6 +54,16 @@ if(NOT TARGET FrictionQPotFEM::compiler_warnings)
     endif()
 endif()
 
+# Define support target "FrictionQPotFEM::warnings"
+
+if(NOT TARGET FrictionQPotFEM::warnings)
+    add_library(FrictionQPotFEM::warnings INTERFACE IMPORTED)
+    set_property(
+        TARGET FrictionQPotFEM::warnings
+        PROPERTY INTERFACE_COMPILE_DEFINITIONS
+        FRICTIONQPOTFEM_WARNING_PYTHON)
+endif()
+
 # Define support target "FrictionQPotFEM::assert"
 
 if(NOT TARGET FrictionQPotFEM::assert)

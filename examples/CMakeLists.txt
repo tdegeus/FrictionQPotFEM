@@ -1,15 +1,14 @@
 cmake_minimum_required(VERSION 3.16..3.21)
 
-set(MYPROJECT "${PROJECT_NAME}-examples")
-
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     project(FrictionQPotFEM-examples)
     find_package(FrictionQPotFEM REQUIRED CONFIG)
     option(USE_ASSERT "${PROJECT_NAME}: Build with assertions" ON)
     option(USE_DEBUG "${PROJECT_NAME}: Build in debug mode" OFF)
     option(USE_SIMD "${PROJECT_NAME}: Build with hardware optimization" OFF)
-    set(MYPROJECT "${PROJECT_NAME}")
 endif()
+
+set(MYPROJECT "${PROJECT_NAME}-examples")
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
@@ -25,22 +24,23 @@ find_package(fmt REQUIRED)
 add_library(mytarget INTERFACE IMPORTED)
 
 target_link_libraries(mytarget INTERFACE
-    FrictionQPotFEM
-    FrictionQPotFEM::compiler_warnings
+    ${PROJECT_NAME}
+    ${PROJECT_NAME}::compiler_warnings
     fmt::fmt
     HighFive)
 
 if(USE_ASSERT)
-    target_link_libraries(mytarget INTERFACE FrictionQPotFEM::assert)
+    target_link_libraries(mytarget INTERFACE ${PROJECT_NAME}::assert)
     message(STATUS "Compiling ${MYPROJECT} with assertions")
 endif()
 
 if(USE_DEBUG)
-    target_link_libraries(mytarget INTERFACE FrictionQPotFEM::debug)
+    target_link_libraries(mytarget INTERFACE ${PROJECT_NAME}::debug)
     message(STATUS "Compiling ${MYPROJECT} in debug mode")
 endif()
 
 if(USE_SIMD)
+    find_package(xtensor REQUIRED)
     find_package(xsimd REQUIRED)
     target_link_libraries(mytarget INTERFACE xtensor::use_xsimd xtensor::optimize)
     message(STATUS "Compiling ${MYPROJECT} with hardware optimization")
@@ -54,4 +54,3 @@ foreach(mysource ${APP_SOURCES})
     add_executable(${myexec} ${mysource})
     target_link_libraries(${myexec} PRIVATE mytarget)
 endforeach()
-
