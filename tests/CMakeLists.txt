@@ -15,8 +15,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(myexec "unit-tests")
-
 find_package(Catch2 REQUIRED)
 find_package(xtensor REQUIRED)
 
@@ -28,12 +26,12 @@ target_link_libraries(mytarget INTERFACE
     Catch2::Catch2)
 
 if(USE_ASSERT)
-    target_link_libraries(mytarget INTERFACE FrictionQPotFEM::assert)
+    target_link_libraries(mytarget INTERFACE ${PROJECT_NAME}::assert)
     message(STATUS "Compiling ${MYPROJECT} with assertions")
 endif()
 
 if(USE_DEBUG)
-    target_link_libraries(mytarget INTERFACE FrictionQPotFEM::debug)
+    target_link_libraries(mytarget INTERFACE ${PROJECT_NAME}::debug)
     message(STATUS "Compiling ${MYPROJECT} in debug mode")
 endif()
 
