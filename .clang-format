@@ -27,6 +27,8 @@ BinPackParameters: false
 ExperimentalAutoDetectBinPacking: false
 AllowAllParametersOfDeclarationOnNextLine: false
 
+# AlwaysBreakAfterDefinitionReturnType: All
+
 BraceWrapping:
     AfterFunction: true
     AfterClass: false
