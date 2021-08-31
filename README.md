@@ -137,6 +137,17 @@ python -m pip install . -vv
 
 # Change-log
 
+## v0.14.2
+
+*   [clang-format] Adding formatting suggestion
+*   [pre-commit] Applying pre-commit (#112)
+*   Version list: sorting alphabetically
+*   [Python] Minor bugfix: wrong import
+
+## v0.14.1
+
+*   Fixing missing version string.
+
 ## v0.14.0
 
 *   [Python] Switching to scikit-build
