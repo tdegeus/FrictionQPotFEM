@@ -1,8 +1,8 @@
 
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
-#include <xtensor/xrandom.hpp>
-#include <xtensor/xcsv.hpp>
 #include <fstream>
+#include <xtensor/xcsv.hpp>
+#include <xtensor/xrandom.hpp>
 
 int main()
 {
@@ -45,17 +45,23 @@ int main()
     double dt = 1.0 / (c * qh) / 10.0;
 
     double k = 2.0;
-    xt::xtensor<double, 2> epsy = 1e-5 + 1e-3 * xt::random::weibull<double>(std::array<size_t, 2>{N, 1000}, k, 1.0);
+    std::array<size_t, 2> shape = {N, 1000};
+    xt::xtensor<double, 2> epsy = 1e-5 + 1e-3 * xt::random::weibull<double>(shape, k, 1.0);
     xt::view(epsy, xt::all(), 0) = 1e-5 + 1e-3 * xt::random::rand<double>({N});
     epsy = xt::cumsum(epsy, 1);
 
     // Initialise system
 
     FrictionQPotFEM::UniformSingleLayer2d::System sys(coor, conn, dofs, iip, elastic, plastic);
+
     sys.setMassMatrix(rho * xt::ones<double>({mesh.nelem()}));
     sys.setDampingMatrix(alpha * xt::ones<double>({mesh.nelem()}));
-    sys.setElastic(K * xt::ones<double>({elastic.size()}), G * xt::ones<double>({elastic.size()}));
-    sys.setPlastic(K * xt::ones<double>({plastic.size()}), G * xt::ones<double>({plastic.size()}), epsy);
+
+    xt::xtensor<double, 1> iel = xt::ones<double>({elastic.size()});
+    xt::xtensor<double, 1> ipl = xt::ones<double>({elastic.size()});
+    sys.setElastic(K * iel, G * iel);
+    sys.setPlastic(K * ipl, G * ipl, epsy);
+
     sys.setDt(dt);
 
     // Run

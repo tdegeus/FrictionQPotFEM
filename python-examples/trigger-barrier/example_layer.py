@@ -1,12 +1,11 @@
 import GooseFEM
 import GMatElastoPlasticQPot.Cartesian2d as GMat
 import numpy as np
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import GooseMPL as gplt
 import GMatTensor.Cartesian2d as gtens
 
-plt.style.use(['goose', 'goose-latex'])
+plt.style.use(["goose", "goose-latex"])
 
 
 def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
@@ -22,7 +21,7 @@ def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
 
     # strain, stress, tangent
     Eps = quad.AllocateQtensor(2, 0.0)
-    Sig = - Sigstar
+    Sig = -Sigstar
 
     # residual force
     fe = quad.Int_gradN_dot_tensor2_dV(Sig)
@@ -44,28 +43,28 @@ def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
     return GMat.Deviatoric(Eps[trigger, 0]), disp, Eps, Sig
 
 
-def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N = 100):
+def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N=100):
 
     # solve for "p = 0"
     a = dgamma ** 2
     b = 2 * gamma * dgamma
     c = gamma ** 2 + E ** 2 - epsy ** 2
     D = b ** 2 - 4 * a * c
-    smax = (- b + np.sqrt(D)) / (2.0 * a)
-    smin = (- b - np.sqrt(D)) / (2.0 * a)
+    smax = (-b + np.sqrt(D)) / (2.0 * a)
+    smin = (-b - np.sqrt(D)) / (2.0 * a)
 
     # solve for "s = 0"
     a = dE ** 2
-    b = 2 * E * dE;
+    b = 2 * E * dE
     c = E ** 2 + gamma ** 2 - epsy ** 2
     D = b ** 2 - 4 * a * c
-    pmax = (- b + np.sqrt(D)) / (2.0 * a)
-    pmin = (- b - np.sqrt(D)) / (2.0 * a)
+    pmax = (-b + np.sqrt(D)) / (2.0 * a)
+    pmin = (-b - np.sqrt(D)) / (2.0 * a)
 
     # add to list
     S = np.empty((2, N))
     P = np.empty((2, N))
-    n = int(- smin / (smax - smin) * N)
+    n = int(-smin / (smax - smin) * N)
     S[:, :n] = np.linspace(smin, 0, n).reshape(1, -1)
     S[:, n:] = np.linspace(0, smax, (N - n) + 1)[1:].reshape(1, -1)
     P[0, n - 1] = pmax
@@ -81,8 +80,8 @@ def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N = 100):
         b = 2 * E * dE
         c = E ** 2 + (gamma + s * dgamma) ** 2 - epsy ** 2
         D = b ** 2 - 4 * a * c
-        P[0, i] = (- b + np.sqrt(D)) / (2.0 * a)
-        P[1, i] = (- b - np.sqrt(D)) / (2.0 * a)
+        P[0, i] = (-b + np.sqrt(D)) / (2.0 * a)
+        P[1, i] = (-b - np.sqrt(D)) / (2.0 * a)
 
     return P, S
 
@@ -92,9 +91,12 @@ def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p):
     dE = np.empty(P.size)
 
     for i, (p, s) in enumerate(zip(P.ravel(), S.ravel())):
-        dE[i] = np.sum(gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV)
+        dE[i] = np.sum(
+            gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV
+        )
 
     return dE.reshape(P.shape)
+
 
 # ------------------------
 # initialise configuration
@@ -133,12 +135,9 @@ dofs[nodesRgt, :] = dofs[nodesLft, :]
 
 dofs = GooseFEM.Mesh.renumber(dofs)
 
-iip = np.concatenate((
-    dofs[nodesBot, 0],
-    dofs[nodesBot, 1],
-    dofs[nodesTop, 0],
-    dofs[nodesTop, 1]
-))
+iip = np.concatenate(
+    (dofs[nodesBot, 0], dofs[nodesBot, 1], dofs[nodesTop, 0], dofs[nodesTop, 1])
+)
 
 # simulation variables
 # --------------------
@@ -166,13 +165,13 @@ nip = quad.nip()
 # material definition
 mat = GMat.Array2d([nelem, nip])
 
-I = np.zeros(mat.shape(), dtype='int')
-I[elastic, :] = 1
-mat.setElastic(I, 10.0, 1.0)
+iden = np.zeros(mat.shape(), dtype="int")
+iden[elastic, :] = 1
+mat.setElastic(iden, 10.0, 1.0)
 
-I = np.zeros(mat.shape(), dtype='int')
-I[plastic, :] = 1
-mat.setElastic(I, 10.0, 1.0)
+iden = np.zeros(mat.shape(), dtype="int")
+iden[plastic, :] = 1
+mat.setElastic(iden, 10.0, 1.0)
 
 # solve
 # -----
@@ -219,32 +218,32 @@ config = []
 
 for i in range(nconfig):
 
-    Sigstar_s = np.array([
-        [ 0.0, +1.0],
-        [+1.0,  0.0]])
+    Sigstar_s = np.array([[0.0, +1.0], [+1.0, 0.0]])
 
-    Sigstar_p = np.array([
-        [+1.0,  0.0],
-        [ 0.0, -1.0]])
+    Sigstar_p = np.array([[+1.0, 0.0], [0.0, -1.0]])
 
-    Epsstar_s, u_s, Eps_s, Sig_s = ComputePerturbation(Sigstar_s, plastic[i], mat, quad, vector, K, Solver)
-    Epsstar_p, u_p, Eps_p, Sig_p = ComputePerturbation(Sigstar_p, plastic[i], mat, quad, vector, K, Solver)
+    Epsstar_s, u_s, Eps_s, Sig_s = ComputePerturbation(
+        Sigstar_s, plastic[i], mat, quad, vector, K, Solver
+    )
+    Epsstar_p, u_p, Eps_p, Sig_p = ComputePerturbation(
+        Sigstar_p, plastic[i], mat, quad, vector, K, Solver
+    )
 
     ret = {
-        'u_p': u_p,
-        'u_s': u_s,
-        'Eps_p': Eps_p,
-        'Eps_s': Eps_s,
-        'Sig_p': Sig_p,
-        'Sig_s': Sig_s,
-        'elemmap': [],
-        'nodemap': [],
+        "u_p": u_p,
+        "u_s": u_s,
+        "Eps_p": Eps_p,
+        "Eps_s": Eps_s,
+        "Sig_p": Sig_p,
+        "Sig_s": Sig_s,
+        "elemmap": [],
+        "nodemap": [],
     }
 
     for roll in range(int(N / nconfig)):
         elemmap = mesh.roll(roll)
-        ret['elemmap'] += [elemmap]
-        ret['nodemap'] += [GooseFEM.Mesh.elemmap2nodemap(elemmap, coor, conn)]
+        ret["elemmap"] += [elemmap]
+        ret["nodemap"] += [GooseFEM.Mesh.elemmap2nodemap(elemmap, coor, conn)]
 
     config += [ret]
 
@@ -252,35 +251,36 @@ Barrier = []
 
 for itrigger, trigger in enumerate(plastic):
 
-    Sigstar_s = np.array([
-        [ 0.0, +1.0],
-        [+1.0,  0.0]])
+    Sigstar_s = np.array([[0.0, +1.0], [+1.0, 0.0]])
 
-    Sigstar_p = np.array([
-        [+1.0,  0.0],
-        [ 0.0, -1.0]])
+    Sigstar_p = np.array([[+1.0, 0.0], [0.0, -1.0]])
 
-    Epsstar_s, u_s, Eps_s, Sig_s = ComputePerturbation(Sigstar_s, trigger, mat, quad, vector, K, Solver)
-    Epsstar_p, u_p, Eps_p, Sig_p = ComputePerturbation(Sigstar_p, trigger, mat, quad, vector, K, Solver)
+    Epsstar_s, u_s, Eps_s, Sig_s = ComputePerturbation(
+        Sigstar_s, trigger, mat, quad, vector, K, Solver
+    )
+    Epsstar_p, u_p, Eps_p, Sig_p = ComputePerturbation(
+        Sigstar_p, trigger, mat, quad, vector, K, Solver
+    )
 
     # Check with perturbation that is rolled periodically
     iconfig = int(itrigger % nconfig)
     roll = int((itrigger - itrigger % nconfig) / nconfig)
-    elemmap = config[iconfig]['elemmap'][roll]
-    nodemap = config[iconfig]['nodemap'][roll]
-    assert np.allclose(config[iconfig]['Eps_s'][elemmap, :], Eps_s)
-    assert np.allclose(config[iconfig]['Eps_p'][elemmap, :], Eps_p)
-    assert np.allclose(config[iconfig]['Sig_s'][elemmap, :], Sig_s)
-    assert np.allclose(config[iconfig]['Sig_p'][elemmap, :], Sig_p)
-    assert np.allclose(config[iconfig]['u_s'][nodemap, :], u_s)
-    assert np.allclose(config[iconfig]['u_p'][nodemap, :], u_p)
+    elemmap = config[iconfig]["elemmap"][roll]
+    nodemap = config[iconfig]["nodemap"][roll]
+    assert np.allclose(config[iconfig]["Eps_s"][elemmap, :], Eps_s)
+    assert np.allclose(config[iconfig]["Eps_p"][elemmap, :], Eps_p)
+    assert np.allclose(config[iconfig]["Sig_s"][elemmap, :], Sig_s)
+    assert np.allclose(config[iconfig]["Sig_p"][elemmap, :], Sig_p)
+    assert np.allclose(config[iconfig]["u_s"][nodemap, :], u_s)
+    assert np.allclose(config[iconfig]["u_p"][nodemap, :], u_p)
 
     # Current state for triggered element
     Epsd = GMat.Deviatoric(Eps[trigger, 0])
     gamma = Epsd[0, 1]
     E = Epsd[0, 0]
 
-    # Find which (s, p) lie on the yield surface, and to which energy change those perturbations lead
+    # Find which (s, p) lie on the yield surface,
+    # and to which energy change those perturbations lead
     Py, Sy = GetYieldSurface(E, gamma, Epsstar_p[0, 0], Epsstar_s[0, 1])
     Ey = ComputeEnergy(Py, Sy, Eps, Sig, quad.dV(), Eps_s, Sig_s, Eps_p, Sig_p)
 
@@ -293,22 +293,26 @@ for itrigger, trigger in enumerate(plastic):
     u = disp + pmin * u_p + smin * u_s
     ue = vector.AsElement(u)
     mat.setStrain(quad.SymGradN_vector(ue))
-    sigeq = GMat.Sigd(np.average(mat.Stress(), weights=quad.AsTensor(2, quad.dV()), axis=1))
+    sigeq = GMat.Sigd(
+        np.average(mat.Stress(), weights=quad.AsTensor(2, quad.dV()), axis=1)
+    )
 
     fig, ax = plt.subplots()
 
-    gplt.patch(coor=coor + u, conn=conn, cindex=sigeq, cmap='Reds', axis=ax, clim=(0, 1.0))
+    gplt.patch(
+        coor=coor + u, conn=conn, cindex=sigeq, cmap="Reds", axis=ax, clim=(0, 1.0)
+    )
 
-    ax.axis('equal')
-    plt.axis('off')
+    ax.axis("equal")
+    plt.axis("off")
 
-    fig.savefig('example_layer_config-perturbed_{0:d}.pdf'.format(itrigger))
+    fig.savefig(f"example_layer_config-perturbed_{itrigger:d}.pdf")
     plt.close(fig)
 
 
 fig, ax = plt.subplots()
 ax.plot(np.arange(len(Barrier)), Barrier)
-ax.set_xlabel(r'$r$')
-ax.set_ylabel(r'$\Delta E$')
-fig.savefig('example_layer_barriers.pdf')
+ax.set_xlabel(r"$r$")
+ax.set_ylabel(r"$\Delta E$")
+fig.savefig("example_layer_barriers.pdf")
 plt.close(fig)

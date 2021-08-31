@@ -22,13 +22,15 @@ Either:
 
 -   Define externally using::
 
-        -DFRICTIONQPOTFEM_VERSION="`python -c "from setuptools_scm import get_version; print(get_version())"`"
+        ver = `python -c "from setuptools_scm import get_version; print(get_version())"`
+        -DFRICTIONQPOTFEM_VERSION="${ver}"
 
     From the root of this project. This is what ``setup.py`` does.
 
-Note that both ``CMakeLists.txt`` and ``setup.py`` will construct the version using ``setuptools_scm``.
-Tip: use the environment variable ``SETUPTOOLS_SCM_PRETEND_VERSION``
-to overwrite the automatic version.
+Note that both ``CMakeLists.txt`` and ``setup.py`` will construct the version using
+``setuptools_scm``.
+Tip: use the environment variable ``SETUPTOOLS_SCM_PRETEND_VERSION`` to overwrite
+the automatic version.
 */
 #ifndef FRICTIONQPOTFEM_VERSION
 #define FRICTIONQPOTFEM_VERSION "@PROJECT_VERSION@"

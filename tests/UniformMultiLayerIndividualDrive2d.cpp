@@ -1,10 +1,12 @@
 #define CATCH_CONFIG_MAIN
-#include <catch2/catch.hpp>
-#include <xtensor/xrandom.hpp>
 #include <FrictionQPotFEM/UniformMultiLayerIndividualDrive2d.h>
 #include <GooseFEM/MeshQuad4.h>
+#include <catch2/catch.hpp>
+#include <xtensor/xrandom.hpp>
 
-TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLayerIndividualDrive2d.h")
+TEST_CASE(
+    "FrictionQPotFEM::UniformMultiLayerIndividualDrive2d",
+    "UniformMultiLayerIndividualDrive2d.h")
 {
     SECTION("Basic")
     {
@@ -22,7 +24,13 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         auto iip = xt::ravel(xt::view(dofs, xt::keep(bottom)));
 
         FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
-            stitch.coor(), stitch.conn(), dofs, iip, stitch.elemmap(), stitch.nodemap(), is_plastic);
+            stitch.coor(),
+            stitch.conn(),
+            dofs,
+            iip,
+            stitch.elemmap(),
+            stitch.nodemap(),
+            is_plastic);
 
         REQUIRE(xt::all(xt::equal(is_plastic, sys.layerIsPlastic())));
     }
@@ -43,7 +51,13 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         auto iip = xt::ravel(xt::view(dofs, xt::keep(bottom)));
 
         FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
-            stitch.coor(), stitch.conn(), dofs, iip, stitch.elemmap(), stitch.nodemap(), is_plastic);
+            stitch.coor(),
+            stitch.conn(),
+            dofs,
+            iip,
+            stitch.elemmap(),
+            stitch.nodemap(),
+            is_plastic);
 
         // to pass internal fail safes
         size_t nelas = sys.elastic().size();
@@ -51,7 +65,10 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         sys.setMassMatrix(xt::ones<double>({stitch.nelem()}));
         sys.setDampingMatrix(xt::ones<double>({stitch.nelem()}));
         sys.setElastic(xt::ones<double>({nelas}), xt::ones<double>({nelas}));
-        sys.setPlastic(xt::ones<double>({nplas}), xt::ones<double>({nplas}), xt::ones<double>({nplas, size_t(1)}));
+        sys.setPlastic(
+            xt::ones<double>({nplas}),
+            xt::ones<double>({nplas}),
+            xt::ones<double>({nplas, size_t(1)}));
         sys.setDt(1.0);
 
         xt::xtensor<bool, 2> drive = xt::zeros<bool>({nlayer, size_t(2)});
@@ -70,8 +87,10 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         xt::xtensor<double, 2> f = xt::zeros<double>({stitch.nnode(), stitch.ndim()});
 
         {
-            xt::xtensor<size_t, 1> c0 = stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesBottomLeftCorner()}, 2);
-            xt::xtensor<size_t, 1> c1 = stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesBottomRightCorner()}, 2);
+            xt::xtensor<size_t, 1> c0 =
+                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesBottomLeftCorner()}, 2);
+            xt::xtensor<size_t, 1> c1 =
+                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesBottomRightCorner()}, 2);
             xt::xtensor<size_t, 1> e = stitch.nodeset(mesh.nodesBottomOpenEdge(), 2);
 
             xt::view(f, xt::keep(c0), 0) -= 0.25;
@@ -80,8 +99,10 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         }
 
         {
-            xt::xtensor<size_t, 1> c0 = stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesTopLeftCorner()}, 2);
-            xt::xtensor<size_t, 1> c1 = stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesTopRightCorner()}, 2);
+            xt::xtensor<size_t, 1> c0 =
+                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesTopLeftCorner()}, 2);
+            xt::xtensor<size_t, 1> c1 =
+                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesTopRightCorner()}, 2);
             xt::xtensor<size_t, 1> e = stitch.nodeset(mesh.nodesTopOpenEdge(), 2);
 
             xt::view(f, xt::keep(c0), 0) -= 0.25;
@@ -90,8 +111,10 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         }
 
         {
-            xt::xtensor<size_t, 1> c0 = stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesBottomLeftCorner()}, 4);
-            xt::xtensor<size_t, 1> c1 = stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesBottomRightCorner()}, 4);
+            xt::xtensor<size_t, 1> c0 =
+                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesBottomLeftCorner()}, 4);
+            xt::xtensor<size_t, 1> c1 =
+                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesBottomRightCorner()}, 4);
             xt::xtensor<size_t, 1> e = stitch.nodeset(mesh.nodesBottomOpenEdge(), 4);
 
             xt::view(f, xt::keep(c0), 0) -= 0.5;
@@ -100,8 +123,10 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         }
 
         {
-            xt::xtensor<size_t, 1> c0 = stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesTopLeftCorner()}, 4);
-            xt::xtensor<size_t, 1> c1 = stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesTopRightCorner()}, 4);
+            xt::xtensor<size_t, 1> c0 =
+                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesTopLeftCorner()}, 4);
+            xt::xtensor<size_t, 1> c1 =
+                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesTopRightCorner()}, 4);
             xt::xtensor<size_t, 1> e = stitch.nodeset(mesh.nodesTopOpenEdge(), 4);
 
             xt::view(f, xt::keep(c0), 0) -= 0.5;
@@ -128,7 +153,13 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         auto iip = xt::ravel(xt::view(dofs, xt::keep(bottom)));
 
         FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
-            stitch.coor(), stitch.conn(), dofs, iip, stitch.elemmap(), stitch.nodemap(), is_plastic);
+            stitch.coor(),
+            stitch.conn(),
+            dofs,
+            iip,
+            stitch.elemmap(),
+            stitch.nodemap(),
+            is_plastic);
 
         size_t nelas = sys.elastic().size();
         size_t nplas = sys.plastic().size();
@@ -137,9 +168,7 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         sys.setMassMatrix(xt::eval(xt::ones<double>({stitch.nelem()})));
         sys.setDampingMatrix(xt::eval(xt::ones<double>({stitch.nelem()})));
 
-        sys.setElastic(
-            xt::eval(xt::ones<double>({nelas})),
-            xt::eval(xt::ones<double>({nelas})));
+        sys.setElastic(xt::eval(xt::ones<double>({nelas})), xt::eval(xt::ones<double>({nelas})));
 
         sys.setPlastic(
             xt::eval(xt::ones<double>({nplas})),
@@ -189,17 +218,15 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         stitch.push_back(x1, layer_plas.conn());
         stitch.push_back(x2, layer_elas.conn());
 
-        auto left = stitch.nodeset({
-            layer_elas.nodesLeftOpenEdge(),
-            layer_plas.nodesLeftEdge(),
-            layer_elas.nodesLeftOpenEdge()
-        });
+        auto left = stitch.nodeset(
+            {layer_elas.nodesLeftOpenEdge(),
+             layer_plas.nodesLeftEdge(),
+             layer_elas.nodesLeftOpenEdge()});
 
-        auto right = stitch.nodeset({
-            layer_elas.nodesRightOpenEdge(),
-            layer_plas.nodesRightEdge(),
-            layer_elas.nodesRightOpenEdge()
-        });
+        auto right = stitch.nodeset(
+            {layer_elas.nodesRightOpenEdge(),
+             layer_plas.nodesRightEdge(),
+             layer_elas.nodesRightOpenEdge()});
 
         auto bottom = stitch.nodeset(layer_elas.nodesBottomEdge(), 0);
         auto top = stitch.nodeset(layer_elas.nodesTopEdge(), 2);
@@ -210,14 +237,13 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
         auto dofs = stitch.dofs();
 
         xt::view(dofs, xt::keep(right), xt::all()) = xt::view(dofs, xt::keep(left), xt::all());
-        dofs(top(0), 0) =  dofs(top.periodic(-1), 0);
-        dofs(bottom(0), 0) =  dofs(bottom.periodic(-1), 0);
+        dofs(top(0), 0) = dofs(top.periodic(-1), 0);
+        dofs(bottom(0), 0) = dofs(bottom.periodic(-1), 0);
         dofs = GooseFEM::Mesh::renumber(dofs);
 
         xt::xtensor<size_t, 1> iip = xt::empty<size_t>({bottom.size() * 2 + top.size()});
 
-        xt::view(iip, xt::range(0, bottom.size())) =
-            xt::view(dofs, xt::keep(bottom), 0);
+        xt::view(iip, xt::range(0, bottom.size())) = xt::view(dofs, xt::keep(bottom), 0);
 
         xt::view(iip, xt::range(bottom.size(), 2 * bottom.size())) =
             xt::view(dofs, xt::keep(bottom), 1);
@@ -239,8 +265,10 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLa
 
         sys.setMassMatrix(1.0 * xt::ones<double>({nelem}));
         sys.setDampingMatrix(0.01 * xt::ones<double>({nelem}));
-        sys.setElastic(10.0 * xt::ones<double>({elas.size()}), 1.0 * xt::ones<double>({elas.size()}));
-        sys.setPlastic(10.0 * xt::ones<double>({plas.size()}), 1.0 * xt::ones<double>({plas.size()}), epsy);
+        sys.setElastic(
+            10.0 * xt::ones<double>({elas.size()}), 1.0 * xt::ones<double>({elas.size()}));
+        sys.setPlastic(
+            10.0 * xt::ones<double>({plas.size()}), 1.0 * xt::ones<double>({plas.size()}), epsy);
         sys.setDt(0.1);
 
         xt::xtensor<bool, 2> drive = xt::zeros<bool>({3, 2});

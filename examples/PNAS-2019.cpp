@@ -1,7 +1,7 @@
 
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
-#include <highfive/H5Easy.hpp>
 #include <fmt/core.h>
+#include <highfive/H5Easy.hpp>
 
 #define MYASSERT(expr) MYASSERT_IMPL(expr, __FILE__, __LINE__)
 #define MYASSERT_IMPL(expr, file, line) \
@@ -11,7 +11,7 @@
             ": assertion failed (" #expr ") \n\t"); \
     }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     MYASSERT(argc == 2);
 
@@ -63,8 +63,12 @@ int main(int argc, char *argv[])
         double u_res = xt::norm_l2(u - u_stored)() / xt::norm_l2(u)();
         MYASSERT(xt::norm_l2(u - u_stored)() / xt::norm_l2(u)() < 1e-5);
 
-        fmt::print("inc = {0:8d}, kick = {1:1d}, iiter = {2:8d}, disp_error = {3:.2e}\n",
-            inc, kick, niter, u_res);
+        fmt::print(
+            "inc = {0:8d}, kick = {1:1d}, iiter = {2:8d}, disp_error = {3:.2e}\n",
+            inc,
+            kick,
+            niter,
+            u_res);
     }
 
     return 0;

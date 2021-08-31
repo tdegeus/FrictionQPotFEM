@@ -1,8 +1,8 @@
 #define CATCH_CONFIG_MAIN
-#include <catch2/catch.hpp>
-#include <xtensor/xrandom.hpp>
 #include <FrictionQPotFEM/UniformMultiLayerLeverDrive2d.h>
 #include <GooseFEM/MeshQuad4.h>
+#include <catch2/catch.hpp>
+#include <xtensor/xrandom.hpp>
 
 TEST_CASE("FrictionQPotFEM::UniformMultiLayerLeverDrive2d", "UniformMultiLayerLeverDrive2d.h")
 {
@@ -22,7 +22,13 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerLeverDrive2d", "UniformMultiLayerLe
         auto iip = xt::ravel(xt::view(dofs, xt::keep(bottom)));
 
         FrictionQPotFEM::UniformMultiLayerLeverDrive2d::System sys(
-            stitch.coor(), stitch.conn(), dofs, iip, stitch.elemmap(), stitch.nodemap(), is_plastic);
+            stitch.coor(),
+            stitch.conn(),
+            dofs,
+            iip,
+            stitch.elemmap(),
+            stitch.nodemap(),
+            is_plastic);
 
         size_t nelas = sys.elastic().size();
         size_t nplas = sys.plastic().size();
@@ -31,9 +37,7 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerLeverDrive2d", "UniformMultiLayerLe
         sys.setMassMatrix(xt::eval(xt::ones<double>({stitch.nelem()})));
         sys.setDampingMatrix(xt::eval(xt::ones<double>({stitch.nelem()})));
 
-        sys.setElastic(
-            xt::eval(xt::ones<double>({nelas})),
-            xt::eval(xt::ones<double>({nelas})));
+        sys.setElastic(xt::eval(xt::ones<double>({nelas})), xt::eval(xt::ones<double>({nelas})));
 
         sys.setPlastic(
             xt::eval(xt::ones<double>({nplas})),

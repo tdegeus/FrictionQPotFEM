@@ -18,7 +18,7 @@ def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
 
     # strain, stress, tangent
     Eps = np.zeros(quad.shape_qtensor(2))
-    Sig = - Sigstar
+    Sig = -Sigstar
 
     # residual force
     fe = quad.Int_gradN_dot_tensor2_dV(Sig)
@@ -40,28 +40,28 @@ def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
     return GMat.Deviatoric(Eps[trigger, 0]), disp, Eps, Sig
 
 
-def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N = 100):
+def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N=100):
 
     # solve for "p = 0"
     a = dgamma ** 2
     b = 2 * gamma * dgamma
     c = gamma ** 2 + E ** 2 - epsy ** 2
     D = b ** 2 - 4 * a * c
-    smax = (- b + np.sqrt(D)) / (2.0 * a)
-    smin = (- b - np.sqrt(D)) / (2.0 * a)
+    smax = (-b + np.sqrt(D)) / (2.0 * a)
+    smin = (-b - np.sqrt(D)) / (2.0 * a)
 
     # solve for "s = 0"
     a = dE ** 2
-    b = 2 * E * dE;
+    b = 2 * E * dE
     c = E ** 2 + gamma ** 2 - epsy ** 2
     D = b ** 2 - 4 * a * c
-    pmax = (- b + np.sqrt(D)) / (2.0 * a)
-    pmin = (- b - np.sqrt(D)) / (2.0 * a)
+    pmax = (-b + np.sqrt(D)) / (2.0 * a)
+    pmin = (-b - np.sqrt(D)) / (2.0 * a)
 
     # add to list
     S = np.empty((2, N))
     P = np.empty((2, N))
-    n = int(- smin / (smax - smin) * N)
+    n = int(-smin / (smax - smin) * N)
     S[:, :n] = np.linspace(smin, 0, n).reshape(1, -1)
     S[:, n:] = np.linspace(0, smax, (N - n) + 1)[1:].reshape(1, -1)
     P[0, n - 1] = pmax
@@ -77,8 +77,8 @@ def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N = 100):
         b = 2 * E * dE
         c = E ** 2 + (gamma + s * dgamma) ** 2 - epsy ** 2
         D = b ** 2 - 4 * a * c
-        P[0, i] = (- b + np.sqrt(D)) / (2.0 * a)
-        P[1, i] = (- b - np.sqrt(D)) / (2.0 * a)
+        P[0, i] = (-b + np.sqrt(D)) / (2.0 * a)
+        P[1, i] = (-b - np.sqrt(D)) / (2.0 * a)
 
     return P, S
 
@@ -88,9 +88,12 @@ def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p, e):
     dE = np.empty(P.size)
 
     for i, (p, s) in enumerate(zip(P.ravel(), S.ravel())):
-        dE[i] = np.sum(gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV)
+        dE[i] = np.sum(
+            gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV
+        )
 
-    return (dE / np.sum(dV[e,: ])).reshape(P.shape)
+    return (dE / np.sum(dV[e, :])).reshape(P.shape)
+
 
 # ------------------------
 # initialise configuration
@@ -129,12 +132,9 @@ dofs[nodesRgt, :] = dofs[nodesLft, :]
 
 dofs = GooseFEM.Mesh.renumber(dofs)
 
-iip = np.concatenate((
-    dofs[nodesBot, 0],
-    dofs[nodesBot, 1],
-    dofs[nodesTop, 0],
-    dofs[nodesTop, 1]
-))
+iip = np.concatenate(
+    (dofs[nodesBot, 0], dofs[nodesBot, 1], dofs[nodesTop, 0], dofs[nodesTop, 1])
+)
 
 # simulation variables
 # --------------------
@@ -162,13 +162,13 @@ nip = quad.nip()
 # material definition
 mat = GMat.Array2d([nelem, nip])
 
-I = np.zeros(mat.shape(), dtype='int')
-I[elastic, :] = 1
-mat.setElastic(I, 10.0, 1.0)
+iden = np.zeros(mat.shape(), dtype=int)
+iden[elastic, :] = 1
+mat.setElastic(iden, 10.0, 1.0)
 
-I = np.zeros(mat.shape(), dtype='int')
-I[plastic, :] = 1
-mat.setElastic(I, 10.0, 1.0)
+iden = np.zeros(mat.shape(), dtype=int)
+iden[plastic, :] = 1
+mat.setElastic(iden, 10.0, 1.0)
 
 # solve
 # -----
@@ -209,8 +209,12 @@ Sig = mat.Stress()
 # ----------------------
 
 sys = model.System(coor, conn, dofs, iip, elastic, plastic)
-sys.setElastic(10 * np.ones(len(elastic)), 1 * np.ones(len(elastic)))
-sys.setPlastic(10 * np.ones(len(plastic)), 1 * np.ones(len(plastic)), np.cumsum(np.ones(50 * len(plastic)).reshape(len(plastic), -1), axis=0))
+
+epsy = np.cumsum(np.ones(50 * len(plastic)).reshape(len(plastic), -1), axis=0)
+iel = np.ones(len(elastic))
+ipl = np.ones(len(plastic))
+sys.setElastic(10 * iel, 1 * iel)
+sys.setPlastic(10 * ipl, 1 * ipl, epsy)
 sys.setMassMatrix(np.ones(nelem))
 sys.setDampingMatrix(np.ones(nelem))
 sys.setDt(1)
@@ -222,16 +226,16 @@ Barrier = []
 
 for itrigger, trigger in enumerate(plastic):
 
-    Sigstar_s = np.array([
-        [ 0.0, +1.0],
-        [+1.0,  0.0]])
+    Sigstar_s = np.array([[0.0, +1.0], [+1.0, 0.0]])
 
-    Sigstar_p = np.array([
-        [+1.0,  0.0],
-        [ 0.0, -1.0]])
+    Sigstar_p = np.array([[+1.0, 0.0], [0.0, -1.0]])
 
-    Epsstar_s, u_s, Eps_s, Sig_s = ComputePerturbation(Sigstar_s, trigger, mat, quad, vector, K, Solver)
-    Epsstar_p, u_p, Eps_p, Sig_p = ComputePerturbation(Sigstar_p, trigger, mat, quad, vector, K, Solver)
+    Epsstar_s, u_s, Eps_s, Sig_s = ComputePerturbation(
+        Sigstar_s, trigger, mat, quad, vector, K, Solver
+    )
+    Epsstar_p, u_p, Eps_p, Sig_p = ComputePerturbation(
+        Sigstar_p, trigger, mat, quad, vector, K, Solver
+    )
 
     assert np.allclose(u_s, modelTrigger.u_s(itrigger))
     assert np.allclose(u_p, modelTrigger.u_p(itrigger))
@@ -245,9 +249,12 @@ for itrigger, trigger in enumerate(plastic):
     gamma = Epsd[0, 1]
     E = Epsd[0, 0]
 
-    # Find which (s, p) lie on the yield surface, and to which energy change those perturbations lead
+    # Find which (s, p) lie on the yield surface,
+    # and to which energy change those perturbations lead
     Py, Sy = GetYieldSurface(E, gamma, Epsstar_p[0, 0], Epsstar_s[0, 1])
-    Ey = ComputeEnergy(Py, Sy, Eps, Sig, quad.dV(), Eps_s, Sig_s, Eps_p, Sig_p, plastic[itrigger])
+    Ey = ComputeEnergy(
+        Py, Sy, Eps, Sig, quad.dV(), Eps_s, Sig_s, Eps_p, Sig_p, plastic[itrigger]
+    )
 
     # Plot perturbed configuration
 
