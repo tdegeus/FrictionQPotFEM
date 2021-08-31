@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
+#include <FrictionQPotFEM/UniformSingleLayer2d.h>
 #include <catch2/catch.hpp>
 #include <xtensor/xrandom.hpp>
-#include <FrictionQPotFEM/UniformSingleLayer2d.h>
 
 TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLayer2d.h")
 {
@@ -51,8 +51,10 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
         FrictionQPotFEM::UniformSingleLayer2d::System sys(coor, conn, dofs, iip, elastic, plastic);
         sys.setMassMatrix(rho * xt::ones<double>({mesh.nelem()}));
         sys.setDampingMatrix(alpha * xt::ones<double>({mesh.nelem()}));
-        sys.setElastic(K * xt::ones<double>({elastic.size()}), G * xt::ones<double>({elastic.size()}));
-        sys.setPlastic(K * xt::ones<double>({plastic.size()}), G * xt::ones<double>({plastic.size()}), epsy);
+        sys.setElastic(
+            K * xt::ones<double>({elastic.size()}), G * xt::ones<double>({elastic.size()}));
+        sys.setPlastic(
+            K * xt::ones<double>({plastic.size()}), G * xt::ones<double>({plastic.size()}), epsy);
         sys.setDt(dt);
 
         {
@@ -60,8 +62,10 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
             xt::xtensor<double, 2> epsy = xt::ones<double>({plastic.size(), size_t(4)});
             trigger.setState(sys.Eps(), sys.Sig(), epsy);
             xt::xtensor<double, 2> dE = 0.150701 * xt::ones<double>({plastic.size(), size_t(4)});
-            xt::xtensor<double, 2> dgamma = 0.373301 * xt::ones<double>({plastic.size(), size_t(4)});
-            xt::xtensor<double, 2> barriers = 5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
+            xt::xtensor<double, 2> dgamma =
+                0.373301 * xt::ones<double>({plastic.size(), size_t(4)});
+            xt::xtensor<double, 2> barriers =
+                5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
             xt::xtensor<double, 2> p = xt::zeros<double>({plastic.size(), size_t(4)});
             xt::xtensor<double, 2> s = 2.678804 * xt::ones<double>({plastic.size(), size_t(4)});
             REQUIRE(xt::allclose(dE, trigger.dE()));
@@ -76,8 +80,10 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
             xt::xtensor<double, 2> epsy = xt::ones<double>({plastic.size(), size_t(4)});
             trigger.setState(sys.Eps(), sys.Sig(), epsy);
             xt::xtensor<double, 2> dE = 0.150701 * xt::ones<double>({plastic.size(), size_t(4)});
-            xt::xtensor<double, 2> dgamma = 0.373301 * xt::ones<double>({plastic.size(), size_t(4)});
-            xt::xtensor<double, 2> barriers = 5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
+            xt::xtensor<double, 2> dgamma =
+                0.373301 * xt::ones<double>({plastic.size(), size_t(4)});
+            xt::xtensor<double, 2> barriers =
+                5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
             xt::xtensor<double, 2> p = xt::zeros<double>({plastic.size(), size_t(4)});
             xt::xtensor<double, 2> s = 2.678804 * xt::ones<double>({plastic.size(), size_t(4)});
             REQUIRE(xt::allclose(dE, trigger.dE()));
@@ -92,8 +98,10 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
             xt::xtensor<double, 2> epsy = xt::ones<double>({plastic.size(), size_t(4)});
             trigger.setStateMinimalSearch(sys.Eps(), sys.Sig(), epsy);
             xt::xtensor<double, 2> dE = 0.150701 * xt::ones<double>({plastic.size(), size_t(4)});
-            xt::xtensor<double, 2> dgamma = 0.373301 * xt::ones<double>({plastic.size(), size_t(4)});
-            xt::xtensor<double, 2> barriers = 5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
+            xt::xtensor<double, 2> dgamma =
+                0.373301 * xt::ones<double>({plastic.size(), size_t(4)});
+            xt::xtensor<double, 2> barriers =
+                5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
             xt::xtensor<double, 2> p = xt::zeros<double>({plastic.size(), size_t(4)});
             xt::xtensor<double, 2> s = 2.678804 * xt::ones<double>({plastic.size(), size_t(4)});
             REQUIRE(xt::allclose(dE, trigger.dE()));
@@ -108,8 +116,10 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
             xt::xtensor<double, 2> epsy = xt::ones<double>({plastic.size(), size_t(4)});
             trigger.setStateSimpleShear(sys.Eps(), sys.Sig(), epsy);
             xt::xtensor<double, 2> dE = 0.150701 * xt::ones<double>({plastic.size(), size_t(4)});
-            xt::xtensor<double, 2> dgamma = 0.373301 * xt::ones<double>({plastic.size(), size_t(4)});
-            xt::xtensor<double, 2> barriers = 5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
+            xt::xtensor<double, 2> dgamma =
+                0.373301 * xt::ones<double>({plastic.size(), size_t(4)});
+            xt::xtensor<double, 2> barriers =
+                5.357607 * xt::ones<double>({plastic.size(), size_t(4)});
             xt::xtensor<double, 2> p = xt::zeros<double>({plastic.size(), size_t(4)});
             xt::xtensor<double, 2> s = 2.678804 * xt::ones<double>({plastic.size(), size_t(4)});
             REQUIRE(xt::allclose(dE, trigger.dE()));

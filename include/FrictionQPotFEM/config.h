@@ -9,8 +9,8 @@ Defines used in the library.
 #ifndef FRICTIONQPOTFEM_CONFIG_H
 #define FRICTIONQPOTFEM_CONFIG_H
 
-#include <string>
 #include <algorithm>
+#include <string>
 
 /**
 \cond
@@ -26,9 +26,8 @@ Defines used in the library.
     }
 
 #define FRICTIONQPOTFEM_WARNING_IMPL(message, file, line) \
-    std::cout << \
-        std::string(file) + ':' + std::to_string(line) + \
-        ": " message ") \n\t"; \
+    std::cout << std::string(file) + ':' + std::to_string(line) + ": " message ") \n\t";
+
 /**
 \endcond
 */
@@ -46,7 +45,8 @@ They can be enabled by::
 The advantage is that:
 
 -   File and line-number are displayed if the assertion fails.
--   FrictionQPotFEM's assertions can be enabled/disabled independently from those of other libraries.
+-   FrictionQPotFEM's assertions can be enabled/disabled independently from those of other
+    libraries.
 
 \throw std::runtime_error
 */
@@ -88,7 +88,8 @@ They can be enabled by::
     #define FRICTIONQPOTFEM_ENABLE_WARNING_PYTHON
 */
 #ifdef FRICTIONQPOTFEM_ENABLE_WARNING_PYTHON
-#define FRICTIONQPOTFEM_WARNING_PYTHON(message) FRICTIONQPOTFEM_WARNING_IMPL(message, __FILE__, __LINE__)
+#define FRICTIONQPOTFEM_WARNING_PYTHON(message) \
+    FRICTIONQPOTFEM_WARNING_IMPL(message, __FILE__, __LINE__)
 #else
 #define FRICTIONQPOTFEM_WARNING_PYTHON(message)
 #endif
@@ -96,6 +97,7 @@ They can be enabled by::
 /**
 Friction simulations based on a disorder potential energy landscape and the finite element method.
 */
-namespace FrictionQPotFEM { }
+namespace FrictionQPotFEM {
+}
 
 #endif

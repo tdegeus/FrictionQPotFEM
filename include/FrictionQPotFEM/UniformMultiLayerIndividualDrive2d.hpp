@@ -87,14 +87,20 @@ inline void System::init(
         if (m_layer_is_plastic(i)) {
             m_slice_index(i) = n_layer_plas;
             m_slice_plas(n_layer_plas + 1) = n_elem_plas + elem[i].size();
-            xt::view(plas, xt::range(m_slice_plas(n_layer_plas), m_slice_plas(n_layer_plas + 1))) = elem[i];
+
+            xt::view(plas, xt::range(m_slice_plas(n_layer_plas), m_slice_plas(n_layer_plas + 1))) =
+                elem[i];
+
             n_elem_plas += elem[i].size();
             n_layer_plas++;
         }
         else {
             m_slice_index(i) = n_layer_elas;
             m_slice_elas(n_layer_elas + 1) = n_elem_elas + elem[i].size();
-            xt::view(elas, xt::range(m_slice_elas(n_layer_elas), m_slice_elas(n_layer_elas + 1))) = elem[i];
+
+            xt::view(elas, xt::range(m_slice_elas(n_layer_elas), m_slice_elas(n_layer_elas + 1))) =
+                elem[i];
+
             n_elem_elas += elem[i].size();
             n_layer_elas++;
         }
@@ -120,17 +126,17 @@ inline void System::init(
         }
     }
 
-    // sanity check nodes per layer
-    #ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
+// sanity check nodes per layer
+#ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
     for (size_t i = 0; i < m_n_layer; ++i) {
         auto e = this->layerElements(i);
         auto n = xt::unique(xt::view(m_conn, xt::keep(e)));
         FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(xt::sort(n), xt::sort(node[i]))));
     }
-    #endif
+#endif
 
-    // sanity check elements per layer + slice of elas/plas element sets
-    #ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
+// sanity check elements per layer + slice of elas/plas element sets
+#ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
     for (size_t i = 0; i < m_n_layer; ++i) {
         xt::xtensor<size_t, 1> e;
         size_t j = m_slice_index(i);
@@ -142,7 +148,7 @@ inline void System::init(
         }
         FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(xt::sort(e), xt::sort(elem[i]))));
     }
-    #endif
+#endif
 }
 
 inline size_t System::nlayer() const

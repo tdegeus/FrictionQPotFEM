@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import GooseMPL as gplt
 import GMatTensor.Cartesian2d as gtens
 
-plt.style.use(['goose', 'goose-latex'])
+plt.style.use(["goose", "goose-latex"])
 
 
 def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
@@ -22,7 +22,7 @@ def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
 
     # strain, stress, tangent
     Eps = quad.AllocateQtensor(2, 0.0)
-    Sig = - Sigstar
+    Sig = -Sigstar
 
     # residual force
     fe = quad.Int_gradN_dot_tensor2_dV(Sig)
@@ -44,28 +44,28 @@ def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
     return GMat.Deviatoric(Eps[trigger, 0]), disp, Eps, Sig
 
 
-def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N = 100):
+def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N=100):
 
     # solve for "p = 0"
     a = dgamma ** 2
     b = 2 * gamma * dgamma
     c = gamma ** 2 + E ** 2 - epsy ** 2
     D = b ** 2 - 4 * a * c
-    smax = (- b + np.sqrt(D)) / (2.0 * a)
-    smin = (- b - np.sqrt(D)) / (2.0 * a)
+    smax = (-b + np.sqrt(D)) / (2.0 * a)
+    smin = (-b - np.sqrt(D)) / (2.0 * a)
 
     # solve for "s = 0"
     a = dE ** 2
-    b = 2 * E * dE;
+    b = 2 * E * dE
     c = E ** 2 + gamma ** 2 - epsy ** 2
     D = b ** 2 - 4 * a * c
-    pmax = (- b + np.sqrt(D)) / (2.0 * a)
-    pmin = (- b - np.sqrt(D)) / (2.0 * a)
+    pmax = (-b + np.sqrt(D)) / (2.0 * a)
+    pmin = (-b - np.sqrt(D)) / (2.0 * a)
 
     # add to list
     S = np.empty((2, N))
     P = np.empty((2, N))
-    n = int(- smin / (smax - smin) * N)
+    n = int(-smin / (smax - smin) * N)
     S[:, :n] = np.linspace(smin, 0, n).reshape(1, -1)
     S[:, n:] = np.linspace(0, smax, (N - n) + 1)[1:].reshape(1, -1)
     P[0, n - 1] = pmax
@@ -81,8 +81,8 @@ def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N = 100):
         b = 2 * E * dE
         c = E ** 2 + (gamma + s * dgamma) ** 2 - epsy ** 2
         D = b ** 2 - 4 * a * c
-        P[0, i] = (- b + np.sqrt(D)) / (2.0 * a)
-        P[1, i] = (- b - np.sqrt(D)) / (2.0 * a)
+        P[0, i] = (-b + np.sqrt(D)) / (2.0 * a)
+        P[1, i] = (-b - np.sqrt(D)) / (2.0 * a)
 
     return P, S
 
@@ -92,9 +92,12 @@ def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p):
     dE = np.empty(P.size)
 
     for i, (p, s) in enumerate(zip(P.ravel(), S.ravel())):
-        dE[i] = np.sum(gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV)
+        dE[i] = np.sum(
+            gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV
+        )
 
     return dE.reshape(P.shape)
+
 
 # ------------------------
 # initialise configuration
@@ -133,12 +136,9 @@ dofs[nodesRgt, :] = dofs[nodesLft, :]
 
 dofs = GooseFEM.Mesh.renumber(dofs)
 
-iip = np.concatenate((
-    dofs[nodesBot, 0],
-    dofs[nodesBot, 1],
-    dofs[nodesTop, 0],
-    dofs[nodesTop, 1]
-))
+iip = np.concatenate(
+    (dofs[nodesBot, 0], dofs[nodesBot, 1], dofs[nodesTop, 0], dofs[nodesTop, 1])
+)
 
 # simulation variables
 # --------------------
@@ -166,11 +166,11 @@ nip = quad.nip()
 # material definition
 mat = GMat.Array2d([nelem, nip])
 
-I = np.zeros(mat.shape(), dtype='int')
+I = np.zeros(mat.shape(), dtype="int")
 I[elastic, :] = 1
 mat.setElastic(I, 10.0, 1.0)
 
-I = np.zeros(mat.shape(), dtype='int')
+I = np.zeros(mat.shape(), dtype="int")
 I[plastic, :] = 1
 mat.setElastic(I, 10.0, 1.0)
 
@@ -214,16 +214,16 @@ Sig = mat.Stress()
 
 trigger = plastic[int(len(plastic) / 2.0)]
 
-Sigstar_s = np.array([
-    [ 0.0, +1.0],
-    [+1.0,  0.0]])
+Sigstar_s = np.array([[0.0, +1.0], [+1.0, 0.0]])
 
-Sigstar_p = np.array([
-    [+1.0,  0.0],
-    [ 0.0, -1.0]])
+Sigstar_p = np.array([[+1.0, 0.0], [0.0, -1.0]])
 
-Epsstar_s, u_s, Eps_s, Sig_s = ComputePerturbation(Sigstar_s, trigger, mat, quad, vector, K, Solver)
-Epsstar_p, u_p, Eps_p, Sig_p = ComputePerturbation(Sigstar_p, trigger, mat, quad, vector, K, Solver)
+Epsstar_s, u_s, Eps_s, Sig_s = ComputePerturbation(
+    Sigstar_s, trigger, mat, quad, vector, K, Solver
+)
+Epsstar_p, u_p, Eps_p, Sig_p = ComputePerturbation(
+    Sigstar_p, trigger, mat, quad, vector, K, Solver
+)
 
 # Current state for triggered element
 Epsd = GMat.Deviatoric(Eps[trigger, 0])
@@ -254,72 +254,75 @@ for i, p in enumerate(P):
 
         sig[i, j] = GMat.Sigd(Sig_n[trigger, 0])
         eps[i, j] = GMat.Epsd(Eps_n[trigger, 0])
-        energy[i, j] = np.average(0.5 * gtens.A2_ddot_B2(Sig_n, Eps_n), weights=dV) * np.sum(dV) - E0
+        energy[i, j] = (
+            np.average(0.5 * gtens.A2_ddot_B2(Sig_n, Eps_n), weights=dV) * np.sum(dV)
+            - E0
+        )
 
 # Plot phase diagram - stress
 
 fig, ax = plt.subplots()
 
-h = ax.imshow(sig, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
+h = ax.imshow(sig, cmap="jet", extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
 
-ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
-ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
+ax.plot([0, 0], [P[0], P[-1]], c="w", lw=1)
+ax.plot([S[0], S[-1]], [0, 0], c="w", lw=1)
 
-ax.plot(Sy[0, :], Py[0, :], c='w')
-ax.plot(Sy[1, :], Py[1, :], c='w')
+ax.plot(Sy[0, :], Py[0, :], c="w")
+ax.plot(Sy[1, :], Py[1, :], c="w")
 
-ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c='r', marker='o')
+ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c="r", marker="o")
 
 cbar = fig.colorbar(h, aspect=10)
 
-ax.set_xlabel(r'$s$')
-ax.set_ylabel(r'$p$')
+ax.set_xlabel(r"$s$")
+ax.set_ylabel(r"$p$")
 
-fig.savefig('example_prestress_phase-diagram_sig.pdf')
+fig.savefig("example_prestress_phase-diagram_sig.pdf")
 plt.close(fig)
 
 # Plot phase diagram - strain
 
 fig, ax = plt.subplots()
 
-h = ax.imshow(eps, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
+h = ax.imshow(eps, cmap="jet", extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
 
-ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
-ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
+ax.plot([0, 0], [P[0], P[-1]], c="w", lw=1)
+ax.plot([S[0], S[-1]], [0, 0], c="w", lw=1)
 
-ax.plot(Sy[0, :], Py[0, :], c='w')
-ax.plot(Sy[1, :], Py[1, :], c='w')
+ax.plot(Sy[0, :], Py[0, :], c="w")
+ax.plot(Sy[1, :], Py[1, :], c="w")
 
-ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c='r', marker='o')
+ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c="r", marker="o")
 
 cbar = fig.colorbar(h, aspect=10)
 
-ax.set_xlabel(r'$s$')
-ax.set_ylabel(r'$p$')
+ax.set_xlabel(r"$s$")
+ax.set_ylabel(r"$p$")
 
-fig.savefig('example_prestress_phase-diagram_eps.pdf')
+fig.savefig("example_prestress_phase-diagram_eps.pdf")
 plt.close(fig)
 
 # Plot phase diagram - energy
 
 fig, ax = plt.subplots()
 
-h = ax.imshow(energy, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
+h = ax.imshow(energy, cmap="jet", extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
 
-ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
-ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
+ax.plot([0, 0], [P[0], P[-1]], c="w", lw=1)
+ax.plot([S[0], S[-1]], [0, 0], c="w", lw=1)
 
-ax.plot(Sy[0, :], Py[0, :], c='w')
-ax.plot(Sy[1, :], Py[1, :], c='w')
+ax.plot(Sy[0, :], Py[0, :], c="w")
+ax.plot(Sy[1, :], Py[1, :], c="w")
 
-ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c='r', marker='o')
+ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c="r", marker="o")
 
 cbar = fig.colorbar(h, aspect=10)
 
-ax.set_xlabel(r'$s$')
-ax.set_ylabel(r'$p$')
+ax.set_xlabel(r"$s$")
+ax.set_ylabel(r"$p$")
 
-fig.savefig('example_prestress_phase-diagram_energy.pdf')
+fig.savefig("example_prestress_phase-diagram_energy.pdf")
 plt.close(fig)
 
 # Plot phase diagram - energy contours
@@ -330,18 +333,18 @@ h = ax.contourf(S, P, energy)
 
 cbar = fig.colorbar(h, aspect=10)
 
-ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
-ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
+ax.plot([0, 0], [P[0], P[-1]], c="w", lw=1)
+ax.plot([S[0], S[-1]], [0, 0], c="w", lw=1)
 
-ax.plot(Sy[0, :], Py[0, :], c='w')
-ax.plot(Sy[1, :], Py[1, :], c='w')
+ax.plot(Sy[0, :], Py[0, :], c="w")
+ax.plot(Sy[1, :], Py[1, :], c="w")
 
-ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c='r', marker='o')
+ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c="r", marker="o")
 
-ax.set_xlabel(r'$s$')
-ax.set_ylabel(r'$p$')
+ax.set_xlabel(r"$s$")
+ax.set_ylabel(r"$p$")
 
-fig.savefig('example_prestress_phase-diagram_energy-contour.pdf')
+fig.savefig("example_prestress_phase-diagram_energy-contour.pdf")
 plt.close(fig)
 
 # Plot initial configuration
@@ -350,12 +353,14 @@ sigeq = GMat.Sigd(np.average(Sig, weights=quad.AsTensor(2, quad.dV()), axis=1))
 
 fig, ax = plt.subplots()
 
-gplt.patch(coor=coor + disp, conn=conn, cindex=sigeq, cmap='Reds', axis=ax, clim=(0, 1.0))
+gplt.patch(
+    coor=coor + disp, conn=conn, cindex=sigeq, cmap="Reds", axis=ax, clim=(0, 1.0)
+)
 
-ax.axis('equal')
-plt.axis('off')
+ax.axis("equal")
+plt.axis("off")
 
-fig.savefig('example_prestress_config.pdf')
+fig.savefig("example_prestress_config.pdf")
 plt.close(fig)
 
 # Plot perturbed configuration
@@ -371,11 +376,12 @@ sigeq = GMat.Sigd(np.average(mat.Stress(), weights=quad.AsTensor(2, quad.dV()), 
 
 fig, ax = plt.subplots()
 
-gplt.patch(coor=coor + disp, conn=conn, cindex=sigeq, cmap='Reds', axis=ax, clim=(0, 1.0))
+gplt.patch(
+    coor=coor + disp, conn=conn, cindex=sigeq, cmap="Reds", axis=ax, clim=(0, 1.0)
+)
 
-ax.axis('equal')
-plt.axis('off')
+ax.axis("equal")
+plt.axis("off")
 
-fig.savefig('example_prestress_config-perturbed.pdf')
+fig.savefig("example_prestress_config-perturbed.pdf")
 plt.close(fig)
-

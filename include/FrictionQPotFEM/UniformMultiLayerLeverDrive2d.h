@@ -10,9 +10,9 @@
 #ifndef FRICTIONQPOTFEM_UNIFORMMULTILAYERLEVERDRIVE2D_H
 #define FRICTIONQPOTFEM_UNIFORMMULTILAYERLEVERDRIVE2D_H
 
+#include "UniformMultiLayerIndividualDrive2d.h"
 #include "config.h"
 #include "version.h"
-#include "UniformMultiLayerIndividualDrive2d.h"
 
 namespace FrictionQPotFEM {
 
@@ -48,10 +48,9 @@ inline std::vector<std::string> version_dependencies();
 class System : public UniformMultiLayerIndividualDrive2d::System {
 
 public:
-
     System() = default;
 
-    virtual ~System() {};
+    virtual ~System(){};
 
     /**
      *  Define basic geometry.
@@ -106,7 +105,6 @@ public:
     double leverPosition() const;
 
 protected:
-
     /**
      *  Define basic geometry.
      *  This function class UniformMultiLayerIndividualDrive2d::init().
@@ -136,14 +134,12 @@ protected:
     void updated_u() override;
 
 private:
-
-    double m_lever_H; ///< See setLeverProperties().
-    xt::xtensor<double, 1> m_lever_hi; ///< See setLeverProperties().
-    xt::xtensor<double, 1> m_lever_hi_H; ///< m_lever_hi / H
+    double m_lever_H;                      ///< See setLeverProperties().
+    xt::xtensor<double, 1> m_lever_hi;     ///< See setLeverProperties().
+    xt::xtensor<double, 1> m_lever_hi_H;   ///< m_lever_hi / H
     xt::xtensor<double, 1> m_lever_hi_H_2; ///< (m_lever_hi / H)^2
-    double m_lever_target; ///< See setLeverTarget().
-    double m_lever_u; ///< Current position of the lever.
-
+    double m_lever_target;                 ///< See setLeverTarget().
+    double m_lever_u;                      ///< Current position of the lever.
 };
 
 } // namespace UniformMultiLayerLeverDrive2d

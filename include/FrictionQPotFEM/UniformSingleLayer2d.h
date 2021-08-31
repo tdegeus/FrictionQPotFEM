@@ -10,9 +10,9 @@ Implementation in UniformSingleLayer2d.hpp.
 #ifndef FRICTIONQPOTFEM_UNIFORMSINGLELAYER2D_H
 #define FRICTIONQPOTFEM_UNIFORMSINGLELAYER2D_H
 
+#include "Generic2d.h"
 #include "config.h"
 #include "version.h"
-#include "Generic2d.h"
 
 /**
 \return x^2
@@ -47,10 +47,9 @@ Class that uses GMatElastoPlasticQPot to evaluate stress everywhere
 class System : public Generic2d::HybridSystem {
 
 public:
-
     System() = default;
 
-    virtual ~System() {};
+    virtual ~System(){};
 
     /**
     Define the geometry, including boundary conditions and element sets.
@@ -94,8 +93,7 @@ public:
 
     \return Integration point scalar. Shape: ``[nelem, nip]``.
     */
-    [[ deprecated ]]
-    virtual xt::xtensor<double, 2> Energy();
+    [[deprecated]] virtual xt::xtensor<double, 2> Energy();
 
     /**
     Get the sign of the equivalent strain increment upon a displacement perturbation,
@@ -147,10 +145,7 @@ public:
         xy-component of the deformation gradient that is applied to the system.
     */
     double addSimpleShearEventDriven(
-        double deps,
-        bool kick,
-        double direction = +1.0,
-        bool dry_run = false);
+        double deps, bool kick, double direction = +1.0, bool dry_run = false);
 
     /**
     Add simple shear until a target equivalent macroscopic stress has been reached.
@@ -166,18 +161,14 @@ public:
     \return
         xy-component of the deformation gradient that is applied to the system.
     */
-    double addSimpleShearToFixedStress(
-        double stress,
-        bool dry_run = false);
+    double addSimpleShearToFixedStress(double stress, bool dry_run = false);
 
     /**
     \copydoc addSimpleShearToFixedStress(double, bool)
 
     \throw Throws if yielding is triggered before the stress was reached.
     */
-    double addElasticSimpleShearToFixedStress(
-        double stress,
-        bool dry_run = false);
+    double addElasticSimpleShearToFixedStress(double stress, bool dry_run = false);
 
     /**
     Apply local strain to the right to a specific plastic element.
@@ -221,12 +212,10 @@ public:
     \return
         Array of shape ``[N, 2]`` with columns ``[delta_eps, delta_epsxy]``.
     */
-    xt::xtensor<double, 2> plastic_ElementYieldBarrierForSimpleShear(
-        double deps_kick = 0.0,
-        size_t iquad = 0);
+    xt::xtensor<double, 2>
+    plastic_ElementYieldBarrierForSimpleShear(double deps_kick = 0.0, size_t iquad = 0);
 
 protected:
-
     /**
     Get the sign of the equivalent strain increment upon a displacement perturbation,
     for each integration point of each plastic element.
@@ -254,7 +243,6 @@ protected:
         const L& iip,
         const L& elem_elastic,
         const L& elem_plastic);
-
 };
 
 /**
@@ -272,10 +260,8 @@ To get the two perturbations a sinple shear and pure shear eigen-stress are appl
 
 The configuration, including the definition of elasticity is read from the input System.
 */
-class LocalTriggerFineLayerFull
-{
+class LocalTriggerFineLayerFull {
 public:
-
     LocalTriggerFineLayerFull() = default;
 
     /**
@@ -289,7 +275,7 @@ public:
     */
     LocalTriggerFineLayerFull(const System& sys);
 
-    virtual ~LocalTriggerFineLayerFull() {};
+    virtual ~LocalTriggerFineLayerFull(){};
 
     /**
     Set current state and compute energy barriers to reach the specified yield surface
@@ -489,7 +475,6 @@ public:
     virtual xt::xtensor<double, 4> slice(const xt::xtensor<double, 4>& arg, size_t e) const;
 
 protected:
-
     /**
     Compute the displacement response to an eigen-stress applied to a plastic element.
 
@@ -517,9 +502,8 @@ protected:
         GMatElastoPlasticQPot::Cartesian2d::Array<2>& material);
 
 protected:
-
-    size_t m_nip; ///< Number of integration points.
-    size_t m_nelem_plas; ///< Number of plastic elements.
+    size_t m_nip;                       ///< Number of integration points.
+    size_t m_nelem_plas;                ///< Number of plastic elements.
     xt::xtensor<size_t, 1> m_elem_plas; ///< Plastic elements.
 
     /**
@@ -529,17 +513,17 @@ protected:
     Because of the construction of the "FineLayer"-mesh, one roll of the mesh will not
     correspond to one roll of the middle layer, therefore a few percolations are needed.
     */
-    std::vector<xt::xtensor<double, 2>> m_u_s; ///< Displacement field for simple shear perturbation.
+    std::vector<xt::xtensor<double, 2>> m_u_s; ///< Disp. field for simple shear perturbation.
     std::vector<xt::xtensor<double, 2>> m_u_p; ///< Displacement field for pure shear perturbation.
-    std::vector<xt::xtensor<double, 4>> m_Eps_s; ///< Strain field for simple shear perturbation.
-    std::vector<xt::xtensor<double, 4>> m_Eps_p; ///< Strain field for pure shear perturbation.
-    std::vector<xt::xtensor<double, 4>> m_Sig_s; ///< Stress field for simple shear perturbation.
-    std::vector<xt::xtensor<double, 4>> m_Sig_p; ///< Stress field for pure shear perturbation.
+    std::vector<xt::xtensor<double, 4>> m_Eps_s;   ///< Strain field for simple shear perturbation.
+    std::vector<xt::xtensor<double, 4>> m_Eps_p;   ///< Strain field for pure shear perturbation.
+    std::vector<xt::xtensor<double, 4>> m_Sig_s;   ///< Stress field for simple shear perturbation.
+    std::vector<xt::xtensor<double, 4>> m_Sig_p;   ///< Stress field for pure shear perturbation.
     std::vector<xt::xtensor<size_t, 1>> m_nodemap; ///< Node-map for the roll.
     std::vector<xt::xtensor<size_t, 1>> m_elemmap; ///< Element-map for the roll.
 
-    xt::xtensor<double, 2> m_dV; ///< Integration point volume.
-    double m_V; ///< Volume of a plastic element: assumed homogeneous!
+    xt::xtensor<double, 2> m_dV;      ///< Integration point volume.
+    double m_V;                       ///< Volume of a plastic element: assumed homogeneous!
     std::array<size_t, 4> m_shape_T2; ///< Shape of an integration point tensor.
 
     xt::xtensor<double, 2> m_smin; ///< value of "s" at minimal work "W" [nip, N]
@@ -560,10 +544,8 @@ Similar to LocalTriggerFineLayerFull, with the difference that only a (small) gr
 around the triggered element is considered to compute the energy barriers.
 The should speed-up the evaluation of the energy barriers significantly.
 */
-class LocalTriggerFineLayer : public LocalTriggerFineLayerFull
-{
+class LocalTriggerFineLayer : public LocalTriggerFineLayerFull {
 public:
-
     LocalTriggerFineLayer() = default;
 
     /**
@@ -602,11 +584,16 @@ public:
     xt::xtensor<double, 4> slice(const xt::xtensor<double, 4>& arg, size_t e) const override;
 
 protected:
-    std::vector<xt::xtensor<size_t, 1>> m_elemslice; ///< Region-of-interest per plastic element.
-    std::vector<xt::xtensor<double, 4>> m_Eps_s_slice; ///< LocalTriggerFineLayerFull::m_Eps_s for the ROI only.
-    std::vector<xt::xtensor<double, 4>> m_Eps_p_slice; ///< LocalTriggerFineLayerFull::m_Eps_p for the ROI only.
-    std::vector<xt::xtensor<double, 4>> m_Sig_s_slice; ///< LocalTriggerFineLayerFull::m_Sig_s for the ROI only.
-    std::vector<xt::xtensor<double, 4>> m_Sig_p_slice; ///< LocalTriggerFineLayerFull::m_Sig_p for the ROI only.
+    std::vector<xt::xtensor<size_t, 1>>
+        m_elemslice; ///< Region-of-interest (ROI) per plastic element.
+    std::vector<xt::xtensor<double, 4>>
+        m_Eps_s_slice; ///< LocalTriggerFineLayerFull::m_Eps_s for the ROI only.
+    std::vector<xt::xtensor<double, 4>>
+        m_Eps_p_slice; ///< LocalTriggerFineLayerFull::m_Eps_p for the ROI only.
+    std::vector<xt::xtensor<double, 4>>
+        m_Sig_s_slice; ///< LocalTriggerFineLayerFull::m_Sig_s for the ROI only.
+    std::vector<xt::xtensor<double, 4>>
+        m_Sig_p_slice; ///< LocalTriggerFineLayerFull::m_Sig_p for the ROI only.
 };
 
 } // namespace UniformSingleLayer2d

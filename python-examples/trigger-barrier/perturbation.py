@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import GooseMPL as gplt
 import GMatTensor.Cartesian2d as gtens
 
-plt.style.use(['goose', 'goose-latex'])
+plt.style.use(["goose", "goose-latex"])
+
 
 def ComputePerturbation(sigma_star_test):
 
@@ -43,12 +44,9 @@ def ComputePerturbation(sigma_star_test):
 
     dofs = GooseFEM.Mesh.renumber(dofs)
 
-    iip = np.concatenate((
-        dofs[nodesBot, 0],
-        dofs[nodesBot, 1],
-        dofs[nodesTop, 0],
-        dofs[nodesTop, 1]
-    ))
+    iip = np.concatenate(
+        (dofs[nodesBot, 0], dofs[nodesBot, 1], dofs[nodesTop, 0], dofs[nodesTop, 1])
+    )
 
     # simulation variables
     # --------------------
@@ -76,11 +74,11 @@ def ComputePerturbation(sigma_star_test):
     # material definition
     mat = GMat.Array2d([nelem, nip])
 
-    I = np.zeros(mat.shape(), dtype='int')
+    I = np.zeros(mat.shape(), dtype="int")
     I[elastic, :] = 1
     mat.setElastic(I, 10.0, 1.0)
 
-    I = np.zeros(mat.shape(), dtype='int')
+    I = np.zeros(mat.shape(), dtype="int")
     I[plastic, :] = 1
     mat.setElastic(I, 10.0, 1.0)
 
@@ -122,31 +120,40 @@ def ComputePerturbation(sigma_star_test):
     ue = vector.AsElement(disp)
     Eps = quad.SymGradN_vector(ue)
 
-    return GMat.Deviatoric(Eps[trigger, 0]), trigger, disp, coor, conn, vector, quad, mat
+    return (
+        GMat.Deviatoric(Eps[trigger, 0]),
+        trigger,
+        disp,
+        coor,
+        conn,
+        vector,
+        quad,
+        mat,
+    )
 
 
-def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N = 100):
+def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N=100):
 
     # solve for "p = 0"
     a = dgamma ** 2
     b = 2 * gamma * dgamma
     c = gamma ** 2 + E ** 2 - epsy ** 2
     D = b ** 2 - 4 * a * c
-    smax = (- b + np.sqrt(D)) / (2.0 * a)
-    smin = (- b - np.sqrt(D)) / (2.0 * a)
+    smax = (-b + np.sqrt(D)) / (2.0 * a)
+    smin = (-b - np.sqrt(D)) / (2.0 * a)
 
     # solve for "s = 0"
     a = dE ** 2
-    b = 2 * E * dE;
+    b = 2 * E * dE
     c = E ** 2 + gamma ** 2 - epsy ** 2
     D = b ** 2 - 4 * a * c
-    pmax = (- b + np.sqrt(D)) / (2.0 * a)
-    pmin = (- b - np.sqrt(D)) / (2.0 * a)
+    pmax = (-b + np.sqrt(D)) / (2.0 * a)
+    pmin = (-b - np.sqrt(D)) / (2.0 * a)
 
     # add to list
     S = np.empty((2, N))
     P = np.empty((2, N))
-    n = int(- smin / (smax - smin) * N)
+    n = int(-smin / (smax - smin) * N)
     S[:, :n] = np.linspace(smin, 0, n).reshape(1, -1)
     S[:, n:] = np.linspace(0, smax, (N - n) + 1)[1:].reshape(1, -1)
     P[0, n - 1] = pmax
@@ -162,8 +169,8 @@ def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N = 100):
         b = 2 * E * dE
         c = E ** 2 + (gamma + s * dgamma) ** 2 - epsy ** 2
         D = b ** 2 - 4 * a * c
-        P[0, i] = (- b + np.sqrt(D)) / (2.0 * a)
-        P[1, i] = (- b - np.sqrt(D)) / (2.0 * a)
+        P[0, i] = (-b + np.sqrt(D)) / (2.0 * a)
+        P[1, i] = (-b - np.sqrt(D)) / (2.0 * a)
 
     return P, S
 
@@ -173,20 +180,19 @@ def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p):
     dE = np.empty(P.size)
 
     for i, (p, s) in enumerate(zip(P.ravel(), S.ravel())):
-        dE[i] = np.sum(gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV)
+        dE[i] = np.sum(
+            gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV
+        )
 
     return dE.reshape(P.shape)
+
 
 # Effect of perturbation
 # ----------------------
 
-Sigstar_s = np.array([
-    [ 0.0, +1.0],
-    [+1.0,  0.0]])
+Sigstar_s = np.array([[0.0, +1.0], [+1.0, 0.0]])
 
-Sigstar_p = np.array([
-    [+1.0,  0.0],
-    [ 0.0, -1.0]])
+Sigstar_p = np.array([[+1.0, 0.0], [0.0, -1.0]])
 
 Epsstar_s, trigger, u_s, coor, conn, vector, quad, mat = ComputePerturbation(Sigstar_s)
 Epsstar_p, trigger, u_p, coor, conn, vector, quad, mat = ComputePerturbation(Sigstar_p)
@@ -201,21 +207,25 @@ energy = np.average(mat.Energy(), weights=quad.dV(), axis=1)
 
 fig, ax = plt.subplots()
 
-gplt.patch(coor=coor + u_s, conn=conn, cindex=energy, cmap='RdGy_r', axis=ax, clim=(-0.1, 0.1))
-gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
+gplt.patch(
+    coor=coor + u_s, conn=conn, cindex=energy, cmap="RdGy_r", axis=ax, clim=(-0.1, 0.1)
+)
+gplt.patch(coor=coor, conn=conn, linestyle="--", axis=ax)
 
-ax.axis('equal')
-plt.axis('off')
+ax.axis("equal")
+plt.axis("off")
 
-sm = plt.cm.ScalarMappable(cmap='RdGy_r', norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1))
+sm = plt.cm.ScalarMappable(
+    cmap="RdGy_r", norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1)
+)
 sm.set_array([])
 
 ticks = [-0.1, 0.0, +0.1]
 labels = [-0.1, 0.0, +0.1]
 cbar = plt.colorbar(sm, ticks=ticks)
-cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
+cbar.ax.set_yticklabels([f"{i:.1f}" for i in labels])
 
-fig.savefig('perturbation_simple-shear_pos.pdf')
+fig.savefig("perturbation_simple-shear_pos.pdf")
 plt.close(fig)
 
 # Plot - pure shear
@@ -228,21 +238,25 @@ energy = np.average(mat.Energy(), weights=quad.dV(), axis=1)
 
 fig, ax = plt.subplots()
 
-gplt.patch(coor=coor + u_p, conn=conn, cindex=energy, cmap='RdGy_r', axis=ax, clim=(-0.1, 0.1))
-gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
+gplt.patch(
+    coor=coor + u_p, conn=conn, cindex=energy, cmap="RdGy_r", axis=ax, clim=(-0.1, 0.1)
+)
+gplt.patch(coor=coor, conn=conn, linestyle="--", axis=ax)
 
-ax.axis('equal')
-plt.axis('off')
+ax.axis("equal")
+plt.axis("off")
 
-sm = plt.cm.ScalarMappable(cmap='RdGy_r', norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1))
+sm = plt.cm.ScalarMappable(
+    cmap="RdGy_r", norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1)
+)
 sm.set_array([])
 
 ticks = [-0.1, 0.0, +0.1]
 labels = [-0.1, 0.0, +0.1]
 cbar = plt.colorbar(sm, ticks=ticks)
-cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
+cbar.ax.set_yticklabels([f"{i:.1f}" for i in labels])
 
-fig.savefig('perturbation_pure-shear_pos.pdf')
+fig.savefig("perturbation_pure-shear_pos.pdf")
 plt.close(fig)
 
 # Plot - simple shear
@@ -255,21 +269,25 @@ energy = np.average(mat.Energy(), weights=quad.dV(), axis=1)
 
 fig, ax = plt.subplots()
 
-gplt.patch(coor=coor - u_s, conn=conn, cindex=energy, cmap='RdGy_r', axis=ax, clim=(-0.1, 0.1))
-gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
+gplt.patch(
+    coor=coor - u_s, conn=conn, cindex=energy, cmap="RdGy_r", axis=ax, clim=(-0.1, 0.1)
+)
+gplt.patch(coor=coor, conn=conn, linestyle="--", axis=ax)
 
-ax.axis('equal')
-plt.axis('off')
+ax.axis("equal")
+plt.axis("off")
 
-sm = plt.cm.ScalarMappable(cmap='RdGy_r', norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1))
+sm = plt.cm.ScalarMappable(
+    cmap="RdGy_r", norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1)
+)
 sm.set_array([])
 
 ticks = [-0.1, 0.0, +0.1]
 labels = [-0.1, 0.0, +0.1]
 cbar = plt.colorbar(sm, ticks=ticks)
-cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
+cbar.ax.set_yticklabels([f"{i:.1f}" for i in labels])
 
-fig.savefig('perturbation_simple-shear_neg.pdf')
+fig.savefig("perturbation_simple-shear_neg.pdf")
 plt.close(fig)
 
 # Plot - pure shear
@@ -282,21 +300,25 @@ energy = np.average(mat.Energy(), weights=quad.dV(), axis=1)
 
 fig, ax = plt.subplots()
 
-gplt.patch(coor=coor - u_p, conn=conn, cindex=energy, cmap='RdGy_r', axis=ax, clim=(-0.1, 0.1))
-gplt.patch(coor=coor, conn=conn, linestyle='--', axis=ax)
+gplt.patch(
+    coor=coor - u_p, conn=conn, cindex=energy, cmap="RdGy_r", axis=ax, clim=(-0.1, 0.1)
+)
+gplt.patch(coor=coor, conn=conn, linestyle="--", axis=ax)
 
-ax.axis('equal')
-plt.axis('off')
+ax.axis("equal")
+plt.axis("off")
 
-sm = plt.cm.ScalarMappable(cmap='RdGy_r', norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1))
+sm = plt.cm.ScalarMappable(
+    cmap="RdGy_r", norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1)
+)
 sm.set_array([])
 
 ticks = [-0.1, 0.0, +0.1]
 labels = [-0.1, 0.0, +0.1]
 cbar = plt.colorbar(sm, ticks=ticks)
-cbar.ax.set_yticklabels(['{0:.1f}'.format(i) for i in labels])
+cbar.ax.set_yticklabels([f"{i:.1f}" for i in labels])
 
-fig.savefig('perturbation_pure-shear_neg.pdf')
+fig.savefig("perturbation_pure-shear_neg.pdf")
 plt.close(fig)
 
 # Perturbations to the yield surface
@@ -346,7 +368,10 @@ for i, p in enumerate(P):
 
         sig[i, j] = GMat.Sigd(Sig_n[trigger, 0])
         eps[i, j] = GMat.Epsd(Eps_n[trigger, 0])
-        energy[i, j] = np.average(0.5 * gtens.A2_ddot_B2(Sig_n, Eps_n), weights=dV) * np.sum(dV) - E0
+        energy[i, j] = (
+            np.average(0.5 * gtens.A2_ddot_B2(Sig_n, Eps_n), weights=dV) * np.sum(dV)
+            - E0
+        )
 
         dEps = s * Eps_s + p * Eps_p
         dSig = s * Sig_s + p * Sig_p
@@ -357,73 +382,79 @@ for i, p in enumerate(P):
 
         assert np.allclose(Eps_n, quad.SymGradN_vector(ue))
         assert np.allclose(Sig_n, mat.Stress())
-        assert np.isclose(energy[i, j] + E0, np.average(mat.Energy(), weights=dV) * np.sum(dV))
-        assert np.isclose(energy[i, j], np.average(gtens.A2_ddot_B2(Sig + 0.5 * dSig, dEps), weights=dV) * np.sum(dV))
+        assert np.isclose(
+            energy[i, j] + E0, np.average(mat.Energy(), weights=dV) * np.sum(dV)
+        )
+        assert np.isclose(
+            energy[i, j],
+            np.average(gtens.A2_ddot_B2(Sig + 0.5 * dSig, dEps), weights=dV)
+            * np.sum(dV),
+        )
 
 # Plot phase diagram - stress
 
 fig, ax = plt.subplots()
 
-h = ax.imshow(sig, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
+h = ax.imshow(sig, cmap="jet", extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
 
-ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
-ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
+ax.plot([0, 0], [P[0], P[-1]], c="w", lw=1)
+ax.plot([S[0], S[-1]], [0, 0], c="w", lw=1)
 
-ax.plot(Sy[0, :], Py[0, :], c='w')
-ax.plot(Sy[1, :], Py[1, :], c='w')
+ax.plot(Sy[0, :], Py[0, :], c="w")
+ax.plot(Sy[1, :], Py[1, :], c="w")
 
-ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c='r', marker='o')
+ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c="r", marker="o")
 
 cbar = fig.colorbar(h, aspect=10)
 
-ax.set_xlabel(r'$s$')
-ax.set_ylabel(r'$p$')
+ax.set_xlabel(r"$s$")
+ax.set_ylabel(r"$p$")
 
-fig.savefig('perturbation_phase-diagram_sig.pdf')
+fig.savefig("perturbation_phase-diagram_sig.pdf")
 plt.close(fig)
 
 # Plot phase diagram - strain
 
 fig, ax = plt.subplots()
 
-h = ax.imshow(eps, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
+h = ax.imshow(eps, cmap="jet", extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
 
-ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
-ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
+ax.plot([0, 0], [P[0], P[-1]], c="w", lw=1)
+ax.plot([S[0], S[-1]], [0, 0], c="w", lw=1)
 
-ax.plot(Sy[0, :], Py[0, :], c='w')
-ax.plot(Sy[1, :], Py[1, :], c='w')
+ax.plot(Sy[0, :], Py[0, :], c="w")
+ax.plot(Sy[1, :], Py[1, :], c="w")
 
-ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c='r', marker='o')
+ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c="r", marker="o")
 
 cbar = fig.colorbar(h, aspect=10)
 
-ax.set_xlabel(r'$s$')
-ax.set_ylabel(r'$p$')
+ax.set_xlabel(r"$s$")
+ax.set_ylabel(r"$p$")
 
-fig.savefig('perturbation_phase-diagram_eps.pdf')
+fig.savefig("perturbation_phase-diagram_eps.pdf")
 plt.close(fig)
 
 # Plot phase diagram - energy
 
 fig, ax = plt.subplots()
 
-h = ax.imshow(energy, cmap='jet', extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
+h = ax.imshow(energy, cmap="jet", extent=[np.min(P), np.max(P), np.min(S), np.max(S)])
 
-ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
-ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
+ax.plot([0, 0], [P[0], P[-1]], c="w", lw=1)
+ax.plot([S[0], S[-1]], [0, 0], c="w", lw=1)
 
-ax.plot(Sy[0, :], Py[0, :], c='w')
-ax.plot(Sy[1, :], Py[1, :], c='w')
+ax.plot(Sy[0, :], Py[0, :], c="w")
+ax.plot(Sy[1, :], Py[1, :], c="w")
 
-ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c='r', marker='o')
+ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c="r", marker="o")
 
 cbar = fig.colorbar(h, aspect=10)
 
-ax.set_xlabel(r'$s$')
-ax.set_ylabel(r'$p$')
+ax.set_xlabel(r"$s$")
+ax.set_ylabel(r"$p$")
 
-fig.savefig('perturbation_phase-diagram_energy.pdf')
+fig.savefig("perturbation_phase-diagram_energy.pdf")
 plt.close(fig)
 
 # Plot phase diagram - energy
@@ -432,20 +463,20 @@ fig, ax = plt.subplots()
 
 h = ax.contourf(S, P, energy)
 
-ax.plot([0, 0], [P[0], P[-1]], c='w', lw=1)
-ax.plot([S[0], S[-1]], [0, 0], c='w', lw=1)
+ax.plot([0, 0], [P[0], P[-1]], c="w", lw=1)
+ax.plot([S[0], S[-1]], [0, 0], c="w", lw=1)
 
-ax.plot(Sy[0, :], Py[0, :], c='w')
-ax.plot(Sy[1, :], Py[1, :], c='w')
+ax.plot(Sy[0, :], Py[0, :], c="w")
+ax.plot(Sy[1, :], Py[1, :], c="w")
 
-ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c='r', marker='o')
+ax.plot(Sy.ravel()[np.argmin(Ey)], Py.ravel()[np.argmin(Ey)], c="r", marker="o")
 
 cbar = fig.colorbar(h, aspect=10)
 
-ax.set_xlabel(r'$s$')
-ax.set_ylabel(r'$p$')
+ax.set_xlabel(r"$s$")
+ax.set_ylabel(r"$p$")
 
-fig.savefig('perturbation_phase-diagram_energy-contour.pdf')
+fig.savefig("perturbation_phase-diagram_energy-contour.pdf")
 plt.close(fig)
 
 # Plot energy change for different perturbations
@@ -455,11 +486,10 @@ fig, ax = plt.subplots()
 ax.plot(Py[0, :], Ey[0, :])
 ax.plot(Py[1, :], Ey[1, :])
 
-ax.set_xlabel(r'$p$')
-ax.set_ylabel(r'$\Delta E$')
+ax.set_xlabel(r"$p$")
+ax.set_ylabel(r"$\Delta E$")
 
-fig.savefig('perturbation_yield-surface_delta-E.pdf')
+fig.savefig("perturbation_yield-surface_delta-E.pdf")
 plt.close(fig)
 
 plt.show()
-

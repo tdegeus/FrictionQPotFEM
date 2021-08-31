@@ -1,8 +1,8 @@
 #define CATCH_CONFIG_MAIN
-#include <catch2/catch.hpp>
-#include <xtensor/xrandom.hpp>
 #include <FrictionQPotFEM/Generic2d.h>
+#include <catch2/catch.hpp>
 #include <iostream>
+#include <xtensor/xrandom.hpp>
 
 TEST_CASE("FrictionQPotFEM::Generic2d", "Generic2d.h")
 {
@@ -21,9 +21,7 @@ TEST_CASE("FrictionQPotFEM::Generic2d", "Generic2d.h")
         full.setMassMatrix(xt::ones<double>({1}));
         full.setDampingMatrix(xt::ones<double>({1}));
 
-        full.setElastic(
-            xt::xtensor<double, 1>{},
-            xt::xtensor<double, 1>{});
+        full.setElastic(xt::xtensor<double, 1>{}, xt::xtensor<double, 1>{});
 
         full.setPlastic(
             xt::xtensor<double, 1>{1.0},
@@ -43,9 +41,7 @@ TEST_CASE("FrictionQPotFEM::Generic2d", "Generic2d.h")
         reduced.setMassMatrix(xt::ones<double>({1}));
         reduced.setDampingMatrix(xt::ones<double>({1}));
 
-        reduced.setElastic(
-            xt::xtensor<double, 1>{},
-            xt::xtensor<double, 1>{});
+        reduced.setElastic(xt::xtensor<double, 1>{}, xt::xtensor<double, 1>{});
 
         reduced.setPlastic(
             xt::xtensor<double, 1>{1.0},
@@ -74,7 +70,8 @@ TEST_CASE("FrictionQPotFEM::Generic2d", "Generic2d.h")
         REQUIRE(xt::allclose(reduced.Sig(), reduced.plastic_Sig()));
 
         REQUIRE(xt::allclose(full.plastic_CurrentYieldLeft(), reduced.plastic_CurrentYieldLeft()));
-        REQUIRE(xt::allclose(full.plastic_CurrentYieldRight(), reduced.plastic_CurrentYieldRight()));
+        REQUIRE(
+            xt::allclose(full.plastic_CurrentYieldRight(), reduced.plastic_CurrentYieldRight()));
         REQUIRE(xt::all(xt::equal(full.plastic_CurrentIndex(), reduced.plastic_CurrentIndex())));
     }
 }

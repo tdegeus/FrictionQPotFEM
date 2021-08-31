@@ -61,8 +61,8 @@ inline double System::plastic_dV() const
 
 inline xt::xtensor<double, 2> System::Energy()
 {
-    FRICTIONQPOTFEM_WARNING_PYTHON(\
-        "Deprecated: use this.material().Energy()."\
+    FRICTIONQPOTFEM_WARNING_PYTHON(
+        "Deprecated: use this.material().Energy()."
         "Careful though: one has to call 'evalSystem()' every time after 'setU'");
 
     this->evalSystem();
@@ -129,8 +129,8 @@ inline double System::addAffineSimpleShearCentered(double delta_gamma)
     return delta_gamma * 2.0;
 }
 
-inline double System::addSimpleShearEventDriven(
-    double deps_kick, bool kick, double direction, bool dry_run)
+inline double
+System::addSimpleShearEventDriven(double deps_kick, bool kick, double direction, bool dry_run)
 {
     FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
     FRICTIONQPOTFEM_REQUIRE(direction == +1.0 || direction == -1.0);
@@ -143,9 +143,12 @@ inline double System::addSimpleShearEventDriven(
 
     // distance to yielding: "deps"
     // (event a positive kick can lead to a decreasing equivalent strain)
-    xt::xtensor<double, 2> sign = this->plastic_signOfSimpleShearPerturbation(direction * deps_kick);
+    xt::xtensor<double, 2> sign =
+        this->plastic_signOfSimpleShearPerturbation(direction * deps_kick);
+
     xt::xtensor<double, 2> epsy_l = xt::abs(this->plastic_CurrentYieldLeft());
     xt::xtensor<double, 2> epsy_r = xt::abs(this->plastic_CurrentYieldRight());
+
     xt::xtensor<double, 2> epsy = xt::where(sign > 0, epsy_r, epsy_l);
     xt::xtensor<double, 2> deps = xt::abs(eps - epsy);
 
@@ -255,15 +258,12 @@ inline double System::addElasticSimpleShearToFixedStress(double target_stress, b
 {
     auto idx = this->plastic_CurrentIndex();
     auto ret = this->addSimpleShearToFixedStress(target_stress, dry_run);
-    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(idx,  this->plastic_CurrentIndex())));
+    FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(idx, this->plastic_CurrentIndex())));
     return ret;
 }
 
 inline double System::triggerElementWithLocalSimpleShear(
-    double deps_kick,
-    size_t plastic_element,
-    bool trigger_weakest,
-    double amplify)
+    double deps_kick, size_t plastic_element, bool trigger_weakest, double amplify)
 {
     FRICTIONQPOTFEM_ASSERT(plastic_element < m_nelem_plas);
 
@@ -290,7 +290,8 @@ inline double System::triggerElementWithLocalSimpleShear(
     double eps_new = epsy(plastic_element, q) + deps_kick / 2.0;
 
     // convert to increment in shear strain (N.B. "dgamma = 2 * Epsd(0,1)")
-    double dgamma = 2.0 * (-Epsd(0, 1) + std::sqrt(std::pow(eps_new, 2.0) - std::pow(Epsd(0, 0), 2.0)));
+    double dgamma =
+        2.0 * (-Epsd(0, 1) + std::sqrt(std::pow(eps_new, 2.0) - std::pow(Epsd(0, 0), 2.0)));
 
     // apply increment in shear strain as a perturbation to the selected element
     // - nodes belonging to the current element, from connectivity
@@ -311,7 +312,8 @@ inline double System::triggerElementWithLocalSimpleShear(
 
     FRICTIONQPOTFEM_REQUIRE(dgamma >= 0.0);
     FRICTIONQPOTFEM_REQUIRE(amplify >= 0.0);
-    FRICTIONQPOTFEM_REQUIRE(std::abs(eps(plastic_element, q) - eps_new) / eps_new < 1e-4 || amplify != 1);
+    FRICTIONQPOTFEM_REQUIRE(
+        std::abs(eps(plastic_element, q) - eps_new) / eps_new < 1e-4 || amplify != 1);
     FRICTIONQPOTFEM_REQUIRE(xt::any(xt::not_equal(idx, idx_new)));
     FRICTIONQPOTFEM_REQUIRE(idx(plastic_element, q) != idx_new(plastic_element, q));
     FRICTIONQPOTFEM_REQUIRE(xt::allclose(up, up_new));
@@ -319,8 +321,8 @@ inline double System::triggerElementWithLocalSimpleShear(
     return dgamma;
 }
 
-inline xt::xtensor<double, 2> System::plastic_ElementYieldBarrierForSimpleShear(
-    double deps_kick, size_t iquad)
+inline xt::xtensor<double, 2>
+System::plastic_ElementYieldBarrierForSimpleShear(double deps_kick, size_t iquad)
 {
     FRICTIONQPOTFEM_ASSERT(iquad < m_nip);
 
@@ -339,7 +341,7 @@ inline xt::xtensor<double, 2> System::plastic_ElementYieldBarrierForSimpleShear(
         double gamma = Epsd(e, q, 0, 1);
         double epsd_xx = Epsd(e, q, 0, 0);
         ret(e, 0) = deps(e, q);
-        ret(e, 1) = - gamma + std::sqrt(std::pow(eps_new, 2.0) - std::pow(epsd_xx, 2.0));
+        ret(e, 1) = -gamma + std::sqrt(std::pow(eps_new, 2.0) - std::pow(epsd_xx, 2.0));
     }
 
     return ret;
@@ -410,16 +412,14 @@ inline LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(const System& sys)
         m_Eps_s.emplace_back(Eps.shape());
         m_Sig_s.emplace_back(Sig.shape());
 
-        xt::xtensor<double, 2> simple_shear = {
-            {0.0, 1.0},
-            {1.0, 0.0}};
+        xt::xtensor<double, 2> simple_shear = {{0.0, 1.0}, {1.0, 0.0}};
 
         this->computePerturbation(
-            e, simple_shear, m_u_s[e], m_Eps_s[e], m_Sig_s[e],
-            K, solver, quad, vector, material);
+            e, simple_shear, m_u_s[e], m_Eps_s[e], m_Sig_s[e], K, solver, quad, vector, material);
 
         for (size_t q = 0; q < m_nip; ++q) {
-            auto Epsd = GMatTensor::Cartesian2d::Deviatoric(xt::eval(xt::view(m_Eps_s[e], m_elem_plas(e), q)));
+            auto Epsd = GMatTensor::Cartesian2d::Deviatoric(
+                xt::eval(xt::view(m_Eps_s[e], m_elem_plas(e), q)));
             double gamma = Epsd(0, 1);
             for (size_t roll = 0; roll < nroll; ++roll) {
                 auto map = mesh.roll(roll);
@@ -433,16 +433,14 @@ inline LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(const System& sys)
         m_Eps_p.emplace_back(Eps.shape());
         m_Sig_p.emplace_back(Sig.shape());
 
-        xt::xtensor<double, 2> pure_shear = {
-            {1.0, 0.0},
-            {0.0, -1.0}};
+        xt::xtensor<double, 2> pure_shear = {{1.0, 0.0}, {0.0, -1.0}};
 
         this->computePerturbation(
-            e, pure_shear, m_u_p[e], m_Eps_p[e], m_Sig_p[e],
-            K, solver, quad, vector, material);
+            e, pure_shear, m_u_p[e], m_Eps_p[e], m_Sig_p[e], K, solver, quad, vector, material);
 
         for (size_t q = 0; q < m_nip; ++q) {
-            auto Epsd = GMatTensor::Cartesian2d::Deviatoric(xt::eval(xt::view(m_Eps_p[e], m_elem_plas(e), q)));
+            auto Epsd = GMatTensor::Cartesian2d::Deviatoric(
+                xt::eval(xt::view(m_Eps_p[e], m_elem_plas(e), q)));
             double E = Epsd(0, 0);
             for (size_t roll = 0; roll < nroll; ++roll) {
                 auto map = mesh.roll(roll);
@@ -470,7 +468,7 @@ inline void LocalTriggerFineLayerFull::computePerturbation(
     u.fill(0.0);
 
     for (size_t q = 0; q < quad.nip(); ++q) {
-        xt::view(Sig, trigger_element, q) = - sig_star;
+        xt::view(Sig, trigger_element, q) = -sig_star;
     }
 
     auto fe = quad.Int_gradN_dot_tensor2_dV(Sig);
@@ -541,14 +539,14 @@ inline xt::xtensor<double, 4> LocalTriggerFineLayerFull::Sig_p(size_t trigger_pl
     return xt::view(m_Sig_p[config], xt::keep(m_elemmap[roll]));
 }
 
-inline xt::xtensor<double, 2> LocalTriggerFineLayerFull::slice(
-    const xt::xtensor<double, 2>& arg, size_t) const
+inline xt::xtensor<double, 2>
+LocalTriggerFineLayerFull::slice(const xt::xtensor<double, 2>& arg, size_t) const
 {
     return arg;
 }
 
-inline xt::xtensor<double, 4> LocalTriggerFineLayerFull::slice(
-    const xt::xtensor<double, 4>& arg, size_t) const
+inline xt::xtensor<double, 4>
+LocalTriggerFineLayerFull::slice(const xt::xtensor<double, 4>& arg, size_t) const
 {
     return arg;
 }
@@ -581,7 +579,8 @@ inline void LocalTriggerFineLayerFull::setState(
             double dgamma = m_dgamma(e, q);
             double dE = m_dE(e, q);
 
-            auto Epsd = GMatTensor::Cartesian2d::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
+            auto Epsd =
+                GMatTensor::Cartesian2d::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
             double gamma = Epsd(0, 1);
             double E = Epsd(0, 0);
             double y = epsy(e, q);
@@ -592,18 +591,18 @@ inline void LocalTriggerFineLayerFull::setState(
             b = 2.0 * gamma * dgamma;
             c = SQR(gamma) + SQR(E) - SQR(y);
             D = SQR(b) - 4.0 * a * c;
-            double smax = (- b + std::sqrt(D)) / (2.0 * a);
-            double smin = (- b - std::sqrt(D)) / (2.0 * a);
+            double smax = (-b + std::sqrt(D)) / (2.0 * a);
+            double smin = (-b - std::sqrt(D)) / (2.0 * a);
 
             // solve for "s = 0"
             a = SQR(dE);
             b = 2.0 * E * dE;
             c = SQR(E) + SQR(gamma) - SQR(y);
             D = SQR(b) - 4.0 * a * c;
-            double pmax = (- b + std::sqrt(D)) / (2.0 * a);
-            double pmin = (- b - std::sqrt(D)) / (2.0 * a);
+            double pmax = (-b + std::sqrt(D)) / (2.0 * a);
+            double pmin = (-b - std::sqrt(D)) / (2.0 * a);
 
-            size_t n = static_cast<size_t>(- smin / (smax - smin) * static_cast<double>(N));
+            size_t n = static_cast<size_t>(-smin / (smax - smin) * static_cast<double>(N));
             size_t m = N - n;
 
             for (size_t i = 0; i < 2; ++i) {
@@ -623,8 +622,8 @@ inline void LocalTriggerFineLayerFull::setState(
                 b = 2.0 * E * dE;
                 c = SQR(E) + std::pow(gamma + S(0, j) * dgamma, 2.0) - SQR(y);
                 D = SQR(b) - 4.0 * a * c;
-                P(0, j) = (- b + std::sqrt(D)) / (2.0 * a);
-                P(1, j) = (- b - std::sqrt(D)) / (2.0 * a);
+                P(0, j) = (-b + std::sqrt(D)) / (2.0 * a);
+                P(1, j) = (-b - std::sqrt(D)) / (2.0 * a);
             }
 
             for (size_t i = 0; i < P.shape(0); ++i) {
@@ -672,7 +671,8 @@ inline void LocalTriggerFineLayerFull::setStateMinimalSearch(
             double dgamma = m_dgamma(e, q);
             double dE = m_dE(e, q);
 
-            auto Epsd = GMatTensor::Cartesian2d::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
+            auto Epsd =
+                GMatTensor::Cartesian2d::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
             double gamma = Epsd(0, 1);
             double E = Epsd(0, 0);
             double y = epsy(e, q);
@@ -683,8 +683,8 @@ inline void LocalTriggerFineLayerFull::setStateMinimalSearch(
             b = 2.0 * gamma * dgamma;
             c = SQR(gamma) + SQR(E) - SQR(y);
             D = SQR(b) - 4.0 * a * c;
-            double smax = (- b + std::sqrt(D)) / (2.0 * a);
-            double smin = (- b - std::sqrt(D)) / (2.0 * a);
+            double smax = (-b + std::sqrt(D)) / (2.0 * a);
+            double smin = (-b - std::sqrt(D)) / (2.0 * a);
             P[0] = 0.0;
             P[1] = 0.0;
             S[0] = smin;
@@ -695,8 +695,8 @@ inline void LocalTriggerFineLayerFull::setStateMinimalSearch(
             b = 2.0 * E * dE;
             c = SQR(E) + SQR(gamma) - SQR(y);
             D = SQR(b) - 4.0 * a * c;
-            double pmax = (- b + std::sqrt(D)) / (2.0 * a);
-            double pmin = (- b - std::sqrt(D)) / (2.0 * a);
+            double pmax = (-b + std::sqrt(D)) / (2.0 * a);
+            double pmin = (-b - std::sqrt(D)) / (2.0 * a);
             P[2] = pmin;
             P[3] = pmax;
             S[2] = 0.0;
@@ -714,9 +714,8 @@ inline void LocalTriggerFineLayerFull::setStateMinimalSearch(
                 b = 2.0 * E * dE;
                 c = SQR(E) + std::pow(gamma + S[i] * dgamma, 2.0) - SQR(y);
                 D = SQR(b) - 4.0 * a * c;
-                P[i] = (- b + std::sqrt(D)) / (2.0 * a);
-                P[i + 1] = (- b - std::sqrt(D)) / (2.0 * a);
-
+                P[i] = (-b + std::sqrt(D)) / (2.0 * a);
+                P[i + 1] = (-b - std::sqrt(D)) / (2.0 * a);
             }
 
             for (size_t i = 0; i < S.size(); ++i) {
@@ -758,7 +757,8 @@ inline void LocalTriggerFineLayerFull::setStateSimpleShear(
 
             double dgamma = m_dgamma(e, q);
 
-            auto Epsd = GMatTensor::Cartesian2d::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
+            auto Epsd =
+                GMatTensor::Cartesian2d::Deviatoric(xt::eval(xt::view(Eps, m_elem_plas(e), q)));
             double gamma = Epsd(0, 1);
             double E = Epsd(0, 0);
             double y = epsy(e, q);
@@ -769,8 +769,8 @@ inline void LocalTriggerFineLayerFull::setStateSimpleShear(
             b = 2.0 * gamma * dgamma;
             c = SQR(gamma) + SQR(E) - SQR(y);
             D = SQR(b) - 4.0 * a * c;
-            S[1] = (- b + std::sqrt(D)) / (2.0 * a);
-            S[0] = (- b - std::sqrt(D)) / (2.0 * a);
+            S[1] = (-b + std::sqrt(D)) / (2.0 * a);
+            S[0] = (-b - std::sqrt(D)) / (2.0 * a);
 
             for (size_t i = 0; i < S.size(); ++i) {
                 xt::xtensor<double, 4> sig = S[i] * Sig_s + Sig_slice;
@@ -822,8 +822,8 @@ inline xt::xtensor<double, 2> LocalTriggerFineLayerFull::delta_u(size_t e, size_
     return m_pmin(e, q) * this->u_p(e) + m_smin(e, q) * this->u_s(e);
 }
 
-inline LocalTriggerFineLayer::LocalTriggerFineLayer(const System& sys, size_t roi) :
-    LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(sys)
+inline LocalTriggerFineLayer::LocalTriggerFineLayer(const System& sys, size_t roi)
+    : LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(sys)
 {
     GooseFEM::Mesh::Quad4::FineLayer mesh(sys.coor(), sys.conn());
 
