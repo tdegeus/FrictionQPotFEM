@@ -16,17 +16,6 @@ inline std::vector<std::string> version_dependencies()
 {
     std::vector<std::string> ret;
 
-    ret.push_back("frictionqpotfem=" + version());
-    ret.push_back("goosefem=" + GooseFEM::version());
-    ret.push_back("gmatelastoplasticqpot=" + GMatElastoPlasticQPot::version());
-    ret.push_back("gmattensor=" + GMatTensor::version());
-    ret.push_back("qpot=" + QPot::version());
-
-    ret.push_back("xtensor=" +
-        detail::unquote(std::string(QUOTE(XTENSOR_VERSION_MAJOR))) + "." +
-        detail::unquote(std::string(QUOTE(XTENSOR_VERSION_MINOR))) + "." +
-        detail::unquote(std::string(QUOTE(XTENSOR_VERSION_PATCH))));
-
     #if defined(GOOSEFEM_EIGEN) || defined(EIGEN_WORLD_VERSION)
 
         ret.push_back("eigen=" +
@@ -35,6 +24,17 @@ inline std::vector<std::string> version_dependencies()
             detail::unquote(std::string(QUOTE(EIGEN_MINOR_VERSION))));
 
     #endif
+
+    ret.push_back("frictionqpotfem=" + version());
+    ret.push_back("gmatelastoplasticqpot=" + GMatElastoPlasticQPot::version());
+    ret.push_back("gmattensor=" + GMatTensor::version());
+    ret.push_back("goosefem=" + GooseFEM::version());
+    ret.push_back("qpot=" + QPot::version());
+
+    ret.push_back("xtensor=" +
+        detail::unquote(std::string(QUOTE(XTENSOR_VERSION_MAJOR))) + "." +
+        detail::unquote(std::string(QUOTE(XTENSOR_VERSION_MINOR))) + "." +
+        detail::unquote(std::string(QUOTE(XTENSOR_VERSION_PATCH))));
 
     return ret;
 }
