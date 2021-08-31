@@ -1,10 +1,7 @@
 /**
-See FrictionQPotFEM::UniformSingleLayer2d.
-Implementation in UniformSingleLayer2d.hpp.
-
-\file UniformSingleLayer2d.h
+\file
 \copyright Copyright 2020. Tom de Geus. All rights reserved.
-\license This project is released under the MIT License.
+\license This project is released under the GNU Public License (MIT).
 */
 
 #ifndef FRICTIONQPOTFEM_UNIFORMSINGLELAYER2D_H
@@ -505,8 +502,8 @@ protected:
         GMatElastoPlasticQPot::Cartesian2d::Array<2>& material);
 
 protected:
-    size_t m_nip;                       ///< Number of integration points.
-    size_t m_nelem_plas;                ///< Number of plastic elements.
+    size_t m_nip; ///< Number of integration points.
+    size_t m_nelem_plas; ///< Number of plastic elements.
     xt::xtensor<size_t, 1> m_elem_plas; ///< Plastic elements.
 
     /**
@@ -518,15 +515,15 @@ protected:
     */
     std::vector<xt::xtensor<double, 2>> m_u_s; ///< Disp. field for simple shear perturbation.
     std::vector<xt::xtensor<double, 2>> m_u_p; ///< Displacement field for pure shear perturbation.
-    std::vector<xt::xtensor<double, 4>> m_Eps_s;   ///< Strain field for simple shear perturbation.
-    std::vector<xt::xtensor<double, 4>> m_Eps_p;   ///< Strain field for pure shear perturbation.
-    std::vector<xt::xtensor<double, 4>> m_Sig_s;   ///< Stress field for simple shear perturbation.
-    std::vector<xt::xtensor<double, 4>> m_Sig_p;   ///< Stress field for pure shear perturbation.
+    std::vector<xt::xtensor<double, 4>> m_Eps_s; ///< Strain field for simple shear perturbation.
+    std::vector<xt::xtensor<double, 4>> m_Eps_p; ///< Strain field for pure shear perturbation.
+    std::vector<xt::xtensor<double, 4>> m_Sig_s; ///< Stress field for simple shear perturbation.
+    std::vector<xt::xtensor<double, 4>> m_Sig_p; ///< Stress field for pure shear perturbation.
     std::vector<xt::xtensor<size_t, 1>> m_nodemap; ///< Node-map for the roll.
     std::vector<xt::xtensor<size_t, 1>> m_elemmap; ///< Element-map for the roll.
 
-    xt::xtensor<double, 2> m_dV;      ///< Integration point volume.
-    double m_V;                       ///< Volume of a plastic element: assumed homogeneous!
+    xt::xtensor<double, 2> m_dV; ///< Integration point volume.
+    double m_V; ///< Volume of a plastic element: assumed homogeneous!
     std::array<size_t, 4> m_shape_T2; ///< Shape of an integration point tensor.
 
     xt::xtensor<double, 2> m_smin; ///< value of "s" at minimal work "W" [nip, N]

@@ -1,7 +1,7 @@
 /**
-\file Generic2d.hpp
+\file
 \copyright Copyright 2020. Tom de Geus. All rights reserved.
-\license This project is released under the MIT License.
+\license This project is released under the GNU Public License (MIT).
 */
 
 #ifndef FRICTIONQPOTFEM_GENERIC2D_HPP

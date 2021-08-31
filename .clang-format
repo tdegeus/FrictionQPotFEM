@@ -21,6 +21,9 @@ PenaltyReturnTypeOnItsOwnLine: 100
 PointerBindsToType: true
 BreakBeforeBraces: Stroustrup
 
+# Do not align consecutive comments that follow a line of code
+AlignTrailingComments: false
+
 # force argument on one line each
 BinPackArguments: false
 BinPackParameters: false
