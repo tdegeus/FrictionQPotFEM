@@ -263,7 +263,10 @@ inline double System::addElasticSimpleShearToFixedStress(double target_stress, b
 }
 
 inline double System::triggerElementWithLocalSimpleShear(
-    double deps_kick, size_t plastic_element, bool trigger_weakest, double amplify)
+    double deps_kick,
+    size_t plastic_element,
+    bool trigger_weakest,
+    double amplify)
 {
     FRICTIONQPOTFEM_ASSERT(plastic_element < m_nelem_plas);
 

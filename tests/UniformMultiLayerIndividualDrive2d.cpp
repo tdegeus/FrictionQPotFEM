@@ -5,7 +5,8 @@
 #include <xtensor/xrandom.hpp>
 
 TEST_CASE(
-    "FrictionQPotFEM::UniformMultiLayerIndividualDrive2d", "UniformMultiLayerIndividualDrive2d.h")
+    "FrictionQPotFEM::UniformMultiLayerIndividualDrive2d",
+    "UniformMultiLayerIndividualDrive2d.h")
 {
     SECTION("Basic")
     {

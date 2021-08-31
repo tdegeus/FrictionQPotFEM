@@ -100,6 +100,6 @@ try:
     gplt.patch(coor=x, conn=conn, cindex=c)
     plt.show()
 
-except:
+except Exception as e:
 
-    pass
+    print(e)

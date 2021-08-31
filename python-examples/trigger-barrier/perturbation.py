@@ -19,8 +19,6 @@ def ComputePerturbation(sigma_star_test):
 
     # mesh dimensions
     nelem = mesh.nelem()
-    nne = mesh.nne()
-    ndim = mesh.ndim()
 
     # mesh definitions
     coor = mesh.coor()
@@ -74,13 +72,13 @@ def ComputePerturbation(sigma_star_test):
     # material definition
     mat = GMat.Array2d([nelem, nip])
 
-    I = np.zeros(mat.shape(), dtype="int")
-    I[elastic, :] = 1
-    mat.setElastic(I, 10.0, 1.0)
+    iden = np.zeros(mat.shape(), dtype="int")
+    iden[elastic, :] = 1
+    mat.setElastic(iden, 10.0, 1.0)
 
-    I = np.zeros(mat.shape(), dtype="int")
-    I[plastic, :] = 1
-    mat.setElastic(I, 10.0, 1.0)
+    iden = np.zeros(mat.shape(), dtype="int")
+    iden[plastic, :] = 1
+    mat.setElastic(iden, 10.0, 1.0)
 
     # solve
     # -----

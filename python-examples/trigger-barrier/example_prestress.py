@@ -1,7 +1,6 @@
 import GooseFEM
 import GMatElastoPlasticQPot.Cartesian2d as GMat
 import numpy as np
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import GooseMPL as gplt
 import GMatTensor.Cartesian2d as gtens
@@ -166,13 +165,13 @@ nip = quad.nip()
 # material definition
 mat = GMat.Array2d([nelem, nip])
 
-I = np.zeros(mat.shape(), dtype="int")
-I[elastic, :] = 1
-mat.setElastic(I, 10.0, 1.0)
+iden = np.zeros(mat.shape(), dtype="int")
+iden[elastic, :] = 1
+mat.setElastic(iden, 10.0, 1.0)
 
-I = np.zeros(mat.shape(), dtype="int")
-I[plastic, :] = 1
-mat.setElastic(I, 10.0, 1.0)
+iden = np.zeros(mat.shape(), dtype="int")
+iden[plastic, :] = 1
+mat.setElastic(iden, 10.0, 1.0)
 
 # solve
 # -----

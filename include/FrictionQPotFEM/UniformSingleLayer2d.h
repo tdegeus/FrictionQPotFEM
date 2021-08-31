@@ -145,7 +145,10 @@ public:
         xy-component of the deformation gradient that is applied to the system.
     */
     double addSimpleShearEventDriven(
-        double deps, bool kick, double direction = +1.0, bool dry_run = false);
+        double deps,
+        bool kick,
+        double direction = +1.0,
+        bool dry_run = false);
 
     /**
     Add simple shear until a target equivalent macroscopic stress has been reached.
