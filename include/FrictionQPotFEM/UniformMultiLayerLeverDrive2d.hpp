@@ -1,8 +1,8 @@
 /**
- *  \file UniformMultiLayerLeverDrive2d.hpp
- *  \copyright Copyright 2020. Tom de Geus. All rights reserved.
- *  \license This project is released under the GNU Public License (MIT).
- */
+\file
+\copyright Copyright 2020. Tom de Geus. All rights reserved.
+\license This project is released under the GNU Public License (MIT).
+*/
 
 #ifndef FRICTIONQPOTFEM_UNIFORMMULTILAYERLEVERDRIVE2D_HPP
 #define FRICTIONQPOTFEM_UNIFORMMULTILAYERLEVERDRIVE2D_HPP
