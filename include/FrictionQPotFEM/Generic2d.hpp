@@ -444,6 +444,11 @@ inline xt::xtensor<double, 2> System::plastic_Epsp() const
     return xt::view(m_material.Epsp(), xt::keep(m_elem_plas), xt::all());
 }
 
+inline bool System::boundcheck_right(size_t n) const
+{
+    return m_material.checkYieldBoundRight(n);
+}
+
 inline void System::computeStress()
 {
     FRICTIONQPOTFEM_ASSERT(m_allset);
@@ -551,7 +556,7 @@ inline size_t System::minimise(double tol, size_t niter_tol, size_t max_iter)
     double tol2 = tol * tol;
     GooseFEM::Iterate::StopList residuals(niter_tol);
 
-    for (size_t iiter = 0; iiter < max_iter; ++iiter) {
+    for (size_t iiter = 1; iiter < max_iter; ++iiter) {
 
         this->timeStep();
 
@@ -565,7 +570,34 @@ inline size_t System::minimise(double tol, size_t niter_tol, size_t max_iter)
 
     bool converged = false;
     FRICTIONQPOTFEM_REQUIRE(converged == true);
-    return std::numeric_limits<size_t>::max();
+    return 0; // irrelevant, the code never goes here
+}
+
+inline size_t System::minimise_boundcheck(size_t nmargin, double tol, size_t niter_tol, size_t max_iter)
+{
+    FRICTIONQPOTFEM_REQUIRE(tol < 1.0);
+    double tol2 = tol * tol;
+    GooseFEM::Iterate::StopList residuals(niter_tol);
+
+    for (size_t iiter = 1; iiter < max_iter; ++iiter) {
+
+        this->timeStep();
+
+        residuals.roll_insert(this->residual());
+
+        if ((residuals.descending() && residuals.all_less(tol)) || residuals.all_less(tol2)) {
+            this->quench();
+            return iiter;
+        }
+
+        if (!this->boundcheck_right(nmargin)) {
+            return 0;
+        }
+    }
+
+    bool converged = false;
+    FRICTIONQPOTFEM_REQUIRE(converged == true);
+    return 0; // irrelevant, the code never goes here
 }
 
 template <class C, class E, class L>
@@ -728,6 +760,11 @@ inline xt::xtensor<size_t, 2> HybridSystem::plastic_CurrentIndex() const
 inline xt::xtensor<double, 2> HybridSystem::plastic_Epsp() const
 {
     return m_material_plas.Epsp();
+}
+
+inline bool HybridSystem::boundcheck_right(size_t n) const
+{
+    return m_material_plas.checkYieldBoundRight(n);
 }
 
 inline void HybridSystem::computeForceMaterial()

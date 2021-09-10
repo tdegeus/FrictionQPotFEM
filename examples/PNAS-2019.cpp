@@ -49,7 +49,8 @@ int main(int argc, char* argv[])
         sys.addSimpleShearEventDriven(deps, kick);
 
         if (kick) {
-            niter = sys.minimise();
+            niter = sys.minimise_boundcheck(1);
+            MYASSERT(niter > 0);
         }
         else {
             niter = 0;

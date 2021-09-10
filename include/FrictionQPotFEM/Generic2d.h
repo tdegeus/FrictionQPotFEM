@@ -403,6 +403,13 @@ public:
     virtual xt::xtensor<double, 2> plastic_Epsp() const;
 
     /**
+    Check that the current yield-index is at least `n` away from the end.
+    \param n Margin.
+    \return `true` if the current yield-index is at least `n` away from the end.
+    */
+    virtual bool boundcheck_right(size_t n) const;
+
+    /**
     Make a time-step: apply velocity-Verlet integration.
     Forces are computed where needed using:
     updated_u(), updated_v(), and computeInternalExternalResidualForce().
@@ -410,8 +417,10 @@ public:
     void timeStep();
 
     /**
-    Perform a series of time-steps until the next plastic event, equilibrium, or the maximum
-    number of iterations.
+    Perform a series of time-steps until:
+    -   the next plastic event,
+    -   equilibrium, or the maximum, or
+    -   the maximum number of iterations.
 
     \param tol
         Relative force tolerance for equilibrium. See System::residual for definition.
@@ -443,6 +452,22 @@ public:
     \return The number of iterations.
     */
     size_t minimise(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 1000000);
+
+    /**
+    \copydoc System::minimise(double, size_t, size_t)
+
+    This function stops if the yield-index in any of the plastic elements is close the end.
+    In that case the function returns zero, in all other cases the function returns a
+    positive number.
+
+    \param nmargin
+        Number of potentials to leave as margin.
+    */
+    size_t minimise_boundcheck(
+        size_t nmargin = 5,
+        double tol = 1e-5,
+        size_t niter_tol = 20,
+        size_t max_iter = 1000000);
 
 protected:
     xt::xtensor<size_t, 2> m_conn; ///< Connectivity. See System::conn.
@@ -667,6 +692,7 @@ public:
     xt::xtensor<double, 2> plastic_CurrentYieldRight(size_t offset) const override;
     xt::xtensor<size_t, 2> plastic_CurrentIndex() const override;
     xt::xtensor<double, 2> plastic_Epsp() const override;
+    bool boundcheck_right(size_t n) const override;
 
 protected:
     xt::xtensor<size_t, 2> m_conn_elas; ///< Slice of System::m_conn for elastic elements.
