@@ -92,60 +92,94 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
             cls.def(
                 "isHomogeneousElastic", &SUB::System::isHomogeneousElastic, "isHomogeneousElastic");
+
             cls.def("setDt", &SUB::System::setDt, "setDt", py::arg("dt"));
+
             cls.def("setT", &SUB::System::setT, "setT", py::arg("t"));
+
             cls.def("setU", &SUB::System::setU<xt::pytensor<double, 2>>, "setU", py::arg("u"));
+
             cls.def("setV", &SUB::System::setV<xt::pytensor<double, 2>>, "setV", py::arg("v"));
+
             cls.def("setA", &SUB::System::setA<xt::pytensor<double, 2>>, "setA", py::arg("a"));
+
             cls.def(
                 "setFext",
                 &SUB::System::setFext<xt::pytensor<double, 2>>,
                 "setFext",
                 py::arg("fext"));
+
             cls.def("quench", &SUB::System::quench, "quench");
+
             cls.def("elastic", &SUB::System::elastic, "elastic");
+
             cls.def("plastic", &SUB::System::plastic, "plastic");
+
             cls.def("conn", &SUB::System::conn, "conn");
+
             cls.def("coor", &SUB::System::coor, "coor");
+
             cls.def("dofs", &SUB::System::dofs, "dofs");
+
             cls.def("u", &SUB::System::u, "u");
+
             cls.def("v", &SUB::System::v, "v");
+
             cls.def("a", &SUB::System::a, "a");
+
             cls.def(
                 "mass", &SUB::System::mass, "mass", py::return_value_policy::reference_internal);
+
             cls.def(
                 "damping",
                 &SUB::System::damping,
                 "damping",
                 py::return_value_policy::reference_internal);
+
             cls.def("fext", &SUB::System::fext, "fext");
+
             cls.def("fint", &SUB::System::fint, "fint");
+
             cls.def("fmaterial", &SUB::System::fmaterial, "fmaterial");
+
             cls.def("fdamp", &SUB::System::fdamp, "fdamp");
+
             cls.def("residual", &SUB::System::residual, "residual");
+
             cls.def("t", &SUB::System::t, "t");
+
             cls.def("dV", &SUB::System::dV, "dV");
+
             cls.def(
                 "stiffness",
                 &SUB::System::stiffness,
                 "stiffness",
                 py::return_value_policy::reference_internal);
+
             cls.def(
                 "vector",
                 &SUB::System::vector,
                 "vector",
                 py::return_value_policy::reference_internal);
+
             cls.def(
                 "quad", &SUB::System::quad, "quad", py::return_value_policy::reference_internal);
+
             cls.def(
                 "material",
                 &SUB::System::material,
                 "material",
                 py::return_value_policy::reference_internal);
+
             cls.def("Sig", &SUB::System::Sig, "Sig");
+
             cls.def("Eps", &SUB::System::Eps, "Eps");
+
             cls.def("plastic_Sig", &SUB::System::plastic_Sig, "plastic_Sig");
+
             cls.def("plastic_Eps", &SUB::System::plastic_Eps, "plastic_Eps");
+
+            cls.def("boundcheck_right", &SUB::System::boundcheck_right, "boundcheck_right", py::arg("n"));
 
             cls.def(
                 "plastic_CurrentYieldLeft",
@@ -188,6 +222,15 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "minimise",
                 &SUB::System::minimise,
                 "minimise",
+                py::arg("tol") = 1e-5,
+                py::arg("niter_tol") = 20,
+                py::arg("max_iter") = 1000000);
+
+            cls.def(
+                "minimise_boundcheck",
+                &SUB::System::minimise_boundcheck,
+                "minimise_boundcheck",
+                py::arg("nmargin") = 5,
                 py::arg("tol") = 1e-5,
                 py::arg("niter_tol") = 20,
                 py::arg("max_iter") = 1000000);
@@ -247,8 +290,11 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::return_value_policy::reference_internal);
 
             cls.def("Sig", &SUB::HybridSystem::Sig, "Sig");
+
             cls.def("Eps", &SUB::HybridSystem::Eps, "Eps");
+
             cls.def("plastic_Sig", &SUB::HybridSystem::plastic_Sig, "plastic_Sig");
+
             cls.def("plastic_Eps", &SUB::HybridSystem::plastic_Eps, "plastic_Eps");
 
             cls.def("__repr__", [](const SUB::System&) {
