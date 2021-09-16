@@ -1,6 +1,6 @@
-import numpy as np
-import GooseFEM as gf
 import FrictionQPotFEM.UniformMultiLayerIndividualDrive2d as model
+import GooseFEM as gf
+import numpy as np
 
 layer_elas = gf.Mesh.Quad4.Regular(20, 6)
 layer_plas = gf.Mesh.Quad4.Regular(20, 1)

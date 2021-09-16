@@ -1,9 +1,9 @@
-import GooseFEM
 import GMatElastoPlasticQPot.Cartesian2d as GMat
-import numpy as np
-import matplotlib.pyplot as plt
-import GooseMPL as gplt
 import GMatTensor.Cartesian2d as gtens
+import GooseFEM
+import GooseMPL as gplt
+import matplotlib.pyplot as plt
+import numpy as np
 
 plt.style.use(["goose", "goose-latex"])
 

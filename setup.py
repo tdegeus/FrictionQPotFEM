@@ -1,5 +1,5 @@
-from skbuild import setup
 from setuptools_scm import get_version
+from skbuild import setup
 
 project_name = "FrictionQPotFEM"
 

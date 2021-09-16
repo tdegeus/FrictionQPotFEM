@@ -573,7 +573,8 @@ inline size_t System::minimise(double tol, size_t niter_tol, size_t max_iter)
     return 0; // irrelevant, the code never goes here
 }
 
-inline size_t System::minimise_boundcheck(size_t nmargin, double tol, size_t niter_tol, size_t max_iter)
+inline size_t
+System::minimise_boundcheck(size_t nmargin, double tol, size_t niter_tol, size_t max_iter)
 {
     FRICTIONQPOTFEM_REQUIRE(tol < 1.0);
     double tol2 = tol * tol;

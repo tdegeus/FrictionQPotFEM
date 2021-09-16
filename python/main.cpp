@@ -179,7 +179,11 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
             cls.def("plastic_Eps", &SUB::System::plastic_Eps, "plastic_Eps");
 
-            cls.def("boundcheck_right", &SUB::System::boundcheck_right, "boundcheck_right", py::arg("n"));
+            cls.def(
+                "boundcheck_right",
+                &SUB::System::boundcheck_right,
+                "boundcheck_right",
+                py::arg("n"));
 
             cls.def(
                 "plastic_CurrentYieldLeft",
