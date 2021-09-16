@@ -1,8 +1,8 @@
-import GooseFEM
-import GMatElastoPlasticQPot.Cartesian2d as GMat
-import numpy as np
-import GMatTensor.Cartesian2d as gtens
 import FrictionQPotFEM.UniformSingleLayer2d as model
+import GMatElastoPlasticQPot.Cartesian2d as GMat
+import GMatTensor.Cartesian2d as gtens
+import GooseFEM
+import numpy as np
 
 
 def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
