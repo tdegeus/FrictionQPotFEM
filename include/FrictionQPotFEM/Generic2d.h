@@ -114,6 +114,13 @@ public:
         const xt::xtensor<double, 2>& epsy_elem);
 
     /**
+    Reset yield strains (to avoid re-construction).
+
+    \param epsy_elem Yield history per element.
+    */
+    virtual void reset_epsy(const xt::xtensor<double, 2>& epsy_elem);
+
+    /**
     Check if elasticity is homogeneous.
 
     \return ``true`` is elasticity is homogeneous (``false`` otherwise).
@@ -642,6 +649,8 @@ public:
         const xt::xtensor<double, 1>& K_elem,
         const xt::xtensor<double, 1>& G_elem,
         const xt::xtensor<double, 2>& epsy_elem) override;
+
+    void reset_epsy(const xt::xtensor<double, 2>& epsy_elem) override;
 
     /**
     Evaluate the full System.
