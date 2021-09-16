@@ -90,6 +90,8 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("G_elem"),
                 py::arg("epsy_elem"));
 
+            cls.def("reset_epsy", &SUB::System::reset_epsy, "reset_epsy", py::arg("epsy_elem"));
+
             cls.def(
                 "isHomogeneousElastic", &SUB::System::isHomogeneousElastic, "isHomogeneousElastic");
 
@@ -278,6 +280,9 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("K_elem"),
                 py::arg("G_elem"),
                 py::arg("epsy_elem"));
+
+            cls.def(
+                "reset_epsy", &SUB::HybridSystem::reset_epsy, "reset_epsy", py::arg("epsy_elem"));
 
             cls.def("evalSystem", &SUB::HybridSystem::evalSystem, "evalSystem");
 

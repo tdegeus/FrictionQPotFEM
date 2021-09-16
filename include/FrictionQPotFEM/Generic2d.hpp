@@ -209,15 +209,34 @@ inline void System::setPlastic(
     if (m_nelem_plas > 0) {
         xt::xtensor<size_t, 2> I = xt::zeros<size_t>({m_nelem, m_nip});
         xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem, m_nip});
+
         xt::view(I, xt::keep(m_elem_plas), xt::all()) = 1ul;
         xt::view(idx, xt::keep(m_elem_plas), xt::all()) =
             xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
+
         m_material.setCusp(I, idx, K_elem, G_elem, epsy_elem);
     }
 
     m_set_plas = true;
     this->evalAllSet();
     this->initMaterial();
+}
+
+inline void System::reset_epsy(const xt::xtensor<double, 2>& epsy_elem)
+{
+    FRICTIONQPOTFEM_ASSERT(m_set_plas);
+    FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
+
+    if (m_nelem_plas > 0) {
+        xt::xtensor<size_t, 2> I = xt::zeros<size_t>({m_nelem, m_nip});
+        xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem, m_nip});
+
+        xt::view(I, xt::keep(m_elem_plas), xt::all()) = 1ul;
+        xt::view(idx, xt::keep(m_elem_plas), xt::all()) =
+            xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
+
+        m_material.reset_epsy(I, idx, epsy_elem);
+    }
 }
 
 inline bool System::isHomogeneousElastic() const
@@ -684,12 +703,32 @@ inline void HybridSystem::setPlastic(
 
     xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_plas, m_nip});
     xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
+
     xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) =
         xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
+
     m_material_plas.setCusp(I, idx, K_elem, G_elem, epsy_elem);
     m_material_plas.setStrain(m_Eps_plas);
+
     FRICTIONQPOTFEM_REQUIRE(xt::all(
         xt::not_equal(m_material_plas.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
+}
+
+inline void HybridSystem::reset_epsy(const xt::xtensor<double, 2>& epsy_elem)
+{
+    System::reset_epsy(epsy_elem);
+
+    if (m_nelem_plas == 0) {
+        return;
+    }
+
+    xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_plas, m_nip});
+    xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
+
+    xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) =
+        xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
+
+    m_material_plas.reset_epsy(I, idx, epsy_elem);
 }
 
 inline const GMatElastoPlasticQPot::Cartesian2d::Array<2>& HybridSystem::material_elastic() const
