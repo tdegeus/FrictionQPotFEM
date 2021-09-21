@@ -137,6 +137,14 @@ python -m pip install . -vv
 
 # Change-log
 
+## v0.15.0
+
+*   Adding "reset_epsy"
+*   Adding "minimise_boundcheck".
+*   Bugfix "minimise" return the number of iterations (not the iteration index)
+*   [Python] Removing unnecessary imports
+*   Formatting updates (#113)
+
 ## v0.14.2
 
 *   [clang-format] Adding formatting suggestion
