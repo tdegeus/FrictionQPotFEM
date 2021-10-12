@@ -16,15 +16,6 @@ inline std::vector<std::string> version_dependencies()
 {
     std::vector<std::string> ret;
 
-#if defined(GOOSEFEM_EIGEN) || defined(EIGEN_WORLD_VERSION)
-
-    ret.push_back(
-        "eigen=" + detail::unquote(std::string(QUOTE(EIGEN_WORLD_VERSION))) + "." +
-        detail::unquote(std::string(QUOTE(EIGEN_MAJOR_VERSION))) + "." +
-        detail::unquote(std::string(QUOTE(EIGEN_MINOR_VERSION))));
-
-#endif
-
     ret.push_back("frictionqpotfem=" + version());
     ret.push_back("gmatelastoplasticqpot=" + GMatElastoPlasticQPot::version());
     ret.push_back("gmattensor=" + GMatTensor::version());
@@ -35,6 +26,29 @@ inline std::vector<std::string> version_dependencies()
         "xtensor=" + detail::unquote(std::string(QUOTE(XTENSOR_VERSION_MAJOR))) + "." +
         detail::unquote(std::string(QUOTE(XTENSOR_VERSION_MINOR))) + "." +
         detail::unquote(std::string(QUOTE(XTENSOR_VERSION_PATCH))));
+
+#if defined(GOOSEFEM_EIGEN) || defined(EIGEN_WORLD_VERSION)
+    ret.push_back(
+        "eigen=" + detail::unquote(std::string(QUOTE(EIGEN_WORLD_VERSION))) + "." +
+        detail::unquote(std::string(QUOTE(EIGEN_MAJOR_VERSION))) + "." +
+        detail::unquote(std::string(QUOTE(EIGEN_MINOR_VERSION))));
+#endif
+
+#ifdef XSIMD_VERSION_MAJOR
+    ret.push_back(
+        "xsimd=" + detail::unquote(std::string(QUOTE(XSIMD_VERSION_MAJOR))) + "." +
+        detail::unquote(std::string(QUOTE(XSIMD_VERSION_MINOR))) + "." +
+        detail::unquote(std::string(QUOTE(XSIMD_VERSION_PATCH))));
+#endif
+
+#ifdef XTL_VERSION_MAJOR
+    ret.push_back(
+        "xtl=" + detail::unquote(std::string(QUOTE(XTL_VERSION_MAJOR))) + "." +
+        detail::unquote(std::string(QUOTE(XTL_VERSION_MINOR))) + "." +
+        detail::unquote(std::string(QUOTE(XTL_VERSION_PATCH))));
+#endif
+
+    std::sort(ret.begin(), ret.end(), std::greater<std::string>());
 
     return ret;
 }
@@ -130,7 +144,7 @@ inline void System::setMassMatrix(const T& val_elem)
         GooseFEM::Element::Quad4::Nodal::xi(),
         GooseFEM::Element::Quad4::Nodal::w());
 
-    xt::xtensor<double, 2> val_quad = xt::empty<double>({m_nelem, nodalQuad.nip()});
+    xt::xtensor<double, 2> val_quad(std::array<size_t, 2>{m_nelem, nodalQuad.nip()});
     for (size_t q = 0; q < nodalQuad.nip(); ++q) {
         xt::view(val_quad, xt::all(), q) = val_elem;
     }
@@ -151,7 +165,7 @@ inline void System::setDampingMatrix(const T& val_elem)
         GooseFEM::Element::Quad4::Nodal::xi(),
         GooseFEM::Element::Quad4::Nodal::w());
 
-    xt::xtensor<double, 2> val_quad = xt::empty<double>({m_nelem, nodalQuad.nip()});
+    xt::xtensor<double, 2> val_quad(std::array<size_t, 2>{m_nelem, nodalQuad.nip()});
     for (size_t q = 0; q < nodalQuad.nip(); ++q) {
         xt::view(val_quad, xt::all(), q) = val_elem;
     }
@@ -183,11 +197,13 @@ System::setElastic(const xt::xtensor<double, 1>& K_elem, const xt::xtensor<doubl
     FRICTIONQPOTFEM_ASSERT(G_elem.size() == m_nelem_elas);
 
     if (m_nelem_elas > 0) {
-        xt::xtensor<size_t, 2> I = xt::zeros<size_t>({m_nelem, m_nip});
-        xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem, m_nip});
+        xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem, m_nip}, 0);
+        xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem, m_nip}, 0);
+
         xt::view(I, xt::keep(m_elem_elas), xt::all()) = 1ul;
         xt::view(idx, xt::keep(m_elem_elas), xt::all()) =
             xt::arange<size_t>(m_nelem_elas).reshape({-1, 1});
+
         m_material.setElastic(I, idx, K_elem, G_elem);
     }
 
@@ -207,8 +223,8 @@ inline void System::setPlastic(
     FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
 
     if (m_nelem_plas > 0) {
-        xt::xtensor<size_t, 2> I = xt::zeros<size_t>({m_nelem, m_nip});
-        xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem, m_nip});
+        xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem, m_nip}, 0);
+        xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem, m_nip}, 0);
 
         xt::view(I, xt::keep(m_elem_plas), xt::all()) = 1ul;
         xt::view(idx, xt::keep(m_elem_plas), xt::all()) =
@@ -228,8 +244,8 @@ inline void System::reset_epsy(const xt::xtensor<double, 2>& epsy_elem)
     FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
 
     if (m_nelem_plas > 0) {
-        xt::xtensor<size_t, 2> I = xt::zeros<size_t>({m_nelem, m_nip});
-        xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem, m_nip});
+        xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem, m_nip}, 0);
+        xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem, m_nip}, 0);
 
         xt::view(I, xt::keep(m_elem_plas), xt::all()) = 1ul;
         xt::view(idx, xt::keep(m_elem_plas), xt::all()) =
@@ -678,12 +694,15 @@ HybridSystem::setElastic(const xt::xtensor<double, 1>& K_elem, const xt::xtensor
         return;
     }
 
-    xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_elas, m_nip});
-    xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_elas, m_nip});
+    xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem_elas, m_nip}, 1);
+    xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem_elas, m_nip}, 0);
+
     xt::view(idx, xt::range(0, m_nelem_elas), xt::all()) =
         xt::arange<size_t>(m_nelem_elas).reshape({-1, 1});
+
     m_material_elas.setElastic(I, idx, K_elem, G_elem);
     m_material_elas.setStrain(m_Eps_elas);
+
     FRICTIONQPOTFEM_REQUIRE(xt::all(
         xt::not_equal(m_material_elas.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
 
@@ -701,8 +720,8 @@ inline void HybridSystem::setPlastic(
         return;
     }
 
-    xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_plas, m_nip});
-    xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
+    xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem_plas, m_nip}, 1);
+    xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem_plas, m_nip}, 0);
 
     xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) =
         xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
@@ -722,8 +741,8 @@ inline void HybridSystem::reset_epsy(const xt::xtensor<double, 2>& epsy_elem)
         return;
     }
 
-    xt::xtensor<size_t, 2> I = xt::ones<size_t>({m_nelem_plas, m_nip});
-    xt::xtensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
+    xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem_plas, m_nip}, 1);
+    xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem_plas, m_nip}, 0);
 
     xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) =
         xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});

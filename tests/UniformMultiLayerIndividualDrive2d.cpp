@@ -15,6 +15,7 @@ TEST_CASE(
         xt::xtensor<bool, 1> is_plastic = {false, true, false, true, false};
         size_t nlayer = is_plastic.size();
         GooseFEM::Mesh::Vstack stitch;
+
         for (size_t i = 0; i < nlayer; ++i) {
             stitch.push_back(mesh.coor(), mesh.conn(), mesh.nodesBottomEdge(), mesh.nodesTopEdge());
         }
@@ -41,6 +42,7 @@ TEST_CASE(
 
         xt::xtensor<bool, 1> is_plastic = {false, true, false, true, false};
         size_t nlayer = is_plastic.size();
+
         GooseFEM::Mesh::Vstack stitch;
         for (size_t i = 0; i < nlayer; ++i) {
             stitch.push_back(mesh.coor(), mesh.conn(), mesh.nodesBottomEdge(), mesh.nodesTopEdge());
@@ -62,21 +64,19 @@ TEST_CASE(
         // to pass internal fail safes
         size_t nelas = sys.elastic().size();
         size_t nplas = sys.plastic().size();
+        xt::xtensor<double, 1> Ielas = xt::ones<double>({nelas});
+        xt::xtensor<double, 1> Iplas = xt::ones<double>({nplas});
+
         sys.setMassMatrix(xt::ones<double>({stitch.nelem()}));
         sys.setDampingMatrix(xt::ones<double>({stitch.nelem()}));
-        sys.setElastic(xt::ones<double>({nelas}), xt::ones<double>({nelas}));
-        sys.setPlastic(
-            xt::ones<double>({nplas}),
-            xt::ones<double>({nplas}),
-            xt::ones<double>({nplas, size_t(1)}));
+        sys.setElastic(1.0 * Ielas, 1.0 * Ielas);
+        sys.setPlastic(1.0 * Iplas, 1.0 * Iplas, xt::ones<double>({nplas, 1ul}));
         sys.setDt(1.0);
 
-        xt::xtensor<bool, 2> drive = xt::zeros<bool>({nlayer, size_t(2)});
-        xt::xtensor<double, 2> u_target = xt::zeros<double>({nlayer, size_t(2)});
-
+        xt::xtensor<bool, 2> drive = xt::zeros<bool>({nlayer, 2ul});
+        xt::xtensor<double, 2> u_target = xt::zeros<double>({nlayer, 2ul});
         drive(2, 0) = true;
         drive(4, 0) = true;
-
         u_target(2, 0) = 1.0;
         u_target(4, 0) = 2.0;
 
@@ -87,10 +87,12 @@ TEST_CASE(
         xt::xtensor<double, 2> f = xt::zeros<double>({stitch.nnode(), stitch.ndim()});
 
         {
-            xt::xtensor<size_t, 1> c0 =
-                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesBottomLeftCorner()}, 2);
-            xt::xtensor<size_t, 1> c1 =
-                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesBottomRightCorner()}, 2);
+            xt::xtensor<size_t, 1> c0 = xt::xtensor<size_t, 1>{mesh.nodesBottomLeftCorner()};
+            c0 = stitch.nodeset(c0, 2);
+
+            xt::xtensor<size_t, 1> c1 = xt::xtensor<size_t, 1>{mesh.nodesBottomRightCorner()};
+            c1 = stitch.nodeset(c1, 2);
+
             xt::xtensor<size_t, 1> e = stitch.nodeset(mesh.nodesBottomOpenEdge(), 2);
 
             xt::view(f, xt::keep(c0), 0) -= 0.25;
@@ -99,10 +101,12 @@ TEST_CASE(
         }
 
         {
-            xt::xtensor<size_t, 1> c0 =
-                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesTopLeftCorner()}, 2);
-            xt::xtensor<size_t, 1> c1 =
-                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesTopRightCorner()}, 2);
+            xt::xtensor<size_t, 1> c0 = xt::xtensor<size_t, 1>{mesh.nodesTopLeftCorner()};
+            c0 = stitch.nodeset(c0, 2);
+
+            xt::xtensor<size_t, 1> c1 = xt::xtensor<size_t, 1>{mesh.nodesTopRightCorner()};
+            c1 = stitch.nodeset(c1, 2);
+
             xt::xtensor<size_t, 1> e = stitch.nodeset(mesh.nodesTopOpenEdge(), 2);
 
             xt::view(f, xt::keep(c0), 0) -= 0.25;
@@ -111,10 +115,12 @@ TEST_CASE(
         }
 
         {
-            xt::xtensor<size_t, 1> c0 =
-                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesBottomLeftCorner()}, 4);
-            xt::xtensor<size_t, 1> c1 =
-                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesBottomRightCorner()}, 4);
+            xt::xtensor<size_t, 1> c0 = xt::xtensor<size_t, 1>{mesh.nodesBottomLeftCorner()};
+            c0 = stitch.nodeset(c0, 4);
+
+            xt::xtensor<size_t, 1> c1 = xt::xtensor<size_t, 1>{mesh.nodesBottomRightCorner()};
+            c1 = stitch.nodeset(c1, 4);
+
             xt::xtensor<size_t, 1> e = stitch.nodeset(mesh.nodesBottomOpenEdge(), 4);
 
             xt::view(f, xt::keep(c0), 0) -= 0.5;
@@ -123,10 +129,12 @@ TEST_CASE(
         }
 
         {
-            xt::xtensor<size_t, 1> c0 =
-                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesTopLeftCorner()}, 4);
-            xt::xtensor<size_t, 1> c1 =
-                stitch.nodeset(xt::xtensor<size_t, 1>{mesh.nodesTopRightCorner()}, 4);
+            xt::xtensor<size_t, 1> c0 = xt::xtensor<size_t, 1>{mesh.nodesTopLeftCorner()};
+            c0 = stitch.nodeset(c0, 4);
+
+            xt::xtensor<size_t, 1> c1 = xt::xtensor<size_t, 1>{mesh.nodesTopRightCorner()};
+            c1 = stitch.nodeset(c1, 4);
+
             xt::xtensor<size_t, 1> e = stitch.nodeset(mesh.nodesTopOpenEdge(), 4);
 
             xt::view(f, xt::keep(c0), 0) -= 0.5;
@@ -144,6 +152,7 @@ TEST_CASE(
         xt::xtensor<bool, 1> is_plastic = {false, true, false, true, false};
         size_t nlayer = is_plastic.size();
         GooseFEM::Mesh::Vstack stitch;
+
         for (size_t i = 0; i < nlayer; ++i) {
             stitch.push_back(mesh.coor(), mesh.conn(), mesh.nodesBottomEdge(), mesh.nodesTopEdge());
         }
@@ -163,24 +172,20 @@ TEST_CASE(
 
         size_t nelas = sys.elastic().size();
         size_t nplas = sys.plastic().size();
+        xt::xtensor<double, 1> Ielas = xt::ones<double>({nelas});
+        xt::xtensor<double, 1> Iplas = xt::ones<double>({nplas});
+        xt::xtensor<double, 2> epsy = 100.0 * xt::ones<double>({nplas, 1ul});
 
         sys.setDt(1.0);
         sys.setMassMatrix(xt::eval(xt::ones<double>({stitch.nelem()})));
         sys.setDampingMatrix(xt::eval(xt::ones<double>({stitch.nelem()})));
-
-        sys.setElastic(xt::eval(xt::ones<double>({nelas})), xt::eval(xt::ones<double>({nelas})));
-
-        sys.setPlastic(
-            xt::eval(xt::ones<double>({nplas})),
-            xt::eval(xt::ones<double>({nplas})),
-            xt::eval(xt::ones<double>({nplas, size_t(1)}) * 100.0));
+        sys.setElastic(1.0 * Ielas, 1.0 * Ielas);
+        sys.setPlastic(1.0 * Iplas, 1.0 * Iplas, epsy);
 
         xt::xtensor<bool, 2> drive = xt::zeros<bool>({5, 2});
         xt::xtensor<double, 2> u_target = xt::zeros<double>({5, 2});
-
         drive(2, 0) = true;
         drive(4, 0) = true;
-
         u_target(2, 0) = 1.0;
         u_target(4, 0) = 2.0;
 
@@ -236,39 +241,36 @@ TEST_CASE(
         auto conn = stitch.conn();
         auto dofs = stitch.dofs();
 
+        // periodicity
         xt::view(dofs, xt::keep(right), xt::all()) = xt::view(dofs, xt::keep(left), xt::all());
         dofs(top(0), 0) = dofs(top.periodic(-1), 0);
         dofs(bottom(0), 0) = dofs(bottom.periodic(-1), 0);
         dofs = GooseFEM::Mesh::renumber(dofs);
 
-        xt::xtensor<size_t, 1> iip = xt::empty<size_t>({bottom.size() * 2 + top.size()});
-
-        xt::view(iip, xt::range(0, bottom.size())) = xt::view(dofs, xt::keep(bottom), 0);
-
-        xt::view(iip, xt::range(bottom.size(), 2 * bottom.size())) =
-            xt::view(dofs, xt::keep(bottom), 1);
-
-        xt::view(iip, xt::range(2 * bottom.size(), 2 * bottom.size() + top.size())) =
-            xt::view(dofs, xt::keep(top), 1);
-
+        // fixed bottom (x + y) and top (x)
+        xt::xtensor<size_t, 1> iip = xt::concatenate(xt::xtuple(
+            xt::view(dofs, xt::keep(bottom), 0),
+            xt::view(dofs, xt::keep(bottom), 1),
+            xt::view(dofs, xt::keep(top), 1)));
         iip = xt::unique(iip);
 
+        xt::xtensor<bool, 1> is_plastic = {false, true, false};
         auto elas = xt::concatenate(xt::xtuple(stitch.elemmap(0), stitch.elemmap(2)));
         auto plas = stitch.elemmap(1);
-        xt::xtensor<bool, 1> is_plastic = {false, true, false};
+        size_t nelas = elas.size();
+        size_t nplas = plas.size();
+        xt::xtensor<double, 1> Ielas = xt::ones<double>({nelas});
+        xt::xtensor<double, 1> Iplas = xt::ones<double>({nplas});
+        xt::xtensor<double, 2> epsy = 0.01 * xt::ones<double>({plas.size(), size_t(100)});
+        epsy = xt::cumsum(epsy, 1);
 
         FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
             coor, conn, dofs, iip, stitch.elemmap(), stitch.nodemap(), is_plastic);
 
-        xt::xtensor<double, 2> epsy = 0.01 * xt::ones<double>({plas.size(), size_t(100)});
-        epsy = xt::cumsum(epsy, 1);
-
         sys.setMassMatrix(1.0 * xt::ones<double>({nelem}));
         sys.setDampingMatrix(0.01 * xt::ones<double>({nelem}));
-        sys.setElastic(
-            10.0 * xt::ones<double>({elas.size()}), 1.0 * xt::ones<double>({elas.size()}));
-        sys.setPlastic(
-            10.0 * xt::ones<double>({plas.size()}), 1.0 * xt::ones<double>({plas.size()}), epsy);
+        sys.setElastic(10.0 * Ielas, 1.0 * Ielas);
+        sys.setPlastic(10.0 * Iplas, 1.0 * Iplas, epsy);
         sys.setDt(0.1);
 
         xt::xtensor<bool, 2> drive = xt::zeros<bool>({3, 2});
@@ -286,5 +288,6 @@ TEST_CASE(
         u_target(1, 0) = 0.05; // expected result (layer not prescribed)
 
         REQUIRE(xt::allclose(u_target, sys.layerUbar(), 5e-2, 5e-3));
+        REQUIRE(xt::all(xt::equal(sys.plastic_CurrentIndex(), 5)));
     }
 }

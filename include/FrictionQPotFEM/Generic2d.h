@@ -16,6 +16,8 @@
 #include <GooseFEM/GooseFEM.h>
 #include <GooseFEM/Matrix.h>
 #include <GooseFEM/MatrixPartitioned.h>
+#include <algorithm>
+#include <string>
 #include <xtensor/xnorm.hpp>
 #include <xtensor/xset_operation.hpp>
 #include <xtensor/xshape.hpp>
@@ -496,8 +498,21 @@ protected:
     GooseFEM::MatrixDiagonalPartitioned m_M; ///< Mass matrix (diagonal)
     GooseFEM::MatrixDiagonal m_D; ///< Damping matrix (diagonal)
     GMatElastoPlasticQPot::Cartesian2d::Array<2> m_material; ///< Material definition.
-    xt::xtensor<double, 2> m_u; ///< Nodal displacements.
-    xt::xtensor<double, 2> m_v; ///< Nodal velocities.
+
+    /**
+    Nodal displacements.
+    \warning To make sure that the right forces are computed at the right time,
+    always call updated_u() after manually updating #m_u (setU() automatically take care of this).
+    */
+    xt::xtensor<double, 2> m_u;
+
+    /**
+    Nodal velocities.
+    \warning To make sure that the right forces are computed at the right time,
+    always call updated_v() after manually updating #m_v (setV() automatically take care of this).
+    */
+    xt::xtensor<double, 2> m_v;
+
     xt::xtensor<double, 2> m_a; ///< Nodal accelerations.
     xt::xtensor<double, 2> m_v_n; ///< Nodal velocities last time-step.
     xt::xtensor<double, 2> m_a_n; ///< Nodal accelerations last time-step.
@@ -747,13 +762,11 @@ protected:
         const L& elem_plastic);
 
     /**
-    Update System::m_fmaterial based on the current displacement field System::m_u.
-    Contrary to System::computeForceMaterial does not call HybridSystem::computeStress,
-    therefore separate computation (and overrides) of
-    HybridSystem::Sig and HybridSystem::Eps are needed.
-
-    Internal rule: This function is always evaluated after an update of System::m_u.
-    This is taken care off by calling System::setU, and never updating System::m_u directly.
+    Update System::m_fmaterial based on the current displacement field #m_u.
+    Contrary to System::computeForceMaterial, this function does not call computeStress(),
+    therefore separate overrides HybridSystem::Sig and HybridSystem::Eps are needed.
+    Consequently, their call corresponds to doing actual computations, while System::Sig and
+    System::Eps just return already computed data held in memory.
     */
     void computeForceMaterial() override;
 };

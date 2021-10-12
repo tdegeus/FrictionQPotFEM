@@ -15,43 +15,42 @@ namespace FrictionQPotFEM {
 
 /**
 System in 2-d with:
- *
 -   Several weak layers.
 -   Each layer driven independently through a spring.
 -   Uniform elasticity.
- */
+*/
 namespace UniformMultiLayerIndividualDrive2d {
 
 /**
 Return versions of this library and of all of its dependencies.
 The output is a list of strings, e.g.::
- *
+
     "frictionqpotfem=0.7.1",
     "goosefem=0.7.0",
     ...
- *
+
 \return List of strings.
- */
+*/
 inline std::vector<std::string> version_dependencies();
 
 /**
 System that comprises several layers (elastic or plastic).
 The average displacement of each layer can be coupled to a prescribed target value
-using a linear spring (to set its stiffness use layerSetDriveStiffness()).
-Each layer has one spring per degree-of-freedom, and each spring can be switched on
-individually using layerSetTargetActive().
-By default all springs are inactive (their stiffness is effectively zero).
- *
+using a linear spring (one spring per spatial dimension):
+-   To set its stiffness use layerSetDriveStiffness().
+-   Each spring can be switched on individually using layerSetTargetActive().
+    By default all springs are inactive (their stiffness is effectively zero).
+
 Terminology:
 -   `ubar`: the average displacement per layer [#nlayer, 2],
             see layerUbar() and layerSetUbar().
- *
+
 -   `target_ubar`: the target average displacement per layer [#nlayer, 2],
                    see layerTargetUbar() and layerSetTargetUbar().
- *
--   `target_active`: per layer/DOF the average displacement is only enforced if the spring
+
+-   `target_active`: the average displacement per layer/DOF is only enforced if the spring
                      is active, see layerTargetActive() and layerSetTargetActive().
- */
+*/
 class System : public Generic2d::HybridSystem {
 
 public:
@@ -185,10 +184,10 @@ public:
     Add affine simple shear to all the nodes of the body.
     The displacement of the bottom boundary is zero,
     while it is maximal for the top boundary.
-    The input is the strain value,
-    the shear component of deformation gradient is twice that.
+    The input is the strain increment,
+    the increment of the shear component of deformation gradient is twice that.
 
-    \param delta_gamma Affine strain to add.
+    \param delta_gamma Strain increment.
     */
     void addAffineSimpleShear(double delta_gamma);
 

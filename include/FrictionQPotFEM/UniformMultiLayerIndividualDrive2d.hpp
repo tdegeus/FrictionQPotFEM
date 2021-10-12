@@ -71,10 +71,10 @@ inline void System::init(
         }
     }
 
-    xt::xtensor<size_t, 1> plas = xt::empty<size_t>({n_elem_plas});
-    xt::xtensor<size_t, 1> elas = xt::empty<size_t>({n_elem_elas});
-    m_slice_plas = xt::empty<size_t>({n_layer_plas + size_t(1)});
-    m_slice_elas = xt::empty<size_t>({n_layer_elas + size_t(1)});
+    xt::xtensor<size_t, 1> plas(std::array<size_t, 1>{n_elem_plas});
+    xt::xtensor<size_t, 1> elas(std::array<size_t, 1>{n_elem_elas});
+    m_slice_plas.resize({n_layer_plas + size_t(1)});
+    m_slice_elas.resize({n_layer_elas + size_t(1)});
     m_slice_plas(0) = 0;
     m_slice_elas(0) = 0;
 
@@ -85,21 +85,25 @@ inline void System::init(
 
     for (size_t i = 0; i < m_n_layer; ++i) {
         if (m_layer_is_plastic(i)) {
-            m_slice_index(i) = n_layer_plas;
-            m_slice_plas(n_layer_plas + 1) = n_elem_plas + elem[i].size();
+            size_t l = m_slice_plas(n_layer_plas);
+            size_t u = n_elem_plas + elem[i].size();
 
-            xt::view(plas, xt::range(m_slice_plas(n_layer_plas), m_slice_plas(n_layer_plas + 1))) =
-                elem[i];
+            m_slice_index(i) = n_layer_plas;
+            m_slice_plas(n_layer_plas + 1) = u;
+
+            xt::view(plas, xt::range(l, u)) = elem[i];
 
             n_elem_plas += elem[i].size();
             n_layer_plas++;
         }
         else {
-            m_slice_index(i) = n_layer_elas;
-            m_slice_elas(n_layer_elas + 1) = n_elem_elas + elem[i].size();
+            size_t l = m_slice_elas(n_layer_elas);
+            size_t u = n_elem_elas + elem[i].size();
 
-            xt::view(elas, xt::range(m_slice_elas(n_layer_elas), m_slice_elas(n_layer_elas + 1))) =
-                elem[i];
+            m_slice_index(i) = n_layer_elas;
+            m_slice_elas(n_layer_elas + 1) = u;
+
+            xt::view(elas, xt::range(l, u)) = elem[i];
 
             n_elem_elas += elem[i].size();
             n_layer_elas++;
