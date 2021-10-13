@@ -70,11 +70,11 @@ TEST_CASE(
         sys.setMassMatrix(xt::ones<double>({stitch.nelem()}));
         sys.setDampingMatrix(xt::ones<double>({stitch.nelem()}));
         sys.setElastic(1.0 * Ielas, 1.0 * Ielas);
-        sys.setPlastic(1.0 * Iplas, 1.0 * Iplas, xt::ones<double>({nplas, 1ul}));
+        sys.setPlastic(1.0 * Iplas, 1.0 * Iplas, xt::ones<double>({nplas, size_t(1)}));
         sys.setDt(1.0);
 
-        xt::xtensor<bool, 2> drive = xt::zeros<bool>({nlayer, 2ul});
-        xt::xtensor<double, 2> u_target = xt::zeros<double>({nlayer, 2ul});
+        xt::xtensor<bool, 2> drive = xt::zeros<bool>({nlayer, size_t(2)});
+        xt::xtensor<double, 2> u_target = xt::zeros<double>({nlayer, size_t(2)});
         drive(2, 0) = true;
         drive(4, 0) = true;
         u_target(2, 0) = 1.0;
@@ -174,7 +174,7 @@ TEST_CASE(
         size_t nplas = sys.plastic().size();
         xt::xtensor<double, 1> Ielas = xt::ones<double>({nelas});
         xt::xtensor<double, 1> Iplas = xt::ones<double>({nplas});
-        xt::xtensor<double, 2> epsy = 100.0 * xt::ones<double>({nplas, 1ul});
+        xt::xtensor<double, 2> epsy = 100.0 * xt::ones<double>({nplas, size_t(1)});
 
         sys.setDt(1.0);
         sys.setMassMatrix(xt::eval(xt::ones<double>({stitch.nelem()})));
