@@ -137,6 +137,10 @@ python -m pip install . -vv
 
 # Change-log
 
+## v0.15.1
+
+*   Improving version_dependencies(). Various minor clean-ups (#115)
+
 ## v0.15.0
 
 *   Adding "reset_epsy"
