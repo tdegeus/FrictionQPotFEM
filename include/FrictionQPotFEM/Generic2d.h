@@ -669,9 +669,8 @@ public:
 
     std::string type() const override;
 
-    void setElastic(
-        const xt::xtensor<double, 1>& K_elem,
-        const xt::xtensor<double, 1>& G_elem) override;
+    void
+    setElastic(const xt::xtensor<double, 1>& K_elem, const xt::xtensor<double, 1>& G_elem) override;
 
     void setPlastic(
         const xt::xtensor<double, 1>& K_elem,
