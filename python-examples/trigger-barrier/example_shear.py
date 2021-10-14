@@ -91,9 +91,7 @@ def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p):
     dE = np.empty(P.size)
 
     for i, (p, s) in enumerate(zip(P.ravel(), S.ravel())):
-        dE[i] = np.sum(
-            gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV
-        )
+        dE[i] = np.sum(gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV)
 
     return dE.reshape(P.shape)
 
@@ -135,9 +133,7 @@ dofs[nodesRgt, :] = dofs[nodesLft, :]
 
 dofs = GooseFEM.Mesh.renumber(dofs)
 
-iip = np.concatenate(
-    (dofs[nodesBot, 0], dofs[nodesBot, 1], dofs[nodesTop, 0], dofs[nodesTop, 1])
-)
+iip = np.concatenate((dofs[nodesBot, 0], dofs[nodesBot, 1], dofs[nodesTop, 0], dofs[nodesTop, 1]))
 
 # simulation variables
 # --------------------
@@ -215,12 +211,8 @@ Sigstar_s = np.array([[0.0, +1.0], [+1.0, 0.0]])
 
 Sigstar_p = np.array([[+1.0, 0.0], [0.0, -1.0]])
 
-Epsstar_s, u_s, Eps_s, Sig_s = ComputePerturbation(
-    Sigstar_s, trigger, mat, quad, vector, K, Solver
-)
-Epsstar_p, u_p, Eps_p, Sig_p = ComputePerturbation(
-    Sigstar_p, trigger, mat, quad, vector, K, Solver
-)
+Epsstar_s, u_s, Eps_s, Sig_s = ComputePerturbation(Sigstar_s, trigger, mat, quad, vector, K, Solver)
+Epsstar_p, u_p, Eps_p, Sig_p = ComputePerturbation(Sigstar_p, trigger, mat, quad, vector, K, Solver)
 
 # Current state for triggered element
 Epsd = GMat.Deviatoric(Eps[trigger, 0])
@@ -252,8 +244,7 @@ for i, p in enumerate(P):
         sig[i, j] = GMat.Sigd(Sig_n[trigger, 0])
         eps[i, j] = GMat.Epsd(Eps_n[trigger, 0])
         energy[i, j] = (
-            np.average(0.5 * gtens.A2_ddot_B2(Sig_n, Eps_n), weights=dV) * np.sum(dV)
-            - E0
+            np.average(0.5 * gtens.A2_ddot_B2(Sig_n, Eps_n), weights=dV) * np.sum(dV) - E0
         )
 
 # Plot phase diagram - stress
@@ -350,9 +341,7 @@ sigeq = GMat.Sigd(np.average(Sig, weights=quad.AsTensor(2, quad.dV()), axis=1))
 
 fig, ax = plt.subplots()
 
-gplt.patch(
-    coor=coor + disp, conn=conn, cindex=sigeq, cmap="Reds", axis=ax, clim=(0, 1.0)
-)
+gplt.patch(coor=coor + disp, conn=conn, cindex=sigeq, cmap="Reds", axis=ax, clim=(0, 1.0))
 
 ax.axis("equal")
 plt.axis("off")
@@ -373,9 +362,7 @@ sigeq = GMat.Sigd(np.average(mat.Stress(), weights=quad.AsTensor(2, quad.dV()), 
 
 fig, ax = plt.subplots()
 
-gplt.patch(
-    coor=coor + disp, conn=conn, cindex=sigeq, cmap="Reds", axis=ax, clim=(0, 1.0)
-)
+gplt.patch(coor=coor + disp, conn=conn, cindex=sigeq, cmap="Reds", axis=ax, clim=(0, 1.0))
 
 ax.axis("equal")
 plt.axis("off")

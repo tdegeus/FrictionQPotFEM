@@ -178,9 +178,7 @@ def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p):
     dE = np.empty(P.size)
 
     for i, (p, s) in enumerate(zip(P.ravel(), S.ravel())):
-        dE[i] = np.sum(
-            gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV
-        )
+        dE[i] = np.sum(gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV)
 
     return dE.reshape(P.shape)
 
@@ -205,17 +203,13 @@ energy = np.average(mat.Energy(), weights=quad.dV(), axis=1)
 
 fig, ax = plt.subplots()
 
-gplt.patch(
-    coor=coor + u_s, conn=conn, cindex=energy, cmap="RdGy_r", axis=ax, clim=(-0.1, 0.1)
-)
+gplt.patch(coor=coor + u_s, conn=conn, cindex=energy, cmap="RdGy_r", axis=ax, clim=(-0.1, 0.1))
 gplt.patch(coor=coor, conn=conn, linestyle="--", axis=ax)
 
 ax.axis("equal")
 plt.axis("off")
 
-sm = plt.cm.ScalarMappable(
-    cmap="RdGy_r", norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1)
-)
+sm = plt.cm.ScalarMappable(cmap="RdGy_r", norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1))
 sm.set_array([])
 
 ticks = [-0.1, 0.0, +0.1]
@@ -236,17 +230,13 @@ energy = np.average(mat.Energy(), weights=quad.dV(), axis=1)
 
 fig, ax = plt.subplots()
 
-gplt.patch(
-    coor=coor + u_p, conn=conn, cindex=energy, cmap="RdGy_r", axis=ax, clim=(-0.1, 0.1)
-)
+gplt.patch(coor=coor + u_p, conn=conn, cindex=energy, cmap="RdGy_r", axis=ax, clim=(-0.1, 0.1))
 gplt.patch(coor=coor, conn=conn, linestyle="--", axis=ax)
 
 ax.axis("equal")
 plt.axis("off")
 
-sm = plt.cm.ScalarMappable(
-    cmap="RdGy_r", norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1)
-)
+sm = plt.cm.ScalarMappable(cmap="RdGy_r", norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1))
 sm.set_array([])
 
 ticks = [-0.1, 0.0, +0.1]
@@ -267,17 +257,13 @@ energy = np.average(mat.Energy(), weights=quad.dV(), axis=1)
 
 fig, ax = plt.subplots()
 
-gplt.patch(
-    coor=coor - u_s, conn=conn, cindex=energy, cmap="RdGy_r", axis=ax, clim=(-0.1, 0.1)
-)
+gplt.patch(coor=coor - u_s, conn=conn, cindex=energy, cmap="RdGy_r", axis=ax, clim=(-0.1, 0.1))
 gplt.patch(coor=coor, conn=conn, linestyle="--", axis=ax)
 
 ax.axis("equal")
 plt.axis("off")
 
-sm = plt.cm.ScalarMappable(
-    cmap="RdGy_r", norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1)
-)
+sm = plt.cm.ScalarMappable(cmap="RdGy_r", norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1))
 sm.set_array([])
 
 ticks = [-0.1, 0.0, +0.1]
@@ -298,17 +284,13 @@ energy = np.average(mat.Energy(), weights=quad.dV(), axis=1)
 
 fig, ax = plt.subplots()
 
-gplt.patch(
-    coor=coor - u_p, conn=conn, cindex=energy, cmap="RdGy_r", axis=ax, clim=(-0.1, 0.1)
-)
+gplt.patch(coor=coor - u_p, conn=conn, cindex=energy, cmap="RdGy_r", axis=ax, clim=(-0.1, 0.1))
 gplt.patch(coor=coor, conn=conn, linestyle="--", axis=ax)
 
 ax.axis("equal")
 plt.axis("off")
 
-sm = plt.cm.ScalarMappable(
-    cmap="RdGy_r", norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1)
-)
+sm = plt.cm.ScalarMappable(cmap="RdGy_r", norm=mpl.colors.Normalize(vmin=-0.1, vmax=+0.1))
 sm.set_array([])
 
 ticks = [-0.1, 0.0, +0.1]
@@ -367,8 +349,7 @@ for i, p in enumerate(P):
         sig[i, j] = GMat.Sigd(Sig_n[trigger, 0])
         eps[i, j] = GMat.Epsd(Eps_n[trigger, 0])
         energy[i, j] = (
-            np.average(0.5 * gtens.A2_ddot_B2(Sig_n, Eps_n), weights=dV) * np.sum(dV)
-            - E0
+            np.average(0.5 * gtens.A2_ddot_B2(Sig_n, Eps_n), weights=dV) * np.sum(dV) - E0
         )
 
         dEps = s * Eps_s + p * Eps_p
@@ -380,13 +361,10 @@ for i, p in enumerate(P):
 
         assert np.allclose(Eps_n, quad.SymGradN_vector(ue))
         assert np.allclose(Sig_n, mat.Stress())
-        assert np.isclose(
-            energy[i, j] + E0, np.average(mat.Energy(), weights=dV) * np.sum(dV)
-        )
+        assert np.isclose(energy[i, j] + E0, np.average(mat.Energy(), weights=dV) * np.sum(dV))
         assert np.isclose(
             energy[i, j],
-            np.average(gtens.A2_ddot_B2(Sig + 0.5 * dSig, dEps), weights=dV)
-            * np.sum(dV),
+            np.average(gtens.A2_ddot_B2(Sig + 0.5 * dSig, dEps), weights=dV) * np.sum(dV),
         )
 
 # Plot phase diagram - stress

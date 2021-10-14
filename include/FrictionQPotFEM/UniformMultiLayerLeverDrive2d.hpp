@@ -54,6 +54,11 @@ inline void System::init_lever(
     m_lever_u = 0.0;
 }
 
+inline std::string System::type() const
+{
+    return "FrictionQPotFEM.UniformMultiLayerLeverDrive2d.System";
+}
+
 template <class T>
 inline void System::setLeverProperties(double H, const T& hi)
 {

@@ -69,6 +69,8 @@ public:
         const std::vector<xt::xtensor<size_t, 1>>& node,
         const xt::xtensor<bool, 1>& layer_is_plastic);
 
+    std::string type() const override;
+
     /**
     Set the lever properties.
 

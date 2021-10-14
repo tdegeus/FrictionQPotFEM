@@ -41,6 +41,11 @@ inline void System::init(
     this->initHybridSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
 }
 
+inline std::string System::type() const
+{
+    return "FrictionQPotFEM.UniformSingleLayer2d.System";
+}
+
 inline double System::plastic_h() const
 {
     auto bot = xt::view(m_conn, xt::keep(m_elem_plas), 0);
