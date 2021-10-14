@@ -70,6 +70,8 @@ public:
         const L& elem_elastic,
         const L& elem_plastic);
 
+    std::string type() const override;
+
     /**
     Element height of all elements along the weak layer.
 

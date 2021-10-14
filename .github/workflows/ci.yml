@@ -70,7 +70,9 @@ jobs:
 
     - name: Run Python tests
       working-directory: tests
-      run: python UniformSingleLayer2d_LocalTriggerFineLayer.py
+      run: |
+        python basic.py
+        python UniformSingleLayer2d_LocalTriggerFineLayer.py
 
     - name: Build doxygen-docs (error on warning)
       if: runner.os == 'Linux'

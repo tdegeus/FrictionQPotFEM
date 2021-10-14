@@ -78,6 +78,9 @@ public:
         const std::vector<xt::xtensor<size_t, 1>>& node,
         const xt::xtensor<bool, 1>& layer_is_plastic);
 
+    size_t N() const override;
+    std::string type() const override;
+
     /**
     Return number of layers.
     \return Number of layers.
@@ -278,6 +281,7 @@ protected:
         const xt::xtensor<bool, 1>& layer_is_plastic);
 
 protected:
+    size_t m_N; ///< Linear system size.
     size_t m_n_layer; ///< Number of layers.
     std::vector<xt::xtensor<size_t, 1>> m_layer_node; ///< Nodes per layer.
     std::vector<xt::xtensor<size_t, 1>> m_layer_elem; ///< Elements per layer.

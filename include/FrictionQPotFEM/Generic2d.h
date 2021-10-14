@@ -76,6 +76,16 @@ public:
         const L& elem_plastic);
 
     /**
+    Return the linear system size (in number of blocks).
+    */
+    virtual size_t N() const;
+
+    /**
+    Return the type of system.
+    */
+    virtual std::string type() const;
+
+    /**
     Set mass matrix, based on certain density (taken uniform per element).
 
     \tparam T e.g. `xt::xtensor<double, 1>`.
@@ -657,8 +667,11 @@ public:
         const L& elem_elastic,
         const L& elem_plastic);
 
-    void
-    setElastic(const xt::xtensor<double, 1>& K_elem, const xt::xtensor<double, 1>& G_elem) override;
+    std::string type() const override;
+
+    void setElastic(
+        const xt::xtensor<double, 1>& K_elem,
+        const xt::xtensor<double, 1>& G_elem) override;
 
     void setPlastic(
         const xt::xtensor<double, 1>& K_elem,

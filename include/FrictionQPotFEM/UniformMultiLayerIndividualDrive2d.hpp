@@ -77,6 +77,7 @@ inline void System::init(
     m_slice_elas.resize({n_layer_elas + size_t(1)});
     m_slice_plas(0) = 0;
     m_slice_elas(0) = 0;
+    m_N = 0;
 
     n_elem_plas = 0;
     n_elem_elas = 0;
@@ -95,6 +96,9 @@ inline void System::init(
 
             n_elem_plas += elem[i].size();
             n_layer_plas++;
+
+            FRICTIONQPOTFEM_REQUIRE(m_N == elem[i].size() || m_N == 0);
+            m_N = elem[i].size();
         }
         else {
             size_t l = m_slice_elas(n_layer_elas);
@@ -153,6 +157,16 @@ inline void System::init(
         FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(xt::sort(e), xt::sort(elem[i]))));
     }
 #endif
+}
+
+inline size_t System::N() const
+{
+    return m_N;
+}
+
+inline std::string System::type() const
+{
+    return "FrictionQPotFEM.UniformMultiLayerIndividualDrive2d.System";
 }
 
 inline size_t System::nlayer() const

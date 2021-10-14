@@ -88,9 +88,7 @@ def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p, e):
     dE = np.empty(P.size)
 
     for i, (p, s) in enumerate(zip(P.ravel(), S.ravel())):
-        dE[i] = np.sum(
-            gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV
-        )
+        dE[i] = np.sum(gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV)
 
     return (dE / np.sum(dV[e, :])).reshape(P.shape)
 
@@ -132,9 +130,7 @@ dofs[nodesRgt, :] = dofs[nodesLft, :]
 
 dofs = GooseFEM.Mesh.renumber(dofs)
 
-iip = np.concatenate(
-    (dofs[nodesBot, 0], dofs[nodesBot, 1], dofs[nodesTop, 0], dofs[nodesTop, 1])
-)
+iip = np.concatenate((dofs[nodesBot, 0], dofs[nodesBot, 1], dofs[nodesTop, 0], dofs[nodesTop, 1]))
 
 # simulation variables
 # --------------------
@@ -252,9 +248,7 @@ for itrigger, trigger in enumerate(plastic):
     # Find which (s, p) lie on the yield surface,
     # and to which energy change those perturbations lead
     Py, Sy = GetYieldSurface(E, gamma, Epsstar_p[0, 0], Epsstar_s[0, 1])
-    Ey = ComputeEnergy(
-        Py, Sy, Eps, Sig, quad.dV(), Eps_s, Sig_s, Eps_p, Sig_p, plastic[itrigger]
-    )
+    Ey = ComputeEnergy(Py, Sy, Eps, Sig, quad.dV(), Eps_s, Sig_s, Eps_p, Sig_p, plastic[itrigger])
 
     # Plot perturbed configuration
 

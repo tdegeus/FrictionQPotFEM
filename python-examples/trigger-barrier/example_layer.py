@@ -91,9 +91,7 @@ def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p):
     dE = np.empty(P.size)
 
     for i, (p, s) in enumerate(zip(P.ravel(), S.ravel())):
-        dE[i] = np.sum(
-            gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV
-        )
+        dE[i] = np.sum(gtens.A2_ddot_B2(Sig + p * Sig_p + s * Sig_s, p * Eps_p + s * Eps_s) * dV)
 
     return dE.reshape(P.shape)
 
@@ -135,9 +133,7 @@ dofs[nodesRgt, :] = dofs[nodesLft, :]
 
 dofs = GooseFEM.Mesh.renumber(dofs)
 
-iip = np.concatenate(
-    (dofs[nodesBot, 0], dofs[nodesBot, 1], dofs[nodesTop, 0], dofs[nodesTop, 1])
-)
+iip = np.concatenate((dofs[nodesBot, 0], dofs[nodesBot, 1], dofs[nodesTop, 0], dofs[nodesTop, 1]))
 
 # simulation variables
 # --------------------
@@ -293,15 +289,11 @@ for itrigger, trigger in enumerate(plastic):
     u = disp + pmin * u_p + smin * u_s
     ue = vector.AsElement(u)
     mat.setStrain(quad.SymGradN_vector(ue))
-    sigeq = GMat.Sigd(
-        np.average(mat.Stress(), weights=quad.AsTensor(2, quad.dV()), axis=1)
-    )
+    sigeq = GMat.Sigd(np.average(mat.Stress(), weights=quad.AsTensor(2, quad.dV()), axis=1))
 
     fig, ax = plt.subplots()
 
-    gplt.patch(
-        coor=coor + u, conn=conn, cindex=sigeq, cmap="Reds", axis=ax, clim=(0, 1.0)
-    )
+    gplt.patch(coor=coor + u, conn=conn, cindex=sigeq, cmap="Reds", axis=ax, clim=(0, 1.0))
 
     ax.axis("equal")
     plt.axis("off")

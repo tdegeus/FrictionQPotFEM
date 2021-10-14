@@ -128,6 +128,16 @@ inline void System::initSystem(
     m_material = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem, m_nip});
 }
 
+inline size_t System::N() const
+{
+    return m_nelem_plas;
+}
+
+inline std::string System::type() const
+{
+    return "FrictionQPotFEM.Generic2d.System";
+}
+
 inline void System::evalAllSet()
 {
     m_allset = m_set_M && m_set_D && m_set_elas && m_set_plas && m_dt > 0.0;
@@ -683,6 +693,11 @@ inline void HybridSystem::initHybridSystem(
     m_material_plas = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem_plas, m_nip});
 
     m_K_elas = GooseFEM::Matrix(m_conn_elas, m_dofs);
+}
+
+inline std::string HybridSystem::type() const
+{
+    return "FrictionQPotFEM.Generic2d.HybridSystem";
 }
 
 inline void

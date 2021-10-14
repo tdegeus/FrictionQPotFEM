@@ -63,6 +63,9 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("elem_elastic"),
                 py::arg("elem_plastic"));
 
+            cls.def("N", &SUB::System::N, "N");
+            cls.def("type", &SUB::System::type, "type");
+
             cls.def(
                 "setMassMatrix",
                 &SUB::System::setMassMatrix<xt::pytensor<double, 1>>,
@@ -96,13 +99,9 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "isHomogeneousElastic", &SUB::System::isHomogeneousElastic, "isHomogeneousElastic");
 
             cls.def("setDt", &SUB::System::setDt, "setDt", py::arg("dt"));
-
             cls.def("setT", &SUB::System::setT, "setT", py::arg("t"));
-
             cls.def("setU", &SUB::System::setU<xt::pytensor<double, 2>>, "setU", py::arg("u"));
-
             cls.def("setV", &SUB::System::setV<xt::pytensor<double, 2>>, "setV", py::arg("v"));
-
             cls.def("setA", &SUB::System::setA<xt::pytensor<double, 2>>, "setA", py::arg("a"));
 
             cls.def(
@@ -112,21 +111,13 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("fext"));
 
             cls.def("quench", &SUB::System::quench, "quench");
-
             cls.def("elastic", &SUB::System::elastic, "elastic");
-
             cls.def("plastic", &SUB::System::plastic, "plastic");
-
             cls.def("conn", &SUB::System::conn, "conn");
-
             cls.def("coor", &SUB::System::coor, "coor");
-
             cls.def("dofs", &SUB::System::dofs, "dofs");
-
             cls.def("u", &SUB::System::u, "u");
-
             cls.def("v", &SUB::System::v, "v");
-
             cls.def("a", &SUB::System::a, "a");
 
             cls.def(
@@ -139,17 +130,11 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::return_value_policy::reference_internal);
 
             cls.def("fext", &SUB::System::fext, "fext");
-
             cls.def("fint", &SUB::System::fint, "fint");
-
             cls.def("fmaterial", &SUB::System::fmaterial, "fmaterial");
-
             cls.def("fdamp", &SUB::System::fdamp, "fdamp");
-
             cls.def("residual", &SUB::System::residual, "residual");
-
             cls.def("t", &SUB::System::t, "t");
-
             cls.def("dV", &SUB::System::dV, "dV");
 
             cls.def(
@@ -174,11 +159,8 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::return_value_policy::reference_internal);
 
             cls.def("Sig", &SUB::System::Sig, "Sig");
-
             cls.def("Eps", &SUB::System::Eps, "Eps");
-
             cls.def("plastic_Sig", &SUB::System::plastic_Sig, "plastic_Sig");
-
             cls.def("plastic_Eps", &SUB::System::plastic_Eps, "plastic_Eps");
 
             cls.def(
@@ -213,7 +195,6 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "plastic_CurrentIndex", &SUB::System::plastic_CurrentIndex, "plastic_CurrentIndex");
 
             cls.def("plastic_Epsp", &SUB::System::plastic_Epsp, "plastic_Epsp");
-
             cls.def("timeStep", &SUB::System::timeStep, "timeStep");
 
             cls.def(
@@ -299,11 +280,8 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::return_value_policy::reference_internal);
 
             cls.def("Sig", &SUB::HybridSystem::Sig, "Sig");
-
             cls.def("Eps", &SUB::HybridSystem::Eps, "Eps");
-
             cls.def("plastic_Sig", &SUB::HybridSystem::plastic_Sig, "plastic_Sig");
-
             cls.def("plastic_Eps", &SUB::HybridSystem::plastic_Eps, "plastic_Eps");
 
             cls.def("__repr__", [](const SUB::System&) {
