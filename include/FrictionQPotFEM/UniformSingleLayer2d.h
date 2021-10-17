@@ -101,7 +101,7 @@ public:
     \param delta_u displacement perturbation.
     \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
     */
-    auto plastic_signOfPerturbation(const xt::xtensor<double, 2>& delta_u);
+    [[deprecated]] auto plastic_signOfPerturbation(const xt::xtensor<double, 2>& delta_u);
 
     /**
     Add affine simple shear (may be negative to subtract affine simple shear).

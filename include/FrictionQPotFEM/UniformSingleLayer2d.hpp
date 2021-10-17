@@ -76,17 +76,10 @@ inline xt::xtensor<double, 2> System::Energy()
 
 inline auto System::plastic_signOfPerturbation(const xt::xtensor<double, 2>& delta_u)
 {
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(delta_u, {m_nnode, m_ndim}));
+    FRICTIONQPOTFEM_WARNING_PYTHON(
+        "Using plastic_SignDeltaEpsd(...) instead of plastic_signOfPerturbation(...)");
 
-    auto u_0 = this->u();
-    auto eps_0 = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-    auto u_pert = this->u() + delta_u;
-    this->setU(u_pert);
-    auto eps_pert = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-    this->setU(u_0);
-
-    xt::xtensor<int, 2> sign = xt::sign(eps_pert - eps_0);
-    return sign;
+    return this->plastic_SignDeltaEpsd(delta_u);
 }
 
 inline auto System::plastic_signOfSimpleShearPerturbation(double perturbation)

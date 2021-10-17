@@ -362,28 +362,37 @@ public:
     /**
     Stress tensor of integration points of plastic elements only, see System::plastic.
 
-    \return Integration point tensor. Shape: ``[m_plastic.size(), nip, 2, 2]``.
+    \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
     */
     virtual xt::xtensor<double, 4> plastic_Sig() const;
 
     /**
     Strain tensor of integration points of plastic elements only, see System::plastic.
 
-    \return Integration point tensor. Shape: ``[m_plastic.size(), nip, 2, 2]``.
+    \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
     */
     virtual xt::xtensor<double, 4> plastic_Eps() const;
 
     /**
+    Strain tensor of of a specific plastic element.
+
+    \param e_plastic Plastic element (real element number = plastic()[e]).
+    \param q Integration point (real element number = plastic()[e]).
+    \return Integration point tensor. Shape: [2, 2].
+    */
+    virtual xt::xtensor<double, 2> plastic_Eps(size_t e_plastic, size_t q) const;
+
+    /**
     Current yield strain left (in the negative equivalent strain direction).
 
-    \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
+    \return Integration point scalar. Shape: [plastic().size(), nip].
     */
     virtual xt::xtensor<double, 2> plastic_CurrentYieldLeft() const;
 
     /**
     Current yield strain right (in the positive equivalent strain direction).
 
-    \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
+    \return Integration point scalar. Shape: [plastic().size(), nip].
     */
     virtual xt::xtensor<double, 2> plastic_CurrentYieldRight() const;
 
@@ -393,7 +402,7 @@ public:
     If ``offset = 0`` the result is the same result as the basic System::plastic_CurrentYieldLeft.
 
     \param offset Offset (number of yield strains).
-    \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
+    \return Integration point scalar. Shape: [plastic().size(), nip].
     */
     virtual xt::xtensor<double, 2> plastic_CurrentYieldLeft(size_t offset) const;
 
@@ -403,23 +412,37 @@ public:
     If ``offset = 0`` the result is the same result as the basic System::plastic_CurrentYieldRight.
 
     \param offset Offset (number of yield strains).
-    \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
+    \return Integration point scalar. Shape: [plastic().size(), nip].
     */
     virtual xt::xtensor<double, 2> plastic_CurrentYieldRight(size_t offset) const;
 
     /**
     Current index in the landscape.
 
-    \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
+    \return Integration point scalar. Shape: [plastic().size(), nip].
     */
     virtual xt::xtensor<size_t, 2> plastic_CurrentIndex() const;
 
     /**
     Plastic strain.
 
-    \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
+    \return Integration point scalar. Shape: [plastic().size(), nip].
     */
     virtual xt::xtensor<double, 2> plastic_Epsp() const;
+
+    /**
+    Get the sign of the equivalent strain increment upon a displacement perturbation,
+    for each integration point of each plastic element.
+
+    \param delta_u Displacement perturbation.
+    \return Integration point scalar. Shape: [plastic().size(), nip].
+    */
+    auto plastic_SignDeltaEpsd(const xt::xtensor<double, 2>& delta_u);
+
+    /**
+    Assumes that the perturbation is in the same direction of the current state of the system.
+    */
+    inline double plastic_scalePerturbation(const xt::xtensor<double, 2>& delta_u, size_t e_plastic, size_t q, double epsd);
 
     /**
     Check that the current yield-index is at least `n` away from the end.
@@ -722,6 +745,7 @@ public:
 
     xt::xtensor<double, 4> plastic_Sig() const override;
     xt::xtensor<double, 4> plastic_Eps() const override;
+    xt::xtensor<double, 2> plastic_Eps(size_t e_plastic, size_t q) const override;
     xt::xtensor<double, 2> plastic_CurrentYieldLeft() const override;
     xt::xtensor<double, 2> plastic_CurrentYieldRight() const override;
     xt::xtensor<double, 2> plastic_CurrentYieldLeft(size_t offset) const override;

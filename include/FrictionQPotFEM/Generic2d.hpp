@@ -88,6 +88,8 @@ inline void System::initSystem(
 
     m_nelem_elas = m_elem_elas.size();
     m_nelem_plas = m_elem_plas.size();
+    m_set_elas = !m_nelem_elas;
+    m_set_plas = !m_nelem_plas;
     m_N = m_nelem_plas;
 
 #ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
@@ -459,6 +461,13 @@ inline xt::xtensor<double, 4> System::plastic_Eps() const
     return xt::view(m_Eps, xt::keep(m_elem_plas), xt::all(), xt::all(), xt::all());
 }
 
+inline xt::xtensor<double, 2> System::plastic_Eps(size_t e_plastic, size_t q) const
+{
+    FRICTIONQPOTFEM_ASSERT(e_plastic < m_nelem_plas);
+    FRICTIONQPOTFEM_ASSERT(q < m_nip);
+    return xt::view(m_Eps, m_elem_plas(e_plastic), q, xt::all(), xt::all());
+}
+
 inline xt::xtensor<double, 2> System::plastic_CurrentYieldLeft() const
 {
     return xt::view(m_material.CurrentYieldLeft(), xt::keep(m_elem_plas), xt::all());
@@ -487,6 +496,45 @@ inline xt::xtensor<size_t, 2> System::plastic_CurrentIndex() const
 inline xt::xtensor<double, 2> System::plastic_Epsp() const
 {
     return xt::view(m_material.Epsp(), xt::keep(m_elem_plas), xt::all());
+}
+
+inline auto System::plastic_SignDeltaEpsd(const xt::xtensor<double, 2>& delta_u)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(delta_u, {m_nnode, m_ndim}));
+
+    auto u_0 = this->u();
+    auto eps_0 = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+    auto u_pert = this->u() + delta_u;
+    this->setU(u_pert);
+    auto eps_pert = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+    this->setU(u_0);
+
+    xt::xtensor<int, 2> sign = xt::sign(eps_pert - eps_0);
+    return sign;
+}
+
+inline double System::plastic_scalePerturbation(const xt::xtensor<double, 2>& delta_u, size_t e_plastic, size_t q, double epsd)
+{
+    auto u_0 = this->u();
+    this->setU(delta_u);
+    auto Eps_delta = GMatTensor::Cartesian2d::Deviatoric(this->plastic_Eps(e_plastic, q));
+    this->setU(u_0);
+    auto Eps_t = GMatTensor::Cartesian2d::Deviatoric(this->plastic_Eps(e_plastic, q));
+
+    // name alias
+    double e_t = Eps_t(0, 0);
+    double g_t = Eps_t(0, 1);
+    double e_d = Eps_delta(0, 0);
+    double g_d = Eps_delta(0, 1);
+
+    // find relevant root of quadratic equation
+    double a = e_d * e_d + g_d * g_d;
+    double b = 2.0 * (e_t * e_d + g_t * g_d);
+    double c = e_t * e_t + g_t * g_t - epsd * epsd;
+    double D = std::sqrt(b * b - 4.0 * a * c);
+
+    FRICTIONQPOTFEM_REQUIRE(b >= 0.0);
+    return (-b + D) / (2.0 * a);
 }
 
 inline bool System::boundcheck_right(size_t n) const
@@ -804,6 +852,13 @@ inline xt::xtensor<double, 4> HybridSystem::plastic_Sig() const
 inline xt::xtensor<double, 4> HybridSystem::plastic_Eps() const
 {
     return m_Eps_plas;
+}
+
+inline xt::xtensor<double, 2> HybridSystem::plastic_Eps(size_t e_plastic, size_t q) const
+{
+    FRICTIONQPOTFEM_ASSERT(e_plastic < m_nelem_plas);
+    FRICTIONQPOTFEM_ASSERT(q < m_nip);
+    return xt::view(m_Eps_plas, e_plastic, q, xt::all(), xt::all());
 }
 
 inline xt::xtensor<double, 2> HybridSystem::plastic_CurrentYieldLeft() const

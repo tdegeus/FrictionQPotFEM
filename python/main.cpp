@@ -161,7 +161,18 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def("Sig", &SUB::System::Sig, "Sig");
             cls.def("Eps", &SUB::System::Eps, "Eps");
             cls.def("plastic_Sig", &SUB::System::plastic_Sig, "plastic_Sig");
-            cls.def("plastic_Eps", &SUB::System::plastic_Eps, "plastic_Eps");
+
+            cls.def(
+                "plastic_Eps",
+                py::overload_cast<>(&SUB::System::plastic_Eps, py::const_),
+                "plastic_Eps");
+
+            cls.def(
+                "plastic_Eps",
+                py::overload_cast<size_t, size_t>(&SUB::System::plastic_Eps, py::const_),
+                "plastic_Eps",
+                py::arg("e_plastic"),
+                py::arg("q"));
 
             cls.def(
                 "boundcheck_right",
@@ -195,6 +206,22 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "plastic_CurrentIndex", &SUB::System::plastic_CurrentIndex, "plastic_CurrentIndex");
 
             cls.def("plastic_Epsp", &SUB::System::plastic_Epsp, "plastic_Epsp");
+
+            cls.def(
+                "plastic_SignDeltaEpsd",
+                &SUB::System::plastic_SignDeltaEpsd,
+                "plastic_SignDeltaEpsd",
+                py::arg("delta_u"));
+
+            cls.def(
+                "plastic_scalePerturbation",
+                &SUB::System::plastic_scalePerturbation,
+                "plastic_scalePerturbation",
+                py::arg("delta_u"),
+                py::arg("e_plastic"),
+                py::arg("q"),
+                py::arg("epsd"));
+
             cls.def("timeStep", &SUB::System::timeStep, "timeStep");
 
             cls.def(
@@ -278,11 +305,6 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 &SUB::HybridSystem::material_plastic,
                 "material_plastic",
                 py::return_value_policy::reference_internal);
-
-            cls.def("Sig", &SUB::HybridSystem::Sig, "Sig");
-            cls.def("Eps", &SUB::HybridSystem::Eps, "Eps");
-            cls.def("plastic_Sig", &SUB::HybridSystem::plastic_Sig, "plastic_Sig");
-            cls.def("plastic_Eps", &SUB::HybridSystem::plastic_Eps, "plastic_Eps");
 
             cls.def("__repr__", [](const SUB::System&) {
                 return "<FrictionQPotFEM.Generic2d.HybridSystem>";
