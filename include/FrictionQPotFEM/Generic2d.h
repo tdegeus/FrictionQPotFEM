@@ -44,6 +44,26 @@ The output is a list of strings, e.g.::
 inline std::vector<std::string> version_dependencies();
 
 /**
+Find with which factor to scale a perturbation with a factor \f$ c \f$ such that
+
+\f$ \varepsilon{\bm{\varepsilon}_d} = \varepsilon_\text{target} \f$
+
+with
+
+\f$ \bm{\varepsilon}_d = \bm{\varepsilon}_d^t + c \bm{\varepsilon}_d^\delta \f$
+
+where \f$ \varepsilon(\bm{A}) \f$ denotes the equivalent strain of tensor \f$ \bm{A} \f$,
+see #GMatElastoPlasticQPot::Cartesian2d::Epsd.
+
+\param Epsd_t The strain deviator \f$ \bm{\varepsilon}_d^t \f$.
+\param Epsd_delta The strain deviator \f$ \bm{\varepsilon}_d^\delta \f$.
+\param epsd_target The target equivalent strain \f$ \varepsilon_\text{target} \f$.
+\return The factor \f$ c \f$.
+*/
+template <class S, class T>
+inline double scalePerturbation(const S& Epsd_t, const T& Epsd_delta, double epsd_target);
+
+/**
 Class that uses GMatElastoPlasticQPot to evaluate stress everywhere.
 */
 class System {

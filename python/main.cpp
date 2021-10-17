@@ -43,6 +43,14 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             &SUB::version_dependencies,
             "Return version information of library and its dependencies.");
 
+        sub.def(
+            "scalePerturbation",
+            &SUB::scalePerturbation<xt::pytensor<double, 2>, xt::pytensor<double, 2>>,
+            "scalePerturbation",
+            py::arg("Epsd_t"),
+            py::arg("Epsd_delta"),
+            py::arg("epsd_target"));
+
         {
 
             py::class_<SUB::System> cls(sub, "System");

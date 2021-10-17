@@ -53,6 +53,23 @@ inline std::vector<std::string> version_dependencies()
     return ret;
 }
 
+template <class S, class T>
+inline double scalePerturbation(const S& Epsd_t, const T& Epsd_delta, double epsd_target)
+{
+    double e_t = Epsd_t(0, 0);
+    double g_t = Epsd_t(0, 1);
+    double e_d = Epsd_delta(0, 0);
+    double g_d = Epsd_delta(0, 1);
+
+    double a = e_d * e_d + g_d * g_d;
+    double b = 2.0 * (e_t * e_d + g_t * g_d);
+    double c = e_t * e_t + g_t * g_t - epsd_target * epsd_target;
+    double D = std::sqrt(b * b - 4.0 * a * c);
+
+    FRICTIONQPOTFEM_REQUIRE(b >= 0.0);
+    return (-b + D) / (2.0 * a);
+}
+
 template <class C, class E, class L>
 inline System::System(
     const C& coor,
