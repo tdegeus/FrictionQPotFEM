@@ -147,7 +147,6 @@ public:
 
     /**
     Reset yield strains (to avoid re-construction).
-
     \param epsy_elem Yield history per element.
     */
     virtual void reset_epsy(const xt::xtensor<double, 2>& epsy_elem);

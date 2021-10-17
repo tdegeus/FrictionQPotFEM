@@ -120,11 +120,46 @@ public:
     void layerSetDriveStiffness(double k, bool symmetric = true);
 
     /**
+    Initialise the event driven protocol by applying a perturbation to the boundary conditions
+    and computing and storing the linear, purely elastic, response.
+    The system can thereafter be moved forward to the next event.
+    Note that this function itself does not change the system in any way.
+
+    \tparam S `xt::xtensor<double, 2>`
+    \param delta_ubar
+        The perturbation in the target average position of each layer [#nlayer, 2].
+
+    \tparam T `xt::xtensor<bool, 2>`
+    \param active
+        For each layer and each degree-of-freedom specify if
+        the spring is active (`true`) or not (`false`) [#nlayer, 2].
+    */
+    template <class S, class T>
+    void initEventDriven(const S& delta_ubar, const T& active);
+
+    /**
+    \copydoc initEventDriven(const S&, const T&)
+
+    \tparam U `xt::xtensor<double, 2>`
+    \param delta_u
+        Use a precomputed displacement field.
+    */
+    template <class S, class T, class U>
+    void initEventDriven(const S& delta_ubar, const T& active, const U& delta_u);
+
+    /**
+    Get equilibrium displacement field computed by initEventDriven(const S&, const T&).
+    \return Nodal displacements.
+    */
+    auto getEventDrivenPerturbation() const;
+
+    double addEventDriven(double deps, bool kick);
+
+    /**
     Turn on (or off) springs connecting
     the average displacement of a layer ("ubar") to its set target value.
 
     \tparam T e.g. `xt::xtensor<bool, 2>`
-
     \param active
         For each layer and each degree-of-freedom specify if
         the spring is active (`true`) or not (`false`) [#nlayer, 2].
@@ -159,8 +194,7 @@ public:
     (if its average displacement is different from the target displacement),
     see layerSetTargetActive().
 
-    \tparam S e.g. `xt::xtensor<double, 2>`
-
+    \tparam T e.g. `xt::xtensor<double, 2>`
     \param ubar The target average position of each layer [#nlayer, 2].
     */
     template <class T>
@@ -300,6 +334,11 @@ protected:
     xt::xtensor<double, 2> m_dV; ///< copy of m_quad.dV()
     xt::xtensor<double, 3> m_uq; ///< qvector
     xt::xtensor<double, 1> m_ud; ///< dofval
+
+    xt::xtensor<double, 2> m_pert_u; ///< Event driven: equilibrium displacement perturbation.
+    xt::xtensor<double, 4> m_pert_Epsd_plastic; ///< Strain deviator for #m_pert_u.
+    xt::xtensor<bool, 2> m_pert_layerdrive_active; ///< Event driven: applied lever setting.
+    xt::xtensor<double, 2> m_pert_layerdrive_targetubar; ///< Event driven: applied lever setting.
 };
 
 } // namespace UniformMultiLayerIndividualDrive2d

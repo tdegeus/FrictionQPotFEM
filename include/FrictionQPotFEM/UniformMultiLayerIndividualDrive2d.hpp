@@ -199,6 +199,121 @@ inline void System::layerSetDriveStiffness(double k, bool symmetric)
     this->computeForceFromTargetUbar();
 }
 
+template <class S, class T>
+inline void System::initEventDriven(const S& delta_ubar, const T& active)
+{
+    // backup system
+
+    auto u0 = m_u;
+    auto v0 = m_v;
+    auto a0 = m_a;
+    auto active0 = m_layerdrive_active;
+    auto ubar0 = m_layerdrive_targetubar;
+    auto t0 = m_t;
+    xt::xtensor<double, 3> epsy0(std::array<size_t, 3>{m_nelem_plas, m_nip, 2});
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        for (size_t q = 0; q < m_nip; ++q) {
+            auto cusp = m_material_plas.refCusp({e, q});
+            auto epsy = cusp.epsy();
+            epsy0(e, q, 0) = epsy(0);
+            epsy0(e, q, 1) = epsy(1);
+            epsy(1) = std::numeric_limits<double>::max();
+            epsy(0) = - epsy(1);
+            cusp.reset_epsy(epsy, false);
+        }
+    }
+
+    // perturbation
+
+    m_u.fill(0.0);
+    m_v.fill(0.0);
+    m_a.fill(0.0);
+    this->layerSetTargetActive(active);
+    this->layerSetTargetUbar(delta_ubar);
+    this->minimise();
+    m_pert_layerdrive_active = active;
+    m_pert_layerdrive_targetubar = delta_ubar;
+    m_pert_u = m_u;
+    m_pert_Epsd_plastic = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps());
+
+    // restore system
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        for (size_t q = 0; q < m_nip; ++q) {
+            auto cusp = m_material_plas.refCusp({e, q});
+            auto epsy = cusp.epsy();
+            epsy(0) = epsy0(e, q, 0);
+            epsy(1) = epsy0(e, q, 1);
+            cusp.reset_epsy(epsy, false);
+        }
+    }
+
+    this->setU(u0);
+    this->setV(v0);
+    this->setA(a0);
+    this->layerSetTargetActive(active0);
+    this->layerSetTargetUbar(ubar0);
+    this->setT(t0);
+}
+
+template <class S, class T, class U>
+inline void System::initEventDriven(const S& ubar, const T& active, const U& u)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, m_u.shape()));
+    m_pert_layerdrive_active = active;
+    m_pert_layerdrive_targetubar = ubar;
+    m_pert_u = u;
+
+    auto u0 = m_u;
+    this->setU(u);
+    m_pert_Epsd_plastic = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps());
+    this->setU(u0);
+}
+
+inline auto System::getEventDrivenPerturbation() const
+{
+    return m_pert_u;
+}
+
+inline double System::addEventDriven(double deps_kick, bool kick)
+{
+    auto idx = this->plastic_CurrentIndex();
+    auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+    auto epsy_l = this->plastic_CurrentYieldLeft();
+    auto epsy_r = this->plastic_CurrentYieldRight();
+    auto sign = this->plastic_SignDeltaEpsd(m_pert_u);
+    auto epsy = xt::where(sign > 0, epsy_r, epsy_l);
+    auto deps = xt::eval(xt::abs(eps - epsy));
+
+    if (!kick && xt::amin(deps)() < deps_kick / 2.0) {
+        return 0.0;
+    }
+
+    auto index = xt::unravel_index(xt::argmin(deps)(), deps.shape());
+    size_t e = index[0];
+    size_t q = index[1];
+    auto Epsd_t = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps(e, q));
+    xt::xtensor<double, 2> Epsd_delta = xt::view(m_pert_Epsd_plastic, e, q);
+    double target = epsy(e, q) - 0.5 * deps_kick;
+    if (kick) {
+        target = epsy(e, q) + 0.5 * deps_kick;
+    }
+    double c = Generic2d::scalePerturbation(Epsd_t, Epsd_delta, target);
+
+    this->setU(this->u() + c * m_pert_u);
+    this->layerSetTargetUbar(this->layerTargetUbar() + c * m_pert_layerdrive_targetubar);
+    auto idx_new = this->plastic_CurrentIndex();
+    auto eps_new = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+
+    FRICTIONQPOTFEM_REQUIRE(kick || xt::all(xt::equal(idx, idx_new)));
+    FRICTIONQPOTFEM_REQUIRE(xt::allclose(eps_new, target));
+
+    return c;
+}
+
 template <class T>
 inline void System::layerSetTargetActive(const T& active)
 {

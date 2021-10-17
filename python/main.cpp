@@ -537,6 +537,27 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             py::arg("symmetric") = true);
 
         cls.def(
+            "initEventDriven",
+            py::overload_cast<const xt::pytensor<double, 2>&, const xt::pytensor<bool, 2>&>(&SUB::System::initEventDriven<xt::pytensor<double, 2>, xt::pytensor<bool, 2>>),
+            "initEventDriven",
+            py::arg("delta_ubar"),
+            py::arg("active"));
+
+        cls.def(
+            "initEventDriven",
+            py::overload_cast<const xt::pytensor<double, 2>&, const xt::pytensor<bool, 2>&, const xt::pytensor<double, 2>&>(&SUB::System::initEventDriven<xt::pytensor<double, 2>, xt::pytensor<bool, 2>, xt::pytensor<double, 2>>),
+            "initEventDriven",
+            py::arg("delta_ubar"),
+            py::arg("active"),
+            py::arg("delta_u"));
+
+        cls.def("getEventDrivenPerturbation", &SUB::System::getEventDrivenPerturbation, "getEventDrivenPerturbation");
+
+        cls.def("addEventDriven", &SUB::System::addEventDriven, "addEventDriven",
+            py::arg("deps"),
+            py::arg("kick"));
+
+        cls.def(
             "layerSetTargetActive",
             &SUB::System::layerSetTargetActive<xt::pytensor<double, 2>>,
             "layerSetTargetActive",
