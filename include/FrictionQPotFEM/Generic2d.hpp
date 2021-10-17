@@ -530,7 +530,11 @@ inline auto System::plastic_SignDeltaEpsd(const xt::xtensor<double, 2>& delta_u)
     return sign;
 }
 
-inline double System::plastic_scalePerturbation(const xt::xtensor<double, 2>& delta_u, size_t e_plastic, size_t q, double epsd)
+inline double System::plastic_scalePerturbation(
+    const xt::xtensor<double, 2>& delta_u,
+    size_t e_plastic,
+    size_t q,
+    double epsd)
 {
     auto u_0 = this->u();
     this->setU(delta_u);

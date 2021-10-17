@@ -46,17 +46,17 @@ inline std::vector<std::string> version_dependencies();
 /**
 Find with which factor to scale a perturbation with a factor \f$ c \f$ such that
 
-\f$ \varepsilon{\bm{\varepsilon}_d} = \varepsilon_\text{target} \f$
+\f$ \varepsilon(\underline{\varepsilon}_d) = \varepsilon_\text{target} \f$
 
 with
 
-\f$ \bm{\varepsilon}_d = \bm{\varepsilon}_d^t + c \bm{\varepsilon}_d^\delta \f$
+\f$ \underline{\varepsilon}_d = \underline{\varepsilon}_d^t + c \underline{\varepsilon}_d^\delta \f$
 
-where \f$ \varepsilon(\bm{A}) \f$ denotes the equivalent strain of tensor \f$ \bm{A} \f$,
-see #GMatElastoPlasticQPot::Cartesian2d::Epsd.
+where \f$ \varepsilon(\underline{A}) \f$ denotes the equivalent strain
+of tensor \f$ \underline{A} \f$, see #GMatElastoPlasticQPot::Cartesian2d::Epsd.
 
-\param Epsd_t The strain deviator \f$ \bm{\varepsilon}_d^t \f$.
-\param Epsd_delta The strain deviator \f$ \bm{\varepsilon}_d^\delta \f$.
+\param Epsd_t The strain deviator \f$ \underline{\varepsilon}_d^t \f$.
+\param Epsd_delta The strain deviator \f$ \underline{\varepsilon}_d^\delta \f$.
 \param epsd_target The target equivalent strain \f$ \varepsilon_\text{target} \f$.
 \return The factor \f$ c \f$.
 */
@@ -462,7 +462,11 @@ public:
     /**
     Assumes that the perturbation is in the same direction of the current state of the system.
     */
-    inline double plastic_scalePerturbation(const xt::xtensor<double, 2>& delta_u, size_t e_plastic, size_t q, double epsd);
+    inline double plastic_scalePerturbation(
+        const xt::xtensor<double, 2>& delta_u,
+        size_t e_plastic,
+        size_t q,
+        double epsd);
 
     /**
     Check that the current yield-index is at least `n` away from the end.
