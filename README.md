@@ -137,6 +137,11 @@ python -m pip install . -vv
 
 # Change-log
 
+## v0.16.0
+
+*   Add "timeSteps" and "flowSteps" (#119)
+*   Adding event driven protocol to all systems (#118)
+
 ## v0.15.1
 
 *   Improving version_dependencies(). Various minor clean-ups (#115)
