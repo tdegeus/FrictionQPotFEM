@@ -467,7 +467,7 @@ public:
     \return Integration point scalar. Shape: [plastic().size(), nip].
     */
     template <class T>
-    auto plastic_SignDeltaEpsd(const T& delta_u);
+    xt::xtensor<int, 2> plastic_SignDeltaEpsd(const T& delta_u);
 
     /**
     Check that the current yield-index is at least `n` away from the end.

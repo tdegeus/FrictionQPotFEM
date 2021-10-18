@@ -532,7 +532,7 @@ inline xt::xtensor<double, 2> System::plastic_Epsp() const
 }
 
 template <class T>
-inline auto System::plastic_SignDeltaEpsd(const T& delta_u)
+inline xt::xtensor<int, 2> System::plastic_SignDeltaEpsd(const T& delta_u)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(delta_u, m_u.shape()));
     auto u_0 = m_u;
