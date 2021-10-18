@@ -73,6 +73,9 @@ jobs:
       run: |
         python basic.py
         python Generic2d.py
+        python UniformMultiLayerIndividualDrive2d.py
+        python UniformMultiLayerLeverDrive2d.py
+        python UniformSingleLayer2d.py
         python UniformSingleLayer2d_LocalTriggerFineLayer.py
 
     - name: Build doxygen-docs (error on warning)
