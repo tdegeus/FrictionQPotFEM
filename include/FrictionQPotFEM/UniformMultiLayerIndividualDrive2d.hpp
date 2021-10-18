@@ -273,44 +273,10 @@ inline void System::initEventDriven(const S& ubar, const T& active, const U& u)
     this->setU(u0);
 }
 
-inline auto System::getEventDrivenPerturbation() const
+inline double System::eventDrivenStep(double deps_kick, bool kick, int direction)
 {
-    return m_pert_u;
-}
-
-inline double System::addEventDriven(double deps_kick, bool kick)
-{
-    auto idx = this->plastic_CurrentIndex();
-    auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-    auto epsy_l = this->plastic_CurrentYieldLeft();
-    auto epsy_r = this->plastic_CurrentYieldRight();
-    auto sign = this->plastic_SignDeltaEpsd(m_pert_u);
-    auto epsy = xt::where(sign > 0, epsy_r, epsy_l);
-    auto deps = xt::eval(xt::abs(eps - epsy));
-
-    if (!kick && xt::amin(deps)() < deps_kick / 2.0) {
-        return 0.0;
-    }
-
-    auto index = xt::unravel_index(xt::argmin(deps)(), deps.shape());
-    size_t e = index[0];
-    size_t q = index[1];
-    auto Epsd_t = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps(e, q));
-    xt::xtensor<double, 2> Epsd_delta = xt::view(m_pert_Epsd_plastic, e, q);
-    double target = epsy(e, q) - 0.5 * deps_kick;
-    if (kick) {
-        target = epsy(e, q) + 0.5 * deps_kick;
-    }
-    double c = Generic2d::scalePerturbation(Epsd_t, Epsd_delta, target);
-
-    this->setU(this->u() + c * m_pert_u);
-    this->layerSetTargetUbar(this->layerTargetUbar() + c * m_pert_layerdrive_targetubar);
-    auto idx_new = this->plastic_CurrentIndex();
-    auto eps_new = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-
-    FRICTIONQPOTFEM_REQUIRE(kick || xt::all(xt::equal(idx, idx_new)));
-    FRICTIONQPOTFEM_REQUIRE(xt::allclose(eps_new, target));
-
+    double c = Generic2d::System::eventDrivenStep(deps_kick, kick, direction);
+    this->layerSetTargetUbar(m_layerdrive_targetubar + c * m_pert_layerdrive_targetubar);
     return c;
 }
 

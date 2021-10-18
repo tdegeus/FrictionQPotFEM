@@ -452,20 +452,14 @@ public:
     /**
     Get the sign of the equivalent strain increment upon a displacement perturbation,
     for each integration point of each plastic element.
+    Note that this sign depends on the current state of the system.
 
+    \tparam T xt::xtensor<double, 2>
     \param delta_u Displacement perturbation.
     \return Integration point scalar. Shape: [plastic().size(), nip].
     */
-    auto plastic_SignDeltaEpsd(const xt::xtensor<double, 2>& delta_u);
-
-    /**
-    Assumes that the perturbation is in the same direction of the current state of the system.
-    */
-    inline double plastic_scalePerturbation(
-        const xt::xtensor<double, 2>& delta_u,
-        size_t e_plastic,
-        size_t q,
-        double epsd);
+    template <class T>
+    auto plastic_SignDeltaEpsd(const T& delta_u);
 
     /**
     Check that the current yield-index is at least `n` away from the end.
@@ -473,6 +467,37 @@ public:
     \return `true` if the current yield-index is at least `n` away from the end.
     */
     virtual bool boundcheck_right(size_t n) const;
+
+    /**
+    Set purely elastic and linear response to specific boundary conditions.
+    Since this response is elastic it can be scaled freely to transverse a fully elastic interval
+    at once, without running any dynamics, and run an event driven code using eventDrivenStep().
+    \param delta_u Nodal displacement field.
+    */
+    template <class T>
+    void eventDriven_setDeltaU(const T& delta_u);
+
+    /**
+    Get displacement perturbation used for event driven code, see eventDriven_setDeltaU().
+    \return Nodal displacements.
+    */
+    auto eventDriven_deltaU() const;
+
+    /**
+    Add event driven step for the boundary conditions that correspond to the displacement
+    perturbation set in eventDriven_setDeltaU().
+
+    \param deps
+        Size of the local stain kick to apply.
+
+    \param kick
+        If ``false``, increment displacements to ``deps / 2`` of yielding again.
+        If ``true``, increment displacements by a affine simple shear increment ``deps``.
+
+    \param direction
+        If ``+1``: apply shear to the right. If ``-1`` applying shear to the left.
+    */
+    virtual double eventDrivenStep(double deps, bool kick, int direction = 1);
 
     /**
     Make a time-step: apply velocity-Verlet integration.
@@ -590,6 +615,8 @@ protected:
     bool m_set_D = false; ///< Internal allocation check: damping matrix was written.
     bool m_set_elas = false; ///< Internal allocation check: elastic elements were written.
     bool m_set_plas = false; ///< Internal allocation check: plastic elements were written.
+    xt::xtensor<double, 2> m_pert_u; ///< See eventDriven_setDeltaU()
+    xt::xtensor<double, 4> m_pert_Epsd_plastic; ///< Strain deviator for #m_pert_u.
 
 protected:
     /**

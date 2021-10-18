@@ -147,13 +147,8 @@ public:
     template <class S, class T, class U>
     void initEventDriven(const S& delta_ubar, const T& active, const U& delta_u);
 
-    /**
-    Get equilibrium displacement field computed by initEventDriven(const S&, const T&).
-    \return Nodal displacements.
-    */
-    auto getEventDrivenPerturbation() const;
 
-    double addEventDriven(double deps, bool kick);
+    double eventDrivenStep(double deps, bool kick, int direction = +1) override;
 
     /**
     Turn on (or off) springs connecting
@@ -335,8 +330,6 @@ protected:
     xt::xtensor<double, 3> m_uq; ///< qvector
     xt::xtensor<double, 1> m_ud; ///< dofval
 
-    xt::xtensor<double, 2> m_pert_u; ///< Event driven: equilibrium displacement perturbation.
-    xt::xtensor<double, 4> m_pert_Epsd_plastic; ///< Strain deviator for #m_pert_u.
     xt::xtensor<bool, 2> m_pert_layerdrive_active; ///< Event driven: applied lever setting.
     xt::xtensor<double, 2> m_pert_layerdrive_targetubar; ///< Event driven: applied lever setting.
 };

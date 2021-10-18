@@ -515,47 +515,17 @@ inline xt::xtensor<double, 2> System::plastic_Epsp() const
     return xt::view(m_material.Epsp(), xt::keep(m_elem_plas), xt::all());
 }
 
-inline auto System::plastic_SignDeltaEpsd(const xt::xtensor<double, 2>& delta_u)
+template <class T>
+inline auto System::plastic_SignDeltaEpsd(const T& delta_u)
 {
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(delta_u, {m_nnode, m_ndim}));
-
-    auto u_0 = this->u();
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(delta_u, m_u.shape()));
+    auto u_0 = m_u;
     auto eps_0 = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-    auto u_pert = this->u() + delta_u;
-    this->setU(u_pert);
+    this->setU(m_u + delta_u);
     auto eps_pert = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
     this->setU(u_0);
-
     xt::xtensor<int, 2> sign = xt::sign(eps_pert - eps_0);
     return sign;
-}
-
-inline double System::plastic_scalePerturbation(
-    const xt::xtensor<double, 2>& delta_u,
-    size_t e_plastic,
-    size_t q,
-    double epsd)
-{
-    auto u_0 = this->u();
-    this->setU(delta_u);
-    auto Eps_delta = GMatTensor::Cartesian2d::Deviatoric(this->plastic_Eps(e_plastic, q));
-    this->setU(u_0);
-    auto Eps_t = GMatTensor::Cartesian2d::Deviatoric(this->plastic_Eps(e_plastic, q));
-
-    // name alias
-    double e_t = Eps_t(0, 0);
-    double g_t = Eps_t(0, 1);
-    double e_d = Eps_delta(0, 0);
-    double g_d = Eps_delta(0, 1);
-
-    // find relevant root of quadratic equation
-    double a = e_d * e_d + g_d * g_d;
-    double b = 2.0 * (e_t * e_d + g_t * g_d);
-    double c = e_t * e_t + g_t * g_t - epsd * epsd;
-    double D = std::sqrt(b * b - 4.0 * a * c);
-
-    FRICTIONQPOTFEM_REQUIRE(b >= 0.0);
-    return (-b + D) / (2.0 * a);
 }
 
 inline bool System::boundcheck_right(size_t n) const
@@ -586,6 +556,68 @@ inline void System::computeInternalExternalResidualForce()
     xt::noalias(m_fint) = m_fmaterial + m_fdamp;
     m_vector.copy_p(m_fint, m_fext);
     xt::noalias(m_fres) = m_fext - m_fint;
+}
+
+template <class T>
+inline void System::eventDriven_setDeltaU(const T& u)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, m_u.shape()));
+    m_pert_u = u;
+
+    auto u0 = m_u;
+    this->setU(u);
+    m_pert_Epsd_plastic = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps());
+    this->setU(u0);
+}
+
+inline auto System::eventDriven_deltaU() const
+{
+    return m_pert_u;
+}
+
+inline double System::eventDrivenStep(double deps_kick, bool kick, int direction)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_pert_u, m_u.shape()));
+    FRICTIONQPOTFEM_ASSERT(direction == 1 || direction == -1);
+
+    auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+    auto epsy_l = this->plastic_CurrentYieldLeft();
+    auto epsy_r = this->plastic_CurrentYieldRight();
+    auto sign = this->plastic_SignDeltaEpsd(m_pert_u);
+
+    xt::xtensor<double, 2> epsy;
+    if (direction > 0) {
+        epsy = xt::where(sign > 0, epsy_r, epsy_l);
+    }
+    else {
+        epsy = xt::where(sign < 0, epsy_l, epsy_r);
+    }
+
+    auto deps = xt::eval(xt::abs(eps - epsy));
+
+    if (!kick && xt::amin(deps)() < deps_kick / 2.0) {
+        return 0.0;
+    }
+
+    auto index = xt::unravel_index(xt::argmin(deps)(), deps.shape());
+    size_t e = index[0];
+    size_t q = index[1];
+    auto Epsd_t = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps(e, q));
+    auto Epsd_delta = xt::eval(xt::view(m_pert_Epsd_plastic, e, q));
+    double target = epsy(e, q) - 0.5 * deps_kick;
+    if (kick) {
+        target = epsy(e, q) + 0.5 * deps_kick;
+    }
+    double c = scalePerturbation(Epsd_t, Epsd_delta, target);
+    auto idx = this->plastic_CurrentIndex();
+    this->setU(m_u + c * m_pert_u);
+    auto idx_new = this->plastic_CurrentIndex();
+    auto eps_new = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+
+    FRICTIONQPOTFEM_REQUIRE(kick || xt::all(xt::equal(idx, idx_new)));
+    FRICTIONQPOTFEM_REQUIRE(xt::allclose(eps_new, target));
+
+    return c;
 }
 
 inline void System::timeStep()

@@ -217,18 +217,28 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
             cls.def(
                 "plastic_SignDeltaEpsd",
-                &SUB::System::plastic_SignDeltaEpsd,
+                &SUB::System::plastic_SignDeltaEpsd<xt::pytensor<double, 2>>,
                 "plastic_SignDeltaEpsd",
                 py::arg("delta_u"));
 
             cls.def(
-                "plastic_scalePerturbation",
-                &SUB::System::plastic_scalePerturbation,
-                "plastic_scalePerturbation",
-                py::arg("delta_u"),
-                py::arg("e_plastic"),
-                py::arg("q"),
-                py::arg("epsd"));
+                "eventDriven_setDeltaU",
+                &SUB::System::eventDriven_setDeltaU<xt::pytensor<double, 2>>,
+                "eventDriven_setDeltaU",
+                py::arg("delta_u"));
+
+            cls.def(
+                "eventDriven_deltaU",
+                &SUB::System::eventDriven_deltaU,
+                "eventDriven_deltaU");
+
+            cls.def(
+                "eventDrivenStep",
+                &SUB::System::eventDrivenStep,
+                "eventDrivenStep",
+                py::arg("deps"),
+                py::arg("kick"),
+                py::arg("direction") = +1);
 
             cls.def("timeStep", &SUB::System::timeStep, "timeStep");
 
@@ -550,12 +560,6 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             py::arg("delta_ubar"),
             py::arg("active"),
             py::arg("delta_u"));
-
-        cls.def("getEventDrivenPerturbation", &SUB::System::getEventDrivenPerturbation, "getEventDrivenPerturbation");
-
-        cls.def("addEventDriven", &SUB::System::addEventDriven, "addEventDriven",
-            py::arg("deps"),
-            py::arg("kick"));
 
         cls.def(
             "layerSetTargetActive",
