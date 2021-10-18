@@ -225,7 +225,8 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "eventDriven_setDeltaU",
                 &SUB::System::eventDriven_setDeltaU<xt::pytensor<double, 2>>,
                 "eventDriven_setDeltaU",
-                py::arg("delta_u"));
+                py::arg("delta_u"),
+                py::arg("autoscale") = true);
 
             cls.def(
                 "eventDriven_deltaU",

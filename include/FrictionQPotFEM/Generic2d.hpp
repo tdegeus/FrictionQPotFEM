@@ -284,6 +284,22 @@ inline void System::reset_epsy(const xt::xtensor<double, 2>& epsy_elem)
     }
 }
 
+inline xt::xtensor<double, 2> System::epsy() const
+{
+    xt::xtensor<double, 2> ret;
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        auto cusp = m_material.crefCusp({m_elem_plas(e), 0});
+        auto val = cusp.epsy();
+        if (e == 0) {
+            ret.resize({m_nelem_plas, val.size()});
+        }
+        std::copy(val.cbegin(), val.cend(), &ret(e, 0));
+    }
+
+    return ret;
+}
+
 inline bool System::isHomogeneousElastic() const
 {
     auto K = m_material.K();
@@ -559,7 +575,7 @@ inline void System::computeInternalExternalResidualForce()
 }
 
 template <class T>
-inline void System::eventDriven_setDeltaU(const T& u)
+inline void System::eventDriven_setDeltaU(const T& u, bool autoscale)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, m_u.shape()));
     m_pert_u = u;
@@ -568,6 +584,17 @@ inline void System::eventDriven_setDeltaU(const T& u)
     this->setU(u);
     m_pert_Epsd_plastic = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps());
     this->setU(u0);
+
+    if (!autoscale) {
+        return;
+    }
+
+    auto deps = xt::amax(GMatElastoPlasticQPot::Cartesian2d::Epsd(m_pert_Epsd_plastic))();
+    auto d = xt::amin(xt::diff(this->epsy(), 1))();
+    double c = 0.1 * d / deps;
+
+    m_pert_u *= c;
+    m_pert_Epsd_plastic *= c;
 }
 
 inline auto System::eventDriven_deltaU() const
@@ -580,10 +607,11 @@ inline double System::eventDrivenStep(double deps_kick, bool kick, int direction
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_pert_u, m_u.shape()));
     FRICTIONQPOTFEM_ASSERT(direction == 1 || direction == -1);
 
+    double d = static_cast<double>(direction);
     auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
     auto epsy_l = this->plastic_CurrentYieldLeft();
     auto epsy_r = this->plastic_CurrentYieldRight();
-    auto sign = this->plastic_SignDeltaEpsd(m_pert_u);
+    auto sign = this->plastic_SignDeltaEpsd(d * m_pert_u);
 
     xt::xtensor<double, 2> epsy;
     if (direction > 0) {
@@ -604,9 +632,9 @@ inline double System::eventDrivenStep(double deps_kick, bool kick, int direction
     size_t q = index[1];
     auto Epsd_t = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps(e, q));
     auto Epsd_delta = xt::eval(xt::view(m_pert_Epsd_plastic, e, q));
-    double target = epsy(e, q) - 0.5 * deps_kick;
+    double target = epsy(e, q) - d * 0.5 * deps_kick;
     if (kick) {
-        target = epsy(e, q) + 0.5 * deps_kick;
+        target = epsy(e, q) + d * 0.5 * deps_kick;
     }
     double c = scalePerturbation(Epsd_t, Epsd_delta, target);
     auto idx = this->plastic_CurrentIndex();

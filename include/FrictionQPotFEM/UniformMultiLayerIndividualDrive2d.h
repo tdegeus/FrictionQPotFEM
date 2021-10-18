@@ -147,7 +147,6 @@ public:
     template <class S, class T, class U>
     void initEventDriven(const S& delta_ubar, const T& active, const U& delta_u);
 
-
     double eventDrivenStep(double deps, bool kick, int direction = +1) override;
 
     /**

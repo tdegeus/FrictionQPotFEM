@@ -146,6 +146,14 @@ public:
         const xt::xtensor<double, 2>& epsy_elem);
 
     /**
+    Get the current yield strains per plastic element.
+    Note that in this system the yield strains history is always the same for all the integration
+    points in the system.
+    \return [plastic().size, n]
+    */
+    xt::xtensor<double, 2> epsy() const;
+
+    /**
     Reset yield strains (to avoid re-construction).
     \param epsy_elem Yield history per element.
     */
@@ -473,9 +481,10 @@ public:
     Since this response is elastic it can be scaled freely to transverse a fully elastic interval
     at once, without running any dynamics, and run an event driven code using eventDrivenStep().
     \param delta_u Nodal displacement field.
+    \param autoscale Scale such that the perturbation is small enough.
     */
     template <class T>
-    void eventDriven_setDeltaU(const T& delta_u);
+    void eventDriven_setDeltaU(const T& delta_u, bool autoscale = true);
 
     /**
     Get displacement perturbation used for event driven code, see eventDriven_setDeltaU().
