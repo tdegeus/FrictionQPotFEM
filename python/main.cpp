@@ -663,6 +663,27 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
         cls.def("leverPosition", &SUB::System::leverPosition, "leverPosition");
 
+        cls.def(
+            "initEventDriven",
+            py::overload_cast<double, const xt::pytensor<bool, 2>&>(
+                &SUB::System::initEventDriven<xt::pytensor<bool, 2>>),
+            "initEventDriven",
+            py::arg("delta_ubar"),
+            py::arg("active"));
+
+        cls.def(
+            "initEventDriven",
+            py::overload_cast<
+                double,
+                const xt::pytensor<bool, 2>&,
+                const xt::pytensor<double, 2>&>(&SUB::System::initEventDriven<
+                                                xt::pytensor<bool, 2>,
+                                                xt::pytensor<double, 2>>),
+            "initEventDriven",
+            py::arg("xdrive"),
+            py::arg("active"),
+            py::arg("delta_u"));
+
         cls.def("__repr__", [](const SUB::System&) {
             return "<FrictionQPotFEM.UniformMultiLayerLeverDrive2d.System>";
         });

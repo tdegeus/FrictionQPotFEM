@@ -63,6 +63,7 @@ template <class T>
 inline void System::setLeverProperties(double H, const T& hi)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(hi, m_lever_hi.shape()));
+    m_lever_set = true;
     m_lever_hi = hi;
     m_lever_H = H;
 
@@ -88,8 +89,103 @@ inline double System::leverPosition() const
     return m_lever_u;
 }
 
+template <class T>
+inline void System::initEventDriven(double xlever, const T& active)
+{
+    // backup system
+
+    auto u0 = m_u;
+    auto v0 = m_v;
+    auto a0 = m_a;
+    auto active0 = m_layerdrive_active;
+    auto ubar0 = m_layerdrive_targetubar;
+    auto xdrive0 = m_lever_target;
+    auto t0 = m_t;
+    xt::xtensor<double, 3> epsy0(std::array<size_t, 3>{m_nelem_plas, m_nip, 2});
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        for (size_t q = 0; q < m_nip; ++q) {
+            auto cusp = m_material_plas.refCusp({e, q});
+            auto epsy = cusp.epsy();
+            epsy0(e, q, 0) = epsy(0);
+            epsy0(e, q, 1) = epsy(1);
+            epsy(1) = std::numeric_limits<double>::max();
+            epsy(0) = -epsy(1);
+            cusp.reset_epsy(epsy, false);
+        }
+    }
+
+    // perturbation
+
+    m_u.fill(0.0);
+    m_v.fill(0.0);
+    m_a.fill(0.0);
+    this->layerSetTargetActive(active);
+    this->setLeverTarget(xlever);
+    this->minimise();
+
+    auto c = this->eventDriven_setDeltaU(m_u);
+    m_pert_layerdrive_active = active;
+    m_pert_layerdrive_targetubar = c * m_layerdrive_targetubar;
+    m_pert_lever_target = c * xlever;
+
+    // restore system
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        for (size_t q = 0; q < m_nip; ++q) {
+            auto cusp = m_material_plas.refCusp({e, q});
+            auto epsy = cusp.epsy();
+            epsy(0) = epsy0(e, q, 0);
+            epsy(1) = epsy0(e, q, 1);
+            cusp.reset_epsy(epsy, false);
+        }
+    }
+
+    this->setU(u0);
+    this->setV(v0);
+    this->setA(a0);
+    this->layerSetTargetActive(active0);
+    this->layerSetTargetUbar(ubar0);
+    this->setLeverTarget(xdrive0);
+    this->setT(t0);
+}
+
+template <class T, class U>
+inline void System::initEventDriven(double xlever, const T& active, const U& delta_u)
+{
+    xt::xtensor<double, 2> ubar(std::array<size_t, 2>{m_n_layer, 2}, 0.0);
+
+    for (size_t i = 0; i < m_n_layer; ++i) {
+        if (m_layerdrive_active(i, 0)) {
+            ubar(i, 0) = xlever / m_lever_H * m_lever_hi(i);
+        }
+    }
+
+    UniformMultiLayerIndividualDrive2d::System::initEventDriven(ubar, active, delta_u);
+
+    auto u0 = m_u;
+    this->setU(m_pert_u);
+    this->computeLayerUbarActive();
+
+    double n = 1.0;
+    double m = 0.0;
+
+    for (size_t i = 0; i < m_n_layer; ++i) {
+        if (m_layerdrive_active(i, 0)) {
+            m += m_layer_ubar(i, 0) * m_lever_hi_H(i);
+            n += m_lever_hi_H_2(i);
+        }
+    }
+
+    m_pert_lever_target = xlever * n - m;
+
+    this->setU(u0);
+}
+
 inline void System::updated_u()
 {
+    FRICTIONQPOTFEM_ASSERT(m_lever_set);
+
     this->computeLayerUbarActive();
 
     // Position of the lever based on equilibrium

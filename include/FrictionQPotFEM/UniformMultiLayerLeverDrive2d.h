@@ -37,6 +37,10 @@ its position is computed by assuming that the sum of moments acting on it is zer
 */
 class System : public UniformMultiLayerIndividualDrive2d::System {
 
+private:
+
+    using UniformMultiLayerIndividualDrive2d::System::initEventDriven;
+
 public:
     System() = default;
 
@@ -95,6 +99,30 @@ public:
     */
     double leverPosition() const;
 
+    /**
+    \todo document
+
+    \param xdrive Target 'position' of the spring pulling the lever.
+
+    \param active
+        For each layer and each degree-of-freedom specify if
+        the spring is active (`true`) or not (`false`) [#nlayer, 2].
+    \
+    */
+    template <class T>
+    void initEventDriven(double xdrive, const T& active);
+
+    /**
+    \copydoc void initEventDriven(double, const T&)
+
+    \tparam U `xt::xtensor<double, 2>`
+    \param delta_u
+        Use a precomputed displacement field.
+    \
+    */
+    template <class T, class U>
+    void initEventDriven(double xdrive, const T& active, const U& delta_u);
+
 protected:
     /**
     Define basic geometry.
@@ -125,12 +153,14 @@ protected:
     void updated_u() override;
 
 private:
+    bool m_lever_set = false; ///< Lock class until properties have been set.
     double m_lever_H; ///< See setLeverProperties().
     xt::xtensor<double, 1> m_lever_hi; ///< See setLeverProperties().
     xt::xtensor<double, 1> m_lever_hi_H; ///< m_lever_hi / H
     xt::xtensor<double, 1> m_lever_hi_H_2; ///< (m_lever_hi / H)^2
     double m_lever_target; ///< See setLeverTarget().
     double m_lever_u; ///< Current position of the lever.
+    double m_pert_lever_target; ///< Perturbation in target position for event driven load.
 };
 
 } // namespace UniformMultiLayerLeverDrive2d
