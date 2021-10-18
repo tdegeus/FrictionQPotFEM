@@ -221,7 +221,7 @@ inline void System::initMaterial()
 inline void
 System::setElastic(const xt::xtensor<double, 1>& K_elem, const xt::xtensor<double, 1>& G_elem)
 {
-    FRICTIONQPOTFEM_ASSERT(!m_set_elas);
+    FRICTIONQPOTFEM_ASSERT(!m_set_elas || m_nelem_elas == 0);
     FRICTIONQPOTFEM_ASSERT(K_elem.size() == m_nelem_elas);
     FRICTIONQPOTFEM_ASSERT(G_elem.size() == m_nelem_elas);
 
@@ -246,7 +246,7 @@ inline void System::setPlastic(
     const xt::xtensor<double, 1>& G_elem,
     const xt::xtensor<double, 2>& epsy_elem)
 {
-    FRICTIONQPOTFEM_ASSERT(!m_set_plas);
+    FRICTIONQPOTFEM_ASSERT(!m_set_plas || m_nelem_plas == 0);
     FRICTIONQPOTFEM_ASSERT(K_elem.size() == m_nelem_plas);
     FRICTIONQPOTFEM_ASSERT(G_elem.size() == m_nelem_plas);
     FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
