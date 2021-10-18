@@ -228,10 +228,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("delta_u"),
                 py::arg("autoscale") = true);
 
-            cls.def(
-                "eventDriven_deltaU",
-                &SUB::System::eventDriven_deltaU,
-                "eventDriven_deltaU");
+            cls.def("eventDriven_deltaU", &SUB::System::eventDriven_deltaU, "eventDriven_deltaU");
 
             cls.def(
                 "eventDrivenStep",
@@ -549,14 +546,21 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
         cls.def(
             "initEventDriven",
-            py::overload_cast<const xt::pytensor<double, 2>&, const xt::pytensor<bool, 2>&>(&SUB::System::initEventDriven<xt::pytensor<double, 2>, xt::pytensor<bool, 2>>),
+            py::overload_cast<const xt::pytensor<double, 2>&, const xt::pytensor<bool, 2>&>(
+                &SUB::System::initEventDriven<xt::pytensor<double, 2>, xt::pytensor<bool, 2>>),
             "initEventDriven",
             py::arg("delta_ubar"),
             py::arg("active"));
 
         cls.def(
             "initEventDriven",
-            py::overload_cast<const xt::pytensor<double, 2>&, const xt::pytensor<bool, 2>&, const xt::pytensor<double, 2>&>(&SUB::System::initEventDriven<xt::pytensor<double, 2>, xt::pytensor<bool, 2>, xt::pytensor<double, 2>>),
+            py::overload_cast<
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<bool, 2>&,
+                const xt::pytensor<double, 2>&>(&SUB::System::initEventDriven<
+                                                xt::pytensor<double, 2>,
+                                                xt::pytensor<bool, 2>,
+                                                xt::pytensor<double, 2>>),
             "initEventDriven",
             py::arg("delta_ubar"),
             py::arg("active"),

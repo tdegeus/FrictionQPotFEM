@@ -219,7 +219,7 @@ inline void System::initEventDriven(const S& delta_ubar, const T& active)
             epsy0(e, q, 0) = epsy(0);
             epsy0(e, q, 1) = epsy(1);
             epsy(1) = std::numeric_limits<double>::max();
-            epsy(0) = - epsy(1);
+            epsy(0) = -epsy(1);
             cusp.reset_epsy(epsy, false);
         }
     }

@@ -50,7 +50,6 @@ class test_Generic2d(unittest.TestCase):
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
         nelem = mesh.nelem()
-        elem = mesh.elementgrid()
         dofs = mesh.dofs()
         dofs[mesh.nodesLeftOpenEdge(), ...] = dofs[mesh.nodesRightOpenEdge(), ...]
 
