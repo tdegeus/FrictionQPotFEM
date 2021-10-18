@@ -100,7 +100,11 @@ public:
     double leverPosition() const;
 
     /**
-    \todo document
+    Initialise the event driven protocol by applying a perturbation to loading spring
+    and computing and storing the linear, purely elastic, response.
+    The system can thereafter be moved forward to the next event.
+    Note that this function itself does not change the system in any way,
+    it just stores the relevant perturbations.
 
     \param xdrive Target 'position' of the spring pulling the lever.
 
@@ -113,15 +117,20 @@ public:
     void initEventDriven(double xdrive, const T& active);
 
     /**
-    \copydoc void initEventDriven(double, const T&)
-
-    \tparam U `xt::xtensor<double, 2>`
-    \param delta_u
-        Use a precomputed displacement field.
-    \
+    Restore perturbation used from event driven protocol.
+    \param xdrive See eventDriven_leverPosition().
+    \param active See eventDriven_targetActive().
+    \param delta_u See eventDriven_deltaU().
+    \param delta_ubar See eventDriven_deltaUbar().
     */
-    template <class T, class U>
-    void initEventDriven(double xdrive, const T& active, const U& delta_u);
+    template <class T, class U, class W>
+    void initEventDriven(double xdrive, const T& active, const U& delta_u, const W& delta_ubar);
+
+    /**
+    Get target 'position' of the spring pulling the lever perturbation used for event driven code.
+    \return Value
+    */
+    double eventDriven_deltaLeverPosition() const;
 
 protected:
     /**

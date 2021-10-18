@@ -50,11 +50,12 @@ class test_Generic2d(unittest.TestCase):
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
         nelem = mesh.nelem()
+        coor = mesh.coor()
         dofs = mesh.dofs()
         dofs[mesh.nodesLeftOpenEdge(), ...] = dofs[mesh.nodesRightOpenEdge(), ...]
 
         system = FrictionQPotFEM.Generic2d.HybridSystem(
-            mesh.coor(),
+            coor,
             mesh.conn(),
             dofs,
             dofs[np.concatenate((mesh.nodesBottomEdge(), mesh.nodesTopEdge())), :].ravel(),
@@ -73,49 +74,55 @@ class test_Generic2d(unittest.TestCase):
         system.setPlastic(np.ones(nplas), np.ones(nplas), epsy)
         system.setDt(1.0)
 
-        x = mesh.coor()
-        delta_u = np.zeros_like(x)
+        delta_u = np.zeros_like(coor)
 
         for i in range(delta_u.shape[0]):
-            delta_u[i, 0] = 0.1 * (x[i, 0] - x[0, 0])
+            delta_u[i, 0] = 0.1 * (coor[i, 0] - coor[0, 0])
 
-        system.eventDriven_setDeltaU(delta_u)
+        for loop in range(2):
 
-        system.eventDrivenStep(1e-4, False)
-        self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 0] - 0.5 * 1e-4))
-        self.assertTrue(system.residual() < 1e-5)
+            if loop == 0:
+                system.eventDriven_setDeltaU(delta_u)
+                delta_u = system.eventDriven_deltaU()
+            else:
+                system.eventDriven_setDeltaU(delta_u)
+                system.setU(np.zeros_like(coor))
 
-        system.eventDrivenStep(1e-4, False)
-        self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 0] - 0.5 * 1e-4))
-        self.assertTrue(system.residual() < 1e-5)
+            system.eventDrivenStep(1e-4, False)
+            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 0] - 0.5 * 1e-4))
+            self.assertTrue(system.residual() < 1e-5)
 
-        system.eventDrivenStep(1e-4, True)
-        self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 0] + 0.5 * 1e-4))
-        self.assertTrue(system.residual() < 1e-5)
+            system.eventDrivenStep(1e-4, False)
+            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 0] - 0.5 * 1e-4))
+            self.assertTrue(system.residual() < 1e-5)
 
-        system.eventDrivenStep(1e-4, False)
-        self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 1] - 0.5 * 1e-4))
-        self.assertTrue(system.residual() < 1e-5)
+            system.eventDrivenStep(1e-4, True)
+            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 0] + 0.5 * 1e-4))
+            self.assertTrue(system.residual() < 1e-5)
 
-        system.eventDrivenStep(1e-4, True)
-        self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 1] + 0.5 * 1e-4))
-        self.assertTrue(system.residual() < 1e-5)
+            system.eventDrivenStep(1e-4, False)
+            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 1] - 0.5 * 1e-4))
+            self.assertTrue(system.residual() < 1e-5)
 
-        system.eventDrivenStep(1e-4, False)
-        self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 2] - 0.5 * 1e-4))
-        self.assertTrue(system.residual() < 1e-5)
+            system.eventDrivenStep(1e-4, True)
+            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 1] + 0.5 * 1e-4))
+            self.assertTrue(system.residual() < 1e-5)
 
-        system.eventDrivenStep(1e-4, False, -1)
-        self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 1] + 0.5 * 1e-4))
-        self.assertTrue(system.residual() < 1e-5)
+            system.eventDrivenStep(1e-4, False)
+            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 2] - 0.5 * 1e-4))
+            self.assertTrue(system.residual() < 1e-5)
 
-        system.eventDrivenStep(1e-4, True, -1)
-        self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 1] - 0.5 * 1e-4))
-        self.assertTrue(system.residual() < 1e-5)
+            system.eventDrivenStep(1e-4, False, -1)
+            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 1] + 0.5 * 1e-4))
+            self.assertTrue(system.residual() < 1e-5)
 
-        system.eventDrivenStep(1e-4, False, -1)
-        self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 0] + 0.5 * 1e-4))
-        self.assertTrue(system.residual() < 1e-5)
+            system.eventDrivenStep(1e-4, True, -1)
+            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 1] - 0.5 * 1e-4))
+            self.assertTrue(system.residual() < 1e-5)
+
+            system.eventDrivenStep(1e-4, False, -1)
+            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 0] + 0.5 * 1e-4))
+            self.assertTrue(system.residual() < 1e-5)
 
 
 if __name__ == "__main__":

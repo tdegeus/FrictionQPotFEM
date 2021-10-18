@@ -567,15 +567,23 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             py::arg("delta_u"));
 
         cls.def(
+            "eventDriven_deltaUbar",
+            &SUB::System::eventDriven_deltaUbar,
+            "eventDriven_deltaUbar");
+
+        cls.def(
+            "eventDriven_targetActive",
+            &SUB::System::eventDriven_targetActive,
+            "eventDriven_targetActive");
+
+        cls.def(
             "layerSetTargetActive",
             &SUB::System::layerSetTargetActive<xt::pytensor<double, 2>>,
             "layerSetTargetActive",
             py::arg("active"));
 
         cls.def("layerUbar", &SUB::System::layerUbar, "layerUbar");
-
         cls.def("layerTargetUbar", &SUB::System::layerTargetUbar, "layerTargetUbar");
-
         cls.def("layerTargetActive", &SUB::System::layerTargetActive, "layerTargetActive");
 
         cls.def(
@@ -658,9 +666,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             py::arg("hi"));
 
         cls.def("setLeverTarget", &SUB::System::setLeverTarget, "setLeverTarget", py::arg("u"));
-
         cls.def("leverTarget", &SUB::System::leverTarget, "leverTarget");
-
         cls.def("leverPosition", &SUB::System::leverPosition, "leverPosition");
 
         cls.def(
@@ -676,13 +682,21 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             py::overload_cast<
                 double,
                 const xt::pytensor<bool, 2>&,
+                const xt::pytensor<double, 2>&,
                 const xt::pytensor<double, 2>&>(&SUB::System::initEventDriven<
                                                 xt::pytensor<bool, 2>,
+                                                xt::pytensor<double, 2>,
                                                 xt::pytensor<double, 2>>),
             "initEventDriven",
             py::arg("xdrive"),
             py::arg("active"),
-            py::arg("delta_u"));
+            py::arg("delta_u"),
+            py::arg("delta_ubar"));
+
+        cls.def(
+            "eventDriven_deltaLeverPosition",
+            &SUB::System::eventDriven_deltaLeverPosition,
+            "eventDriven_deltaLeverPosition");
 
         cls.def("__repr__", [](const SUB::System&) {
             return "<FrictionQPotFEM.UniformMultiLayerLeverDrive2d.System>";

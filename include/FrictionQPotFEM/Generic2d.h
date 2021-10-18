@@ -478,11 +478,13 @@ public:
 
     /**
     Set purely elastic and linear response to specific boundary conditions.
-    Since this response is elastic it can be scaled freely to transverse a fully elastic interval
-    at once, without running any dynamics, and run an event driven code using eventDrivenStep().
+    Since this response is linear and elastic it can be scaled freely to transverse a
+    fully elastic interval at once, without running any dynamics,
+    and run an event driven code using eventDrivenStep().
+
     \param delta_u Nodal displacement field.
     \param autoscale Scale such that the perturbation is small enough.
-    \return Value with which the input perturbation is scaled.
+    \return Value with which the input perturbation is scaled, see also eventDriven_deltaU().
     */
     template <class T>
     double eventDriven_setDeltaU(const T& delta_u, bool autoscale = true);

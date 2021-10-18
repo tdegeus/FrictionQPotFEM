@@ -150,10 +150,22 @@ inline void System::initEventDriven(double xlever, const T& active)
     this->setT(t0);
 }
 
-template <class T, class U>
-inline void System::initEventDriven(double xlever, const T& active, const U& delta_u)
+template <class T, class U, class W>
+inline void System::initEventDriven(double xlever, const T& active, const U& u, const W& ubar)
 {
-    FRICTIONQPOTFEM_REQUIRE(false);
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, m_u.shape()));
+    auto c = this->eventDriven_setDeltaU(u);
+    FRICTIONQPOTFEM_ASSERT(xt::allclose(c, 1.0));
+    m_pert_layerdrive_active = active;
+    m_pert_layerdrive_targetubar = c * ubar;
+    m_pert_lever_target = c * xlever;
+}
+
+inline double System::eventDriven_deltaLeverPosition() const
+{
+    return m_pert_lever_target;
 }
 
 inline void System::updated_u()
