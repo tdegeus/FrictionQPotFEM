@@ -143,9 +143,8 @@ inline void System::initEventDrivenSimpleShear()
 inline double
 System::addSimpleShearEventDriven(double deps_kick, bool kick, double direction, bool dry_run)
 {
-    FRICTIONQPOTFEM_WARNING_PYTHON(
-        "Use initEventDrivenSimpleShear() + eventDrivenStep(...) "
-        "instead of addSimpleShearEventDriven(...)");
+    FRICTIONQPOTFEM_WARNING_PYTHON("Use initEventDrivenSimpleShear() + eventDrivenStep(...) "
+                                   "instead of addSimpleShearEventDriven(...)");
 
     FRICTIONQPOTFEM_REQUIRE(direction > 0.0); // bugged, use new implementation
 

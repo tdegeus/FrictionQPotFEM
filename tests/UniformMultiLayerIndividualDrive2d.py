@@ -59,7 +59,7 @@ class test_Generic2d(unittest.TestCase):
                 delta_u = system.eventDriven_deltaU()
                 delta_ubar = system.eventDriven_deltaUbar()
             else:
-                system.initEventDriven(delta_ubar, drive_active, delta_u)
+                system.initEventDriven(delta_ubar, delta_active, delta_u)
                 system.setU(np.zeros_like(coor))
 
             directions = [1, 1, 1, 1, 1, 1, -1, -1, -1]

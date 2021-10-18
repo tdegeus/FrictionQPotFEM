@@ -60,7 +60,6 @@ class test_Generic2d(unittest.TestCase):
                 self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), eps_expect))
                 self.assertTrue(system.residual() < 1e-5)
 
-
     def test_eventDrivenSimpleShear_historic(self):
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
@@ -106,6 +105,7 @@ class test_Generic2d(unittest.TestCase):
             check = system.u() - u
 
             self.assertTrue(np.allclose(delta_u, check))
+
 
 if __name__ == "__main__":
 

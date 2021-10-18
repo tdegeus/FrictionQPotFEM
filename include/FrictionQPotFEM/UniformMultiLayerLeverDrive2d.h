@@ -38,7 +38,6 @@ its position is computed by assuming that the sum of moments acting on it is zer
 class System : public UniformMultiLayerIndividualDrive2d::System {
 
 private:
-
     using UniformMultiLayerIndividualDrive2d::System::initEventDriven;
 
 public:

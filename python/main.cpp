@@ -572,9 +572,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             py::arg("delta_u"));
 
         cls.def(
-            "eventDriven_deltaUbar",
-            &SUB::System::eventDriven_deltaUbar,
-            "eventDriven_deltaUbar");
+            "eventDriven_deltaUbar", &SUB::System::eventDriven_deltaUbar, "eventDriven_deltaUbar");
 
         cls.def(
             "eventDriven_targetActive",
