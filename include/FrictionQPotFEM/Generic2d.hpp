@@ -575,7 +575,7 @@ inline void System::computeInternalExternalResidualForce()
 }
 
 template <class T>
-inline void System::eventDriven_setDeltaU(const T& u, bool autoscale)
+inline double System::eventDriven_setDeltaU(const T& u, bool autoscale)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, m_u.shape()));
     m_pert_u = u;
@@ -586,7 +586,7 @@ inline void System::eventDriven_setDeltaU(const T& u, bool autoscale)
     this->setU(u0);
 
     if (!autoscale) {
-        return;
+        return 1.0;
     }
 
     auto deps = xt::amax(GMatElastoPlasticQPot::Cartesian2d::Epsd(m_pert_Epsd_plastic))();
@@ -595,6 +595,8 @@ inline void System::eventDriven_setDeltaU(const T& u, bool autoscale)
 
     m_pert_u *= c;
     m_pert_Epsd_plastic *= c;
+
+    return c;
 }
 
 inline auto System::eventDriven_deltaU() const

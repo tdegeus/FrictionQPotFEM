@@ -482,9 +482,10 @@ public:
     at once, without running any dynamics, and run an event driven code using eventDrivenStep().
     \param delta_u Nodal displacement field.
     \param autoscale Scale such that the perturbation is small enough.
+    \return Value with which the input perturbation is scaled.
     */
     template <class T>
-    void eventDriven_setDeltaU(const T& delta_u, bool autoscale = true);
+    double eventDriven_setDeltaU(const T& delta_u, bool autoscale = true);
 
     /**
     Get displacement perturbation used for event driven code, see eventDriven_setDeltaU().

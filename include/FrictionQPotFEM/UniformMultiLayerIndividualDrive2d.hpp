@@ -200,7 +200,7 @@ inline void System::layerSetDriveStiffness(double k, bool symmetric)
 }
 
 template <class S, class T>
-inline void System::initEventDriven(const S& delta_ubar, const T& active)
+inline void System::initEventDriven(const S& ubar, const T& active)
 {
     // backup system
 
@@ -230,12 +230,12 @@ inline void System::initEventDriven(const S& delta_ubar, const T& active)
     m_v.fill(0.0);
     m_a.fill(0.0);
     this->layerSetTargetActive(active);
-    this->layerSetTargetUbar(delta_ubar);
+    this->layerSetTargetUbar(ubar);
     this->minimise();
 
+    auto c = this->eventDriven_setDeltaU(m_u);
     m_pert_layerdrive_active = active;
-    m_pert_layerdrive_targetubar = delta_ubar;
-    this->eventDriven_setDeltaU(m_u);
+    m_pert_layerdrive_targetubar = c * ubar;
 
     // restore system
 
@@ -263,9 +263,9 @@ inline void System::initEventDriven(const S& ubar, const T& active, const U& u)
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, m_u.shape()));
+    auto c = this->eventDriven_setDeltaU(u);
     m_pert_layerdrive_active = active;
-    m_pert_layerdrive_targetubar = ubar;
-    this->eventDriven_setDeltaU(u);
+    m_pert_layerdrive_targetubar = c * ubar;
 }
 
 inline double System::eventDrivenStep(double deps_kick, bool kick, int direction)
