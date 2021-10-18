@@ -153,33 +153,7 @@ inline void System::initEventDriven(double xlever, const T& active)
 template <class T, class U>
 inline void System::initEventDriven(double xlever, const T& active, const U& delta_u)
 {
-    xt::xtensor<double, 2> ubar(std::array<size_t, 2>{m_n_layer, 2}, 0.0);
-
-    for (size_t i = 0; i < m_n_layer; ++i) {
-        if (m_layerdrive_active(i, 0)) {
-            ubar(i, 0) = xlever / m_lever_H * m_lever_hi(i);
-        }
-    }
-
-    UniformMultiLayerIndividualDrive2d::System::initEventDriven(ubar, active, delta_u);
-
-    auto u0 = m_u;
-    this->setU(m_pert_u);
-    this->computeLayerUbarActive();
-
-    double n = 1.0;
-    double m = 0.0;
-
-    for (size_t i = 0; i < m_n_layer; ++i) {
-        if (m_layerdrive_active(i, 0)) {
-            m += m_layer_ubar(i, 0) * m_lever_hi_H(i);
-            n += m_lever_hi_H_2(i);
-        }
-    }
-
-    m_pert_lever_target = xlever * n - m;
-
-    this->setU(u0);
+    FRICTIONQPOTFEM_REQUIRE(false);
 }
 
 inline void System::updated_u()
