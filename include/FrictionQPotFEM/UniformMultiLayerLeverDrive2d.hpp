@@ -72,9 +72,9 @@ inline void System::setLeverProperties(double H, const T& hi)
     this->updated_u(); // updates forces
 }
 
-inline void System::setLeverTarget(double u)
+inline void System::setLeverTarget(double xdrive)
 {
-    m_lever_target = u;
+    m_lever_target = xdrive;
     this->updated_u(); // updates target average displacement per layer, and forces
 }
 

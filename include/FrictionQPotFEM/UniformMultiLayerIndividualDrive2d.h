@@ -22,14 +22,7 @@ System in 2-d with:
 namespace UniformMultiLayerIndividualDrive2d {
 
 /**
-Return versions of this library and of all of its dependencies.
-The output is a list of strings, e.g.::
-
-    "frictionqpotfem=0.7.1",
-    "goosefem=0.7.0",
-    ...
-
-\return List of strings.
+\copydoc Generic2d::version_dependencies()
 */
 inline std::vector<std::string> version_dependencies();
 

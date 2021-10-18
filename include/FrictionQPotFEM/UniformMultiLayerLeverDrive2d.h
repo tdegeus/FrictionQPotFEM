@@ -23,14 +23,7 @@ System in 2-d with:
 namespace UniformMultiLayerLeverDrive2d {
 
 /**
-Return versions of this library and of all of its dependencies.
-The output is a list of strings, e.g.::
-
-    "frictionqpotfem=0.7.1",
-    "goosefem=0.7.0",
-    ...
-
-\return List of strings.
+\copydoc Generic2d::version_dependencies()
 */
 inline std::vector<std::string> version_dependencies();
 
@@ -75,7 +68,6 @@ public:
     Set the lever properties.
 
     \tparam T e.g. `xt::xtensor<double, 1>`
-
     \param H The height of the spring pulling the lever.
     \param hi The height \f$ h_i \f$ of the loading frame of each layer [nlayer].
     */
@@ -85,9 +77,9 @@ public:
     /**
     Set the target 'position' of the spring pulling the lever.
 
-    \param u Lever position
+    \param xdrive Lever position
     */
-    void setLeverTarget(double u);
+    void setLeverTarget(double xdrive);
 
     /**
     Get the current target lever 'position'.

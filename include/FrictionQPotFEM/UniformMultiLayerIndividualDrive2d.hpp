@@ -232,10 +232,10 @@ inline void System::initEventDriven(const S& delta_ubar, const T& active)
     this->layerSetTargetActive(active);
     this->layerSetTargetUbar(delta_ubar);
     this->minimise();
+
     m_pert_layerdrive_active = active;
     m_pert_layerdrive_targetubar = delta_ubar;
-    m_pert_u = m_u;
-    m_pert_Epsd_plastic = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps());
+    this->eventDriven_setDeltaU(m_u);
 
     // restore system
 
@@ -265,12 +265,7 @@ inline void System::initEventDriven(const S& ubar, const T& active, const U& u)
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, m_u.shape()));
     m_pert_layerdrive_active = active;
     m_pert_layerdrive_targetubar = ubar;
-    m_pert_u = u;
-
-    auto u0 = m_u;
-    this->setU(u);
-    m_pert_Epsd_plastic = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps());
-    this->setU(u0);
+    this->eventDriven_setDeltaU(u);
 }
 
 inline double System::eventDrivenStep(double deps_kick, bool kick, int direction)
