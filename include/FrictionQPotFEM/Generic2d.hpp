@@ -696,6 +696,24 @@ inline void System::timeStep()
     m_M.solve(m_fres, m_a);
 }
 
+inline void System::timeSteps(size_t n)
+{
+    for (size_t i = 0; i < n; ++i) {
+        this->timeStep();
+    }
+}
+
+template <class T>
+inline void System::flowSteps(size_t n, const T& v)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(v, m_u.shape()));
+
+    for (size_t i = 0; i < n; ++i) {
+        m_u += v * m_dt;
+        this->timeStep();
+    }
+}
+
 inline size_t System::timeStepsUntilEvent(double tol, size_t niter_tol, size_t max_iter)
 {
     FRICTIONQPOTFEM_REQUIRE(tol < 1.0);

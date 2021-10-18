@@ -240,6 +240,15 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
             cls.def("timeStep", &SUB::System::timeStep, "timeStep");
 
+            cls.def("timeSteps", &SUB::System::timeSteps, "timeSteps", py::arg("n"));
+
+            cls.def(
+                "flowSteps",
+                &SUB::System::flowSteps<xt::pytensor<double, 2>>,
+                "flowSteps",
+                py::arg("n"),
+                py::arg("v"));
+
             cls.def(
                 "timeStepsUntilEvent",
                 &SUB::System::timeStepsUntilEvent,

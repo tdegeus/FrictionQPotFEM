@@ -34,7 +34,7 @@ class test_Generic2d(unittest.TestCase):
         delta_u = np.zeros_like(x)
 
         for i in range(delta_u.shape[0]):
-            delta_u[i, 0] = 0.1 * (x[i, 0] - x[0, 0])
+            delta_u[i, 0] = 0.1 * (x[i, 1] - x[0, 1])
 
         system.setU(delta_u)
         Epsd_delta = GMat.Deviatoric(system.plastic_Eps(0, 0))
@@ -77,7 +77,7 @@ class test_Generic2d(unittest.TestCase):
         delta_u = np.zeros_like(coor)
 
         for i in range(delta_u.shape[0]):
-            delta_u[i, 0] = 0.1 * (coor[i, 0] - coor[0, 0])
+            delta_u[i, 0] = 0.1 * (coor[i, 1] - coor[0, 1])
 
         for loop in range(2):
 
@@ -132,7 +132,7 @@ class test_Generic2d(unittest.TestCase):
         delta_u = np.zeros_like(coor)
 
         for i in range(delta_u.shape[0]):
-            delta_u[i, 0] = 0.1 * (coor[i, 0] - coor[0, 0])
+            delta_u[i, 0] = 0.1 * (coor[i, 1] - coor[0, 1])
 
         system.eventDriven_setDeltaU(delta_u)
 
@@ -158,6 +158,48 @@ class test_Generic2d(unittest.TestCase):
                 self.assertTrue(np.sum(idx - idx_n) == -4)
             else:
                 self.assertTrue(np.all(idx == idx_n))
+
+    def test_flowSteps(self):
+        """
+        Basic test of:
+        -   Generic2d.System.flowSteps
+        -   Generic2d.System.timeSteps
+        """
+
+        mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
+        nelem = mesh.nelem()
+        system = FrictionQPotFEM.Generic2d.HybridSystem(
+            mesh.coor(),
+            mesh.conn(),
+            mesh.dofs(),
+            np.arange(mesh.nnode() * mesh.ndim()),
+            [0, 1, 2, 6, 7, 8],
+            [3, 4, 5],
+        )
+
+        system.setMassMatrix(np.ones(nelem))
+        system.setDampingMatrix(np.ones(nelem))
+        system.setElastic(np.ones(6), np.ones(6))
+        system.setPlastic(np.ones(3), np.ones(3), [[100.0], [100.0], [100.0]])
+        system.setDt(1.0)
+
+        x = mesh.coor()
+        v = np.zeros_like(x)
+
+        for i in range(v.shape[0]):
+            v[i, 0] = 0.1 * (x[i, 1] - x[0, 1])
+
+        system.flowSteps(10, v)
+
+        # displacement is added affinely in an elastic system:
+        # there is not residual force -> the system stays uniform
+        self.assertTrue(np.allclose(system.u(), 10 * v))
+        self.assertTrue(np.allclose(system.t(), 10))
+
+        system.timeSteps(10)
+
+        self.assertTrue(np.allclose(system.u(), 10 * v))
+        self.assertTrue(np.allclose(system.t(), 20))
 
 
 if __name__ == "__main__":

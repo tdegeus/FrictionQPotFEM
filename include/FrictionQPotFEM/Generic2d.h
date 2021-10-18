@@ -519,6 +519,23 @@ public:
     void timeStep();
 
     /**
+    Make a number of time steps.
+    \param n Number of steps to make.
+    */
+    void timeSteps(size_t n);
+
+    /**
+    Make a number of steps with the following protocol:
+    - Add a displacement \f$ \underline{v} \Delta t \f$ to each of the nodes.
+    - Make a timeStep().
+
+    \param n Number of steps to make.
+    \param v Nodal velocity to add ``[nnode, ndim]``.
+    */
+    template <class T>
+    void flowSteps(size_t n, const T& v);
+
+    /**
     Perform a series of time-steps until:
     -   the next plastic event,
     -   equilibrium, or the maximum, or
