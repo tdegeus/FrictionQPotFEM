@@ -199,6 +199,95 @@ inline void System::layerSetDriveStiffness(double k, bool symmetric)
     this->computeForceFromTargetUbar();
 }
 
+template <class S, class T>
+inline double System::initEventDriven(const S& ubar, const T& active)
+{
+    // backup system
+
+    auto u0 = m_u;
+    auto v0 = m_v;
+    auto a0 = m_a;
+    auto active0 = m_layerdrive_active;
+    auto ubar0 = m_layerdrive_targetubar;
+    auto t0 = m_t;
+    xt::xtensor<double, 3> epsy0(std::array<size_t, 3>{m_nelem_plas, m_nip, 2});
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        for (size_t q = 0; q < m_nip; ++q) {
+            auto cusp = m_material_plas.refCusp({e, q});
+            auto epsy = cusp.epsy();
+            epsy0(e, q, 0) = epsy(0);
+            epsy0(e, q, 1) = epsy(1);
+            epsy(1) = std::numeric_limits<double>::max();
+            epsy(0) = -epsy(1);
+            cusp.reset_epsy(epsy, false);
+        }
+    }
+
+    // perturbation
+
+    m_u.fill(0.0);
+    m_v.fill(0.0);
+    m_a.fill(0.0);
+    this->layerSetTargetActive(active);
+    this->layerSetTargetUbar(ubar);
+    this->minimise();
+
+    auto c = this->eventDriven_setDeltaU(m_u);
+    m_pert_layerdrive_active = active;
+    m_pert_layerdrive_targetubar = c * ubar;
+
+    // restore system
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        for (size_t q = 0; q < m_nip; ++q) {
+            auto cusp = m_material_plas.refCusp({e, q});
+            auto epsy = cusp.epsy();
+            epsy(0) = epsy0(e, q, 0);
+            epsy(1) = epsy0(e, q, 1);
+            cusp.reset_epsy(epsy, false);
+        }
+    }
+
+    this->setU(u0);
+    this->setV(v0);
+    this->setA(a0);
+    this->layerSetTargetActive(active0);
+    this->layerSetTargetUbar(ubar0);
+    this->setT(t0);
+
+    return c;
+}
+
+template <class S, class T, class U>
+inline void System::initEventDriven(const S& ubar, const T& active, const U& u)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, m_u.shape()));
+    auto c = this->eventDriven_setDeltaU(u);
+    FRICTIONQPOTFEM_ASSERT(xt::allclose(c, 1.0));
+    m_pert_layerdrive_active = active;
+    m_pert_layerdrive_targetubar = c * ubar;
+}
+
+inline xt::xtensor<double, 2> System::eventDriven_deltaUbar() const
+{
+    return m_pert_layerdrive_targetubar;
+}
+
+inline xt::xtensor<bool, 2> System::eventDriven_targetActive() const
+{
+    return m_pert_layerdrive_active;
+}
+
+inline double System::eventDrivenStep(double deps_kick, bool kick, int direction)
+{
+    double c = Generic2d::System::eventDrivenStep(deps_kick, kick, direction);
+    this->layerSetTargetUbar(m_layerdrive_targetubar + c * m_pert_layerdrive_targetubar);
+    return c;
+}
+
 template <class T>
 inline void System::layerSetTargetActive(const T& active)
 {

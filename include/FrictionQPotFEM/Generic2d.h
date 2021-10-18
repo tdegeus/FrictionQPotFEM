@@ -44,6 +44,26 @@ The output is a list of strings, e.g.::
 inline std::vector<std::string> version_dependencies();
 
 /**
+Find with which factor to scale a perturbation with a factor \f$ c \f$ such that
+
+\f$ \varepsilon(\underline{\varepsilon}_d) = \varepsilon_\text{target} \f$
+
+with
+
+\f$ \underline{\varepsilon}_d = \underline{\varepsilon}_d^t + c \underline{\varepsilon}_d^\delta \f$
+
+where \f$ \varepsilon(\underline{A}) \f$ denotes the equivalent strain
+of tensor \f$ \underline{A} \f$, see #GMatElastoPlasticQPot::Cartesian2d::Epsd.
+
+\param Epsd_t The strain deviator \f$ \underline{\varepsilon}_d^t \f$.
+\param Epsd_delta The strain deviator \f$ \underline{\varepsilon}_d^\delta \f$.
+\param epsd_target The target equivalent strain \f$ \varepsilon_\text{target} \f$.
+\return The factor \f$ c \f$.
+*/
+template <class S, class T>
+inline double scalePerturbation(const S& Epsd_t, const T& Epsd_delta, double epsd_target);
+
+/**
 Class that uses GMatElastoPlasticQPot to evaluate stress everywhere.
 */
 class System {
@@ -126,8 +146,15 @@ public:
         const xt::xtensor<double, 2>& epsy_elem);
 
     /**
-    Reset yield strains (to avoid re-construction).
+    Get the current yield strains per plastic element.
+    Note that in this system the yield strains history is always the same for all the integration
+    points in the system.
+    \return [plastic().size, n]
+    */
+    xt::xtensor<double, 2> epsy() const;
 
+    /**
+    Reset yield strains (to avoid re-construction).
     \param epsy_elem Yield history per element.
     */
     virtual void reset_epsy(const xt::xtensor<double, 2>& epsy_elem);
@@ -362,28 +389,37 @@ public:
     /**
     Stress tensor of integration points of plastic elements only, see System::plastic.
 
-    \return Integration point tensor. Shape: ``[m_plastic.size(), nip, 2, 2]``.
+    \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
     */
     virtual xt::xtensor<double, 4> plastic_Sig() const;
 
     /**
     Strain tensor of integration points of plastic elements only, see System::plastic.
 
-    \return Integration point tensor. Shape: ``[m_plastic.size(), nip, 2, 2]``.
+    \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
     */
     virtual xt::xtensor<double, 4> plastic_Eps() const;
 
     /**
+    Strain tensor of of a specific plastic element.
+
+    \param e_plastic Plastic element (real element number = plastic()[e]).
+    \param q Integration point (real element number = plastic()[e]).
+    \return Integration point tensor. Shape: [2, 2].
+    */
+    virtual xt::xtensor<double, 2> plastic_Eps(size_t e_plastic, size_t q) const;
+
+    /**
     Current yield strain left (in the negative equivalent strain direction).
 
-    \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
+    \return Integration point scalar. Shape: [plastic().size(), nip].
     */
     virtual xt::xtensor<double, 2> plastic_CurrentYieldLeft() const;
 
     /**
     Current yield strain right (in the positive equivalent strain direction).
 
-    \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
+    \return Integration point scalar. Shape: [plastic().size(), nip].
     */
     virtual xt::xtensor<double, 2> plastic_CurrentYieldRight() const;
 
@@ -393,7 +429,7 @@ public:
     If ``offset = 0`` the result is the same result as the basic System::plastic_CurrentYieldLeft.
 
     \param offset Offset (number of yield strains).
-    \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
+    \return Integration point scalar. Shape: [plastic().size(), nip].
     */
     virtual xt::xtensor<double, 2> plastic_CurrentYieldLeft(size_t offset) const;
 
@@ -403,23 +439,35 @@ public:
     If ``offset = 0`` the result is the same result as the basic System::plastic_CurrentYieldRight.
 
     \param offset Offset (number of yield strains).
-    \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
+    \return Integration point scalar. Shape: [plastic().size(), nip].
     */
     virtual xt::xtensor<double, 2> plastic_CurrentYieldRight(size_t offset) const;
 
     /**
     Current index in the landscape.
 
-    \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
+    \return Integration point scalar. Shape: [plastic().size(), nip].
     */
     virtual xt::xtensor<size_t, 2> plastic_CurrentIndex() const;
 
     /**
     Plastic strain.
 
-    \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
+    \return Integration point scalar. Shape: [plastic().size(), nip].
     */
     virtual xt::xtensor<double, 2> plastic_Epsp() const;
+
+    /**
+    Get the sign of the equivalent strain increment upon a displacement perturbation,
+    for each integration point of each plastic element.
+    Note that this sign depends on the current state of the system.
+
+    \tparam T xt::xtensor<double, 2>
+    \param delta_u Displacement perturbation.
+    \return Integration point scalar. Shape: [plastic().size(), nip].
+    */
+    template <class T>
+    xt::xtensor<int, 2> plastic_SignDeltaEpsd(const T& delta_u);
 
     /**
     Check that the current yield-index is at least `n` away from the end.
@@ -427,6 +475,41 @@ public:
     \return `true` if the current yield-index is at least `n` away from the end.
     */
     virtual bool boundcheck_right(size_t n) const;
+
+    /**
+    Set purely elastic and linear response to specific boundary conditions.
+    Since this response is linear and elastic it can be scaled freely to transverse a
+    fully elastic interval at once, without running any dynamics,
+    and run an event driven code using eventDrivenStep().
+
+    \param delta_u Nodal displacement field.
+    \param autoscale Scale such that the perturbation is small enough.
+    \return Value with which the input perturbation is scaled, see also eventDriven_deltaU().
+    */
+    template <class T>
+    double eventDriven_setDeltaU(const T& delta_u, bool autoscale = true);
+
+    /**
+    Get displacement perturbation used for event driven code, see eventDriven_setDeltaU().
+    \return Nodal displacements.
+    */
+    auto eventDriven_deltaU() const;
+
+    /**
+    Add event driven step for the boundary conditions that correspond to the displacement
+    perturbation set in eventDriven_setDeltaU().
+
+    \param deps
+        Size of the local stain kick to apply.
+
+    \param kick
+        If ``false``, increment displacements to ``deps / 2`` of yielding again.
+        If ``true``, increment displacements by a affine simple shear increment ``deps``.
+
+    \param direction
+        If ``+1``: apply shear to the right. If ``-1`` applying shear to the left.
+    */
+    virtual double eventDrivenStep(double deps, bool kick, int direction = 1);
 
     /**
     Make a time-step: apply velocity-Verlet integration.
@@ -544,6 +627,8 @@ protected:
     bool m_set_D = false; ///< Internal allocation check: damping matrix was written.
     bool m_set_elas = false; ///< Internal allocation check: elastic elements were written.
     bool m_set_plas = false; ///< Internal allocation check: plastic elements were written.
+    xt::xtensor<double, 2> m_pert_u; ///< See eventDriven_setDeltaU()
+    xt::xtensor<double, 4> m_pert_Epsd_plastic; ///< Strain deviator for #m_pert_u.
 
 protected:
     /**
@@ -722,6 +807,7 @@ public:
 
     xt::xtensor<double, 4> plastic_Sig() const override;
     xt::xtensor<double, 4> plastic_Eps() const override;
+    xt::xtensor<double, 2> plastic_Eps(size_t e_plastic, size_t q) const override;
     xt::xtensor<double, 2> plastic_CurrentYieldLeft() const override;
     xt::xtensor<double, 2> plastic_CurrentYieldRight() const override;
     xt::xtensor<double, 2> plastic_CurrentYieldLeft(size_t offset) const override;

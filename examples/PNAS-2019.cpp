@@ -44,9 +44,11 @@ int main(int argc, char* argv[])
     double deps = H5Easy::load<double>(data, "/run/epsd/kick");
     size_t niter;
 
+    sys.initEventDrivenSimpleShear();
+
     for (size_t inc = 1; inc < ninc; ++inc) {
 
-        sys.addSimpleShearEventDriven(deps, kick);
+        sys.eventDrivenStep(deps, kick);
 
         if (kick) {
             niter = sys.minimise_boundcheck(1);

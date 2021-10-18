@@ -22,14 +22,7 @@ System in 2-d with:
 namespace UniformMultiLayerIndividualDrive2d {
 
 /**
-Return versions of this library and of all of its dependencies.
-The output is a list of strings, e.g.::
-
-    "frictionqpotfem=0.7.1",
-    "goosefem=0.7.0",
-    ...
-
-\return List of strings.
+\copydoc Generic2d::version_dependencies()
 */
 inline std::vector<std::string> version_dependencies();
 
@@ -120,11 +113,54 @@ public:
     void layerSetDriveStiffness(double k, bool symmetric = true);
 
     /**
+    Initialise the event driven protocol by applying a perturbation to the loading springs
+    and computing and storing the linear, purely elastic, response.
+    The system can thereafter be moved forward to the next event.
+    Note that this function itself does not change the system in any way,
+    it just stores the relevant perturbations.
+
+    \tparam S `xt::xtensor<double, 2>`
+    \param delta_ubar
+        The perturbation in the target average position of each layer [#nlayer, 2].
+
+    \tparam T `xt::xtensor<bool, 2>`
+    \param active
+        For each layer and each degree-of-freedom specify if
+        the spring is active (`true`) or not (`false`) [#nlayer, 2].
+
+    \return Value with which the input perturbation is scaled, see also eventDriven_deltaUbar().
+    */
+    template <class S, class T>
+    double initEventDriven(const S& delta_ubar, const T& active);
+
+    /**
+    Restore perturbation used from event driven protocol.
+    \param delta_ubar See eventDriven_deltaUbar().
+    \param active See eventDriven_targetActive().
+    \param delta_u See eventDriven_deltaU().
+    */
+    template <class S, class T, class U>
+    void initEventDriven(const S& delta_ubar, const T& active, const U& delta_u);
+
+    /**
+    Get target average position perturbation used for event driven code.
+    \return [#nlayer, 2]
+    */
+    xt::xtensor<double, 2> eventDriven_deltaUbar() const;
+
+    /**
+    Get if the target average position is prescribed in the event driven code.
+    \return [#nlayer, 2]
+    */
+    xt::xtensor<bool, 2> eventDriven_targetActive() const;
+
+    double eventDrivenStep(double deps, bool kick, int direction = +1) override;
+
+    /**
     Turn on (or off) springs connecting
     the average displacement of a layer ("ubar") to its set target value.
 
     \tparam T e.g. `xt::xtensor<bool, 2>`
-
     \param active
         For each layer and each degree-of-freedom specify if
         the spring is active (`true`) or not (`false`) [#nlayer, 2].
@@ -159,8 +195,7 @@ public:
     (if its average displacement is different from the target displacement),
     see layerSetTargetActive().
 
-    \tparam S e.g. `xt::xtensor<double, 2>`
-
+    \tparam T e.g. `xt::xtensor<double, 2>`
     \param ubar The target average position of each layer [#nlayer, 2].
     */
     template <class T>
@@ -300,6 +335,9 @@ protected:
     xt::xtensor<double, 2> m_dV; ///< copy of m_quad.dV()
     xt::xtensor<double, 3> m_uq; ///< qvector
     xt::xtensor<double, 1> m_ud; ///< dofval
+
+    xt::xtensor<bool, 2> m_pert_layerdrive_active; ///< Event driven: applied lever setting.
+    xt::xtensor<double, 2> m_pert_layerdrive_targetubar; ///< Event driven: applied lever setting.
 };
 
 } // namespace UniformMultiLayerIndividualDrive2d

@@ -43,6 +43,14 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             &SUB::version_dependencies,
             "Return version information of library and its dependencies.");
 
+        sub.def(
+            "scalePerturbation",
+            &SUB::scalePerturbation<xt::pytensor<double, 2>, xt::pytensor<double, 2>>,
+            "scalePerturbation",
+            py::arg("Epsd_t"),
+            py::arg("Epsd_delta"),
+            py::arg("epsd_target"));
+
         {
 
             py::class_<SUB::System> cls(sub, "System");
@@ -161,7 +169,18 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def("Sig", &SUB::System::Sig, "Sig");
             cls.def("Eps", &SUB::System::Eps, "Eps");
             cls.def("plastic_Sig", &SUB::System::plastic_Sig, "plastic_Sig");
-            cls.def("plastic_Eps", &SUB::System::plastic_Eps, "plastic_Eps");
+
+            cls.def(
+                "plastic_Eps",
+                py::overload_cast<>(&SUB::System::plastic_Eps, py::const_),
+                "plastic_Eps");
+
+            cls.def(
+                "plastic_Eps",
+                py::overload_cast<size_t, size_t>(&SUB::System::plastic_Eps, py::const_),
+                "plastic_Eps",
+                py::arg("e_plastic"),
+                py::arg("q"));
 
             cls.def(
                 "boundcheck_right",
@@ -195,6 +214,30 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "plastic_CurrentIndex", &SUB::System::plastic_CurrentIndex, "plastic_CurrentIndex");
 
             cls.def("plastic_Epsp", &SUB::System::plastic_Epsp, "plastic_Epsp");
+
+            cls.def(
+                "plastic_SignDeltaEpsd",
+                &SUB::System::plastic_SignDeltaEpsd<xt::pytensor<double, 2>>,
+                "plastic_SignDeltaEpsd",
+                py::arg("delta_u"));
+
+            cls.def(
+                "eventDriven_setDeltaU",
+                &SUB::System::eventDriven_setDeltaU<xt::pytensor<double, 2>>,
+                "eventDriven_setDeltaU",
+                py::arg("delta_u"),
+                py::arg("autoscale") = true);
+
+            cls.def("eventDriven_deltaU", &SUB::System::eventDriven_deltaU, "eventDriven_deltaU");
+
+            cls.def(
+                "eventDrivenStep",
+                &SUB::System::eventDrivenStep,
+                "eventDrivenStep",
+                py::arg("deps"),
+                py::arg("kick"),
+                py::arg("direction") = +1);
+
             cls.def("timeStep", &SUB::System::timeStep, "timeStep");
 
             cls.def(
@@ -279,11 +322,6 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "material_plastic",
                 py::return_value_policy::reference_internal);
 
-            cls.def("Sig", &SUB::HybridSystem::Sig, "Sig");
-            cls.def("Eps", &SUB::HybridSystem::Eps, "Eps");
-            cls.def("plastic_Sig", &SUB::HybridSystem::plastic_Sig, "plastic_Sig");
-            cls.def("plastic_Eps", &SUB::HybridSystem::plastic_Eps, "plastic_Eps");
-
             cls.def("__repr__", [](const SUB::System&) {
                 return "<FrictionQPotFEM.Generic2d.HybridSystem>";
             });
@@ -342,6 +380,11 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 &SUB::System::addAffineSimpleShearCentered,
                 "addAffineSimpleShearCentered",
                 py::arg("delta_gamma"));
+
+            cls.def(
+                "initEventDrivenSimpleShear",
+                &SUB::System::initEventDrivenSimpleShear,
+                "initEventDrivenSimpleShear");
 
             cls.def(
                 "addSimpleShearEventDriven",
@@ -507,15 +550,43 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             py::arg("symmetric") = true);
 
         cls.def(
+            "initEventDriven",
+            py::overload_cast<const xt::pytensor<double, 2>&, const xt::pytensor<bool, 2>&>(
+                &SUB::System::initEventDriven<xt::pytensor<double, 2>, xt::pytensor<bool, 2>>),
+            "initEventDriven",
+            py::arg("delta_ubar"),
+            py::arg("active"));
+
+        cls.def(
+            "initEventDriven",
+            py::overload_cast<
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<bool, 2>&,
+                const xt::pytensor<double, 2>&>(&SUB::System::initEventDriven<
+                                                xt::pytensor<double, 2>,
+                                                xt::pytensor<bool, 2>,
+                                                xt::pytensor<double, 2>>),
+            "initEventDriven",
+            py::arg("delta_ubar"),
+            py::arg("active"),
+            py::arg("delta_u"));
+
+        cls.def(
+            "eventDriven_deltaUbar", &SUB::System::eventDriven_deltaUbar, "eventDriven_deltaUbar");
+
+        cls.def(
+            "eventDriven_targetActive",
+            &SUB::System::eventDriven_targetActive,
+            "eventDriven_targetActive");
+
+        cls.def(
             "layerSetTargetActive",
             &SUB::System::layerSetTargetActive<xt::pytensor<double, 2>>,
             "layerSetTargetActive",
             py::arg("active"));
 
         cls.def("layerUbar", &SUB::System::layerUbar, "layerUbar");
-
         cls.def("layerTargetUbar", &SUB::System::layerTargetUbar, "layerTargetUbar");
-
         cls.def("layerTargetActive", &SUB::System::layerTargetActive, "layerTargetActive");
 
         cls.def(
@@ -598,10 +669,37 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             py::arg("hi"));
 
         cls.def("setLeverTarget", &SUB::System::setLeverTarget, "setLeverTarget", py::arg("u"));
-
         cls.def("leverTarget", &SUB::System::leverTarget, "leverTarget");
-
         cls.def("leverPosition", &SUB::System::leverPosition, "leverPosition");
+
+        cls.def(
+            "initEventDriven",
+            py::overload_cast<double, const xt::pytensor<bool, 2>&>(
+                &SUB::System::initEventDriven<xt::pytensor<bool, 2>>),
+            "initEventDriven",
+            py::arg("delta_ubar"),
+            py::arg("active"));
+
+        cls.def(
+            "initEventDriven",
+            py::overload_cast<
+                double,
+                const xt::pytensor<bool, 2>&,
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<double, 2>&>(&SUB::System::initEventDriven<
+                                                xt::pytensor<bool, 2>,
+                                                xt::pytensor<double, 2>,
+                                                xt::pytensor<double, 2>>),
+            "initEventDriven",
+            py::arg("xdrive"),
+            py::arg("active"),
+            py::arg("delta_u"),
+            py::arg("delta_ubar"));
+
+        cls.def(
+            "eventDriven_deltaLeverPosition",
+            &SUB::System::eventDriven_deltaLeverPosition,
+            "eventDriven_deltaLeverPosition");
 
         cls.def("__repr__", [](const SUB::System&) {
             return "<FrictionQPotFEM.UniformMultiLayerLeverDrive2d.System>";

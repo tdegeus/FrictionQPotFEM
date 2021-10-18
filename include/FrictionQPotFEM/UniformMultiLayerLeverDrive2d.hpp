@@ -63,6 +63,7 @@ template <class T>
 inline void System::setLeverProperties(double H, const T& hi)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(hi, m_lever_hi.shape()));
+    m_lever_set = true;
     m_lever_hi = hi;
     m_lever_H = H;
 
@@ -72,9 +73,9 @@ inline void System::setLeverProperties(double H, const T& hi)
     this->updated_u(); // updates forces
 }
 
-inline void System::setLeverTarget(double u)
+inline void System::setLeverTarget(double xdrive)
 {
-    m_lever_target = u;
+    m_lever_target = xdrive;
     this->updated_u(); // updates target average displacement per layer, and forces
 }
 
@@ -88,8 +89,89 @@ inline double System::leverPosition() const
     return m_lever_u;
 }
 
+template <class T>
+inline void System::initEventDriven(double xlever, const T& active)
+{
+    // backup system
+
+    auto u0 = m_u;
+    auto v0 = m_v;
+    auto a0 = m_a;
+    auto active0 = m_layerdrive_active;
+    auto ubar0 = m_layerdrive_targetubar;
+    auto xdrive0 = m_lever_target;
+    auto t0 = m_t;
+    xt::xtensor<double, 3> epsy0(std::array<size_t, 3>{m_nelem_plas, m_nip, 2});
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        for (size_t q = 0; q < m_nip; ++q) {
+            auto cusp = m_material_plas.refCusp({e, q});
+            auto epsy = cusp.epsy();
+            epsy0(e, q, 0) = epsy(0);
+            epsy0(e, q, 1) = epsy(1);
+            epsy(1) = std::numeric_limits<double>::max();
+            epsy(0) = -epsy(1);
+            cusp.reset_epsy(epsy, false);
+        }
+    }
+
+    // perturbation
+
+    m_u.fill(0.0);
+    m_v.fill(0.0);
+    m_a.fill(0.0);
+    this->layerSetTargetActive(active);
+    this->setLeverTarget(xlever);
+    this->minimise();
+
+    auto c = this->eventDriven_setDeltaU(m_u);
+    m_pert_layerdrive_active = active;
+    m_pert_layerdrive_targetubar = c * m_layerdrive_targetubar;
+    m_pert_lever_target = c * xlever;
+
+    // restore system
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        for (size_t q = 0; q < m_nip; ++q) {
+            auto cusp = m_material_plas.refCusp({e, q});
+            auto epsy = cusp.epsy();
+            epsy(0) = epsy0(e, q, 0);
+            epsy(1) = epsy0(e, q, 1);
+            cusp.reset_epsy(epsy, false);
+        }
+    }
+
+    this->setU(u0);
+    this->setV(v0);
+    this->setA(a0);
+    this->layerSetTargetActive(active0);
+    this->layerSetTargetUbar(ubar0);
+    this->setLeverTarget(xdrive0);
+    this->setT(t0);
+}
+
+template <class T, class U, class W>
+inline void System::initEventDriven(double xlever, const T& active, const U& u, const W& ubar)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, m_u.shape()));
+    auto c = this->eventDriven_setDeltaU(u);
+    FRICTIONQPOTFEM_ASSERT(xt::allclose(c, 1.0));
+    m_pert_layerdrive_active = active;
+    m_pert_layerdrive_targetubar = c * ubar;
+    m_pert_lever_target = c * xlever;
+}
+
+inline double System::eventDriven_deltaLeverPosition() const
+{
+    return m_pert_lever_target;
+}
+
 inline void System::updated_u()
 {
+    FRICTIONQPOTFEM_ASSERT(m_lever_set);
+
     this->computeLayerUbarActive();
 
     // Position of the lever based on equilibrium

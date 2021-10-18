@@ -17,7 +17,7 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
         }
     }
 
-    SECTION("System::plastic_signOfPerturbation")
+    SECTION("System::plastic_SignDeltaEpsd")
     {
         GooseFEM::Mesh::Quad4::Regular mesh(3, 3);
 
@@ -48,9 +48,9 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
         auto u = sys.u();
         auto delta_u = u - u0;
 
-        REQUIRE(xt::all(xt::equal(sys.plastic_signOfPerturbation(delta_u), xt::ones<int>({3, 4}))));
-        REQUIRE(xt::all(
-            xt::equal(sys.plastic_signOfPerturbation(-delta_u), -1 * xt::ones<int>({3, 4}))));
+        REQUIRE(xt::all(xt::equal(sys.plastic_SignDeltaEpsd(delta_u), xt::ones<int>({3, 4}))));
+        REQUIRE(
+            xt::all(xt::equal(sys.plastic_SignDeltaEpsd(-delta_u), -1 * xt::ones<int>({3, 4}))));
     }
 
     SECTION("System::addAffineSimpleShear")
@@ -158,49 +158,51 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
         xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         REQUIRE(xt::allclose(GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 0.0));
 
-        sys.addSimpleShearEventDriven(delta_eps, false, +1.0);
+        sys.initEventDrivenSimpleShear();
+
+        sys.eventDrivenStep(delta_eps, false, +1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         REQUIRE(xt::allclose(
             GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 1.0 - delta_eps / 2.0));
 
-        sys.addSimpleShearEventDriven(delta_eps, true, +1.0);
+        sys.eventDrivenStep(delta_eps, true, +1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         REQUIRE(xt::allclose(
             GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 1.0 + delta_eps / 2.0));
 
-        sys.addSimpleShearEventDriven(delta_eps, false, +1.0);
+        sys.eventDrivenStep(delta_eps, false, +1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         REQUIRE(xt::allclose(
             GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 2.0 - delta_eps / 2.0));
 
-        sys.addSimpleShearEventDriven(delta_eps, true, +1.0);
+        sys.eventDrivenStep(delta_eps, true, +1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         REQUIRE(xt::allclose(
             GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 2.0 + delta_eps / 2.0));
 
-        sys.addSimpleShearEventDriven(delta_eps, false, -1.0);
+        sys.eventDrivenStep(delta_eps, false, -1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         REQUIRE(xt::allclose(
             GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 2.0 + delta_eps / 2.0));
 
-        sys.addSimpleShearEventDriven(delta_eps, true, -1.0);
+        sys.eventDrivenStep(delta_eps, true, -1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         REQUIRE(xt::allclose(
             GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 2.0 - delta_eps / 2.0));
 
-        sys.addSimpleShearEventDriven(delta_eps, false, -1.0);
+        sys.eventDrivenStep(delta_eps, false, -1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         REQUIRE(xt::allclose(
             GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)(), 1.0 + delta_eps / 2.0));
 
-        sys.addSimpleShearEventDriven(delta_eps, true, -1.0);
+        sys.eventDrivenStep(delta_eps, true, -1.0);
 
         Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         REQUIRE(xt::allclose(

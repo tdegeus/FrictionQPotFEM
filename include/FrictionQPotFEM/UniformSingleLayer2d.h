@@ -27,14 +27,7 @@ System in 2-d with:
 namespace UniformSingleLayer2d {
 
 /**
-Return versions of this library and of all of its dependencies.
-The output is a list of strings, e.g.::
-
-    "frictionqpotfem=0.7.1",
-    "goosefem=0.7.0",
-    ...
-
-\return List of strings.
+\copydoc Generic2d::version_dependencies()
 */
 inline std::vector<std::string> version_dependencies();
 
@@ -101,7 +94,7 @@ public:
     \param delta_u displacement perturbation.
     \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
     */
-    auto plastic_signOfPerturbation(const xt::xtensor<double, 2>& delta_u);
+    [[deprecated]] auto plastic_signOfPerturbation(const xt::xtensor<double, 2>& delta_u);
 
     /**
     Add affine simple shear (may be negative to subtract affine simple shear).
@@ -125,6 +118,11 @@ public:
     double addAffineSimpleShearCentered(double delta_gamma);
 
     /**
+    Initialise event driven protocol for affine simple shear.
+    */
+    void initEventDrivenSimpleShear();
+
+    /**
     Add event driven simple shear step.
 
     \param deps
@@ -143,7 +141,7 @@ public:
     \return
         xy-component of the deformation gradient that is applied to the system.
     */
-    double addSimpleShearEventDriven(
+    [[deprecated]] double addSimpleShearEventDriven(
         double deps,
         bool kick,
         double direction = +1.0,

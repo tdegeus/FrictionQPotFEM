@@ -23,14 +23,7 @@ System in 2-d with:
 namespace UniformMultiLayerLeverDrive2d {
 
 /**
-Return versions of this library and of all of its dependencies.
-The output is a list of strings, e.g.::
-
-    "frictionqpotfem=0.7.1",
-    "goosefem=0.7.0",
-    ...
-
-\return List of strings.
+\copydoc Generic2d::version_dependencies()
 */
 inline std::vector<std::string> version_dependencies();
 
@@ -43,6 +36,9 @@ The assumption is made that the lever has no inertia:
 its position is computed by assuming that the sum of moments acting on it is zero.
 */
 class System : public UniformMultiLayerIndividualDrive2d::System {
+
+private:
+    using UniformMultiLayerIndividualDrive2d::System::initEventDriven;
 
 public:
     System() = default;
@@ -75,7 +71,6 @@ public:
     Set the lever properties.
 
     \tparam T e.g. `xt::xtensor<double, 1>`
-
     \param H The height of the spring pulling the lever.
     \param hi The height \f$ h_i \f$ of the loading frame of each layer [nlayer].
     */
@@ -85,9 +80,9 @@ public:
     /**
     Set the target 'position' of the spring pulling the lever.
 
-    \param u Lever position
+    \param xdrive Lever position
     */
-    void setLeverTarget(double u);
+    void setLeverTarget(double xdrive);
 
     /**
     Get the current target lever 'position'.
@@ -102,6 +97,39 @@ public:
     \return double
     */
     double leverPosition() const;
+
+    /**
+    Initialise the event driven protocol by applying a perturbation to loading spring
+    and computing and storing the linear, purely elastic, response.
+    The system can thereafter be moved forward to the next event.
+    Note that this function itself does not change the system in any way,
+    it just stores the relevant perturbations.
+
+    \param xdrive Target 'position' of the spring pulling the lever.
+
+    \param active
+        For each layer and each degree-of-freedom specify if
+        the spring is active (`true`) or not (`false`) [#nlayer, 2].
+    \
+    */
+    template <class T>
+    void initEventDriven(double xdrive, const T& active);
+
+    /**
+    Restore perturbation used from event driven protocol.
+    \param xdrive See eventDriven_leverPosition().
+    \param active See eventDriven_targetActive().
+    \param delta_u See eventDriven_deltaU().
+    \param delta_ubar See eventDriven_deltaUbar().
+    */
+    template <class T, class U, class W>
+    void initEventDriven(double xdrive, const T& active, const U& delta_u, const W& delta_ubar);
+
+    /**
+    Get target 'position' of the spring pulling the lever perturbation used for event driven code.
+    \return Value
+    */
+    double eventDriven_deltaLeverPosition() const;
 
 protected:
     /**
@@ -133,12 +161,14 @@ protected:
     void updated_u() override;
 
 private:
+    bool m_lever_set = false; ///< Lock class until properties have been set.
     double m_lever_H; ///< See setLeverProperties().
     xt::xtensor<double, 1> m_lever_hi; ///< See setLeverProperties().
     xt::xtensor<double, 1> m_lever_hi_H; ///< m_lever_hi / H
     xt::xtensor<double, 1> m_lever_hi_H_2; ///< (m_lever_hi / H)^2
     double m_lever_target; ///< See setLeverTarget().
     double m_lever_u; ///< Current position of the lever.
+    double m_pert_lever_target; ///< Perturbation in target position for event driven load.
 };
 
 } // namespace UniformMultiLayerLeverDrive2d
