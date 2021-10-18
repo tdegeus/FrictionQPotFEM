@@ -49,8 +49,8 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
         auto delta_u = u - u0;
 
         REQUIRE(xt::all(xt::equal(sys.plastic_SignDeltaEpsd(delta_u), xt::ones<int>({3, 4}))));
-        REQUIRE(xt::all(
-            xt::equal(sys.plastic_SignDeltaEpsd(-delta_u), -1 * xt::ones<int>({3, 4}))));
+        REQUIRE(
+            xt::all(xt::equal(sys.plastic_SignDeltaEpsd(-delta_u), -1 * xt::ones<int>({3, 4}))));
     }
 
     SECTION("System::addAffineSimpleShear")
