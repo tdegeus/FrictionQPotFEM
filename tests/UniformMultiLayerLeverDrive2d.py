@@ -68,41 +68,17 @@ class test_Generic2d(unittest.TestCase):
                 system.initEventDriven(delta_xlever, drive_active, delta_u, delta_ubar)
                 system.setU(np.zeros_like(coor))
 
-            system.eventDrivenStep(1e-4, False)
-            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 0] - 0.5 * 1e-4))
-            self.assertTrue(system.residual() < 1e-5)
+            directions = [1, 1, 1, 1, 1, 1, -1, -1, -1]
+            kicks = [False, False, True, False, True, False, False, True, False]
+            indices = [0, 0, 0, 1, 1, 2, 1, 1, 0]
+            multi = [-1, -1, +1, -1, +1, -1, +1, -1, +1]
 
-            system.eventDrivenStep(1e-4, False)
-            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 0] - 0.5 * 1e-4))
-            self.assertTrue(system.residual() < 1e-5)
+            for direction, kick, index, m in zip(directions, kicks, indices, multi):
 
-            system.eventDrivenStep(1e-4, True)
-            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 0] + 0.5 * 1e-4))
-            self.assertTrue(system.residual() < 1e-5)
-
-            system.eventDrivenStep(1e-4, False)
-            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 1] - 0.5 * 1e-4))
-            self.assertTrue(system.residual() < 1e-5)
-
-            system.eventDrivenStep(1e-4, True)
-            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 1] + 0.5 * 1e-4))
-            self.assertTrue(system.residual() < 1e-5)
-
-            system.eventDrivenStep(1e-4, False)
-            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 2] - 0.5 * 1e-4))
-            self.assertTrue(system.residual() < 1e-5)
-
-            system.eventDrivenStep(1e-4, False, -1)
-            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 1] + 0.5 * 1e-4))
-            self.assertTrue(system.residual() < 1e-5)
-
-            system.eventDrivenStep(1e-4, True, -1)
-            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 1] - 0.5 * 1e-4))
-            self.assertTrue(system.residual() < 1e-5)
-
-            system.eventDrivenStep(1e-4, False, -1)
-            self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), epsy[0, 0] + 0.5 * 1e-4))
-            self.assertTrue(system.residual() < 1e-5)
+                eps_expect = epsy[0, index] + m * 0.5 * 1e-4
+                system.eventDrivenStep(1e-4, kick, direction)
+                self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), eps_expect))
+                self.assertTrue(system.residual() < 1e-5)
 
 
 if __name__ == "__main__":

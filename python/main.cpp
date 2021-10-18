@@ -382,6 +382,11 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("delta_gamma"));
 
             cls.def(
+                "initEventDrivenSimpleShear",
+                &SUB::System::initEventDrivenSimpleShear,
+                "initEventDrivenSimpleShear");
+
+            cls.def(
                 "addSimpleShearEventDriven",
                 &SUB::System::addSimpleShearEventDriven,
                 "addSimpleShearEventDriven",

@@ -77,7 +77,7 @@ inline xt::xtensor<double, 2> System::Energy()
 inline auto System::plastic_signOfPerturbation(const xt::xtensor<double, 2>& delta_u)
 {
     FRICTIONQPOTFEM_WARNING_PYTHON(
-        "Using plastic_SignDeltaEpsd(...) instead of plastic_signOfPerturbation(...)");
+        "Use plastic_SignDeltaEpsd(...) instead of plastic_signOfPerturbation(...)");
 
     return this->plastic_SignDeltaEpsd(delta_u);
 }
@@ -127,9 +127,28 @@ inline double System::addAffineSimpleShearCentered(double delta_gamma)
     return delta_gamma * 2.0;
 }
 
+inline void System::initEventDrivenSimpleShear()
+{
+    FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
+
+    auto u = xt::zeros_like(m_u);
+
+    for (size_t n = 0; n < m_nnode; ++n) {
+        u(n, 0) += m_coor(n, 1) - m_coor(0, 1);
+    }
+
+    this->eventDriven_setDeltaU(u);
+}
+
 inline double
 System::addSimpleShearEventDriven(double deps_kick, bool kick, double direction, bool dry_run)
 {
+    FRICTIONQPOTFEM_WARNING_PYTHON(
+        "Use initEventDrivenSimpleShear() + eventDrivenStep(...) "
+        "instead of addSimpleShearEventDriven(...)");
+
+    FRICTIONQPOTFEM_REQUIRE(direction > 0.0); // bugged, use new implementation
+
     FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
     FRICTIONQPOTFEM_REQUIRE(direction == +1.0 || direction == -1.0);
 

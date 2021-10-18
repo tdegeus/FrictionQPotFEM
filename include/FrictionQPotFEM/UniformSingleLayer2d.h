@@ -118,6 +118,11 @@ public:
     double addAffineSimpleShearCentered(double delta_gamma);
 
     /**
+    Initialise event driven protocol for affine simple shear.
+    */
+    void initEventDrivenSimpleShear();
+
+    /**
     Add event driven simple shear step.
 
     \param deps
@@ -136,7 +141,7 @@ public:
     \return
         xy-component of the deformation gradient that is applied to the system.
     */
-    double addSimpleShearEventDriven(
+    [[deprecated]] double addSimpleShearEventDriven(
         double deps,
         bool kick,
         double direction = +1.0,
