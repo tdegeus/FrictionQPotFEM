@@ -833,6 +833,31 @@ System::minimise_boundcheck(size_t nmargin, double tol, size_t niter_tol, size_t
     return 0; // irrelevant, the code never goes here
 }
 
+inline xt::xtensor<double, 2> System::affineSimpleShear(double delta_gamma) const
+{
+    xt::xtensor<double, 2> ret = xt::zeros_like(m_u);
+
+    for (size_t n = 0; n < m_nnode; ++n) {
+        ret(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - m_coor(0, 1));
+    }
+
+    return ret;
+}
+
+inline xt::xtensor<double, 2> System::affineSimpleShearCentered(double delta_gamma) const
+{
+    xt::xtensor<double, 2> ret = xt::zeros_like(m_u);
+    size_t ll = m_conn(m_elem_plas(0), 0);
+    size_t ul = m_conn(m_elem_plas(0), 3);
+    double y0 = (m_coor(ul, 1) + m_coor(ll, 1)) / 2.0;
+
+    for (size_t n = 0; n < m_nnode; ++n) {
+        ret(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - y0);
+    }
+
+    return ret;
+}
+
 template <class C, class E, class L>
 inline HybridSystem::HybridSystem(
     const C& coor,

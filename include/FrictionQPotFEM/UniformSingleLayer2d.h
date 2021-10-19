@@ -109,26 +109,6 @@ public:
     [[deprecated]] auto plastic_signOfPerturbation(const xt::xtensor<double, 2>& delta_u);
 
     /**
-    Get the displacement field that corresponds to an affine simple shear of a certain strain.
-    The displacement of the bottom boundary is zero, while it is maximal for the top boundary.
-
-    \param delta_gamma Strain to add (the shear component of deformation gradient is twice that).
-    \return Nodal displacements.
-    */
-    xt::xtensor<double, 2> affineSimpleShear(double delta_gamma) const;
-
-    /**
-    Get the displacement field that corresponds to an affine simple shear of a certain strain.
-    Similar to affineSimpleShear() with the difference that the displacement is zero
-    exactly in the middle, while the displacement at the bottom and the top boundary is maximal
-    (with a negative displacement for the bottom boundary).
-
-    \param delta_gamma Strain to add (the shear component of deformation gradient is twice that).
-    \return Nodal displacements.
-    */
-    xt::xtensor<double, 2> affineSimpleShearCentered(double delta_gamma) const;
-
-    /**
     Add affine simple shear (may be negative to subtract affine simple shear).
     The displacement of the bottom boundary is zero, while it is maximal for the top boundary.
     The input is the strain value, the shear component of deformation gradient is twice that.
