@@ -528,7 +528,7 @@ public:
     void timeSteps(size_t n);
 
     /**
-    \copydoc void timeSteps(size_t)
+    \copydoc timeSteps(size_t)
 
     This function stops if the yield-index in any of the plastic elements is close the end.
     In that case the function returns zero, in all other cases the function returns a
@@ -540,9 +540,9 @@ public:
     size_t timeSteps_boundcheck(size_t n, size_t nmargin = 5);
 
     /**
-    Make a number of steps with the following protocol:
-    - Add a displacement \f$ \underline{v} \Delta t \f$ to each of the nodes.
-    - Make a timeStep().
+    Make a number of steps with the following protocol.
+    (1) Add a displacement \f$ \underline{v} \Delta t \f$ to each of the nodes.
+    (2) Make a timeStep().
 
     \param n Number of steps to make.
     \param v Nodal velocity to add ``[nnode, ndim]``.
