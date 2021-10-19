@@ -137,6 +137,14 @@ python -m pip install . -vv
 
 # Change-log
 
+## v0.16.1
+
+*   [docs] Fixing typo
+*   Removing deprecated eventDriven code. The API is kept in deprecated mode, but "dry_run == true" it removed immediately.
+*   Identifying error in deprecated eventDriven protocol
+*   UniformSingleLayer2d: adding "typical_plastic_h", "typical_plastic_dV", "affineSimpleShear", "affineSimpleShearCentered"
+*   Adding "timeSteps_boundcheck" and "flowSteps_boundcheck"
+
 ## v0.16.0
 
 *   Add "timeSteps" and "flowSteps" (#119)
