@@ -508,6 +508,9 @@ public:
 
     \param direction
         If ``+1``: apply shear to the right. If ``-1`` applying shear to the left.
+
+    \return
+        Factor with which the displacement perturbation, see eventDriven_deltaU(), is scaled.
     */
     virtual double eventDrivenStep(double deps, bool kick, int direction = 1);
 
