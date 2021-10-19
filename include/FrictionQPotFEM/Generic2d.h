@@ -616,6 +616,26 @@ public:
         size_t niter_tol = 20,
         size_t max_iter = 1000000);
 
+    /**
+    Get the displacement field that corresponds to an affine simple shear of a certain strain.
+    The displacement of the bottom boundary is zero, while it is maximal for the top boundary.
+
+    \param delta_gamma Strain to add (the shear component of deformation gradient is twice that).
+    \return Nodal displacements.
+    */
+    xt::xtensor<double, 2> affineSimpleShear(double delta_gamma) const;
+
+    /**
+    Get the displacement field that corresponds to an affine simple shear of a certain strain.
+    Similar to affineSimpleShear() with the difference that the displacement is zero
+    exactly in the middle, while the displacement at the bottom and the top boundary is maximal
+    (with a negative displacement for the bottom boundary).
+
+    \param delta_gamma Strain to add (the shear component of deformation gradient is twice that).
+    \return Nodal displacements.
+    */
+    xt::xtensor<double, 2> affineSimpleShearCentered(double delta_gamma) const;
+
 protected:
     xt::xtensor<size_t, 2> m_conn; ///< Connectivity. See System::conn.
     xt::xtensor<double, 2> m_coor; ///< Nodal coordinates. See System::coor.

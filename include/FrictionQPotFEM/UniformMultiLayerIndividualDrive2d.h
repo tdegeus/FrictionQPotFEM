@@ -227,7 +227,7 @@ public:
 
     \param delta_gamma Strain increment.
     */
-    void addAffineSimpleShear(double delta_gamma);
+    [[deprecated]] void addAffineSimpleShear(double delta_gamma);
 
     /**
     Add simple shear to each of the target average displacements.
@@ -241,7 +241,22 @@ public:
     \param height The height \f$ h_i \f$ of the loading frame of each layer [#nlayer].
     */
     template <class T>
-    void layerTagetUbar_addAffineSimpleShear(double delta_gamma, const T& height);
+    [[deprecated]] void layerTagetUbar_addAffineSimpleShear(double delta_gamma, const T& height);
+
+    /**
+    Get target average displacements that correspond to affine simple shear
+    (with the bottom fixed).
+    In particular \f$ \bar{u}_x^i = 2 \Delta \gamma h_i \f$
+    with \f$ \bar{u}_x^i \f$ the \f$ x \f$-component of the target average displacement
+    of layer \f$ i \f$.
+
+    \tparam T e.g. `xt::xtensor<double, 1>`
+    \param delta_gamma Affine strain to add.
+    \param height The height \f$ h_i \f$ of the loading frame of each layer [#nlayer].
+    */
+    template <class T>
+    xt::xtensor<double, 2>
+    layerTargetUbar_affineSimpleShear(double delta_gamma, const T& height) const;
 
     /**
     Nodal force induced by the driving springs.

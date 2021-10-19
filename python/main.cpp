@@ -288,6 +288,18 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("niter_tol") = 20,
                 py::arg("max_iter") = 1000000);
 
+            cls.def(
+                "affineSimpleShear",
+                &SUB::System::affineSimpleShear,
+                "affineSimpleShear",
+                py::arg("delta_gamma"));
+
+            cls.def(
+                "affineSimpleShearCentered",
+                &SUB::System::affineSimpleShearCentered,
+                "affineSimpleShearCentered",
+                py::arg("delta_gamma"));
+
             cls.def("__repr__", [](const SUB::System&) {
                 return "<FrictionQPotFEM.Generic2d.System>";
             });
@@ -394,18 +406,6 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 &SUB::System::plastic_signOfPerturbation,
                 "plastic_signOfPerturbation",
                 py::arg("delta_u"));
-
-            cls.def(
-                "affineSimpleShear",
-                &SUB::System::affineSimpleShear,
-                "affineSimpleShear",
-                py::arg("delta_gamma"));
-
-            cls.def(
-                "affineSimpleShearCentered",
-                &SUB::System::affineSimpleShearCentered,
-                "affineSimpleShearCentered",
-                py::arg("delta_gamma"));
 
             cls.def(
                 "addAffineSimpleShear",
@@ -653,6 +653,13 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             py::arg("delta_gamma"),
             py::arg("height"));
 
+        cls.def(
+            "layerTargetUbar_affineSimpleShear",
+            &SUB::System::layerTargetUbar_affineSimpleShear<xt::pytensor<double, 1>>,
+            "layerTargetUbar_affineSimpleShear",
+            py::arg("delta_gamma"),
+            py::arg("height"));
+
         cls.def("fdrive", &SUB::System::fdrive, "fdrive");
 
         cls.def("layerFdrive", &SUB::System::layerFdrive, "layerFdrive");
@@ -662,9 +669,9 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
         });
     }
 
-    // --------------------------------------------------
+    // ---------------------------------------------
     // FrictionQPotFEM.UniformMultiLayerLeverDrive2d
-    // --------------------------------------------------
+    // ---------------------------------------------
 
     {
 
