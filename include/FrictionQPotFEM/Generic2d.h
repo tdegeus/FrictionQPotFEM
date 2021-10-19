@@ -525,6 +525,18 @@ public:
     void timeSteps(size_t n);
 
     /**
+    \copydoc void timeSteps(size_t)
+
+    This function stops if the yield-index in any of the plastic elements is close the end.
+    In that case the function returns zero, in all other cases the function returns a
+    positive number.
+
+    \param nmargin
+        Number of potentials to leave as margin.
+    */
+    size_t timeSteps_boundcheck(size_t n, size_t nmargin = 5);
+
+    /**
     Make a number of steps with the following protocol:
     - Add a displacement \f$ \underline{v} \Delta t \f$ to each of the nodes.
     - Make a timeStep().
@@ -534,6 +546,19 @@ public:
     */
     template <class T>
     void flowSteps(size_t n, const T& v);
+
+    /**
+    \copydoc flowSteps(size_t, const T&)
+
+    This function stops if the yield-index in any of the plastic elements is close the end.
+    In that case the function returns zero, in all other cases the function returns a
+    positive number.
+
+    \param nmargin
+        Number of potentials to leave as margin.
+    */
+    template <class T>
+    size_t flowSteps_boundcheck(size_t n, const T& v, size_t nmargin = 5);
 
     /**
     Perform a series of time-steps until:

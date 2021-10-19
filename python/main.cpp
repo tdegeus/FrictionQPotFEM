@@ -239,8 +239,14 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("direction") = +1);
 
             cls.def("timeStep", &SUB::System::timeStep, "timeStep");
-
             cls.def("timeSteps", &SUB::System::timeSteps, "timeSteps", py::arg("n"));
+
+            cls.def(
+                "timeSteps_boundcheck",
+                &SUB::System::timeSteps_boundcheck,
+                "timeSteps_boundcheck",
+                py::arg("n"),
+                py::arg("nmargin") = 5);
 
             cls.def(
                 "flowSteps",
@@ -248,6 +254,14 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "flowSteps",
                 py::arg("n"),
                 py::arg("v"));
+
+            cls.def(
+                "flowSteps_boundcheck",
+                &SUB::System::flowSteps_boundcheck<xt::pytensor<double, 2>>,
+                "flowSteps_boundcheck",
+                py::arg("n"),
+                py::arg("v"),
+                py::arg("nmargin") = 5);
 
             cls.def(
                 "timeStepsUntilEvent",
