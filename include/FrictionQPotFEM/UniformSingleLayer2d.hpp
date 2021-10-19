@@ -46,7 +46,7 @@ inline std::string System::type() const
     return "FrictionQPotFEM.UniformSingleLayer2d.System";
 }
 
-inline double System::plastic_h() const
+inline double System::typical_plastic_h() const
 {
     auto bot = xt::view(m_conn, xt::keep(m_elem_plas), 0);
     auto top = xt::view(m_conn, xt::keep(m_elem_plas), 3);
@@ -56,12 +56,24 @@ inline double System::plastic_h() const
     return h;
 }
 
-inline double System::plastic_dV() const
+inline double System::typical_plastic_dV() const
 {
     auto dV_plas = xt::view(m_quad.dV(), xt::keep(m_elem_plas), xt::all());
     double dV = dV_plas(0, 0);
     FRICTIONQPOTFEM_ASSERT(xt::allclose(dV_plas, dV));
     return dV;
+}
+
+inline double System::plastic_h() const
+{
+    FRICTIONQPOTFEM_WARNING_PYTHON("Deprecated: use typical_plastic_h().");
+    return this->typical_plastic_h();
+}
+
+inline double System::plastic_dV() const
+{
+    FRICTIONQPOTFEM_WARNING_PYTHON("Deprecated: use typical_plastic_dV().");
+    return this->typical_plastic_dV();
 }
 
 inline xt::xtensor<double, 2> System::Energy()
@@ -100,44 +112,51 @@ inline auto System::plastic_signOfSimpleShearPerturbation(double perturbation)
     return sign;
 }
 
-inline double System::addAffineSimpleShear(double delta_gamma)
+inline xt::xtensor<double, 2> System::affineSimpleShear(double delta_gamma) const
 {
-    auto u_new = this->u();
+    xt::xtensor<double, 2> ret = xt::zeros_like(m_u);
 
     for (size_t n = 0; n < m_nnode; ++n) {
-        u_new(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - m_coor(0, 1));
+        ret(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - m_coor(0, 1));
     }
-    this->setU(u_new);
 
+    return ret;
+}
+
+inline xt::xtensor<double, 2> System::affineSimpleShearCentered(double delta_gamma) const
+{
+    xt::xtensor<double, 2> ret = xt::zeros_like(m_u);
+    size_t ll = m_conn(m_elem_plas(0), 0);
+    size_t ul = m_conn(m_elem_plas(0), 3);
+    double y0 = (m_coor(ul, 1) + m_coor(ll, 1)) / 2.0;
+
+    for (size_t n = 0; n < m_nnode; ++n) {
+        ret(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - y0);
+    }
+
+    return ret;
+}
+
+inline double System::addAffineSimpleShear(double delta_gamma)
+{
+    FRICTIONQPOTFEM_WARNING_PYTHON("Use setU(u() + affineSimpleShear(...)) "
+                                   "instead of addAffineSimpleShear(...)");
+    this->setU(this->u() + affineSimpleShear(delta_gamma));
     return delta_gamma * 2.0;
 }
 
 inline double System::addAffineSimpleShearCentered(double delta_gamma)
 {
-    size_t ll = m_conn(m_elem_plas(0), 0);
-    size_t ul = m_conn(m_elem_plas(0), 3);
-    double y0 = (m_coor(ul, 1) + m_coor(ll, 1)) / 2.0;
-    auto u_new = this->u();
-
-    for (size_t n = 0; n < m_nnode; ++n) {
-        u_new(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - y0);
-    }
-    this->setU(u_new);
-
+    FRICTIONQPOTFEM_WARNING_PYTHON("Use setU(u() + affineSimpleShearCentered(...)) "
+                                   "instead of addAffineSimpleShearCentered(...)");
+    this->setU(this->u() + affineSimpleShearCentered(delta_gamma));
     return delta_gamma * 2.0;
 }
 
 inline void System::initEventDrivenSimpleShear()
 {
     FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
-
-    auto u = xt::zeros_like(m_u);
-
-    for (size_t n = 0; n < m_nnode; ++n) {
-        u(n, 0) += m_coor(n, 1) - m_coor(0, 1);
-    }
-
-    this->eventDriven_setDeltaU(u);
+    this->eventDriven_setDeltaU(this->affineSimpleShear(0.5));
 }
 
 inline double

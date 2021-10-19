@@ -67,17 +67,29 @@ public:
 
     /**
     Element height of all elements along the weak layer.
+    \return Element height (scalar).
+    */
+    double typical_plastic_h() const;
+
+    /**
+    Integration point volume of all elements along the weak layer.
+    \return Integration point volume.
+    */
+    double typical_plastic_dV() const;
+
+    /**
+    Element height of all elements along the weak layer.
 
     \return Element height (scalar).
     */
-    double plastic_h() const;
+    [[deprecated]] double plastic_h() const;
 
     /**
     Integration point volume of all elements along the weak layer.
 
     \return Integration point volume.
     */
-    double plastic_dV() const;
+    [[deprecated]] double plastic_dV() const;
 
     /**
     Elastic energy of each integration point.
@@ -97,6 +109,26 @@ public:
     [[deprecated]] auto plastic_signOfPerturbation(const xt::xtensor<double, 2>& delta_u);
 
     /**
+    Get the displacement field that corresponds to an affine simple shear of a certain strain.
+    The displacement of the bottom boundary is zero, while it is maximal for the top boundary.
+
+    \param delta_gamma Strain to add (the shear component of deformation gradient is twice that).
+    \return Nodal displacements.
+    */
+    xt::xtensor<double, 2> affineSimpleShear(double delta_gamma) const;
+
+    /**
+    Get the displacement field that corresponds to an affine simple shear of a certain strain.
+    Similar to affineSimpleShear() with the difference that the displacement is zero
+    exactly in the middle, while the displacement at the bottom and the top boundary is maximal
+    (with a negative displacement for the bottom boundary).
+
+    \param delta_gamma Strain to add (the shear component of deformation gradient is twice that).
+    \return Nodal displacements.
+    */
+    xt::xtensor<double, 2> affineSimpleShearCentered(double delta_gamma) const;
+
+    /**
     Add affine simple shear (may be negative to subtract affine simple shear).
     The displacement of the bottom boundary is zero, while it is maximal for the top boundary.
     The input is the strain value, the shear component of deformation gradient is twice that.
@@ -104,7 +136,7 @@ public:
     \param delta_gamma Affine strain to add.
     \return xy-component of the deformation gradient that is applied to the system.
     */
-    double addAffineSimpleShear(double delta_gamma);
+    [[deprecated]] double addAffineSimpleShear(double delta_gamma);
 
     /**
     Symmetrised version of System::addAffineSimpleShear.
@@ -115,7 +147,7 @@ public:
     \param delta_gamma Affine strain to add.
     \return xy-component of the deformation gradient that is applied to the system.
     */
-    double addAffineSimpleShearCentered(double delta_gamma);
+    [[deprecated]] double addAffineSimpleShearCentered(double delta_gamma);
 
     /**
     Initialise event driven protocol for affine simple shear.

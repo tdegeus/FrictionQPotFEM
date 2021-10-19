@@ -386,11 +386,26 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("elem_elastic"),
                 py::arg("elem_plastic"));
 
+            cls.def("typical_plastic_h", &SUB::System::typical_plastic_h, "typical_plastic_h");
+            cls.def("typical_plastic_dV", &SUB::System::typical_plastic_dV, "typical_plastic_dV");
+
             cls.def(
                 "plastic_signOfPerturbation",
                 &SUB::System::plastic_signOfPerturbation,
                 "plastic_signOfPerturbation",
                 py::arg("delta_u"));
+
+            cls.def(
+                "affineSimpleShear",
+                &SUB::System::affineSimpleShear,
+                "affineSimpleShear",
+                py::arg("delta_gamma"));
+
+            cls.def(
+                "affineSimpleShearCentered",
+                &SUB::System::affineSimpleShearCentered,
+                "affineSimpleShearCentered",
+                py::arg("delta_gamma"));
 
             cls.def(
                 "addAffineSimpleShear",
