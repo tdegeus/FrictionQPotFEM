@@ -703,6 +703,23 @@ inline void System::timeSteps(size_t n)
     }
 }
 
+inline size_t System::timeSteps_boundcheck(size_t n, size_t nmargin)
+{
+    if (!this->boundcheck_right(nmargin)) {
+        return 0;
+    }
+
+    for (size_t i = 0; i < n; ++i) {
+        this->timeStep();
+
+        if (!this->boundcheck_right(nmargin)) {
+            return 0;
+        }
+    }
+
+    return n;
+}
+
 template <class T>
 inline void System::flowSteps(size_t n, const T& v)
 {
@@ -712,6 +729,27 @@ inline void System::flowSteps(size_t n, const T& v)
         m_u += v * m_dt;
         this->timeStep();
     }
+}
+
+template <class T>
+inline size_t System::flowSteps_boundcheck(size_t n, const T& v, size_t nmargin)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(v, m_u.shape()));
+
+    if (!this->boundcheck_right(nmargin)) {
+        return 0;
+    }
+
+    for (size_t i = 0; i < n; ++i) {
+        m_u += v * m_dt;
+        this->timeStep();
+
+        if (!this->boundcheck_right(nmargin)) {
+            return 0;
+        }
+    }
+
+    return n;
 }
 
 inline size_t System::timeStepsUntilEvent(double tol, size_t niter_tol, size_t max_iter)
