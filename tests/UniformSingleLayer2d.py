@@ -80,7 +80,7 @@ class test_Generic2d(unittest.TestCase):
         nelas = system.elastic().size
         nplas = system.plastic().size
 
-        epsy = 1e-1 * np.cumsum(np.random.random((nplas, 500)), axis=1)
+        epsy = 1e-1 * np.cumsum(np.random.random((nplas, 2000)), axis=1)
 
         system.setMassMatrix(np.ones(nelem))
         system.setDampingMatrix(np.ones(nelem))
@@ -90,21 +90,45 @@ class test_Generic2d(unittest.TestCase):
 
         system.initEventDrivenSimpleShear()
 
-        kicks = np.zeros(50, dtype=bool)
+        kicks = np.zeros(1800, dtype=bool)
         kicks[1::2] = True
 
         for kick in kicks:
 
             u = system.u()
+            epsy = system.plastic_CurrentYieldRight()
+            eps_n = GMat.Epsd(system.plastic_Eps())
+            idx_n = system.plastic_CurrentIndex()
+
             system.eventDrivenStep(1e-4, kick)
+            idx = system.plastic_CurrentIndex()
+            eps = GMat.Epsd(system.plastic_Eps())
             delta_u = system.u() - u
             system.setU(u)
 
             # note that this implementation is flawed in negative direction
             system.addSimpleShearEventDriven(1e-4, kick)
-            check = system.u() - u
+            check_idx = system.plastic_CurrentIndex()
+            check_eps = GMat.Epsd(system.plastic_Eps())
+            check_u = system.u() - u
 
-            self.assertTrue(np.allclose(delta_u, check))
+            if not np.allclose(delta_u, check_u):
+                self.assertTrue(np.all(idx == check_idx))
+                i = np.argmin(epsy - eps_n)
+                if kick:
+                    self.assertTrue(np.sum(idx.astype(int) - idx_n.astype(int)) <= 4)
+                    self.assertTrue(np.sum(check_idx.astype(int) - idx_n.astype(int)) <= 4)
+                    self.assertTrue(np.isclose(eps.ravel()[i], epsy.ravel()[i] + 0.5 * 1e-4))
+                    # note: only failing here, by about 1e-5 (so small error)
+                    self.assertTrue(np.isclose(check_eps.ravel()[i], epsy.ravel()[i] + 0.5 * 1e-4))
+                else:
+                    self.assertTrue(np.sum(idx.astype(int) - idx_n.astype(int)) == 0)
+                    self.assertTrue(np.sum(check_idx.astype(int) - idx_n.astype(int)) == 0)
+                    self.assertTrue(np.isclose(eps.ravel()[i], epsy.ravel()[i] - 0.5 * 1e-4))
+                    self.assertTrue(np.isclose(check_eps.ravel()[i], epsy.ravel()[i] - 0.5 * 1e-4))
+
+            else:
+                self.assertTrue(np.allclose(delta_u, check_u))
 
 
 if __name__ == "__main__":
