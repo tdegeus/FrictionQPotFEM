@@ -44,7 +44,7 @@ The output is a list of strings, e.g.::
 inline std::vector<std::string> version_dependencies();
 
 /**
-Find with which factor to scale a perturbation with a factor \f$ c \f$ such that
+Find the factor \f$ c \f$ to scale a perturbation such that
 
 \f$ \varepsilon(\underline{\varepsilon}_d) = \varepsilon_\text{target} \f$
 
