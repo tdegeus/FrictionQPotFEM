@@ -625,7 +625,7 @@ inline double System::eventDrivenStep(double deps_kick, bool kick, int direction
 
     auto deps = xt::eval(xt::abs(eps - epsy));
 
-    if (!kick && xt::amin(deps)() < deps_kick / 2.0) {
+    if (!kick && xt::amin(deps)() < 0.5 * deps_kick) {
         return 0.0;
     }
 
@@ -644,8 +644,8 @@ inline double System::eventDrivenStep(double deps_kick, bool kick, int direction
     auto idx_new = this->plastic_CurrentIndex();
     auto eps_new = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps())(e, q);
 
-    FRICTIONQPOTFEM_REQUIRE(kick || xt::all(xt::equal(idx, idx_new)));
     FRICTIONQPOTFEM_REQUIRE(xt::allclose(eps_new, target));
+    FRICTIONQPOTFEM_REQUIRE(kick || xt::all(xt::equal(idx, idx_new)));
 
     return c;
 }
