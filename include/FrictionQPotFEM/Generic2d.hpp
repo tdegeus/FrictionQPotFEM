@@ -642,7 +642,7 @@ inline double System::eventDrivenStep(double deps_kick, bool kick, int direction
     auto idx = this->plastic_CurrentIndex();
     this->setU(m_u + c * m_pert_u);
     auto idx_new = this->plastic_CurrentIndex();
-    auto eps_new = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+    auto eps_new = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps())(e, q);
 
     FRICTIONQPOTFEM_REQUIRE(kick || xt::all(xt::equal(idx, idx_new)));
     FRICTIONQPOTFEM_REQUIRE(xt::allclose(eps_new, target));
