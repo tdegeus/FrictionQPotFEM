@@ -517,8 +517,7 @@ inline xt::xtensor<double, 2> System::plastic_Epsp() const
 template <class T>
 inline xt::xtensor<int, 2> System::plastic_SignDeltaEpsd(const T& delta_u)
 {
-    FRICTIONQPOTFEM_WARNING_PYTHON(
-        "Deprecation: for now there is no use for this function");
+    FRICTIONQPOTFEM_WARNING_PYTHON("Deprecation: for now there is no use for this function");
 
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(delta_u, m_u.shape()));
     auto u_0 = m_u;
@@ -604,7 +603,7 @@ inline double System::eventDrivenStep(double deps_kick, bool kick, int direction
 
     xt::xtensor<double, 2> target;
 
-    if (direction > 0 && kick) {  // direction > 0 && kick
+    if (direction > 0 && kick) { // direction > 0 && kick
         target = epsy_r + 0.5 * deps_kick;
     }
     else if (direction > 0) { // direction > 0 && !kick
