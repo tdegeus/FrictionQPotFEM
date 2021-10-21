@@ -10,6 +10,36 @@
 #include "Generic2d.h"
 
 namespace FrictionQPotFEM {
+
+namespace detail {
+
+template <class S, class T>
+inline double scalePerturbation(const S* Epsd_t, const T* Epsd_delta, double epsd_target)
+{
+    // std::cout << "Epsd_t = " << std::endl;
+    // std::cout << Epsd_t[0] << ", " << Epsd_t[1] << std::endl;
+    // std::cout << Epsd_t[2] << ", " << Epsd_t[3] << std::endl;
+
+    // std::cout << "Epsd_delta = " << std::endl;
+    // std::cout << Epsd_delta[0] << ", " << Epsd_delta[1] << std::endl;
+    // std::cout << Epsd_delta[2] << ", " << Epsd_delta[3] << std::endl;
+
+    double e_t = Epsd_t[0];
+    double g_t = Epsd_t[1];
+    double e_d = Epsd_delta[0];
+    double g_d = Epsd_delta[1];
+
+    double a = e_d * e_d + g_d * g_d;
+    double b = 2.0 * (e_t * e_d + g_t * g_d);
+    double c = e_t * e_t + g_t * g_t - epsd_target * epsd_target;
+    double D = std::sqrt(b * b - 4.0 * a * c);
+
+    FRICTIONQPOTFEM_REQUIRE(b >= 0.0);
+    return (-b + D) / (2.0 * a);
+}
+
+} // namespace detail
+
 namespace Generic2d {
 
 inline std::vector<std::string> version_dependencies()
@@ -51,23 +81,6 @@ inline std::vector<std::string> version_dependencies()
     std::sort(ret.begin(), ret.end(), std::greater<std::string>());
 
     return ret;
-}
-
-template <class S, class T>
-inline double scalePerturbation(const S& Epsd_t, const T& Epsd_delta, double epsd_target)
-{
-    double e_t = Epsd_t(0, 0);
-    double g_t = Epsd_t(0, 1);
-    double e_d = Epsd_delta(0, 0);
-    double g_d = Epsd_delta(0, 1);
-
-    double a = e_d * e_d + g_d * g_d;
-    double b = 2.0 * (e_t * e_d + g_t * g_d);
-    double c = e_t * e_t + g_t * g_t - epsd_target * epsd_target;
-    double D = std::sqrt(b * b - 4.0 * a * c);
-
-    FRICTIONQPOTFEM_REQUIRE(b >= 0.0);
-    return (-b + D) / (2.0 * a);
 }
 
 template <class C, class E, class L>
@@ -537,8 +550,12 @@ inline xt::xtensor<int, 2> System::plastic_SignDeltaEpsd(const T& delta_u)
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(delta_u, m_u.shape()));
     auto u_0 = m_u;
     auto eps_0 = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+    std::cout << "gamma_0 = " << std::endl << xt::view(this->plastic_Eps(), xt::all(), xt::all(), 0, 1) << std::endl;
+    std::cout << "eps_0 = " << std::endl << eps_0 << std::endl;
     this->setU(m_u + delta_u);
     auto eps_pert = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+    std::cout << "gamma_pert = " << std::endl << xt::view(this->plastic_Eps(), xt::all(), xt::all(), 0, 1) << std::endl;
+    std::cout << "eps_pert = " << std::endl << eps_pert << std::endl;
     this->setU(u_0);
     xt::xtensor<int, 2> sign = xt::sign(eps_pert - eps_0);
     return sign;
@@ -611,41 +628,103 @@ inline double System::eventDrivenStep(double deps_kick, bool kick, int direction
 
     double d = static_cast<double>(direction);
     auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+    auto idx = this->plastic_CurrentIndex();
     auto epsy_l = this->plastic_CurrentYieldLeft();
     auto epsy_r = this->plastic_CurrentYieldRight();
     auto sign = this->plastic_SignDeltaEpsd(d * m_pert_u);
 
-    xt::xtensor<double, 2> epsy;
-    if (direction > 0) {
-        epsy = xt::where(sign > 0, epsy_r, epsy_l);
+    std::cout << "kick = " << kick << std::endl;
+    std::cout << "epsd = " << std::endl << GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps()) << std::endl;
+    std::cout << "idx = " << std::endl << idx << std::endl;
+    std::cout << "sign = "<< std::endl << sign << std::endl;
+    std::cout << "epsy_l = "<< std::endl << epsy_l << std::endl;
+    std::cout << "epsy_r = "<< std::endl << epsy_r << std::endl;
+
+    xt::xtensor<double, 2> offset = xt::ones_like(eps);
+    xt::xtensor<double, 2> target;
+
+    if (kick) {
+        offset *= d * 0.5 * deps_kick;
     }
     else {
-        epsy = xt::where(sign < 0, epsy_l, epsy_r);
+        offset *= - d * 0.5 * deps_kick;
     }
 
-    auto deps = xt::eval(xt::abs(eps - epsy));
-
-    if (!kick && xt::amin(deps)() < 0.5 * deps_kick) {
-        return 0.0;
+    if (direction > 0) {
+        target = xt::where(sign > 0, epsy_r, epsy_l);
+    }
+    else {
+        target = xt::where(sign < 0, epsy_l, epsy_r);
+        target = xt::where(sign < 0 && xt::equal(idx, 0), epsy_r, target);
+        offset = xt::where(sign < 0 && xt::equal(idx, 0), - offset, offset);
     }
 
-    auto index = xt::unravel_index(xt::argmin(deps)(), deps.shape());
+    std::cout << "offset = " << std::endl << offset << std::endl;
+    std::cout << "target = " << std::endl << target << std::endl;
+
+    target += offset;
+
+    std::cout << "target = " << std::endl << target << std::endl;
+
+
+
+    // target = xt::where(target >= 0.0, target, 0.0);
+
+    auto Epsd_plastic = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps());
+    auto scale = xt::empty_like(target);
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        for (size_t q = 0; q < m_nip; ++q) {
+            scale(e, q) = detail::scalePerturbation(&Epsd_plastic(e, q, 0, 0), &m_pert_Epsd_plastic(e, q, 0, 0), target(e, q));
+        }
+    }
+
+    std::cout << "scale = " << std::endl << scale << std::endl;
+    std::cout << "scale * d = " << std::endl << scale * d << std::endl;
+
+    auto index = xt::unravel_index(xt::argmin(d * scale)(), scale.shape());
     size_t e = index[0];
     size_t q = index[1];
-    auto Epsd_t = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps(e, q));
-    auto Epsd_delta = xt::eval(xt::view(m_pert_Epsd_plastic, e, q));
-    double target = epsy(e, q) - d * 0.5 * deps_kick;
-    if (kick) {
-        target = epsy(e, q) + d * 0.5 * deps_kick;
-    }
-    double c = scalePerturbation(Epsd_t, Epsd_delta, target);
-    auto idx = this->plastic_CurrentIndex();
+    double c = scale(e, q);
+
+    std::cout << "c = " << c << std::endl;
+
+
+
+
+
+    // std::cout << "scale = " << std::endl << d * scale << std::endl;
+    std::cout << "===" << std::endl;
+
+
+
+
+
+
+    // auto deps = xt::eval(xt::abs(eps - epsy));
+
+    // if (!kick && xt::amin(deps)() < 0.5 * deps_kick) {
+    //     return 0.0;
+    // }
+
+    // auto index = xt::unravel_index(xt::argmin(deps)(), deps.shape());
+    // size_t e = index[0];
+    // size_t q = index[1];
+    // auto Epsd_t = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps(e, q));
+    // auto Epsd_delta = xt::eval(xt::view(m_pert_Epsd_plastic, e, q));
+    // double target = epsy(e, q) - d * 0.5 * deps_kick;
+    // if (kick) {
+    //     target = epsy(e, q) + d * 0.5 * deps_kick;
+    // }
+    // double c = scalePerturbation(Epsd_t, Epsd_delta, target);
+
     this->setU(m_u + c * m_pert_u);
     auto idx_new = this->plastic_CurrentIndex();
     auto eps_new = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps())(e, q);
+    auto eps_target = target(e, q);
 
-    FRICTIONQPOTFEM_REQUIRE(xt::allclose(eps_new, target));
+    FRICTIONQPOTFEM_REQUIRE(xt::allclose(eps_new, eps_target));
     FRICTIONQPOTFEM_REQUIRE(kick || xt::all(xt::equal(idx, idx_new)));
+    FRICTIONQPOTFEM_REQUIRE(!kick || xt::any(xt::not_equal(idx, idx_new)));
 
     return c;
 }

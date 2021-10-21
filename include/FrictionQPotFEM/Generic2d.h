@@ -25,23 +25,7 @@
 
 namespace FrictionQPotFEM {
 
-/**
-Generic system of elastic and plastic elements.
-For the moment this not part of the public API and can be subjected to changes.
-*/
-namespace Generic2d {
-
-/**
-Return versions of this library and of all of its dependencies.
-The output is a list of strings, e.g.::
-
-    "frictionqpotfem=0.7.1",
-    "goosefem=0.7.0",
-    ...
-
-\return List of strings.
-*/
-inline std::vector<std::string> version_dependencies();
+namespace detail {
 
 /**
 Find the factor \f$ c \f$ to scale a perturbation such that
@@ -61,7 +45,27 @@ of tensor \f$ \underline{A} \f$, see #GMatElastoPlasticQPot::Cartesian2d::Epsd.
 \return The factor \f$ c \f$.
 */
 template <class S, class T>
-inline double scalePerturbation(const S& Epsd_t, const T& Epsd_delta, double epsd_target);
+inline double scalePerturbation(const S* Epsd_t, const T* Epsd_delta, double epsd_target);
+
+} // namespace detail
+
+/**
+Generic system of elastic and plastic elements.
+For the moment this not part of the public API and can be subjected to changes.
+*/
+namespace Generic2d {
+
+/**
+Return versions of this library and of all of its dependencies.
+The output is a list of strings, e.g.::
+
+    "frictionqpotfem=0.7.1",
+    "goosefem=0.7.0",
+    ...
+
+\return List of strings.
+*/
+inline std::vector<std::string> version_dependencies();
 
 /**
 Class that uses GMatElastoPlasticQPot to evaluate stress everywhere.
