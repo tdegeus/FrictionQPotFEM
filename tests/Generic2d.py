@@ -129,7 +129,7 @@ class test_Generic2d(unittest.TestCase):
 
         system.eventDriven_setDeltaU(delta_u)
 
-        kicks = np.zeros(10, dtype=bool)
+        kicks = np.zeros(50, dtype=bool)
         kicks[1::2] = True
 
         for kick in kicks:
