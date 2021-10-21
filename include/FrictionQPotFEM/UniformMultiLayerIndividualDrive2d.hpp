@@ -202,7 +202,6 @@ inline void System::layerSetDriveStiffness(double k, bool symmetric)
 template <class S, class T>
 inline double System::initEventDriven(const S& ubar, const T& active)
 {
-    FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
 
@@ -266,7 +265,6 @@ inline double System::initEventDriven(const S& ubar, const T& active)
 template <class S, class T, class U>
 inline void System::initEventDriven(const S& ubar, const T& active, const U& u)
 {
-    FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, m_u.shape()));

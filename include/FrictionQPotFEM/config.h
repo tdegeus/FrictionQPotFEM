@@ -23,6 +23,13 @@
             ": assertion failed (" #expr ") \n\t"); \
     }
 
+#define FRICTIONQPOTFEM_WIP_IMPL(expr, file, line) \
+    if (!(expr)) { \
+        throw std::out_of_range( \
+            std::string(file) + ':' + std::to_string(line) + \
+            ": assertion failed (" #expr ") \n\t"); \
+    }
+
 #define FRICTIONQPOTFEM_WARNING_IMPL(message, file, line) \
     std::cout << std::string(file) + ':' + std::to_string(line) + ": " message ") \n\t";
 
@@ -55,11 +62,18 @@ The advantage is that:
 #endif
 
 /**
-Assertions that cannot be disable.
+Assertions that cannot be disabled.
 
 \throw std::runtime_error
 */
 #define FRICTIONQPOTFEM_REQUIRE(expr) FRICTIONQPOTFEM_ASSERT_IMPL(expr, __FILE__, __LINE__)
+
+/**
+Assertions on a implementation limitation (that in theory can be resolved)
+
+\throw std::out_of_range
+*/
+#define FRICTIONQPOTFEM_WIP(expr) FRICTIONQPOTFEM_WIP_IMPL(expr, __FILE__, __LINE__)
 
 /**
 All warnings are implemented as::

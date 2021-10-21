@@ -156,7 +156,6 @@ inline void System::initEventDriven(double xlever, const T& active)
 template <class T, class U, class W>
 inline void System::initEventDriven(double xlever, const T& active, const U& u, const W& ubar)
 {
-    FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, m_u.shape()));

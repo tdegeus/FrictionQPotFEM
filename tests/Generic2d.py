@@ -11,42 +11,11 @@ class test_Generic2d(unittest.TestCase):
     Tests
     """
 
-    def test_scalePerturbation(self):
-
-        mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
-        nelem = mesh.nelem()
-        system = FrictionQPotFEM.Generic2d.HybridSystem(
-            mesh.coor(),
-            mesh.conn(),
-            mesh.dofs(),
-            np.arange(mesh.nnode() * mesh.ndim()),
-            [0, 1, 2, 6, 7, 8],
-            [3, 4, 5],
-        )
-
-        system.setMassMatrix(np.ones(nelem))
-        system.setDampingMatrix(np.ones(nelem))
-        system.setElastic(np.ones(6), np.ones(6))
-        system.setPlastic(np.ones(3), np.ones(3), [[100.0], [100.0], [100.0]])
-        system.setDt(1.0)
-
-        x = mesh.coor()
-        delta_u = np.zeros_like(x)
-
-        for i in range(delta_u.shape[0]):
-            delta_u[i, 0] = 0.1 * (x[i, 1] - x[0, 1])
-
-        system.setU(delta_u)
-        Epsd_delta = GMat.Deviatoric(system.plastic_Eps(0, 0))
-        system.setU(np.zeros_like(x))
-
-        for eps_target in [0.001, 0.1, 1.0]:
-            Epsd_t = GMat.Deviatoric(system.plastic_Eps(0, 0))
-            c = FrictionQPotFEM.Generic2d.scalePerturbation(Epsd_t, Epsd_delta, eps_target)
-            system.setU(system.u() + c * delta_u)
-            self.assertTrue(np.isclose(GMat.Epsd(system.plastic_Eps(0, 0)), eps_target))
-
     def test_eventDrivenSimpleShear(self):
+        """
+        Simple test of event driven simple shear in a homogeneous system:
+        Load forward and backward (for the latter: test current implementation limitation).
+        """
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
         nelem = mesh.nelem()
@@ -66,7 +35,7 @@ class test_Generic2d(unittest.TestCase):
         nelas = system.elastic().size
         nplas = system.plastic().size
 
-        epsy = 1e-3 * np.cumsum(np.ones((nplas, 5)), axis=1)
+        epsy = np.cumsum(np.ones((nplas, 5)), axis=1)
 
         system.setMassMatrix(np.ones(nelem))
         system.setDampingMatrix(np.ones(nelem))
@@ -88,19 +57,42 @@ class test_Generic2d(unittest.TestCase):
                 system.eventDriven_setDeltaU(delta_u)
                 system.setU(np.zeros_like(coor))
 
-            directions = [1, 1, 1, 1, 1, 1, -1, -1, -1]
-            kicks = [False, False, True, False, True, False, False, True, False]
-            indices = [0, 0, 0, 1, 1, 2, 1, 1, 0]
-            multi = [-1, -1, +1, -1, +1, -1, +1, -1, +1]
+            settings = [
+                [+1, 0, 0, -1, 0],  # :   .|    |    |    |
+                [+1, 0, 0, -1, 0],  # :   .|    |    |    |
+                [+1, 1, 0, +1, 0],  # :    |.   |    |    |
+                [+1, 0, 1, -1, 0],  # :    |   .|    |    |
+                [+1, 1, 1, +1, 0],  # :    |    |.   |    |
+                [+1, 0, 2, -1, 0],  # :    |    |   .|    |
+                [+1, 1, 2, +1, 0],  # :    |    |    |.   |
+                [-1, 0, 2, +1, 0],  # :    |    |    |.   |
+                [-1, 1, 2, -1, 0],  # :    |    |   .|    |
+                [-1, 0, 1, +1, 0],  # :    |    |.   |    |
+                [-1, 1, 1, -1, 0],  # :    |   .|    |    |
+                [-1, 0, 0, +1, 0],  # :    |.   |    |    |
+                [-1, 1, 0, -1, 0],  # :   .|    |    |    |
+                [-1, 0, 0, -1, 1],  # :   .|    |    |    | (symmetry, throw)
+                [-1, 1, 0, +1, 1],  # :    |.   |    |    | (symmetry, not tested)
+                [-1, 0, 1, -1, 1],  # :    |   .|    |    | (symmetry, not tested)
+            ]
 
-            for direction, kick, index, m in zip(directions, kicks, indices, multi):
+            for direction, kick, index, f, throw in settings:
 
-                eps_expect = epsy[0, index] + m * 0.5 * 1e-4
-                system.eventDrivenStep(1e-4, kick, direction)
+                eps_expect = epsy[0, index] + f * 0.5 * 0.1
+
+                if throw:
+                    with self.assertRaises(IndexError):
+                        system.eventDrivenStep(0.1, kick, direction)
+                    break
+
+                system.eventDrivenStep(0.1, kick, direction)
                 self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), eps_expect))
                 self.assertTrue(system.residual() < 1e-5)
 
     def test_eventDrivenSimpleShear2(self):
+        """
+        Like :py:func:`test_eventDrivenSimpleShear` but with random yield strains.
+        """
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
         nelem = mesh.nelem()
@@ -151,7 +143,14 @@ class test_Generic2d(unittest.TestCase):
 
         for kick in kicks:
             idx_n = system.plastic_CurrentIndex().astype(int)
+
+            if np.any(idx_n == 0):
+                with self.assertRaises(IndexError):
+                    system.eventDrivenStep(deps, kick, -1)
+                break
+
             system.eventDrivenStep(deps, kick, -1)
+
             idx = system.plastic_CurrentIndex().astype(int)
 
             if kick:

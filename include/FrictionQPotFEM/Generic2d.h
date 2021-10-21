@@ -44,26 +44,6 @@ The output is a list of strings, e.g.::
 inline std::vector<std::string> version_dependencies();
 
 /**
-Find the factor \f$ c \f$ to scale a perturbation such that
-
-\f$ \varepsilon(\underline{\varepsilon}_d) = \varepsilon_\text{target} \f$
-
-with
-
-\f$ \underline{\varepsilon}_d = \underline{\varepsilon}_d^t + c \underline{\varepsilon}_d^\delta \f$
-
-where \f$ \varepsilon(\underline{A}) \f$ denotes the equivalent strain
-of tensor \f$ \underline{A} \f$, see #GMatElastoPlasticQPot::Cartesian2d::Epsd.
-
-\param Epsd_t The strain deviator \f$ \underline{\varepsilon}_d^t \f$.
-\param Epsd_delta The strain deviator \f$ \underline{\varepsilon}_d^\delta \f$.
-\param epsd_target The target equivalent strain \f$ \varepsilon_\text{target} \f$.
-\return The factor \f$ c \f$.
-*/
-template <class S, class T>
-inline double scalePerturbation(const S& Epsd_t, const T& Epsd_delta, double epsd_target);
-
-/**
 Class that uses GMatElastoPlasticQPot to evaluate stress everywhere.
 */
 class System {
@@ -467,7 +447,7 @@ public:
     \return Integration point scalar. Shape: [plastic().size(), nip].
     */
     template <class T>
-    xt::xtensor<int, 2> plastic_SignDeltaEpsd(const T& delta_u);
+    [[deprecated]] xt::xtensor<int, 2> plastic_SignDeltaEpsd(const T& delta_u);
 
     /**
     Check that the current yield-index is at least `n` away from the end.
@@ -498,6 +478,11 @@ public:
     /**
     Add event driven step for the boundary conditions that correspond to the displacement
     perturbation set in eventDriven_setDeltaU().
+
+    \todo
+        The current implementation is suited for unloading, but only until the first yield strain.
+        An improved implementation is needed to deal with the symmetry of the equivalent strain.
+        A `FRICTIONQPOTFEM_WIP` assertion is made.
 
     \param deps
         Size of the local stain kick to apply.
