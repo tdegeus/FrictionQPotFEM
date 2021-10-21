@@ -10,7 +10,6 @@
 #include "Generic2d.h"
 
 namespace FrictionQPotFEM {
-
 namespace Generic2d {
 
 inline std::vector<std::string> version_dependencies()
@@ -518,15 +517,14 @@ inline xt::xtensor<double, 2> System::plastic_Epsp() const
 template <class T>
 inline xt::xtensor<int, 2> System::plastic_SignDeltaEpsd(const T& delta_u)
 {
+    FRICTIONQPOTFEM_WARNING_PYTHON(
+        "Deprecation: for now there is no use for this function");
+
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(delta_u, m_u.shape()));
     auto u_0 = m_u;
     auto eps_0 = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-    // std::cout << "gamma_0 = " << std::endl << xt::view(this->plastic_Eps(), xt::all(), xt::all(), 0, 1) << std::endl;
-    // std::cout << "eps_0 = " << std::endl << eps_0 << std::endl;
     this->setU(m_u + delta_u);
     auto eps_pert = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-    // std::cout << "gamma_pert = " << std::endl << xt::view(this->plastic_Eps(), xt::all(), xt::all(), 0, 1) << std::endl;
-    // std::cout << "eps_pert = " << std::endl << eps_pert << std::endl;
     this->setU(u_0);
     xt::xtensor<int, 2> sign = xt::sign(eps_pert - eps_0);
     return sign;
