@@ -166,6 +166,14 @@ inline void System::initEventDriven(double xlever, const T& active, const U& u, 
     m_pert_lever_target = c * xlever;
 }
 
+inline double System::eventDrivenStep(double deps_kick, bool kick, int direction)
+{
+    double c = Generic2d::System::eventDrivenStep(deps_kick, kick, direction);
+    this->layerSetTargetUbar(m_layerdrive_targetubar + c * m_pert_layerdrive_targetubar);
+    this->setLeverTarget(m_lever_target + c * m_pert_lever_target);
+    return c;
+}
+
 inline double System::eventDriven_deltaLeverPosition() const
 {
     return m_pert_lever_target;
