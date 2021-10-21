@@ -25,30 +25,6 @@
 
 namespace FrictionQPotFEM {
 
-namespace detail {
-
-/**
-Find the factor \f$ c \f$ to scale a perturbation such that
-
-\f$ \varepsilon(\underline{\varepsilon}_d) = \varepsilon_\text{target} \f$
-
-with
-
-\f$ \underline{\varepsilon}_d = \underline{\varepsilon}_d^t + c \underline{\varepsilon}_d^\delta \f$
-
-where \f$ \varepsilon(\underline{A}) \f$ denotes the equivalent strain
-of tensor \f$ \underline{A} \f$, see #GMatElastoPlasticQPot::Cartesian2d::Epsd.
-
-\param Epsd_t The strain deviator \f$ \underline{\varepsilon}_d^t \f$.
-\param Epsd_delta The strain deviator \f$ \underline{\varepsilon}_d^\delta \f$.
-\param epsd_target The target equivalent strain \f$ \varepsilon_\text{target} \f$.
-\return The factor \f$ c \f$.
-*/
-template <class S, class T>
-inline double scalePerturbation(const S* Epsd_t, const T* Epsd_delta, double epsd_target);
-
-} // namespace detail
-
 /**
 Generic system of elastic and plastic elements.
 For the moment this not part of the public API and can be subjected to changes.
