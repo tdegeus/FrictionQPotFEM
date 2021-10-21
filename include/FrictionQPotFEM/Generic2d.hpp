@@ -635,31 +635,20 @@ inline double System::eventDrivenStep(double deps_kick, bool kick, int direction
 
     FRICTIONQPOTFEM_WIP(direction > 0 || !xt::any(xt::equal(idx, 0)));
 
-    xt::xtensor<double, 2> offset = xt::ones_like(eps);
     xt::xtensor<double, 2> target;
 
-    if (kick) {
-        offset *= d * 0.5 * deps_kick;
+    if (direction > 0 && kick) {  // direction > 0 && kick
+        target = xt::where(sign > 0, epsy_r, epsy_l) + 0.5 * deps_kick;
     }
-    else {
-        offset *= - d * 0.5 * deps_kick;
+    else if (direction > 0) { // direction > 0 && !kick
+        target = xt::where(sign > 0, epsy_r, epsy_l) - 0.5 * deps_kick;
     }
-
-    if (direction > 0) {
-        target = xt::where(sign > 0, epsy_r, epsy_l);
+    else if (kick) { // direction < 0 && kick
+        target = xt::where(sign < 0, epsy_l, epsy_r) - 0.5 * deps_kick;
     }
-    else {
-        target = xt::where(sign < 0, epsy_l, epsy_r);
-        // target = xt::where(sign < 0 && xt::equal(idx, 0), epsy_r, target);
-        // offset = xt::where(sign < 0 && xt::equal(idx, 0), - offset, offset);
+    else { // direction < 0 && !kick
+        target = xt::where(sign < 0, epsy_l, epsy_r) + 0.5 * deps_kick;
     }
-
-    // std::cout << "offset = " << std::endl << offset << std::endl;
-    // std::cout << "target = " << std::endl << target << std::endl;
-
-    target += offset;
-
-    // std::cout << "target = " << std::endl << target << std::endl;
 
     auto Epsd_plastic = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps());
     auto scale = xt::empty_like(target);
@@ -691,7 +680,7 @@ inline double System::eventDrivenStep(double deps_kick, bool kick, int direction
     // std::cout << "scale = " << std::endl << scale << std::endl;
     // std::cout << "scale * d = " << std::endl << scale * d << std::endl;
 
-    auto index = xt::unravel_index(xt::argmin(d * scale)(), scale.shape());
+    auto index = xt::unravel_index(xt::argmin(xt::abs(scale))(), scale.shape());
     size_t e = index[0];
     size_t q = index[1];
     double c = scale(e, q);
