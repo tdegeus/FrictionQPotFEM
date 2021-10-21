@@ -550,12 +550,12 @@ inline xt::xtensor<int, 2> System::plastic_SignDeltaEpsd(const T& delta_u)
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(delta_u, m_u.shape()));
     auto u_0 = m_u;
     auto eps_0 = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-    std::cout << "gamma_0 = " << std::endl << xt::view(this->plastic_Eps(), xt::all(), xt::all(), 0, 1) << std::endl;
-    std::cout << "eps_0 = " << std::endl << eps_0 << std::endl;
+    // std::cout << "gamma_0 = " << std::endl << xt::view(this->plastic_Eps(), xt::all(), xt::all(), 0, 1) << std::endl;
+    // std::cout << "eps_0 = " << std::endl << eps_0 << std::endl;
     this->setU(m_u + delta_u);
     auto eps_pert = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-    std::cout << "gamma_pert = " << std::endl << xt::view(this->plastic_Eps(), xt::all(), xt::all(), 0, 1) << std::endl;
-    std::cout << "eps_pert = " << std::endl << eps_pert << std::endl;
+    // std::cout << "gamma_pert = " << std::endl << xt::view(this->plastic_Eps(), xt::all(), xt::all(), 0, 1) << std::endl;
+    // std::cout << "eps_pert = " << std::endl << eps_pert << std::endl;
     this->setU(u_0);
     xt::xtensor<int, 2> sign = xt::sign(eps_pert - eps_0);
     return sign;
@@ -633,12 +633,7 @@ inline double System::eventDrivenStep(double deps_kick, bool kick, int direction
     auto epsy_r = this->plastic_CurrentYieldRight();
     auto sign = this->plastic_SignDeltaEpsd(d * m_pert_u);
 
-    std::cout << "kick = " << kick << std::endl;
-    std::cout << "epsd = " << std::endl << GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps()) << std::endl;
-    std::cout << "idx = " << std::endl << idx << std::endl;
-    std::cout << "sign = "<< std::endl << sign << std::endl;
-    std::cout << "epsy_l = "<< std::endl << epsy_l << std::endl;
-    std::cout << "epsy_r = "<< std::endl << epsy_r << std::endl;
+    FRICTIONQPOTFEM_WIP(direction > 0 || !xt::any(xt::equal(idx, 0)));
 
     xt::xtensor<double, 2> offset = xt::ones_like(eps);
     xt::xtensor<double, 2> target;
@@ -655,45 +650,60 @@ inline double System::eventDrivenStep(double deps_kick, bool kick, int direction
     }
     else {
         target = xt::where(sign < 0, epsy_l, epsy_r);
-        target = xt::where(sign < 0 && xt::equal(idx, 0), epsy_r, target);
-        offset = xt::where(sign < 0 && xt::equal(idx, 0), - offset, offset);
+        // target = xt::where(sign < 0 && xt::equal(idx, 0), epsy_r, target);
+        // offset = xt::where(sign < 0 && xt::equal(idx, 0), - offset, offset);
     }
 
-    std::cout << "offset = " << std::endl << offset << std::endl;
-    std::cout << "target = " << std::endl << target << std::endl;
+    // std::cout << "offset = " << std::endl << offset << std::endl;
+    // std::cout << "target = " << std::endl << target << std::endl;
 
     target += offset;
 
-    std::cout << "target = " << std::endl << target << std::endl;
-
-
-
-    // target = xt::where(target >= 0.0, target, 0.0);
+    // std::cout << "target = " << std::endl << target << std::endl;
 
     auto Epsd_plastic = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps());
     auto scale = xt::empty_like(target);
+
     for (size_t e = 0; e < m_nelem_plas; ++e) {
         for (size_t q = 0; q < m_nip; ++q) {
-            scale(e, q) = detail::scalePerturbation(&Epsd_plastic(e, q, 0, 0), &m_pert_Epsd_plastic(e, q, 0, 0), target(e, q));
+
+            double e_t = Epsd_plastic(e, q, 0, 0);
+            double g_t = Epsd_plastic(e, q, 0, 1);
+            double e_d = m_pert_Epsd_plastic(e, q, 0, 0);
+            double g_d = m_pert_Epsd_plastic(e, q, 0, 1);
+            double epsd_target = target(e, q);
+
+            double a = e_d * e_d + g_d * g_d;
+            double b = 2.0 * (e_t * e_d + g_t * g_d);
+            double c = e_t * e_t + g_t * g_t - epsd_target * epsd_target;
+            double D = std::sqrt(b * b - 4.0 * a * c);
+
+            FRICTIONQPOTFEM_REQUIRE(b >= 0.0);
+            scale(e, q) = (-b + D) / (2.0 * a);
         }
     }
 
-    std::cout << "scale = " << std::endl << scale << std::endl;
-    std::cout << "scale * d = " << std::endl << scale * d << std::endl;
+    // std::cout << "scale_n = " << std::endl << scale_n << std::endl;
+    // std::cout << "scale_p = " << std::endl << scale_p << std::endl;
+
+    // auto scale = scale_p;
+
+    // std::cout << "scale = " << std::endl << scale << std::endl;
+    // std::cout << "scale * d = " << std::endl << scale * d << std::endl;
 
     auto index = xt::unravel_index(xt::argmin(d * scale)(), scale.shape());
     size_t e = index[0];
     size_t q = index[1];
     double c = scale(e, q);
 
-    std::cout << "c = " << c << std::endl;
+    // std::cout << "c = " << c << std::endl;
 
 
 
 
 
     // std::cout << "scale = " << std::endl << d * scale << std::endl;
-    std::cout << "===" << std::endl;
+    // std::cout << "===" << std::endl;
 
 
 

@@ -503,6 +503,11 @@ public:
     Add event driven step for the boundary conditions that correspond to the displacement
     perturbation set in eventDriven_setDeltaU().
 
+    \todo
+        The current implementation is suited for unloading, but only until the first yield strain.
+        An improved implementation is needed to deal with the symmetry of the equivalent strain.
+        A `FRICTIONQPOTFEM_WIP` assertion is made.
+
     \param deps
         Size of the local stain kick to apply.
 
