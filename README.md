@@ -137,6 +137,20 @@ python -m pip install . -vv
 
 # Change-log
 
+## v0.16.4
+
+*   eventDriven: override with additional update to UniformMultiLayerLeverDrive2d (#126)
+*   eventDriven: choosing lowest scale factor (rather than shortest distance in eq. strain space) (#125)
+*   Adding assertions (#124)
+
+## v0.16.3
+
+*   eventDriven: fixing incorrect check (#123)
+
+## v0.16.2
+
+*   UniformMultiLayerIndividualDrive2d: adding convenience function (deprecated integrated functions)
+
 ## v0.16.1
 
 *   [docs] Fixing typo
