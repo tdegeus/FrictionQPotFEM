@@ -228,7 +228,8 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "eventDrivenStep",
                 py::arg("deps"),
                 py::arg("kick"),
-                py::arg("direction") = +1);
+                py::arg("direction") = +1,
+                py::arg("yield_element") = false);
 
             cls.def("timeStep", &SUB::System::timeStep, "timeStep");
             cls.def("timeSteps", &SUB::System::timeSteps, "timeSteps", py::arg("n"));

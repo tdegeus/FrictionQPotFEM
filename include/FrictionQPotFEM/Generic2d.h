@@ -494,10 +494,16 @@ public:
     \param direction
         If ``+1``: apply shear to the right. If ``-1`` applying shear to the left.
 
+    \param yield_element
+        If `true` and `kick == true` then the element closest to yielding is selected (as normal),
+        but of that element the displacement update is the maximum of the element, such that all
+        integration points of the element are forced to yield.
+
     \return
         Factor with which the displacement perturbation, see eventDriven_deltaU(), is scaled.
     */
-    virtual double eventDrivenStep(double deps, bool kick, int direction = 1);
+    virtual double
+    eventDrivenStep(double deps, bool kick, int direction = 1, bool yield_element = false);
 
     /**
     Make a time-step: apply velocity-Verlet integration.

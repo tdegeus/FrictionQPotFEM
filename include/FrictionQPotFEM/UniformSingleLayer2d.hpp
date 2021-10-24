@@ -142,7 +142,7 @@ System::addSimpleShearEventDriven(double deps_kick, bool kick, double direction,
 
     FRICTIONQPOTFEM_REQUIRE(!dry_run);
     this->initEventDrivenSimpleShear();
-    eventDrivenStep(deps_kick, kick, static_cast<int>(direction));
+    eventDrivenStep(deps_kick, kick, static_cast<int>(direction), false);
     return 0.0;
 }
 

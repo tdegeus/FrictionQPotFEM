@@ -589,7 +589,8 @@ inline auto System::eventDriven_deltaU() const
     return m_pert_u;
 }
 
-inline double System::eventDrivenStep(double deps_kick, bool kick, int direction)
+inline double
+System::eventDrivenStep(double deps_kick, bool kick, int direction, bool yield_element)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_pert_u, m_u.shape()));
     FRICTIONQPOTFEM_ASSERT(direction == 1 || direction == -1);
@@ -641,6 +642,11 @@ inline double System::eventDrivenStep(double deps_kick, bool kick, int direction
     auto index = xt::unravel_index(xt::argmin(xt::abs(scale))(), scale.shape());
     size_t e = index[0];
     size_t q = index[1];
+
+    if (kick && yield_element) {
+        auto q = xt::argmax(xt::view(xt::abs(scale), e, xt::all()))();
+    }
+
     double c = scale(e, q);
 
     this->setU(m_u + c * m_pert_u);

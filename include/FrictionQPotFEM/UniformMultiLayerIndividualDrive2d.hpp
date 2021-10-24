@@ -284,9 +284,10 @@ inline xt::xtensor<bool, 2> System::eventDriven_targetActive() const
     return m_pert_layerdrive_active;
 }
 
-inline double System::eventDrivenStep(double deps_kick, bool kick, int direction)
+inline double
+System::eventDrivenStep(double deps_kick, bool kick, int direction, bool yield_element)
 {
-    double c = Generic2d::System::eventDrivenStep(deps_kick, kick, direction);
+    double c = Generic2d::System::eventDrivenStep(deps_kick, kick, direction, yield_element);
     this->layerSetTargetUbar(m_layerdrive_targetubar + c * m_pert_layerdrive_targetubar);
     return c;
 }
