@@ -158,7 +158,6 @@ class test_Generic2d(unittest.TestCase):
             else:
                 self.assertTrue(np.all(idx == idx_n))
 
-
     def test_eventDrivenSimpleShear_element(self):
         """
         Like :py:func:`test_eventDrivenSimpleShear` but with slightly different yield strains
@@ -197,7 +196,7 @@ class test_Generic2d(unittest.TestCase):
             c = mat.refCusp([e, 1])
             y = c.epsy() + 0.1
             epsy_element[e, :] = y[1:]
-            c.reset_epsy(y, init_elastic = False)
+            c.reset_epsy(y, init_elastic=False)
 
         delta_u = np.zeros_like(coor)
 
@@ -237,7 +236,6 @@ class test_Generic2d(unittest.TestCase):
 
                 self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), eps_expect))
                 self.assertTrue(system.residual() < 1e-5)
-
 
     def test_flowSteps(self):
         """

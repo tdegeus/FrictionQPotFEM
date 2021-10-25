@@ -12,6 +12,10 @@ class test_Generic2d(unittest.TestCase):
     """
 
     def test_eventDrivenSimpleShear(self):
+        """
+        Event driven simple shear in a system with three layers of a single element each:
+        elastic, plastic, elastic.
+        """
 
         mesh = GooseFEM.Mesh.Quad4.Regular(nx=3, ny=2 * 3 + 1)
         nelem = mesh.nelem()
