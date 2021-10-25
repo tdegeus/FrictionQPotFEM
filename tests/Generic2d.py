@@ -82,7 +82,7 @@ class test_Generic2d(unittest.TestCase):
 
                 if throw:
                     with self.assertRaises(IndexError):
-                        system.eventDrivenStep(0.1, kick, direction)
+                        system.eventDrivenStep(0.1, kick, direction, yield_element = True)
                     break
 
                 system.eventDrivenStep(0.1, kick, direction)
