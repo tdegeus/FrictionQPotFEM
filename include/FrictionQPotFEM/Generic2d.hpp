@@ -644,7 +644,7 @@ System::eventDrivenStep(double deps_kick, bool kick, int direction, bool yield_e
     size_t q = index[1];
 
     if (kick && yield_element) {
-        auto q = xt::argmax(xt::view(xt::abs(scale), e, xt::all()))();
+        q = xt::argmax(xt::view(xt::abs(scale), e, xt::all()))();
     }
 
     double c = scale(e, q);

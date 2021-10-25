@@ -82,14 +82,14 @@ class test_Generic2d(unittest.TestCase):
 
                 if throw:
                     with self.assertRaises(IndexError):
-                        system.eventDrivenStep(0.1, kick, direction, yield_element = True)
+                        system.eventDrivenStep(0.1, kick, direction)
                     break
 
                 system.eventDrivenStep(0.1, kick, direction)
                 self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), eps_expect))
                 self.assertTrue(system.residual() < 1e-5)
 
-    def test_eventDrivenSimpleShear2(self):
+    def test_eventDrivenSimpleShear_random(self):
         """
         Like :py:func:`test_eventDrivenSimpleShear` but with random yield strains.
         """
@@ -157,6 +157,87 @@ class test_Generic2d(unittest.TestCase):
                 self.assertTrue(np.sum(idx - idx_n) == -4)
             else:
                 self.assertTrue(np.all(idx == idx_n))
+
+
+    def test_eventDrivenSimpleShear_element(self):
+        """
+        Like :py:func:`test_eventDrivenSimpleShear` but with slightly different yield strains
+        per element.
+        """
+
+        mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
+        nelem = mesh.nelem()
+        coor = mesh.coor()
+        dofs = mesh.dofs()
+        dofs[mesh.nodesLeftOpenEdge(), ...] = dofs[mesh.nodesRightOpenEdge(), ...]
+
+        system = FrictionQPotFEM.Generic2d.HybridSystem(
+            coor,
+            mesh.conn(),
+            dofs,
+            dofs[np.concatenate((mesh.nodesBottomEdge(), mesh.nodesTopEdge())), :].ravel(),
+            [0, 1, 2, 6, 7, 8],
+            [3, 4, 5],
+        )
+
+        nelas = system.elastic().size
+        nplas = system.plastic().size
+
+        epsy = np.cumsum(np.ones((nplas, 5)), axis=1)
+
+        system.setMassMatrix(np.ones(nelem))
+        system.setDampingMatrix(np.ones(nelem))
+        system.setElastic(np.ones(nelas), np.ones(nelas))
+        system.setPlastic(np.ones(nplas), np.ones(nplas), epsy)
+        system.setDt(1.0)
+
+        epsy_element = np.zeros(epsy.shape)
+        mat = system.material_plastic()
+        for e in range(mat.shape()[0]):
+            c = mat.refCusp([e, 1])
+            y = c.epsy() + 0.1
+            epsy_element[e, :] = y[1:]
+            c.reset_epsy(y, init_elastic = False)
+
+        delta_u = np.zeros_like(coor)
+
+        for i in range(delta_u.shape[0]):
+            delta_u[i, 0] = 0.1 * (coor[i, 1] - coor[0, 1])
+
+        for loop in range(2):
+
+            if loop == 0:
+                system.eventDriven_setDeltaU(delta_u)
+                delta_u = system.eventDriven_deltaU()
+            else:
+                system.eventDriven_setDeltaU(delta_u)
+                system.setU(np.zeros_like(coor))
+
+            settings = [
+                [+1, 0, 0, -1, 0],  # :   .|    |    |    |
+                [+1, 0, 0, -1, 0],  # :   .|    |    |    |
+                [+1, 1, 0, +1, 0],  # :    |.   |    |    |
+                [+1, 0, 1, -1, 0],  # :    |   .|    |    |
+                [+1, 1, 1, +1, 0],  # :    |    |.   |    |
+                [+1, 0, 2, -1, 0],  # :    |    |   .|    |
+                [+1, 1, 2, +1, 0],  # :    |    |    |.   |
+            ]
+
+            for direction, kick, index, f, throw in settings:
+
+                if not kick:
+                    eps_expect = epsy[0, index] + f * 0.5 * 0.05
+                else:
+                    eps_expect = epsy_element[0, index] + f * 0.5 * 0.05
+
+                if throw:
+                    with self.assertRaises(IndexError):
+                        system.eventDrivenStep(0.05, kick, direction, yield_element=True)
+                    break
+
+                self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), eps_expect))
+                self.assertTrue(system.residual() < 1e-5)
+
 
     def test_flowSteps(self):
         """
