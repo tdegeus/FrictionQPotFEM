@@ -137,6 +137,11 @@ python -m pip install . -vv
 
 # Change-log
 
+## v0.16.5
+
+*   Bugfix initEventDriven: adding missing references (#127)
+*   eventDriven: add "yield_element" option
+
 ## v0.16.4
 
 *   eventDriven: override with additional update to UniformMultiLayerLeverDrive2d (#126)
