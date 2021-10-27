@@ -49,7 +49,7 @@ class test_Generic2d(unittest.TestCase):
         drive_u = np.zeros((3, 2), dtype=float)
 
         drive_active[-1, 0] = True
-        drive_u[-1, 0] = 0.1
+        drive_u[-1, 0] = 5.0
 
         for loop in range(2):
 
