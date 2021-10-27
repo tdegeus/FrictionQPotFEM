@@ -217,7 +217,7 @@ inline double System::initEventDriven(const S& ubar, const T& active)
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
         for (size_t q = 0; q < m_nip; ++q) {
-            auto cusp = m_material_plas.refCusp({e, q});
+            auto& cusp = m_material_plas.refCusp({e, q});
             auto epsy = cusp.epsy();
             epsy0(e, q, 0) = epsy(0);
             epsy0(e, q, 1) = epsy(1);
@@ -232,9 +232,12 @@ inline double System::initEventDriven(const S& ubar, const T& active)
     m_u.fill(0.0);
     m_v.fill(0.0);
     m_a.fill(0.0);
+    this->updated_u();
+    FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(this->plastic_CurrentIndex(), 0)));
     this->layerSetTargetActive(active);
     this->layerSetTargetUbar(ubar);
     this->minimise();
+    FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(this->plastic_CurrentIndex(), 0)));
 
     auto c = this->eventDriven_setDeltaU(m_u);
     m_pert_layerdrive_active = active;
@@ -244,7 +247,7 @@ inline double System::initEventDriven(const S& ubar, const T& active)
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
         for (size_t q = 0; q < m_nip; ++q) {
-            auto cusp = m_material_plas.refCusp({e, q});
+            auto& cusp = m_material_plas.refCusp({e, q});
             auto epsy = cusp.epsy();
             epsy(0) = epsy0(e, q, 0);
             epsy(1) = epsy0(e, q, 1);
