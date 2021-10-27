@@ -234,6 +234,8 @@ class test_Generic2d(unittest.TestCase):
                         system.eventDrivenStep(0.05, kick, direction, yield_element=True)
                     break
 
+                system.eventDrivenStep(0.05, kick, direction, yield_element=True)
+
                 self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), eps_expect))
                 self.assertTrue(system.residual() < 1e-5)
 
