@@ -138,9 +138,10 @@ public:
     \param delta_ubar See eventDriven_deltaUbar().
     \param active See eventDriven_targetActive().
     \param delta_u See eventDriven_deltaU().
+    \return Value with which the input perturbation is scaled, see also eventDriven_deltaU().
     */
     template <class S, class T, class U>
-    void initEventDriven(const S& delta_ubar, const T& active, const U& delta_u);
+    double initEventDriven(const S& delta_ubar, const T& active, const U& delta_u);
 
     /**
     Get target average position perturbation used for event driven code.

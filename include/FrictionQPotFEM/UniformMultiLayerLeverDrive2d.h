@@ -121,9 +121,10 @@ public:
     \param active See eventDriven_targetActive().
     \param delta_u See eventDriven_deltaU().
     \param delta_ubar See eventDriven_deltaUbar().
+    \return Value with which the input perturbation is scaled, see also eventDriven_deltaU().
     */
     template <class T, class U, class W>
-    void initEventDriven(double xdrive, const T& active, const U& delta_u, const W& delta_ubar);
+    double initEventDriven(double xdrive, const T& active, const U& delta_u, const W& delta_ubar);
 
     double eventDrivenStep(double deps, bool kick, int direction = +1, bool yield_element = false)
         override;

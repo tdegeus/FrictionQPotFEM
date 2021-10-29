@@ -266,15 +266,15 @@ inline double System::initEventDriven(const S& ubar, const T& active)
 }
 
 template <class S, class T, class U>
-inline void System::initEventDriven(const S& ubar, const T& active, const U& u)
+inline double System::initEventDriven(const S& ubar, const T& active, const U& u)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, m_u.shape()));
-    auto c = this->eventDriven_setDeltaU(u);
-    FRICTIONQPOTFEM_ASSERT(xt::allclose(c, 1.0));
+    double c = this->eventDriven_setDeltaU(u);
     m_pert_layerdrive_active = active;
     m_pert_layerdrive_targetubar = c * ubar;
+    return c;
 }
 
 inline xt::xtensor<double, 2> System::eventDriven_deltaUbar() const
