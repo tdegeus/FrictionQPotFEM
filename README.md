@@ -137,6 +137,10 @@ python -m pip install . -vv
 
 # Change-log
 
+## v0.16.6
+
+*   initEventDriven: Removing assertion that makes no sense (c depends on the realization)
+
 ## v0.16.5
 
 *   Bugfix initEventDriven: adding missing references (#127)
