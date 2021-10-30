@@ -262,7 +262,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "timeStepsUntilEvent",
                 py::arg("tol") = 1e-5,
                 py::arg("niter_tol") = 20,
-                py::arg("max_iter") = 1000000);
+                py::arg("max_iter") = 10000000);
 
             cls.def(
                 "minimise",
@@ -270,7 +270,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "minimise",
                 py::arg("tol") = 1e-5,
                 py::arg("niter_tol") = 20,
-                py::arg("max_iter") = 1000000);
+                py::arg("max_iter") = 10000000);
 
             cls.def(
                 "minimise_boundcheck",
@@ -279,7 +279,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("nmargin") = 5,
                 py::arg("tol") = 1e-5,
                 py::arg("niter_tol") = 20,
-                py::arg("max_iter") = 1000000);
+                py::arg("max_iter") = 10000000);
 
             cls.def(
                 "affineSimpleShear",

@@ -557,7 +557,7 @@ public:
     /**
     Perform a series of time-steps until:
     -   the next plastic event,
-    -   equilibrium, or the maximum, or
+    -   equilibrium, or
     -   the maximum number of iterations.
 
     \param tol
@@ -567,13 +567,17 @@ public:
         Enforce the residual check for ``niter_tol`` consecutive increments.
 
     \param max_iter
-        Maximum number of iterations. Throws ``std::runtime_error`` otherwise.
+        Maximum number of iterations.
 
     \return
-        The number of iterations.
-        `0` is returned if there was no plastic activity and the residual was reached.
+        -   *Number of iterations*:
+            If stopped by a plastic event or the maximum number of iterations.
+        -   `0`:
+            If stopped when the residual is reached
+            (so no plastic event occurred and the number of iterations was lower than the maximum).
     */
-    size_t timeStepsUntilEvent(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 1000000);
+    size_t
+    timeStepsUntilEvent(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 10000000);
 
     /**
     Minimise energy: run System::timeStep until a mechanical equilibrium has been reached.
@@ -589,7 +593,7 @@ public:
 
     \return The number of iterations.
     */
-    size_t minimise(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 1000000);
+    size_t minimise(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 10000000);
 
     /**
     \copydoc System::minimise(double, size_t, size_t)
@@ -605,7 +609,7 @@ public:
         size_t nmargin = 5,
         double tol = 1e-5,
         size_t niter_tol = 20,
-        size_t max_iter = 1000000);
+        size_t max_iter = 10000000);
 
     /**
     Get the displacement field that corresponds to an affine simple shear of a certain strain.
