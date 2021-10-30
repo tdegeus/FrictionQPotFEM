@@ -773,7 +773,7 @@ inline size_t System::timeStepsUntilEvent(double tol, size_t niter_tol, size_t m
 
     auto idx_n = this->plastic_CurrentIndex();
 
-    for (iiter = 1; iiter < max_iter; ++iiter) {
+    for (iiter = 1; iiter < max_iter + 1; ++iiter) {
 
         this->timeStep();
 
@@ -800,7 +800,7 @@ inline size_t System::minimise(double tol, size_t niter_tol, size_t max_iter)
     double tol2 = tol * tol;
     GooseFEM::Iterate::StopList residuals(niter_tol);
 
-    for (size_t iiter = 1; iiter < max_iter; ++iiter) {
+    for (size_t iiter = 1; iiter < max_iter + 1; ++iiter) {
 
         this->timeStep();
 
@@ -824,7 +824,7 @@ System::minimise_boundcheck(size_t nmargin, double tol, size_t niter_tol, size_t
     double tol2 = tol * tol;
     GooseFEM::Iterate::StopList residuals(niter_tol);
 
-    for (size_t iiter = 1; iiter < max_iter; ++iiter) {
+    for (size_t iiter = 1; iiter < max_iter + 1; ++iiter) {
 
         this->timeStep();
 
