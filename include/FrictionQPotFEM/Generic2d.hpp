@@ -812,6 +812,7 @@ inline size_t System::minimise(double tol, size_t niter_tol, size_t max_iter)
         }
     }
 
+    std::cout << "residuals = " << xt::adapt(residuals.get()) << std::endl;
     bool converged = false;
     FRICTIONQPOTFEM_REQUIRE(converged == true);
     return 0; // irrelevant, the code never goes here
@@ -840,6 +841,7 @@ System::minimise_boundcheck(size_t nmargin, double tol, size_t niter_tol, size_t
         }
     }
 
+    std::cout << "residuals = " << xt::adapt(residuals.get()) << std::endl;
     bool converged = false;
     FRICTIONQPOTFEM_REQUIRE(converged == true);
     return 0; // irrelevant, the code never goes here
