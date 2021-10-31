@@ -589,8 +589,12 @@ inline auto System::eventDriven_deltaU() const
     return m_pert_u;
 }
 
-inline double
-System::eventDrivenStep(double deps_kick, bool kick, int direction, bool yield_element)
+inline double System::eventDrivenStep(
+    double deps_kick,
+    bool kick,
+    int direction,
+    bool yield_element,
+    bool fallback)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_pert_u, m_u.shape()));
     FRICTIONQPOTFEM_ASSERT(direction == 1 || direction == -1);
@@ -649,11 +653,27 @@ System::eventDrivenStep(double deps_kick, bool kick, int direction, bool yield_e
 
     double c = scale(e, q);
 
+    if ((direction > 0 && c < 0) || (direction < 0 && c > 0)) {
+        if (!kick && fallback) {
+            c = -c;
+        }
+        else {
+            FRICTIONQPOTFEM_REQUIRE((direction > 0 && c > 0) || (direction < 0 && c < 0));
+        }
+    }
+
     this->setU(m_u + c * m_pert_u);
 
     auto idx_new = this->plastic_CurrentIndex();
     auto eps_new = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps())(e, q);
     auto eps_target = target(e, q);
+
+    if (fallback) {
+        if (!kick && xt::any(xt::not_equal(idx, idx_new))) {
+            this->setU(m_u - c * m_pert_u);
+            return 0.0;
+        }
+    }
 
     FRICTIONQPOTFEM_REQUIRE(xt::allclose(eps_new, eps_target));
     FRICTIONQPOTFEM_REQUIRE(kick || xt::all(xt::equal(idx, idx_new)));

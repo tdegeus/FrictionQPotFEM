@@ -126,8 +126,12 @@ public:
     template <class T, class U, class W>
     double initEventDriven(double xdrive, const T& active, const U& delta_u, const W& delta_ubar);
 
-    double eventDrivenStep(double deps, bool kick, int direction = +1, bool yield_element = false)
-        override;
+    double eventDrivenStep(
+        double deps,
+        bool kick,
+        int direction = +1,
+        bool yield_element = false,
+        bool fallback = false) override;
 
     /**
     Get target 'position' of the spring pulling the lever perturbation used for event driven code.
