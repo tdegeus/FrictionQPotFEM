@@ -654,8 +654,8 @@ inline double System::eventDrivenStep(
     double c = scale(e, q);
 
     if ((direction > 0 && c < 0) || (direction < 0 && c > 0)) {
-        if (!kick && fallback) {
-            c = -c;
+        if (!kick) {
+            return 0.0;
         }
         else {
             FRICTIONQPOTFEM_REQUIRE((direction > 0 && c > 0) || (direction < 0 && c < 0));

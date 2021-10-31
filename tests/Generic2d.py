@@ -131,12 +131,14 @@ class test_Generic2d(unittest.TestCase):
         kicks = np.zeros(50, dtype=bool)
         kicks[1::2] = True
 
-        for kick in kicks:
+        for inc, kick in enumerate(kicks):
             idx_n = system.plastic_CurrentIndex().astype(int)
             system.eventDrivenStep(deps, kick)
             idx = system.plastic_CurrentIndex().astype(int)
 
-            if kick:
+            if kick and inc == 0:
+                self.assertTrue(np.sum(idx - idx_n) > 1)
+            elif kick:
                 self.assertTrue(np.sum(idx - idx_n) == 4)
             else:
                 self.assertTrue(np.all(idx == idx_n))
