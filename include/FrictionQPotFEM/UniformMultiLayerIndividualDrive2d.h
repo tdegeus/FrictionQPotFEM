@@ -155,8 +155,12 @@ public:
     */
     xt::xtensor<bool, 2> eventDriven_targetActive() const;
 
-    double eventDrivenStep(double deps, bool kick, int direction = +1, bool yield_element = false)
-        override;
+    double eventDrivenStep(
+        double deps,
+        bool kick,
+        int direction = +1,
+        bool yield_element = false,
+        bool fallback = false) override;
 
     /**
     Turn on (or off) springs connecting
