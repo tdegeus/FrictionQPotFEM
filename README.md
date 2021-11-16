@@ -137,6 +137,11 @@ python -m pip install . -vv
 
 # Change-log
 
+## v0.17.0
+
+*   [BREAKING CHANGE] eventDriven: adding iterative search (replaces "fallback" that is immediately deprecated) (#129)
+*   Fixing GH pages (#129)
+
 ## v0.16.6
 
 *   initEventDriven: Removing assertion that makes no sense (c depends on the realization)
