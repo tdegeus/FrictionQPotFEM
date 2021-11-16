@@ -230,7 +230,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("kick"),
                 py::arg("direction") = +1,
                 py::arg("yield_element") = false,
-                py::arg("fallback") = false);
+                py::arg("iterative") = false);
 
             cls.def("timeStep", &SUB::System::timeStep, "timeStep");
             cls.def("timeSteps", &SUB::System::timeSteps, "timeSteps", py::arg("n"));
