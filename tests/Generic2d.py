@@ -132,31 +132,46 @@ class test_Generic2d(unittest.TestCase):
         kicks[1::2] = True
 
         for inc, kick in enumerate(kicks):
-            idx_n = system.plastic_CurrentIndex().astype(int)
-            system.eventDrivenStep(deps, kick)
-            idx = system.plastic_CurrentIndex().astype(int)
+            idx_n = system.plastic_CurrentIndex()
+            u_n = system.u()
 
-            if kick and inc == 0:
-                self.assertTrue(np.sum(idx - idx_n) > 1)
-            elif kick:
-                self.assertTrue(np.sum(idx - idx_n) == 4)
+            system.eventDrivenStep(deps, kick, iterative=True)
+            idx = system.plastic_CurrentIndex()
+            if kick:
+                self.assertTrue(not np.all(idx == idx_n))
+            else:
+                self.assertTrue(np.all(idx == idx_n))
+
+            system.setU(u_n)
+            system.eventDrivenStep(deps, kick)
+            idx = system.plastic_CurrentIndex()
+            if kick:
+                self.assertTrue(not np.all(idx == idx_n))
             else:
                 self.assertTrue(np.all(idx == idx_n))
 
         for kick in kicks:
-            idx_n = system.plastic_CurrentIndex().astype(int)
+            idx_n = system.plastic_CurrentIndex()
+            u_n = system.u()
+
+            system.setU(u_n)
+            system.eventDrivenStep(deps, kick, -1, iterative=True)
+            idx = system.plastic_CurrentIndex()
+            if kick:
+                self.assertTrue(not np.all(idx == idx_n))
+            else:
+                self.assertTrue(np.all(idx == idx_n))
 
             if np.any(idx_n == 0):
                 with self.assertRaises(IndexError):
                     system.eventDrivenStep(deps, kick, -1)
                 break
 
+            system.setU(u_n)
             system.eventDrivenStep(deps, kick, -1)
-
-            idx = system.plastic_CurrentIndex().astype(int)
-
+            idx = system.plastic_CurrentIndex()
             if kick:
-                self.assertTrue(np.sum(idx - idx_n) == -4)
+                self.assertTrue(not np.all(idx == idx_n))
             else:
                 self.assertTrue(np.all(idx == idx_n))
 

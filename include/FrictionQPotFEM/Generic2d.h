@@ -499,11 +499,10 @@ public:
         but of that element the displacement update is the maximum of the element, such that all
         integration points of the element are forced to yield.
 
-    \param fallback
-        If `true` an elastic step (`kick = false`) is skipped if the outcome of applying the
-        perturbation is too ambiguous. This can happen if the perturbation is not analytical.
-        This way the next step, where `kick = true`, changes the state slightly to ensure the
-        integrity of the event driven protocol.
+    \param iterative
+        If `true` the step is iteratively searched.
+        This is more costly by recommended, if the perturbation is non-analytical
+        (and contains numerical errors).
 
     \return
         Factor with which the displacement perturbation, see eventDriven_deltaU(), is scaled.
@@ -513,7 +512,7 @@ public:
         bool kick,
         int direction = 1,
         bool yield_element = false,
-        bool fallback = false);
+        bool iterative = false);
 
     /**
     Make a time-step: apply velocity-Verlet integration.

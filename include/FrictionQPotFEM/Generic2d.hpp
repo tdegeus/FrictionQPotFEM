@@ -594,7 +594,7 @@ inline double System::eventDrivenStep(
     bool kick,
     int direction,
     bool yield_element,
-    bool fallback)
+    bool iterative)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_pert_u, m_u.shape()));
     FRICTIONQPOTFEM_ASSERT(direction == 1 || direction == -1);
@@ -604,7 +604,7 @@ inline double System::eventDrivenStep(
     auto epsy_l = this->plastic_CurrentYieldLeft();
     auto epsy_r = this->plastic_CurrentYieldRight();
 
-    FRICTIONQPOTFEM_WIP(direction > 0 || !xt::any(xt::equal(idx, 0)));
+    FRICTIONQPOTFEM_WIP(iterative || direction > 0 || !xt::any(xt::equal(idx, 0)));
 
     xt::xtensor<double, 2> target;
 
@@ -643,43 +643,166 @@ inline double System::eventDrivenStep(
         }
     }
 
-    auto index = xt::unravel_index(xt::argmin(xt::abs(scale))(), scale.shape());
-    size_t e = index[0];
-    size_t q = index[1];
+    double ret;
+    size_t e;
+    size_t q;
 
-    if (kick && yield_element) {
-        q = xt::argmax(xt::view(xt::abs(scale), e, xt::all()))();
+    if (!iterative) {
+
+        auto index = xt::unravel_index(xt::argmin(xt::abs(scale))(), scale.shape());
+        e = index[0];
+        q = index[1];
+
+        if (kick && yield_element) {
+            q = xt::argmax(xt::view(xt::abs(scale), e, xt::all()))();
+        }
+
+        ret = scale(e, q);
+
+        if ((direction > 0 && ret < 0) || (direction < 0 && ret > 0)) {
+            if (!kick) {
+                return 0.0;
+            }
+            else {
+                FRICTIONQPOTFEM_REQUIRE((direction > 0 && ret > 0) || (direction < 0 && ret < 0));
+            }
+        }
     }
 
-    double c = scale(e, q);
+    else {
 
-    if ((direction > 0 && c < 0) || (direction < 0 && c > 0)) {
+        double dir = static_cast<double>(direction);
+        auto steps = xt::sort(xt::ravel(xt::eval(xt::abs(scale))));
+        auto u_n = this->u();
+        auto jdx = xt::cast<long>(this->plastic_CurrentIndex());
+        size_t i;
+        long nip = static_cast<long>(m_nip);
+
+        // find first step that:
+        // if (!kick || (kick && !yield_element)): is plastic for the first time
+        // if (kick && yield_element): yields the element for the first time
+
+        for (i = 0; i < steps.size(); ++i) {
+            this->setU(u_n + dir * steps(i) * m_pert_u);
+            auto jdx_new = xt::cast<long>(this->plastic_CurrentIndex());
+            auto S = xt::abs(jdx_new - jdx);
+            if (!yield_element || !kick) {
+                if (xt::any(S > 0)) {
+                    break;
+                }
+            }
+            else {
+                if (xt::any(xt::equal(xt::sum(S > 0, 1), nip))) {
+                    break;
+                }
+            }
+        }
+
+        // iterate to acceptable step
+
+        double right = steps(i);
+        double left = 0.0;
+        ret = right;
+
+        if (i > 0) {
+            left = steps(i - 1);
+        }
+
+        // iterate to actual step
+
+        for (size_t iiter = 0; iiter < 1100; ++iiter) {
+
+            ret = 0.5 * (right + left);
+            this->setU(u_n + dir * ret * m_pert_u);
+            auto jdx_new = xt::cast<long>(this->plastic_CurrentIndex());
+            auto S = xt::abs(jdx_new - jdx);
+
+            if (!kick) {
+                if (xt::any(S > 0)) {
+                    right = ret;
+                }
+                else {
+                    left = ret;
+                }
+            }
+            else if (yield_element) {
+                if (xt::any(xt::equal(xt::sum(S > 0, 1), nip))) {
+                    right = ret;
+                }
+                else {
+                    left = ret;
+                }
+            }
+            else {
+                if (xt::any(S > 0)) {
+                    right = ret;
+                }
+                else {
+                    left = ret;
+                }
+            }
+
+            if ((right - left) / left < 1e-5) {
+                break;
+            }
+            FRICTIONQPOTFEM_REQUIRE(iiter < 1000);
+        }
+
+        // final assertion: make sure that "left" and "right" are still bounds
+
+        {
+            this->setU(u_n + dir * left * m_pert_u);
+            auto jdx_new = xt::cast<long>(this->plastic_CurrentIndex());
+            auto S = xt::abs(jdx_new - jdx);
+
+            FRICTIONQPOTFEM_REQUIRE(kick || xt::all(xt::equal(S, 0)));
+            if (kick && yield_element) {
+                FRICTIONQPOTFEM_REQUIRE(!xt::any(xt::equal(xt::sum(S > 0, 1), nip)));
+            }
+            else if (kick) {
+                FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(S, 0)));
+            }
+        }
+        {
+            this->setU(u_n + dir * right * m_pert_u);
+            auto jdx_new = xt::cast<long>(this->plastic_CurrentIndex());
+            auto S = xt::abs(jdx_new - jdx);
+            FRICTIONQPOTFEM_REQUIRE(!xt::all(xt::equal(S, 0)));
+
+            FRICTIONQPOTFEM_REQUIRE(kick || !xt::all(xt::equal(S, 0)));
+            if (kick && yield_element) {
+                FRICTIONQPOTFEM_REQUIRE(xt::any(xt::equal(xt::sum(S > 0, 1), nip)));
+            }
+            else if (kick) {
+                FRICTIONQPOTFEM_REQUIRE(xt::any(S > 0));
+            }
+        }
+
+        // "output"
+
         if (!kick) {
-            return 0.0;
+            ret = dir * left;
         }
         else {
-            FRICTIONQPOTFEM_REQUIRE((direction > 0 && c > 0) || (direction < 0 && c < 0));
+            ret = dir * right;
         }
+        this->setU(u_n);
+        FRICTIONQPOTFEM_REQUIRE((direction > 0 && ret >= 0) || (direction < 0 && ret <= 0));
     }
 
-    this->setU(m_u + c * m_pert_u);
+    this->setU(m_u + ret * m_pert_u);
 
     auto idx_new = this->plastic_CurrentIndex();
-    auto eps_new = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps())(e, q);
-    auto eps_target = target(e, q);
-
-    if (fallback) {
-        if (!kick && xt::any(xt::not_equal(idx, idx_new))) {
-            this->setU(m_u - c * m_pert_u);
-            return 0.0;
-        }
-    }
-
-    FRICTIONQPOTFEM_REQUIRE(xt::allclose(eps_new, eps_target));
     FRICTIONQPOTFEM_REQUIRE(kick || xt::all(xt::equal(idx, idx_new)));
     FRICTIONQPOTFEM_REQUIRE(!kick || xt::any(xt::not_equal(idx, idx_new)));
 
-    return c;
+    if (!iterative) {
+        auto eps_new = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps())(e, q);
+        auto eps_target = target(e, q);
+        FRICTIONQPOTFEM_REQUIRE(xt::allclose(eps_new, eps_target));
+    }
+
+    return ret;
 }
 
 inline void System::timeStep()
