@@ -608,14 +608,35 @@ public:
     \copydoc System::minimise(double, size_t, size_t)
 
     This function stops if the yield-index in any of the plastic elements is close the end.
-    In that case the function returns zero, in all other cases the function returns a
-    positive number.
+    In that case the function returns zero (in all other cases it returns a positive number).
 
     \param nmargin
         Number of potentials to leave as margin.
     */
     size_t minimise_boundcheck(
         size_t nmargin = 5,
+        double tol = 1e-5,
+        size_t niter_tol = 20,
+        size_t max_iter = 10000000);
+
+    /**
+    \copydoc System::minimise(double, size_t, size_t)
+
+    This function stops when a certain number of blocks has yielded at least once.
+    In that case the function returns zero (in all other cases it returns a positive number).
+
+    \note ``A_truncate`` and ``S_truncate`` are defined on the first integration point.
+
+    \param A_truncate
+        Truncate if ``A_truncate`` blocks have yielded at least once.
+
+    \param S_truncate
+        Truncate if the number of times blocks yielded is equal to ``S_truncate``.
+        **Warning** This option is reserved for future use, but for the moment does nothing.
+    */
+    size_t minimise_truncate(
+        size_t A_truncate = 0,
+        size_t S_truncate = 0,
         double tol = 1e-5,
         size_t niter_tol = 20,
         size_t max_iter = 10000000);
