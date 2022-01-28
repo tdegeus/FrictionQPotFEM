@@ -283,6 +283,16 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("max_iter") = 10000000);
 
             cls.def(
+                "minimise_truncate",
+                &SUB::System::minimise_truncate,
+                "minimise_truncate",
+                py::arg("A_truncate") = 0,
+                py::arg("S_truncate") = 0,
+                py::arg("tol") = 1e-5,
+                py::arg("niter_tol") = 20,
+                py::arg("max_iter") = 10000000);
+
+            cls.def(
                 "affineSimpleShear",
                 &SUB::System::affineSimpleShear,
                 "affineSimpleShear",
