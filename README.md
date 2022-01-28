@@ -137,6 +137,10 @@ python -m pip install . -vv
 
 # Change-log
 
+## v0.17.1
+
+*   Adding function to truncate minimization at a certain A (#130)
+
 ## v0.17.0
 
 *   [BREAKING CHANGE] eventDriven: adding iterative search (replaces "fallback" that is immediately deprecated) (#129)
