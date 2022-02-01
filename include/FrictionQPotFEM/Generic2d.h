@@ -644,9 +644,9 @@ public:
     /**
     \copydoc System::minimise_truncate(size_t, size_t, double, size_t, size_t)
 
-    This overload can be used to specify a reference state to measure the number of times
-    blocks yielded.
-    This can be useful when manually triggering.
+    This overload can be used to specify a reference state when manually triggering.
+    If triggering is done before calling this function, already one block yielded,
+    making `A_truncate` and `S_truncate` inaccurate.
 
     \param idx_n Reference potential index of the first integration point.
     */
