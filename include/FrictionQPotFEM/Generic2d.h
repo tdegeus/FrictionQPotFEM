@@ -642,6 +642,24 @@ public:
         size_t max_iter = 10000000);
 
     /**
+    \copydoc System::minimise_truncate(size_t, size_t, double, size_t, size_t)
+
+    This overload can be used to specify a reference state when manually triggering.
+    If triggering is done before calling this function, already one block yielded,
+    making `A_truncate` and `S_truncate` inaccurate.
+
+    \param idx_n Reference potential index of the first integration point.
+    */
+    template <class T>
+    size_t minimise_truncate(
+        const T& idx_n,
+        size_t A_truncate = 0,
+        size_t S_truncate = 0,
+        double tol = 1e-5,
+        size_t niter_tol = 20,
+        size_t max_iter = 10000000);
+
+    /**
     Get the displacement field that corresponds to an affine simple shear of a certain strain.
     The displacement of the bottom boundary is zero, while it is maximal for the top boundary.
 

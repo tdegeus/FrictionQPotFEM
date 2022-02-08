@@ -988,20 +988,21 @@ System::minimise_boundcheck(size_t nmargin, double tol, size_t niter_tol, size_t
     return 0; // irrelevant, the code never goes here
 }
 
+template <class T>
 inline size_t System::minimise_truncate(
+    const T& idx_n,
     size_t A_truncate,
     size_t S_truncate,
     double tol,
     size_t niter_tol,
     size_t max_iter)
 {
+    FRICTIONQPOTFEM_REQUIRE(xt::has_shape(idx_n, std::array<size_t, 1>{m_N}));
     FRICTIONQPOTFEM_REQUIRE(S_truncate == 0);
     FRICTIONQPOTFEM_REQUIRE(A_truncate > 0);
     FRICTIONQPOTFEM_REQUIRE(tol < 1.0);
     double tol2 = tol * tol;
     GooseFEM::Iterate::StopList residuals(niter_tol);
-
-    xt::xtensor<size_t, 1> idx_n = xt::view(this->plastic_CurrentIndex(), xt::all(), 0);
 
     for (size_t iiter = 1; iiter < max_iter + 1; ++iiter) {
 
@@ -1023,6 +1024,17 @@ inline size_t System::minimise_truncate(
     bool converged = false;
     FRICTIONQPOTFEM_REQUIRE(converged == true);
     return 0; // irrelevant, the code never goes here
+}
+
+inline size_t System::minimise_truncate(
+    size_t A_truncate,
+    size_t S_truncate,
+    double tol,
+    size_t niter_tol,
+    size_t max_iter)
+{
+    xt::xtensor<size_t, 1> idx_n = xt::view(this->plastic_CurrentIndex(), xt::all(), 0);
+    return this->minimise_truncate(idx_n, A_truncate, S_truncate, tol, niter_tol, max_iter);
 }
 
 inline xt::xtensor<double, 2> System::affineSimpleShear(double delta_gamma) const
