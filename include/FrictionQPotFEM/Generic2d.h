@@ -528,14 +528,29 @@ public:
     void timeSteps(size_t n);
 
     /**
+    Make a number of time steps.
+
+    \param n Number of steps to make.
+    \param tol Relative force tolerance for equilibrium. See System::residual for definition.
+    \param niter_tol Enforce the residual check for ``niter_tol`` consecutive increments.
+
+    \return
+        -   *Number of iterations*:
+            If stopped by a plastic event or the maximum number of iterations.
+        -   `0`:
+            If stopped when the residual is reached
+            (so no plastic event occurred and the number of iterations was lower than the maximum).
+    */
+    size_t timeSteps_residualcheck(size_t n, double tol = 1e-5, size_t niter_tol = 20);
+
+    /**
     \copydoc timeSteps(size_t)
 
     This function stops if the yield-index in any of the plastic elements is close the end.
     In that case the function returns zero, in all other cases the function returns a
     positive number.
 
-    \param nmargin
-        Number of potentials to leave as margin.
+    \param nmargin Number of potentials to leave as margin.
     */
     size_t timeSteps_boundcheck(size_t n, size_t nmargin = 5);
 
@@ -569,14 +584,9 @@ public:
     -   equilibrium, or
     -   the maximum number of iterations.
 
-    \param tol
-        Relative force tolerance for equilibrium. See System::residual for definition.
-
-    \param niter_tol
-        Enforce the residual check for ``niter_tol`` consecutive increments.
-
-    \param max_iter
-        Maximum number of iterations.
+    \param tol Relative force tolerance for equilibrium. See System::residual for definition.
+    \param niter_tol Enforce the residual check for ``niter_tol`` consecutive increments.
+    \param max_iter Maximum number of iterations.
 
     \return
         -   *Number of iterations*:
@@ -591,14 +601,9 @@ public:
     /**
     Minimise energy: run System::timeStep until a mechanical equilibrium has been reached.
 
-    \param tol
-        Relative force tolerance for equilibrium. See System::residual for definition.
-
-    \param niter_tol
-        Enforce the residual check for ``niter_tol`` consecutive increments.
-
-    \param max_iter
-        Maximum number of iterations. Throws ``std::runtime_error`` otherwise.
+    \param tol Relative force tolerance for equilibrium. See System::residual for definition.
+    \param niter_tol Enforce the residual check for ``niter_tol`` consecutive increments.
+    \param max_iter Maximum number of iterations. Throws ``std::runtime_error`` otherwise.
 
     \return The number of iterations.
     */
