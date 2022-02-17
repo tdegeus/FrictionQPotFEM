@@ -858,6 +858,27 @@ inline void System::timeSteps(size_t n)
     }
 }
 
+inline size_t System::timeSteps_residualcheck(size_t n, double tol, size_t niter_tol)
+{
+    FRICTIONQPOTFEM_REQUIRE(tol < 1.0);
+    double tol2 = tol * tol;
+    GooseFEM::Iterate::StopList residuals(niter_tol);
+
+    for (size_t i = 0; i < n; ++i) {
+
+        this->timeStep();
+
+        residuals.roll_insert(this->residual());
+
+        if ((residuals.descending() && residuals.all_less(tol)) || residuals.all_less(tol2)) {
+            this->quench();
+            return 0;
+        }
+    }
+
+    return n;
+}
+
 inline size_t System::timeSteps_boundcheck(size_t n, size_t nmargin)
 {
     if (!this->boundcheck_right(nmargin)) {
