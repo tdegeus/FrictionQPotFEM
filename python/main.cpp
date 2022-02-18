@@ -43,7 +43,7 @@ private:
 PYBIND11_MODULE(_FrictionQPotFEM, mod)
 {
     // Ensure members to display as `FrictionQPotFEM.X` (not `FrictionQPotFEM._FrictionQPotFEM.X`)
-    ScopedModuleNameOverride name_override(m, "FrictionQPotFEM");
+    ScopedModuleNameOverride name_override(mod, "FrictionQPotFEM");
 
     xt::import_numpy();
 
