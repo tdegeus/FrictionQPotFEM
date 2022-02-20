@@ -88,7 +88,7 @@ public:
 protected:
     xt::xtensor<double, 4> m_Epsdot_plas; ///< Integration point tensor: strain-rate for plastic el.
     double m_eta = 0.0; ///< Damping at the interface
-    xt::xtensor<double, 2> m_visco; ///< Nodal force, deriving from damping at the interface
+    xt::xtensor<double, 2> m_fvisco; ///< Nodal force, deriving from damping at the interface
     bool m_set_visco = false; ///< Internal allocation check: interfacial damping specified.
 };
 
