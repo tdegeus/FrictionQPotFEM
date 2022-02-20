@@ -274,7 +274,7 @@ public:
     Note: the external force on the DOFs whose displacement are prescribed are response forces
     computed during timeStep().
 
-    \return Nodal force. Shape ``[nnode, ndim]``    .
+    \return Nodal force. Shape ``[nnode, ndim]``.
     */
     auto fext() const;
 
@@ -282,21 +282,21 @@ public:
     Internal force.
     Note: computed during timeStep().
 
-    \return Nodal force. Shape ``[nnode, ndim]``    .
+    \return Nodal force. Shape ``[nnode, ndim]``.
     */
     auto fint() const;
 
     /**
     Force deriving from elasticity.
 
-    \return Nodal force. Shape ``[nnode, ndim]``    .
+    \return Nodal force. Shape ``[nnode, ndim]``.
     */
     auto fmaterial() const;
 
     /**
     Force deriving from damping.
 
-    \return Nodal force. Shape ``[nnode, ndim]``    .
+    \return Nodal force. Shape ``[nnode, ndim]``.
     */
     auto fdamp() const;
 
@@ -774,7 +774,7 @@ protected:
     /**
     Set m_allset = ``true`` if all prerequisites are satisfied.
     */
-    void evalAllSet();
+    virtual void evalAllSet();
 
     /**
     Compute strain and stress tensors.

@@ -587,6 +587,59 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
         }
     }
 
+    // -----------------------------------------------------
+    // FrictionQPotFEM.UniformSingleLayer2d_InterfaceDamping
+    // -----------------------------------------------------
+
+    {
+
+        py::module sub = mod.def_submodule("UniformSingleLayer2d_InterfaceDamping", "UniformSingleLayer2d_InterfaceDamping");
+
+        namespace SUB = FrictionQPotFEM::UniformSingleLayer2d_InterfaceDamping;
+
+        sub.def(
+            "version_dependencies",
+            &SUB::version_dependencies,
+            "Return version information of library and its dependencies.");
+
+        {
+
+            py::class_<SUB::System, FrictionQPotFEM::UniformSingleLayer2d::System> cls(sub, "System");
+
+            cls.def(
+                py::init<
+                    const xt::pytensor<double, 2>&,
+                    const xt::pytensor<size_t, 2>&,
+                    const xt::pytensor<size_t, 2>&,
+                    const xt::pytensor<size_t, 1>&,
+                    const xt::pytensor<size_t, 1>&,
+                    const xt::pytensor<size_t, 1>&>(),
+                "System",
+                py::arg("coor"),
+                py::arg("conn"),
+                py::arg("dofs"),
+                py::arg("iip"),
+                py::arg("elem_elastic"),
+                py::arg("elem_plastic"));
+
+            cls.def(
+                "setEta",
+                &SUB::System::setEta,
+                "setEta",
+                py::arg("eta"));
+
+            cls.def(
+                "fvisco",
+                &SUB::System::fvisco,
+                "fvisco");
+
+            cls.def("__repr__", [](const SUB::System&) {
+                return "<FrictionQPotFEM.UniformSingleLayer2d_InterfaceDamping.System>";
+            });
+        }
+
+    }
+
     // --------------------------------------------------
     // FrictionQPotFEM.UniformMultiLayerIndividualDrive2d
     // --------------------------------------------------
