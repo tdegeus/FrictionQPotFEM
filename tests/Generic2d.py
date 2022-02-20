@@ -1,6 +1,7 @@
 import unittest
 
 import FrictionQPotFEM
+import GMatElastoPlasticQPot  # noqa: F401
 import GMatElastoPlasticQPot.Cartesian2d as GMat
 import GooseFEM
 import numpy as np
