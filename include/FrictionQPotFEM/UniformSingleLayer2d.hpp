@@ -164,6 +164,11 @@ inline double System::addSimpleShearToFixedStress(double target_stress, bool dry
 
     double eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)();
     double sig = GMatElastoPlasticQPot::Cartesian2d::Sigd(Sigbar)();
+
+    if (std::abs(target_stress - sig) / sig < 1e-4) {
+        return 0.0;
+    }
+
     double direction = +1.0;
     if (target_stress < sig) {
         direction = -1.0;
