@@ -528,18 +528,16 @@ public:
     void timeSteps(size_t n);
 
     /**
-    Make a number of time steps.
+    Make a number of time steps (or stop early if mechanical equilibrium was reached).
 
-    \param n Number of steps to make.
+    \param n (Maximum) Number of steps to make.
     \param tol Relative force tolerance for equilibrium. See System::residual for definition.
     \param niter_tol Enforce the residual check for ``niter_tol`` consecutive increments.
 
     \return
-        -   *Number of iterations*:
-            If stopped by a plastic event or the maximum number of iterations.
-        -   `0`:
-            If stopped when the residual is reached
-            (so no plastic event occurred and the number of iterations was lower than the maximum).
+        -   Number of iterations: `== n`
+        -   `0`: if stopped when the residual is reached
+            (and the number of iterations was ``< n``).
     */
     size_t timeSteps_residualcheck(size_t n, double tol = 1e-5, size_t niter_tol = 20);
 
@@ -582,7 +580,7 @@ public:
     Perform a series of time-steps until:
     -   the next plastic event,
     -   equilibrium, or
-    -   the maximum number of iterations.
+    -   a maximum number of iterations.
 
     \param tol Relative force tolerance for equilibrium. See System::residual for definition.
     \param niter_tol Enforce the residual check for ``niter_tol`` consecutive increments.
