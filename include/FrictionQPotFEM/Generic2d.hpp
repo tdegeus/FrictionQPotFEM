@@ -1036,7 +1036,7 @@ inline size_t System::minimise_truncate(
         }
 
         xt::xtensor<size_t, 1> idx = xt::view(this->plastic_CurrentIndex(), xt::all(), 0);
-        if (xt::sum(xt::not_equal(idx_n, idx))() >= A_truncate) {
+        if (static_cast<size_t>(xt::sum(xt::not_equal(idx_n, idx))()) >= A_truncate) {
             return 0;
         }
     }
