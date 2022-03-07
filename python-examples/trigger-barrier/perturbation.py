@@ -133,18 +133,18 @@ def ComputePerturbation(sigma_star_test):
 def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N=100):
 
     # solve for "p = 0"
-    a = dgamma ** 2
+    a = dgamma**2
     b = 2 * gamma * dgamma
-    c = gamma ** 2 + E ** 2 - epsy ** 2
-    D = b ** 2 - 4 * a * c
+    c = gamma**2 + E**2 - epsy**2
+    D = b**2 - 4 * a * c
     smax = (-b + np.sqrt(D)) / (2.0 * a)
     smin = (-b - np.sqrt(D)) / (2.0 * a)
 
     # solve for "s = 0"
-    a = dE ** 2
+    a = dE**2
     b = 2 * E * dE
-    c = E ** 2 + gamma ** 2 - epsy ** 2
-    D = b ** 2 - 4 * a * c
+    c = E**2 + gamma**2 - epsy**2
+    D = b**2 - 4 * a * c
     pmax = (-b + np.sqrt(D)) / (2.0 * a)
     pmin = (-b - np.sqrt(D)) / (2.0 * a)
 
@@ -163,10 +163,10 @@ def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N=100):
     for i, s in enumerate(S[0, :-1]):
         if i in [0, n - 1]:
             continue
-        a = dE ** 2
+        a = dE**2
         b = 2 * E * dE
-        c = E ** 2 + (gamma + s * dgamma) ** 2 - epsy ** 2
-        D = b ** 2 - 4 * a * c
+        c = E**2 + (gamma + s * dgamma) ** 2 - epsy**2
+        D = b**2 - 4 * a * c
         P[0, i] = (-b + np.sqrt(D)) / (2.0 * a)
         P[1, i] = (-b - np.sqrt(D)) / (2.0 * a)
 
