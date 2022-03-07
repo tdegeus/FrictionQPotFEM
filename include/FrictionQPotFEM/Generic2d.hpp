@@ -119,7 +119,7 @@ inline void System::initSystem(
     m_fint = m_vector.allocate_nodevec(0.0);
     m_fext = m_vector.allocate_nodevec(0.0);
     m_fres = m_vector.allocate_nodevec(0.0);
-    m_tmp = m_vector.allocate_nodevec(0.0);
+    m_ftmp = m_vector.allocate_nodevec(0.0);
 
     m_Eps = m_quad.allocate_qtensor<2>(0.0);
     m_Sig = m_quad.allocate_qtensor<2>(0.0);
