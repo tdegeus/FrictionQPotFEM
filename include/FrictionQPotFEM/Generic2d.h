@@ -742,7 +742,6 @@ protected:
     xt::xtensor<double, 2> m_fres; ///< Nodal force: residual force.
     xt::xtensor<double, 4> m_Eps; ///< Integration point tensor: strain.
     xt::xtensor<double, 4> m_Sig; ///< Integration point tensor: stress.
-    xt::xtensor<double, 4> m_Epsdot_plas; ///< Integration point tensor: strain-rate for plastic el.
     GooseFEM::MatrixPartitioned m_K; ///< Stiffness matrix.
     GooseFEM::MatrixPartitionedSolver<> m_solve; ///< Solver to solve ``m_K \ m_fres``
     double m_t = 0.0; ///< Current time.
@@ -960,6 +959,7 @@ protected:
     xt::xtensor<double, 4> m_Eps_plas; ///< Integration point tensor: strain for plastic elements.
     xt::xtensor<double, 4> m_Sig_elas; ///< Integration point tensor: stress for elastic elements.
     xt::xtensor<double, 4> m_Sig_plas; ///< Integration point tensor: stress for plastic elements.
+    xt::xtensor<double, 4> m_Epsdot_plas; ///< Integration point tensor: strain-rate for plastic el.
     GooseFEM::Matrix m_K_elas; ///< Stiffness matrix for elastic elements.
     bool m_eval_full = true; ///< Keep track of the need to recompute full variables.
 
