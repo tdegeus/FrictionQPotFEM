@@ -116,6 +116,7 @@ inline void System::initSystem(
 
     m_fmaterial = m_vector.allocate_nodevec(0.0);
     m_fdamp = m_vector.allocate_nodevec(0.0);
+    m_fvisco = m_vector.allocate_nodevec(0.0);
     m_fint = m_vector.allocate_nodevec(0.0);
     m_fext = m_vector.allocate_nodevec(0.0);
     m_fres = m_vector.allocate_nodevec(0.0);
@@ -123,10 +124,6 @@ inline void System::initSystem(
 
     m_Eps = m_quad.allocate_qtensor<2>(0.0);
     m_Sig = m_quad.allocate_qtensor<2>(0.0);
-
-    auto shape = m_Eps.shape();
-    shape[0] = m_nelem_plas;
-    m_Epsdot_plas = xt::zeros<double>(shape);
 
     m_M = GooseFEM::MatrixDiagonalPartitioned(m_conn, m_dofs, m_iip);
     m_D = GooseFEM::MatrixDiagonal(m_conn, m_dofs);
@@ -335,22 +332,9 @@ inline void System::setV(const T& v)
 
 inline void System::updated_v()
 {
+    FRICTIONQPOTFEM_ASSERT(!m_set_visco);
     if (m_set_D) {
         m_D.dot(m_v, m_fdamp);
-    }
-
-    // m_ue_plas, m_fe_plas, m_ftmp are temporaries that can be reused
-    if (m_set_visco) {
-        m_vector_plas.asElement(m_v, m_ue_plas);
-        m_quad_plas.symGradN_vector(m_ue_plas, m_Epsdot_plas);
-        m_quad_plas.int_gradN_dot_tensor2_dV(xt::eval(m_Epsdot_plas * m_eta), m_fe_plas);
-        if (!m_set_D) {
-            m_vector_plas.assembleNode(m_fe_plas, m_fdamp);
-        }
-        else {
-            m_vector_plas.assembleNode(m_fe_plas, m_ftmp);
-            m_fdamp += m_ftmp;
-        }
     }
 }
 
@@ -1152,7 +1136,7 @@ inline void HybridSystem::initHybridSystem(
     m_Sig_elas = m_quad_elas.allocate_qtensor<2>(0.0);
     m_Eps_plas = m_quad_plas.allocate_qtensor<2>(0.0);
     m_Sig_plas = m_quad_plas.allocate_qtensor<2>(0.0);
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_Epsdot_plas, m_Eps_plas.shape()));
+    m_Epsdot_plas = m_quad_plas.allocate_qtensor<2>(0.0);
 
     m_material_elas = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem_elas, m_nip});
     m_material_plas = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem_plas, m_nip});
@@ -1247,6 +1231,27 @@ inline void HybridSystem::evalSystem()
     }
     this->computeStress();
     m_eval_full = false;
+}
+
+inline void HybridSystem::updated_v()
+{
+    if (m_set_D) {
+        m_D.dot(m_v, m_fdamp);
+    }
+
+    // m_ue_plas, m_fe_plas, m_ftmp are temporaries that can be reused
+    if (m_set_visco) {
+        m_vector_plas.asElement(m_v, m_ue_plas);
+        m_quad_plas.symGradN_vector(m_ue_plas, m_Epsdot_plas);
+        m_quad_plas.int_gradN_dot_tensor2_dV(xt::eval(m_Epsdot_plas * m_eta), m_fe_plas);
+        if (!m_set_D) {
+            m_vector_plas.assembleNode(m_fe_plas, m_fdamp);
+        }
+        else {
+            m_vector_plas.assembleNode(m_fe_plas, m_ftmp);
+            m_fdamp += m_ftmp;
+        }
+    }
 }
 
 inline xt::xtensor<double, 4> HybridSystem::Sig()

@@ -734,9 +734,9 @@ protected:
     xt::xtensor<double, 3> m_ue; ///< Element vector (used for displacements).
     xt::xtensor<double, 3> m_fe; ///< Element vector (used for forces).
     xt::xtensor<double, 2> m_fmaterial; ///< Nodal force, deriving from elasticity.
-    xt::xtensor<double, 2> m_ftmp; ///< Temporary for internal use.
     xt::xtensor<double, 2> m_fdamp; ///< Nodal force, deriving from damping.
     xt::xtensor<double, 2> m_fvisco; ///< Nodal force, deriving from damping at the interface
+    xt::xtensor<double, 2> m_ftmp; ///< Temporary for internal use.
     xt::xtensor<double, 2> m_fint; ///< Nodal force: total internal force.
     xt::xtensor<double, 2> m_fext; ///< Nodal force: total external force (reaction force)
     xt::xtensor<double, 2> m_fres; ///< Nodal force: residual force.
@@ -994,6 +994,8 @@ protected:
     System::Eps just return already computed data held in memory.
     */
     void computeForceMaterial() override;
+
+    void updated_v() override;
 };
 
 } // namespace Generic2d
