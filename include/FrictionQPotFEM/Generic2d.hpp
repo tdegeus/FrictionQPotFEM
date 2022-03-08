@@ -1247,7 +1247,6 @@ inline void HybridSystem::updated_v()
         m_quad_plas.int_gradN_dot_tensor2_dV(m_Epsdot_plas, m_fe_plas);
         if (!m_set_D) {
             m_vector_plas.assembleNode(m_fe_plas, m_fdamp);
-
             m_fdamp *= m_eta;
         }
         else {
