@@ -266,12 +266,12 @@ class test_Generic2d(unittest.TestCase):
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
         nelem = mesh.nelem()
         system = FrictionQPotFEM.Generic2d.HybridSystem(
-            mesh.coor(),
-            mesh.conn(),
-            mesh.dofs(),
-            np.arange(mesh.nnode() * mesh.ndim()),
-            [0, 1, 2, 6, 7, 8],
-            [3, 4, 5],
+            coor=mesh.coor(),
+            conn=mesh.conn(),
+            dofs=mesh.dofs(),
+            iip=np.arange(mesh.nnode() * mesh.ndim()),
+            elem_elastic=[0, 1, 2, 6, 7, 8],
+            elem_plastic=[3, 4, 5],
         )
 
         system.setMassMatrix(np.ones(nelem))
@@ -297,6 +297,98 @@ class test_Generic2d(unittest.TestCase):
 
         self.assertTrue(np.allclose(system.u(), 10 * v))
         self.assertTrue(np.allclose(system.t(), 20))
+
+    def test_damping_alpha_no_eta(self):
+
+        mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
+        nelem = mesh.nelem()
+        system = FrictionQPotFEM.Generic2d.HybridSystem(
+            coor=mesh.coor(),
+            conn=mesh.conn(),
+            dofs=mesh.dofsPeriodic(),
+            iip=[],
+            elem_elastic=[0, 1, 2, 6, 7, 8],
+            elem_plastic=[3, 4, 5],
+        )
+
+        alpha = 1.2
+        system.setMassMatrix(np.ones(nelem))
+        system.setDampingMatrix(alpha * np.ones(nelem))
+        system.setElastic(np.ones(6), np.ones(6))
+        system.setPlastic(np.ones(3), np.ones(3), [[100.0], [100.0], [100.0]])
+        system.setDt(1.0)
+
+        system.setV(np.ones_like(mesh.coor()))
+        assert np.allclose(system.vector().AsDofs(system.fdamp()), alpha)
+
+    def test_damping_no_alpha_eta(self):
+
+        mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
+        coor = mesh.coor()
+        conn = mesh.conn()
+        nelem = mesh.nelem()
+        system = FrictionQPotFEM.Generic2d.HybridSystem(
+            coor=coor,
+            conn=conn,
+            dofs=mesh.dofsPeriodic(),
+            iip=[],
+            elem_elastic=[0, 1, 2, 6, 7, 8],
+            elem_plastic=[3, 4, 5],
+        )
+
+        eta = 3.4
+        system.setMassMatrix(np.ones(nelem))
+        system.setEta(eta)
+        system.setElastic(np.ones(6), np.ones(6))
+        system.setPlastic(np.ones(3), np.ones(3), [[100.0], [100.0], [100.0]])
+        system.setDt(1.0)
+
+        f = np.zeros_like(coor)
+        v = np.zeros_like(coor)
+
+        v[conn[-3:, :], 0] = 2
+
+        f[conn[:3, -2:], 0] = -eta
+        f[conn[-3:, :2], 0] = eta
+
+        system.setV(v)
+        assert np.allclose(system.fdamp(), f)
+
+    def test_damping_alpha_eta(self):
+
+        mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
+        coor = mesh.coor()
+        conn = mesh.conn()
+        nelem = mesh.nelem()
+        system = FrictionQPotFEM.Generic2d.HybridSystem(
+            coor=coor,
+            conn=conn,
+            dofs=mesh.dofsPeriodic(),
+            iip=[],
+            elem_elastic=[0, 1, 2, 6, 7, 8],
+            elem_plastic=[3, 4, 5],
+        )
+
+        alpha = 1.2
+        eta = 3.4
+        system.setMassMatrix(np.ones(nelem))
+        system.setEta(eta)
+        system.setDampingMatrix(alpha * np.ones(nelem))
+        system.setElastic(np.ones(6), np.ones(6))
+        system.setPlastic(np.ones(3), np.ones(3), [[100.0], [100.0], [100.0]])
+        system.setDt(1.0)
+
+        f = np.zeros_like(coor)
+        v = np.zeros_like(coor)
+
+        v[conn[-3:, :], 0] = 2
+
+        f[conn[-3:, :], 0] = 2 * alpha
+        f[conn[:3, -2:], 0] += -eta
+        f[conn[-3:, :2], 0] += eta
+
+        system.setV(v)
+        assert np.allclose(system.fdamp(), f)
 
 
 if __name__ == "__main__":

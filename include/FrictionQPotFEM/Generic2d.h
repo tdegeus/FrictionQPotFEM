@@ -95,7 +95,16 @@ public:
     void setMassMatrix(const T& rho_elem);
 
     /**
+    Set the value of the damping at the interface.
+    Note that you can specify either setEta() or setDampingMatrix() or both.
+
+    \param eta Damping parameter
+    */
+    void setEta(double eta);
+
+    /**
     Set damping matrix, based on certain density (taken uniform per element).
+    Note that you can specify either setEta() or setDampingMatrix() or both.
 
     \param alpha_elem Damping per element.
     */
@@ -295,6 +304,8 @@ public:
 
     /**
     Force deriving from damping.
+    This force is the sum of damping at the interface plus that of background damping
+    (or just one of both if just one is specified).
 
     \return Nodal force. Shape ``[nnode, ndim]``    .
     */
@@ -724,6 +735,8 @@ protected:
     xt::xtensor<double, 3> m_fe; ///< Element vector (used for forces).
     xt::xtensor<double, 2> m_fmaterial; ///< Nodal force, deriving from elasticity.
     xt::xtensor<double, 2> m_fdamp; ///< Nodal force, deriving from damping.
+    xt::xtensor<double, 2> m_fvisco; ///< Nodal force, deriving from damping at the interface
+    xt::xtensor<double, 2> m_ftmp; ///< Temporary for internal use.
     xt::xtensor<double, 2> m_fint; ///< Nodal force: total internal force.
     xt::xtensor<double, 2> m_fext; ///< Nodal force: total external force (reaction force)
     xt::xtensor<double, 2> m_fres; ///< Nodal force: residual force.
@@ -733,9 +746,11 @@ protected:
     GooseFEM::MatrixPartitionedSolver<> m_solve; ///< Solver to solve ``m_K \ m_fres``
     double m_t = 0.0; ///< Current time.
     double m_dt = 0.0; ///< Time-step.
+    double m_eta = 0.0; ///< Damping at the interface
     bool m_allset = false; ///< Internal allocation check.
     bool m_set_M = false; ///< Internal allocation check: mass matrix was written.
     bool m_set_D = false; ///< Internal allocation check: damping matrix was written.
+    bool m_set_visco = false; ///< Internal allocation check: interfacial damping specified.
     bool m_set_elas = false; ///< Internal allocation check: elastic elements were written.
     bool m_set_plas = false; ///< Internal allocation check: plastic elements were written.
     xt::xtensor<double, 2> m_pert_u; ///< See eventDriven_setDeltaU()
@@ -944,6 +959,7 @@ protected:
     xt::xtensor<double, 4> m_Eps_plas; ///< Integration point tensor: strain for plastic elements.
     xt::xtensor<double, 4> m_Sig_elas; ///< Integration point tensor: stress for elastic elements.
     xt::xtensor<double, 4> m_Sig_plas; ///< Integration point tensor: stress for plastic elements.
+    xt::xtensor<double, 4> m_Epsdot_plas; ///< Integration point tensor: strain-rate for plastic el.
     GooseFEM::Matrix m_K_elas; ///< Stiffness matrix for elastic elements.
     bool m_eval_full = true; ///< Keep track of the need to recompute full variables.
 
@@ -978,6 +994,8 @@ protected:
     System::Eps just return already computed data held in memory.
     */
     void computeForceMaterial() override;
+
+    void updated_v() override;
 };
 
 } // namespace Generic2d
