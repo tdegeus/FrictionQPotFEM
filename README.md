@@ -6,6 +6,8 @@
 
 Friction simulations based on "GMatElastoPlasticQPot" and "GooseFEM"
 
+Testing CI
+
 # Testing
 
 # Additional checks and balances
