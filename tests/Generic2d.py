@@ -354,7 +354,6 @@ class test_Generic2d(unittest.TestCase):
         system.setV(v)
         assert np.allclose(system.fdamp(), f)
 
-
     def test_damping_alpha_eta(self):
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
