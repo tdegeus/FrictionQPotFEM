@@ -123,6 +123,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def(
                 "isHomogeneousElastic", &SUB::System::isHomogeneousElastic, "isHomogeneousElastic");
 
+            cls.def("setEta", &SUB::System::setEta, "setEta", py::arg("eta"));
             cls.def("setDt", &SUB::System::setDt, "setDt", py::arg("dt"));
             cls.def("setT", &SUB::System::setT, "setT", py::arg("t"));
             cls.def("setU", &SUB::System::setU<xt::pytensor<double, 2>>, "setU", py::arg("u"));
