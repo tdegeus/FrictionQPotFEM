@@ -81,6 +81,9 @@ inline void System::initSystem(
     m_elem_elas = elem_elastic;
     m_elem_plas = elem_plastic;
 
+    m_conn_elas = xt::view(m_conn, xt::keep(m_elem_elas), xt::all());
+    m_conn_plas = xt::view(m_conn, xt::keep(m_elem_plas), xt::all());
+
     m_nnode = m_coor.shape(0);
     m_ndim = m_coor.shape(1);
     m_nelem = m_conn.shape(0);
@@ -101,8 +104,12 @@ inline void System::initSystem(
 #endif
 
     m_vector = GooseFEM::VectorPartitioned(m_conn, m_dofs, m_iip);
+    m_vector_elas = GooseFEM::VectorPartitioned(m_conn_elas, m_dofs, m_iip);
+    m_vector_plas = GooseFEM::VectorPartitioned(m_conn_plas, m_dofs, m_iip);
 
     m_quad = GooseFEM::Element::Quad4::Quadrature(m_vector.AsElement(m_coor));
+    m_quad_elas = GooseFEM::Element::Quad4::Quadrature(m_vector_elas.AsElement(m_coor));
+    m_quad_plas = GooseFEM::Element::Quad4::Quadrature(m_vector_plas.AsElement(m_coor));
     m_nip = m_quad.nip();
 
     m_u = m_vector.allocate_nodevec(0.0);
@@ -113,8 +120,14 @@ inline void System::initSystem(
 
     m_ue = m_vector.allocate_elemvec(0.0);
     m_fe = m_vector.allocate_elemvec(0.0);
+    m_ue_elas = m_vector_elas.allocate_elemvec(0.0);
+    m_fe_elas = m_vector_elas.allocate_elemvec(0.0);
+    m_ue_plas = m_vector_plas.allocate_elemvec(0.0);
+    m_fe_plas = m_vector_plas.allocate_elemvec(0.0);
 
     m_fmaterial = m_vector.allocate_nodevec(0.0);
+    m_felas = m_vector.allocate_nodevec(0.0);
+    m_fplas = m_vector.allocate_nodevec(0.0);
     m_fdamp = m_vector.allocate_nodevec(0.0);
     m_fvisco = m_vector.allocate_nodevec(0.0);
     m_ftmp = m_vector.allocate_nodevec(0.0);
@@ -124,12 +137,19 @@ inline void System::initSystem(
 
     m_Eps = m_quad.allocate_qtensor<2>(0.0);
     m_Sig = m_quad.allocate_qtensor<2>(0.0);
+    m_Eps_elas = m_quad_elas.allocate_qtensor<2>(0.0);
+    m_Sig_elas = m_quad_elas.allocate_qtensor<2>(0.0);
+    m_Eps_plas = m_quad_plas.allocate_qtensor<2>(0.0);
+    m_Sig_plas = m_quad_plas.allocate_qtensor<2>(0.0);
+    m_Epsdot_plas = m_quad_plas.allocate_qtensor<2>(0.0);
 
     m_M = GooseFEM::MatrixDiagonalPartitioned(m_conn, m_dofs, m_iip);
     m_D = GooseFEM::MatrixDiagonal(m_conn, m_dofs);
-    m_K = GooseFEM::MatrixPartitioned(m_conn, m_dofs, m_iip);
 
-    m_material = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem, m_nip});
+    m_material_elas = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem_elas, m_nip});
+    m_material_plas = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem_plas, m_nip});
+
+    m_K_elas = GooseFEM::Matrix(m_conn_elas, m_dofs);
 }
 
 inline size_t System::N() const
@@ -195,20 +215,6 @@ inline void System::setDampingMatrix(const T& val_elem)
     this->evalAllSet();
 }
 
-inline void System::initMaterial()
-{
-    if (!(m_set_elas && m_set_plas)) {
-        return;
-    }
-
-    FRICTIONQPOTFEM_REQUIRE(
-        xt::all(xt::not_equal(m_material.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
-
-    m_material.setStrain(m_Eps);
-
-    m_K.assemble(m_quad.Int_gradN_dot_tensor4_dot_gradNT_dV(m_material.Tangent()));
-}
-
 inline void
 System::setElastic(const xt::xtensor<double, 1>& K_elem, const xt::xtensor<double, 1>& G_elem)
 {
@@ -217,14 +223,19 @@ System::setElastic(const xt::xtensor<double, 1>& K_elem, const xt::xtensor<doubl
     FRICTIONQPOTFEM_ASSERT(G_elem.size() == m_nelem_elas);
 
     if (m_nelem_elas > 0) {
-        xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem, m_nip}, 0);
-        xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem, m_nip}, 0);
+        xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem_elas, m_nip}, 1);
+        xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem_elas, m_nip}, 0);
 
-        xt::view(I, xt::keep(m_elem_elas), xt::all()) = 1ul;
-        xt::view(idx, xt::keep(m_elem_elas), xt::all()) =
+        xt::view(idx, xt::range(0, m_nelem_elas), xt::all()) =
             xt::arange<size_t>(m_nelem_elas).reshape({-1, 1});
 
-        m_material.setElastic(I, idx, K_elem, G_elem);
+        m_material_elas.setElastic(I, idx, K_elem, G_elem);
+        m_material_elas.setStrain(m_Eps_elas);
+
+        FRICTIONQPOTFEM_REQUIRE(xt::all(
+            xt::not_equal(m_material_elas.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
+
+        m_K_elas.assemble(m_quad_elas.Int_gradN_dot_tensor4_dot_gradNT_dV(m_material_elas.Tangent()));
     }
 
     m_set_elas = true;
@@ -243,14 +254,17 @@ inline void System::setPlastic(
     FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
 
     if (m_nelem_plas > 0) {
-        xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem, m_nip}, 0);
-        xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem, m_nip}, 0);
+        xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem_plas, m_nip}, 1);
+        xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem_plas, m_nip}, 0);
 
-        xt::view(I, xt::keep(m_elem_plas), xt::all()) = 1ul;
-        xt::view(idx, xt::keep(m_elem_plas), xt::all()) =
+        xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) =
             xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
 
-        m_material.setCusp(I, idx, K_elem, G_elem, epsy_elem);
+        m_material_plas.setCusp(I, idx, K_elem, G_elem, epsy_elem);
+        m_material_plas.setStrain(m_Eps_plas);
+
+        FRICTIONQPOTFEM_REQUIRE(xt::all(
+            xt::not_equal(m_material_plas.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
     }
 
     m_set_plas = true;
@@ -264,14 +278,13 @@ inline void System::reset_epsy(const xt::xtensor<double, 2>& epsy_elem)
     FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
 
     if (m_nelem_plas > 0) {
-        xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem, m_nip}, 0);
-        xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem, m_nip}, 0);
+        xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem_plas, m_nip}, 1);
+        xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem_plas, m_nip}, 0);
 
-        xt::view(I, xt::keep(m_elem_plas), xt::all()) = 1ul;
-        xt::view(idx, xt::keep(m_elem_plas), xt::all()) =
+        xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) =
             xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
 
-        m_material.reset_epsy(I, idx, epsy_elem);
+        m_material_plas.reset_epsy(I, idx, epsy_elem);
     }
 }
 
@@ -280,7 +293,7 @@ inline xt::xtensor<double, 2> System::epsy() const
     xt::xtensor<double, 2> ret;
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
-        auto cusp = m_material.crefCusp({m_elem_plas(e), 0});
+        auto cusp = m_material_plas.crefCusp({e, 0});
         auto val = cusp.epsy();
         if (e == 0) {
             ret.resize({m_nelem_plas, val.size()});
@@ -293,10 +306,10 @@ inline xt::xtensor<double, 2> System::epsy() const
 
 inline bool System::isHomogeneousElastic() const
 {
-    auto K = m_material.K();
-    auto G = m_material.G();
+    auto k = this->K();
+    auto g = this->G();
 
-    return xt::allclose(K, K.data()[0]) && xt::allclose(G, G.data()[0]);
+    return xt::allclose(k, k.data()[0]) && xt::allclose(g, g.data()[0]);
 }
 
 inline void System::setT(double t)
@@ -333,9 +346,24 @@ inline void System::setV(const T& v)
 
 inline void System::updated_v()
 {
-    FRICTIONQPOTFEM_ASSERT(!m_set_visco);
     if (m_set_D) {
         m_D.dot(m_v, m_fdamp);
+    }
+
+    // m_ue_plas, m_fe_plas, m_ftmp are temporaries that can be reused
+    if (m_set_visco) {
+        m_vector_plas.asElement(m_v, m_ue_plas);
+        m_quad_plas.symGradN_vector(m_ue_plas, m_Epsdot_plas);
+        m_quad_plas.int_gradN_dot_tensor2_dV(m_Epsdot_plas, m_fe_plas);
+        if (!m_set_D) {
+            m_vector_plas.assembleNode(m_fe_plas, m_fdamp);
+            m_fdamp *= m_eta;
+        }
+        else {
+            m_vector_plas.assembleNode(m_fe_plas, m_ftmp);
+            m_ftmp *= m_eta;
+            m_fdamp += m_ftmp;
+        }
     }
 }
 
@@ -449,11 +477,6 @@ inline auto System::dV() const
     return m_quad.dV();
 }
 
-inline const GooseFEM::MatrixPartitioned& System::stiffness() const
-{
-    return m_K;
-}
-
 inline const GooseFEM::VectorPartitioned& System::vector() const
 {
     return m_vector;
@@ -464,104 +487,174 @@ inline const GooseFEM::Element::Quad4::Quadrature& System::quad() const
     return m_quad;
 }
 
-inline const GMatElastoPlasticQPot::Cartesian2d::Array<2>& System::material() const
+inline const GMatElastoPlasticQPot::Cartesian2d::Array<2>& System::material_elastic() const
 {
-    return m_material;
+    return m_material_elas;
+}
+
+inline const GMatElastoPlasticQPot::Cartesian2d::Array<2>& System::material_plastic() const
+{
+    return m_material_plas;
+}
+
+inline xt::xtensor<double, 2> System::K() const
+{
+    xt::xtensor<double, 2> ret = xt::empty<double>({m_nelem, m_nip});
+
+    auto ret_elas = m_material_elas.K();
+    auto ret_plas = m_material_plas.K();
+
+    for (size_t e = 0; e < m_nelem_elas; ++e) {
+        std::copy(&ret_elas(e), &ret_elas(e) + m_nip, &ret(m_elem_elas(e)));
+    }
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        std::copy(&ret_plas(e), &ret_plas(e) + m_nip, &ret(m_elem_plas(e)));
+    }
+
+    return ret;
+}
+
+inline xt::xtensor<double, 2> System::G() const
+{
+    xt::xtensor<double, 2> ret = xt::empty<double>({m_nelem, m_nip});
+
+    auto ret_elas = m_material_elas.G();
+    auto ret_plas = m_material_plas.G();
+
+    for (size_t e = 0; e < m_nelem_elas; ++e) {
+        std::copy(&ret_elas(e), &ret_elas(e) + m_nip, &ret(m_elem_elas(e)));
+    }
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        std::copy(&ret_plas(e), &ret_plas(e) + m_nip, &ret(m_elem_plas(e)));
+    }
+
+    return ret;
 }
 
 inline xt::xtensor<double, 4> System::Sig()
 {
+    this->computeFullStress();
     return m_Sig;
 }
 
 inline xt::xtensor<double, 4> System::Eps()
 {
+    this->computeFullStress();
     return m_Eps;
+}
+
+inline GooseFEM::MatrixPartitioned System::stiffness() const
+{
+    auto ret = m_quad.allocate_qtensor<4>(0.0);
+    auto ret_plas = m_material_plas.Tangent();
+    auto ret_elas = m_material_elas.Tangent();
+
+    for (size_t e = 0; e < m_nelem_elas; ++e) {
+        std::copy(&ret_elas(e), &ret_elas(e) + m_nip, &ret(m_elem_elas(e)));
+    }
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        std::copy(&ret_plas(e), &ret_plas(e) + m_nip, &ret(m_elem_plas(e)));
+    }
+
+    GooseFEM::MatrixPartitioned K(m_conn, m_dofs, m_iip);
+    K.assemble(m_quad.Int_gradN_dot_tensor4_dot_gradNT_dV(ret));
+    return K;
 }
 
 inline xt::xtensor<double, 4> System::plastic_Sig() const
 {
-    return xt::view(m_Sig, xt::keep(m_elem_plas), xt::all(), xt::all(), xt::all());
+    return m_Sig_plas;
 }
 
 inline xt::xtensor<double, 4> System::plastic_Eps() const
 {
-    return xt::view(m_Eps, xt::keep(m_elem_plas), xt::all(), xt::all(), xt::all());
+    return m_Eps_plas;
 }
 
 inline xt::xtensor<double, 2> System::plastic_Eps(size_t e_plastic, size_t q) const
 {
     FRICTIONQPOTFEM_ASSERT(e_plastic < m_nelem_plas);
     FRICTIONQPOTFEM_ASSERT(q < m_nip);
-    return xt::view(m_Eps, m_elem_plas(e_plastic), q, xt::all(), xt::all());
+    return xt::view(m_Eps_plas, e_plastic, q, xt::all(), xt::all());
 }
 
 inline xt::xtensor<double, 2> System::plastic_CurrentYieldLeft() const
 {
-    return xt::view(m_material.CurrentYieldLeft(), xt::keep(m_elem_plas), xt::all());
+    return m_material_plas.CurrentYieldLeft();
 }
 
 inline xt::xtensor<double, 2> System::plastic_CurrentYieldRight() const
 {
-    return xt::view(m_material.CurrentYieldRight(), xt::keep(m_elem_plas), xt::all());
+    return m_material_plas.CurrentYieldRight();
 }
 
 inline xt::xtensor<double, 2> System::plastic_CurrentYieldLeft(size_t offset) const
 {
-    return xt::view(m_material.CurrentYieldLeft(offset), xt::keep(m_elem_plas), xt::all());
+    return m_material_plas.CurrentYieldLeft(offset);
 }
 
 inline xt::xtensor<double, 2> System::plastic_CurrentYieldRight(size_t offset) const
 {
-    return xt::view(m_material.CurrentYieldRight(offset), xt::keep(m_elem_plas), xt::all());
+    return m_material_plas.CurrentYieldRight(offset);
 }
 
 inline xt::xtensor<size_t, 2> System::plastic_CurrentIndex() const
 {
-    return xt::view(m_material.CurrentIndex(), xt::keep(m_elem_plas), xt::all());
+    return m_material_plas.CurrentIndex();
 }
 
 inline xt::xtensor<double, 2> System::plastic_Epsp() const
 {
-    return xt::view(m_material.Epsp(), xt::keep(m_elem_plas), xt::all());
-}
-
-template <class T>
-inline xt::xtensor<int, 2> System::plastic_SignDeltaEpsd(const T& delta_u)
-{
-    FRICTIONQPOTFEM_WARNING_PYTHON("Deprecation: for now there is no use for this function");
-
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(delta_u, m_u.shape()));
-    auto u_0 = m_u;
-    auto eps_0 = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-    this->setU(m_u + delta_u);
-    auto eps_pert = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-    this->setU(u_0);
-    xt::xtensor<int, 2> sign = xt::sign(eps_pert - eps_0);
-    return sign;
+    return m_material_plas.Epsp();
 }
 
 inline bool System::boundcheck_right(size_t n) const
 {
-    return m_material.checkYieldBoundRight(n);
+    return m_material_plas.checkYieldBoundRight(n);
 }
 
-inline void System::computeStress()
+inline void System::computeFullStress()
 {
     FRICTIONQPOTFEM_ASSERT(m_allset);
+    if (!m_eval_full) {
+        return;
+    }
 
-    m_vector.asElement(m_u, m_ue);
-    m_quad.symGradN_vector(m_ue, m_Eps);
-    m_material.setStrain(m_Eps);
-    m_material.stress(m_Sig);
+    m_vector_elas.asElement(m_u, m_ue_elas);
+    m_quad_elas.symGradN_vector(m_ue_elas, m_Eps_elas);
+    m_material_elas.setStrain(m_Eps_elas);
+    m_material_elas.stress(m_Sig_elas);
+
+    for (size_t e = 0; e < m_nelem_elas; ++e) {
+        std::copy(&m_Eps_elas(e), &m_Eps_elas(e) + m_nip * 4, &m_Eps(m_elem_elas(e)));
+        std::copy(&m_Sig_elas(e), &m_Sig_elas(e) + m_nip * 4, &m_Sig(m_elem_elas(e)));
+    }
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        std::copy(&m_Eps_plas(e), &m_Eps_plas(e) + m_nip * 4, &m_Eps(m_elem_plas(e)));
+        std::copy(&m_Sig_plas(e), &m_Sig_plas(e) + m_nip * 4, &m_Sig(m_elem_plas(e)));
+    }
+
+    m_eval_full = false;
 }
 
 inline void System::computeForceMaterial()
 {
-    this->computeStress();
+    FRICTIONQPOTFEM_ASSERT(m_allset);
+    m_eval_full = true;
 
-    m_quad.int_gradN_dot_tensor2_dV(m_Sig, m_fe);
-    m_vector.assembleNode(m_fe, m_fmaterial);
+    m_vector_plas.asElement(m_u, m_ue_plas);
+    m_quad_plas.symGradN_vector(m_ue_plas, m_Eps_plas);
+    m_material_plas.setStrain(m_Eps_plas);
+    m_material_plas.stress(m_Sig_plas);
+    m_quad_plas.int_gradN_dot_tensor2_dV(m_Sig_plas, m_fe_plas);
+    m_vector_plas.assembleNode(m_fe_plas, m_fplas);
+
+    m_K_elas.dot(m_u, m_felas);
+
+    xt::noalias(m_fmaterial) = m_felas + m_fplas;
 }
 
 inline void System::computeInternalExternalResidualForce()
@@ -1103,249 +1196,6 @@ inline xt::xtensor<double, 2> System::affineSimpleShearCentered(double delta_gam
     }
 
     return ret;
-}
-
-template <class C, class E, class L>
-inline HybridSystem::HybridSystem(
-    const C& coor,
-    const E& conn,
-    const E& dofs,
-    const L& iip,
-    const L& elem_elastic,
-    const L& elem_plastic)
-{
-    this->initHybridSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
-}
-
-template <class C, class E, class L>
-inline void HybridSystem::initHybridSystem(
-    const C& coor,
-    const E& conn,
-    const E& dofs,
-    const L& iip,
-    const L& elem_elastic,
-    const L& elem_plastic)
-{
-    this->initSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
-
-    m_conn_elas = xt::view(m_conn, xt::keep(m_elem_elas), xt::all());
-    m_conn_plas = xt::view(m_conn, xt::keep(m_elem_plas), xt::all());
-
-    m_vector_elas = GooseFEM::VectorPartitioned(m_conn_elas, m_dofs, m_iip);
-    m_vector_plas = GooseFEM::VectorPartitioned(m_conn_plas, m_dofs, m_iip);
-
-    m_quad_elas = GooseFEM::Element::Quad4::Quadrature(m_vector_elas.AsElement(m_coor));
-    m_quad_plas = GooseFEM::Element::Quad4::Quadrature(m_vector_plas.AsElement(m_coor));
-
-    m_ue_plas = m_vector_plas.allocate_elemvec(0.0);
-    m_fe_plas = m_vector_plas.allocate_elemvec(0.0);
-
-    m_felas = m_vector.allocate_nodevec(0.0);
-    m_fplas = m_vector.allocate_nodevec(0.0);
-
-    m_Eps_elas = m_quad_elas.allocate_qtensor<2>(0.0);
-    m_Sig_elas = m_quad_elas.allocate_qtensor<2>(0.0);
-    m_Eps_plas = m_quad_plas.allocate_qtensor<2>(0.0);
-    m_Sig_plas = m_quad_plas.allocate_qtensor<2>(0.0);
-    m_Epsdot_plas = m_quad_plas.allocate_qtensor<2>(0.0);
-
-    m_material_elas = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem_elas, m_nip});
-    m_material_plas = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem_plas, m_nip});
-
-    m_K_elas = GooseFEM::Matrix(m_conn_elas, m_dofs);
-}
-
-inline std::string HybridSystem::type() const
-{
-    return "FrictionQPotFEM.Generic2d.HybridSystem";
-}
-
-inline void
-HybridSystem::setElastic(const xt::xtensor<double, 1>& K_elem, const xt::xtensor<double, 1>& G_elem)
-{
-    System::setElastic(K_elem, G_elem);
-
-    if (m_nelem_elas == 0) {
-        return;
-    }
-
-    xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem_elas, m_nip}, 1);
-    xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem_elas, m_nip}, 0);
-
-    xt::view(idx, xt::range(0, m_nelem_elas), xt::all()) =
-        xt::arange<size_t>(m_nelem_elas).reshape({-1, 1});
-
-    m_material_elas.setElastic(I, idx, K_elem, G_elem);
-    m_material_elas.setStrain(m_Eps_elas);
-
-    FRICTIONQPOTFEM_REQUIRE(xt::all(
-        xt::not_equal(m_material_elas.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
-
-    m_K_elas.assemble(m_quad_elas.Int_gradN_dot_tensor4_dot_gradNT_dV(m_material_elas.Tangent()));
-}
-
-inline void HybridSystem::setPlastic(
-    const xt::xtensor<double, 1>& K_elem,
-    const xt::xtensor<double, 1>& G_elem,
-    const xt::xtensor<double, 2>& epsy_elem)
-{
-    System::setPlastic(K_elem, G_elem, epsy_elem);
-
-    if (m_nelem_plas == 0) {
-        return;
-    }
-
-    xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem_plas, m_nip}, 1);
-    xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem_plas, m_nip}, 0);
-
-    xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) =
-        xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
-
-    m_material_plas.setCusp(I, idx, K_elem, G_elem, epsy_elem);
-    m_material_plas.setStrain(m_Eps_plas);
-
-    FRICTIONQPOTFEM_REQUIRE(xt::all(
-        xt::not_equal(m_material_plas.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
-}
-
-inline void HybridSystem::reset_epsy(const xt::xtensor<double, 2>& epsy_elem)
-{
-    System::reset_epsy(epsy_elem);
-
-    if (m_nelem_plas == 0) {
-        return;
-    }
-
-    xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem_plas, m_nip}, 1);
-    xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem_plas, m_nip}, 0);
-
-    xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) =
-        xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
-
-    m_material_plas.reset_epsy(I, idx, epsy_elem);
-}
-
-inline const GMatElastoPlasticQPot::Cartesian2d::Array<2>& HybridSystem::material_elastic() const
-{
-    return m_material_elas;
-}
-
-inline const GMatElastoPlasticQPot::Cartesian2d::Array<2>& HybridSystem::material_plastic() const
-{
-    return m_material_plas;
-}
-
-inline void HybridSystem::evalSystem()
-{
-    if (!m_eval_full) {
-        return;
-    }
-    this->computeStress();
-    m_eval_full = false;
-}
-
-inline void HybridSystem::updated_v()
-{
-    if (m_set_D) {
-        m_D.dot(m_v, m_fdamp);
-    }
-
-    // m_ue_plas, m_fe_plas, m_ftmp are temporaries that can be reused
-    if (m_set_visco) {
-        m_vector_plas.asElement(m_v, m_ue_plas);
-        m_quad_plas.symGradN_vector(m_ue_plas, m_Epsdot_plas);
-        m_quad_plas.int_gradN_dot_tensor2_dV(m_Epsdot_plas, m_fe_plas);
-        if (!m_set_D) {
-            m_vector_plas.assembleNode(m_fe_plas, m_fdamp);
-            m_fdamp *= m_eta;
-        }
-        else {
-            m_vector_plas.assembleNode(m_fe_plas, m_ftmp);
-            m_ftmp *= m_eta;
-            m_fdamp += m_ftmp;
-        }
-    }
-}
-
-inline xt::xtensor<double, 4> HybridSystem::Sig()
-{
-    this->evalSystem();
-    return m_Sig;
-}
-
-inline xt::xtensor<double, 4> HybridSystem::Eps()
-{
-    this->evalSystem();
-    return m_Eps;
-}
-
-inline xt::xtensor<double, 4> HybridSystem::plastic_Sig() const
-{
-    return m_Sig_plas;
-}
-
-inline xt::xtensor<double, 4> HybridSystem::plastic_Eps() const
-{
-    return m_Eps_plas;
-}
-
-inline xt::xtensor<double, 2> HybridSystem::plastic_Eps(size_t e_plastic, size_t q) const
-{
-    FRICTIONQPOTFEM_ASSERT(e_plastic < m_nelem_plas);
-    FRICTIONQPOTFEM_ASSERT(q < m_nip);
-    return xt::view(m_Eps_plas, e_plastic, q, xt::all(), xt::all());
-}
-
-inline xt::xtensor<double, 2> HybridSystem::plastic_CurrentYieldLeft() const
-{
-    return m_material_plas.CurrentYieldLeft();
-}
-
-inline xt::xtensor<double, 2> HybridSystem::plastic_CurrentYieldRight() const
-{
-    return m_material_plas.CurrentYieldRight();
-}
-
-inline xt::xtensor<double, 2> HybridSystem::plastic_CurrentYieldLeft(size_t offset) const
-{
-    return m_material_plas.CurrentYieldLeft(offset);
-}
-
-inline xt::xtensor<double, 2> HybridSystem::plastic_CurrentYieldRight(size_t offset) const
-{
-    return m_material_plas.CurrentYieldRight(offset);
-}
-
-inline xt::xtensor<size_t, 2> HybridSystem::plastic_CurrentIndex() const
-{
-    return m_material_plas.CurrentIndex();
-}
-
-inline xt::xtensor<double, 2> HybridSystem::plastic_Epsp() const
-{
-    return m_material_plas.Epsp();
-}
-
-inline bool HybridSystem::boundcheck_right(size_t n) const
-{
-    return m_material_plas.checkYieldBoundRight(n);
-}
-
-inline void HybridSystem::computeForceMaterial()
-{
-    FRICTIONQPOTFEM_ASSERT(m_allset);
-    m_eval_full = true;
-
-    m_vector_plas.asElement(m_u, m_ue_plas);
-    m_quad_plas.symGradN_vector(m_ue_plas, m_Eps_plas);
-    m_material_plas.setStrain(m_Eps_plas);
-    m_material_plas.stress(m_Sig_plas);
-    m_quad_plas.int_gradN_dot_tensor2_dV(m_Sig_plas, m_fe_plas);
-    m_vector_plas.assembleNode(m_fe_plas, m_fplas);
-
-    m_K_elas.dot(m_u, m_felas);
-
-    xt::noalias(m_fmaterial) = m_felas + m_fplas;
 }
 
 } // namespace Generic2d

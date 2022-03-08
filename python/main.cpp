@@ -178,12 +178,8 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def(
                 "quad", &SUB::System::quad, "quad", py::return_value_policy::reference_internal);
 
-            cls.def(
-                "material",
-                &SUB::System::material,
-                "material",
-                py::return_value_policy::reference_internal);
-
+            cls.def("K", &SUB::System::K, "K");
+            cls.def("G", &SUB::System::G, "G");
             cls.def("Sig", &SUB::System::Sig, "Sig");
             cls.def("Eps", &SUB::System::Eps, "Eps");
             cls.def("plastic_Sig", &SUB::System::plastic_Sig, "plastic_Sig");
@@ -232,12 +228,6 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "plastic_CurrentIndex", &SUB::System::plastic_CurrentIndex, "plastic_CurrentIndex");
 
             cls.def("plastic_Epsp", &SUB::System::plastic_Epsp, "plastic_Epsp");
-
-            cls.def(
-                "plastic_SignDeltaEpsd",
-                &SUB::System::plastic_SignDeltaEpsd<xt::pytensor<double, 2>>,
-                "plastic_SignDeltaEpsd",
-                py::arg("delta_u"));
 
             cls.def(
                 "eventDriven_setDeltaU",
@@ -356,63 +346,6 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 return "<FrictionQPotFEM.Generic2d.System>";
             });
         }
-
-        {
-
-            py::class_<SUB::HybridSystem, SUB::System> cls(sub, "HybridSystem");
-
-            cls.def(
-                py::init<
-                    const xt::pytensor<double, 2>&,
-                    const xt::pytensor<size_t, 2>&,
-                    const xt::pytensor<size_t, 2>&,
-                    const xt::pytensor<size_t, 1>&,
-                    const xt::pytensor<size_t, 1>&,
-                    const xt::pytensor<size_t, 1>&>(),
-                "HybridSystem",
-                py::arg("coor"),
-                py::arg("conn"),
-                py::arg("dofs"),
-                py::arg("iip"),
-                py::arg("elem_elastic"),
-                py::arg("elem_plastic"));
-
-            cls.def(
-                "setElastic",
-                &SUB::HybridSystem::setElastic,
-                "setElastic",
-                py::arg("K_elem"),
-                py::arg("G_elem"));
-
-            cls.def(
-                "setPlastic",
-                &SUB::HybridSystem::setPlastic,
-                "setPlastic",
-                py::arg("K_elem"),
-                py::arg("G_elem"),
-                py::arg("epsy_elem"));
-
-            cls.def(
-                "reset_epsy", &SUB::HybridSystem::reset_epsy, "reset_epsy", py::arg("epsy_elem"));
-
-            cls.def("evalSystem", &SUB::HybridSystem::evalSystem, "evalSystem");
-
-            cls.def(
-                "material_elastic",
-                &SUB::HybridSystem::material_elastic,
-                "material_elastic",
-                py::return_value_policy::reference_internal);
-
-            cls.def(
-                "material_plastic",
-                &SUB::HybridSystem::material_plastic,
-                "material_plastic",
-                py::return_value_policy::reference_internal);
-
-            cls.def("__repr__", [](const SUB::System&) {
-                return "<FrictionQPotFEM.Generic2d.HybridSystem>";
-            });
-        }
     }
 
     // ------------------------------------
@@ -432,7 +365,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
         {
 
-            py::class_<SUB::System, FrictionQPotFEM::Generic2d::HybridSystem> cls(sub, "System");
+            py::class_<SUB::System, FrictionQPotFEM::Generic2d::System> cls(sub, "System");
 
             cls.def(
                 py::init<
@@ -454,36 +387,9 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def("typical_plastic_dV", &SUB::System::typical_plastic_dV, "typical_plastic_dV");
 
             cls.def(
-                "plastic_signOfPerturbation",
-                &SUB::System::plastic_signOfPerturbation,
-                "plastic_signOfPerturbation",
-                py::arg("delta_u"));
-
-            cls.def(
-                "addAffineSimpleShear",
-                &SUB::System::addAffineSimpleShear,
-                "addAffineSimpleShear",
-                py::arg("delta_gamma"));
-
-            cls.def(
-                "addAffineSimpleShearCentered",
-                &SUB::System::addAffineSimpleShearCentered,
-                "addAffineSimpleShearCentered",
-                py::arg("delta_gamma"));
-
-            cls.def(
                 "initEventDrivenSimpleShear",
                 &SUB::System::initEventDrivenSimpleShear,
                 "initEventDrivenSimpleShear");
-
-            cls.def(
-                "addSimpleShearEventDriven",
-                &SUB::System::addSimpleShearEventDriven,
-                "addSimpleShearEventDriven",
-                py::arg("deps"),
-                py::arg("kick"),
-                py::arg("direction") = +1.0,
-                py::arg("dry_run") = false);
 
             cls.def(
                 "addSimpleShearToFixedStress",
@@ -604,7 +510,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             &SUB::version_dependencies,
             "Return version information of library and its dependencies.");
 
-        py::class_<SUB::System, FrictionQPotFEM::Generic2d::HybridSystem> cls(sub, "System");
+        py::class_<SUB::System, FrictionQPotFEM::Generic2d::System> cls(sub, "System");
 
         cls.def(
             py::init<
@@ -691,19 +597,6 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             "layerSetUbar",
             py::arg("ubar"),
             py::arg("prescribe"));
-
-        cls.def(
-            "addAffineSimpleShear",
-            &SUB::System::addAffineSimpleShear,
-            "addAffineSimpleShear",
-            py::arg("delta_gamma"));
-
-        cls.def(
-            "layerTagetUbar_addAffineSimpleShear",
-            &SUB::System::layerTagetUbar_addAffineSimpleShear<xt::pytensor<double, 1>>,
-            "layerTagetUbar_addAffineSimpleShear",
-            py::arg("delta_gamma"),
-            py::arg("height"));
 
         cls.def(
             "layerTargetUbar_affineSimpleShear",

@@ -34,7 +34,7 @@ inline std::vector<std::string> version_dependencies();
 /**
 Class that uses GMatElastoPlasticQPot to evaluate stress everywhere
 */
-class System : public Generic2d::HybridSystem {
+class System : public Generic2d::System {
 
 public:
     System() = default;
@@ -78,86 +78,9 @@ public:
     double typical_plastic_dV() const;
 
     /**
-    Element height of all elements along the weak layer.
-
-    \return Element height (scalar).
-    */
-    [[deprecated]] double plastic_h() const;
-
-    /**
-    Integration point volume of all elements along the weak layer.
-
-    \return Integration point volume.
-    */
-    [[deprecated]] double plastic_dV() const;
-
-    /**
-    Elastic energy of each integration point.
-    Note: this function is put here by convenience as ``this.material().Energy()`` gave problems.
-
-    \return Integration point scalar. Shape: ``[nelem, nip]``.
-    */
-    [[deprecated]] virtual xt::xtensor<double, 2> Energy();
-
-    /**
-    Get the sign of the equivalent strain increment upon a displacement perturbation,
-    for each integration point of each plastic element.
-
-    \param delta_u displacement perturbation.
-    \return Integration point scalar. Shape: ``[m_plastic.size(), nip]``.
-    */
-    [[deprecated]] auto plastic_signOfPerturbation(const xt::xtensor<double, 2>& delta_u);
-
-    /**
-    Add affine simple shear (may be negative to subtract affine simple shear).
-    The displacement of the bottom boundary is zero, while it is maximal for the top boundary.
-    The input is the strain value, the shear component of deformation gradient is twice that.
-
-    \param delta_gamma Affine strain to add.
-    \return xy-component of the deformation gradient that is applied to the system.
-    */
-    [[deprecated]] double addAffineSimpleShear(double delta_gamma);
-
-    /**
-    Symmetrised version of System::addAffineSimpleShear.
-    Similar to System::addAffineSimpleShear with the difference that the displacement is zero
-    exactly in the middle, while the displacement at the bottom and the top boundary is maximal
-    (with a negative displacement for the bottom boundary).
-
-    \param delta_gamma Affine strain to add.
-    \return xy-component of the deformation gradient that is applied to the system.
-    */
-    [[deprecated]] double addAffineSimpleShearCentered(double delta_gamma);
-
-    /**
     Initialise event driven protocol for affine simple shear.
     */
     void initEventDrivenSimpleShear();
-
-    /**
-    Add event driven simple shear step.
-
-    \param deps
-        Size of the local stain kick to apply.
-
-    \param kick
-        If ``false``, increment displacements to ``deps / 2`` of yielding again.
-        If ``true``, increment displacements by a affine simple shear increment ``deps``.
-
-    \param direction
-        If ``+1``: apply shear to the right. If ``-1`` applying shear to the left.
-
-    \param dry_run
-        If ``true`` do not apply displacement, do not check.
-
-    \return
-        xy-component of the deformation gradient that is applied to the system.
-    */
-    [[deprecated]] double addSimpleShearEventDriven(
-        double deps,
-        bool kick,
-        double direction = +1.0,
-        bool dry_run = false);
 
     /**
     Add simple shear until a target equivalent macroscopic stress has been reached.
@@ -228,15 +151,6 @@ public:
     plastic_ElementYieldBarrierForSimpleShear(double deps_kick = 0.0, size_t iquad = 0);
 
 protected:
-    /**
-    Get the sign of the equivalent strain increment upon a displacement perturbation,
-    for each integration point of each plastic element.
-
-    \param perturbation xy-component of the deformation gradient to use to perturb.
-    \return Sign of the perturbation. Shape: [System::m_nelem, System::m_nip].
-    */
-    auto plastic_signOfSimpleShearPerturbation(double perturbation);
-
     /**
     Constructor alias, useful for derived classes.
 

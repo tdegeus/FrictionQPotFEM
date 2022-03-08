@@ -114,7 +114,7 @@ inline void System::init(
         }
     }
 
-    this->initHybridSystem(coor, conn, dofs, iip, elas, plas);
+    this->initSystem(coor, conn, dofs, iip, elas, plas);
 
     m_fdrive = m_vector.allocate_nodevec(0.0);
     m_ud = m_vector.allocate_dofval(0.0);
@@ -370,36 +370,6 @@ inline void System::layerSetUbar(const S& ubar, const T& prescribe)
     if (m_allset) {
         this->computeForceMaterial();
     }
-}
-
-inline void System::addAffineSimpleShear(double delta_gamma)
-{
-    FRICTIONQPOTFEM_WARNING_PYTHON("Use setU(u() + affineSimpleShear(...)) "
-                                   "instead of addAffineSimpleShear(...)");
-
-    for (size_t n = 0; n < m_nnode; ++n) {
-        m_u(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - m_coor(0, 1));
-    }
-
-    this->computeLayerUbarActive();
-    this->computeForceFromTargetUbar();
-    if (m_allset) {
-        this->computeForceMaterial();
-    }
-}
-
-template <class T>
-inline void System::layerTagetUbar_addAffineSimpleShear(double delta_gamma, const T& height)
-{
-    FRICTIONQPOTFEM_WARNING_PYTHON(
-        "layerTagetUbar_addAffineSimpleShear is deprecated. "
-        "It can be replaced by affineSimpleShear(...) and layerTargetUbar_affineSimpleShear(...)");
-
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(height, {m_n_layer}));
-    for (size_t i = 0; i < m_n_layer; ++i) {
-        m_layerdrive_targetubar(i, 0) += 2.0 * delta_gamma * height(i);
-    }
-    this->computeForceFromTargetUbar(); // the average displacement and other forces do not change
 }
 
 template <class T>

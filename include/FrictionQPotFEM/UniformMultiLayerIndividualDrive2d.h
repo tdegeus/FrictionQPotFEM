@@ -44,7 +44,7 @@ Terminology:
 -   `target_active`: the average displacement per layer/DOF is only enforced if the spring
                      is active, see layerTargetActive() and layerSetTargetActive().
 */
-class System : public Generic2d::HybridSystem {
+class System : public Generic2d::System {
 
 public:
     System() = default;
@@ -223,31 +223,6 @@ public:
     */
     template <class S, class T>
     void layerSetUbar(const S& ubar, const T& prescribe);
-
-    /**
-    Add affine simple shear to all the nodes of the body.
-    The displacement of the bottom boundary is zero,
-    while it is maximal for the top boundary.
-    The input is the strain increment,
-    the increment of the shear component of deformation gradient is twice that.
-
-    \param delta_gamma Strain increment.
-    */
-    [[deprecated]] void addAffineSimpleShear(double delta_gamma);
-
-    /**
-    Add simple shear to each of the target average displacements.
-    In particular \f$ \bar{u}_x^i = 2 \Delta \gamma h_i \f$
-    with \f$ \bar{u}_x^i \f$ the \f$ x \f$-component of the target average displacement
-    of layer \f$ i \f$.
-
-    \tparam T e.g. `xt::xtensor<double, 1>`
-
-    \param delta_gamma Affine strain to add.
-    \param height The height \f$ h_i \f$ of the loading frame of each layer [#nlayer].
-    */
-    template <class T>
-    [[deprecated]] void layerTagetUbar_addAffineSimpleShear(double delta_gamma, const T& height);
 
     /**
     Get target average displacements that correspond to affine simple shear
