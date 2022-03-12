@@ -10,7 +10,7 @@
 
 TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
 {
-    SECTION("System vs. HybridSystem")
+    SECTION("System")
     {
         // Stress/strain response computed using previous versions
 
@@ -358,26 +358,16 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
         // Initialise system
 
         FrictionQPotFEM::Generic2d::System full(coor, conn, dofs, iip, elastic, plastic);
-        FrictionQPotFEM::Generic2d::HybridSystem reduced(coor, conn, dofs, iip, elastic, plastic);
-
         full.setMassMatrix(rho * xt::ones<double>({mesh.nelem()}));
-        reduced.setMassMatrix(rho * xt::ones<double>({mesh.nelem()}));
-
         full.setDampingMatrix(alpha * xt::ones<double>({mesh.nelem()}));
-        reduced.setDampingMatrix(alpha * xt::ones<double>({mesh.nelem()}));
 
         full.setElastic(
-            K * xt::ones<double>({elastic.size()}), G * xt::ones<double>({elastic.size()}));
-        reduced.setElastic(
             K * xt::ones<double>({elastic.size()}), G * xt::ones<double>({elastic.size()}));
 
         full.setPlastic(
             K * xt::ones<double>({plastic.size()}), G * xt::ones<double>({plastic.size()}), epsy);
-        reduced.setPlastic(
-            K * xt::ones<double>({plastic.size()}), G * xt::ones<double>({plastic.size()}), epsy);
 
         full.setDt(dt);
-        reduced.setDt(dt);
 
         // Run
 
@@ -387,13 +377,10 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
         xt::xtensor<double, 1> compute_Eps = xt::zeros<double>({dF.shape(0)});
         xt::xtensor<double, 1> compute_Sig = xt::zeros<double>({dF.shape(0)});
         auto dV = full.quad().AsTensor<2>(full.dV());
-        REQUIRE(xt::allclose(dV, reduced.quad().AsTensor<2>(reduced.dV())));
 
         GooseFEM::Iterate::StopList residuals(20);
 
         for (size_t inc = 0; inc < dF.shape(0); ++inc) {
-
-            REQUIRE(xt::allclose(full.u(), reduced.u()));
 
             auto u = full.u();
 
@@ -406,19 +393,10 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
             }
 
             full.setU(u);
-            reduced.setU(u);
-
-            REQUIRE(xt::allclose(full.u(), reduced.u()));
 
             for (size_t iiter = 0;; ++iiter) {
 
                 full.timeStep();
-                reduced.timeStep();
-
-                REQUIRE(xt::allclose(full.fmaterial(), reduced.fmaterial()));
-                REQUIRE(xt::allclose(full.u(), reduced.u()));
-                REQUIRE(full.t() == Approx(reduced.t()));
-                ISCLOSE(full.residual(), reduced.residual());
 
                 residuals.roll_insert(full.residual());
 
@@ -432,12 +410,7 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
             }
 
             full.quench();
-            reduced.quench();
-
             residuals.reset();
-
-            REQUIRE(xt::allclose(full.Eps(), reduced.Eps()));
-            REQUIRE(xt::allclose(full.Sig(), reduced.Sig()));
 
             xt::xtensor<double, 2> Epsbar = xt::average(full.Eps(), dV, {0, 1});
             xt::xtensor<double, 2> Sigbar = xt::average(full.Sig(), dV, {0, 1});
