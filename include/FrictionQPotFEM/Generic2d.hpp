@@ -232,10 +232,11 @@ System::setElastic(const xt::xtensor<double, 1>& K_elem, const xt::xtensor<doubl
         m_material_elas.setElastic(I, idx, K_elem, G_elem);
         m_material_elas.setStrain(m_Eps_elas);
 
-        FRICTIONQPOTFEM_REQUIRE(xt::all(
-            xt::not_equal(m_material_elas.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
+        FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(
+            m_material_elas.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
 
-        m_K_elas.assemble(m_quad_elas.Int_gradN_dot_tensor4_dot_gradNT_dV(m_material_elas.Tangent()));
+        m_K_elas.assemble(
+            m_quad_elas.Int_gradN_dot_tensor4_dot_gradNT_dV(m_material_elas.Tangent()));
     }
 
     m_set_elas = true;
@@ -262,8 +263,8 @@ inline void System::setPlastic(
         m_material_plas.setCusp(I, idx, K_elem, G_elem, epsy_elem);
         m_material_plas.setStrain(m_Eps_plas);
 
-        FRICTIONQPOTFEM_REQUIRE(xt::all(
-            xt::not_equal(m_material_plas.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
+        FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(
+            m_material_plas.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
     }
 
     m_set_plas = true;
@@ -550,11 +551,17 @@ inline GooseFEM::MatrixPartitioned System::stiffness() const
     auto ret_elas = m_material_elas.Tangent();
 
     for (size_t e = 0; e < m_nelem_elas; ++e) {
-        std::copy(&ret_elas(e, 0, 0, 0, 0, 0), &ret_elas(e, 0, 0, 0, 0, 0) + m_nip, &ret(m_elem_elas(e), 0, 0, 0, 0, 0));
+        std::copy(
+            &ret_elas(e, 0, 0, 0, 0, 0),
+            &ret_elas(e, 0, 0, 0, 0, 0) + m_nip,
+            &ret(m_elem_elas(e), 0, 0, 0, 0, 0));
     }
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
-        std::copy(&ret_plas(e, 0, 0, 0, 0, 0), &ret_plas(e, 0, 0, 0, 0, 0) + m_nip, &ret(m_elem_plas(e), 0, 0, 0, 0, 0));
+        std::copy(
+            &ret_plas(e, 0, 0, 0, 0, 0),
+            &ret_plas(e, 0, 0, 0, 0, 0) + m_nip,
+            &ret(m_elem_plas(e), 0, 0, 0, 0, 0));
     }
 
     GooseFEM::MatrixPartitioned K(m_conn, m_dofs, m_iip);

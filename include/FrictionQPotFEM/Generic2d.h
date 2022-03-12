@@ -788,7 +788,6 @@ protected:
     xt::xtensor<double, 2> m_pert_u; ///< See eventDriven_setDeltaU()
     xt::xtensor<double, 4> m_pert_Epsd_plastic; ///< Strain deviator for #m_pert_u.
 
-
 protected:
     /**
     Constructor alias, useful for derived classes.
