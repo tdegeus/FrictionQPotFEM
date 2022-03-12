@@ -26,22 +26,6 @@ class Test(unittest.TestCase):
         self.assertEqual(system.N(), 3)
         self.assertEqual(system.type(), "FrictionQPotFEM.Generic2d.System")
 
-    def test_FrictionQPotFEM_Generic2d_HybridSystem(self):
-
-        mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
-
-        system = FrictionQPotFEM.Generic2d.HybridSystem(
-            mesh.coor(),
-            mesh.conn(),
-            mesh.dofs(),
-            np.arange(mesh.nnode() * mesh.ndim()),
-            [0, 1, 2, 6, 7, 8],
-            [3, 4, 5],
-        )
-
-        self.assertEqual(system.N(), 3)
-        self.assertEqual(system.type(), "FrictionQPotFEM.Generic2d.HybridSystem")
-
     def test_FrictionQPotFEM_UniformSingleLayer2d_System(self):
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
