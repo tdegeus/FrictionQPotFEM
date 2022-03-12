@@ -813,11 +813,6 @@ protected:
         const L& elem_plastic);
 
     /**
-    If all material points are specified: initialise strain and set stiffness matrix.
-    */
-    void initMaterial();
-
-    /**
     Set m_allset = ``true`` if all prerequisites are satisfied.
     */
     void evalAllSet();

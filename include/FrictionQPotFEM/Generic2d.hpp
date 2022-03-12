@@ -240,7 +240,6 @@ System::setElastic(const xt::xtensor<double, 1>& K_elem, const xt::xtensor<doubl
 
     m_set_elas = true;
     this->evalAllSet();
-    this->initMaterial();
 }
 
 inline void System::setPlastic(
@@ -269,7 +268,6 @@ inline void System::setPlastic(
 
     m_set_plas = true;
     this->evalAllSet();
-    this->initMaterial();
 }
 
 inline void System::reset_epsy(const xt::xtensor<double, 2>& epsy_elem)
@@ -505,11 +503,11 @@ inline xt::xtensor<double, 2> System::K() const
     auto ret_plas = m_material_plas.K();
 
     for (size_t e = 0; e < m_nelem_elas; ++e) {
-        std::copy(&ret_elas(e), &ret_elas(e) + m_nip, &ret(m_elem_elas(e)));
+        std::copy(&ret_elas(e, 0), &ret_elas(e, 0) + m_nip, &ret(m_elem_elas(e), 0));
     }
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
-        std::copy(&ret_plas(e), &ret_plas(e) + m_nip, &ret(m_elem_plas(e)));
+        std::copy(&ret_plas(e, 0), &ret_plas(e, 0) + m_nip, &ret(m_elem_plas(e), 0));
     }
 
     return ret;
@@ -523,11 +521,11 @@ inline xt::xtensor<double, 2> System::G() const
     auto ret_plas = m_material_plas.G();
 
     for (size_t e = 0; e < m_nelem_elas; ++e) {
-        std::copy(&ret_elas(e), &ret_elas(e) + m_nip, &ret(m_elem_elas(e)));
+        std::copy(&ret_elas(e, 0), &ret_elas(e, 0) + m_nip, &ret(m_elem_elas(e), 0));
     }
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
-        std::copy(&ret_plas(e), &ret_plas(e) + m_nip, &ret(m_elem_plas(e)));
+        std::copy(&ret_plas(e, 0), &ret_plas(e, 0) + m_nip, &ret(m_elem_plas(e), 0));
     }
 
     return ret;
@@ -552,11 +550,11 @@ inline GooseFEM::MatrixPartitioned System::stiffness() const
     auto ret_elas = m_material_elas.Tangent();
 
     for (size_t e = 0; e < m_nelem_elas; ++e) {
-        std::copy(&ret_elas(e), &ret_elas(e) + m_nip, &ret(m_elem_elas(e)));
+        std::copy(&ret_elas(e, 0, 0, 0, 0, 0), &ret_elas(e, 0, 0, 0, 0, 0) + m_nip, &ret(m_elem_elas(e), 0, 0, 0, 0, 0));
     }
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
-        std::copy(&ret_plas(e), &ret_plas(e) + m_nip, &ret(m_elem_plas(e)));
+        std::copy(&ret_plas(e, 0, 0, 0, 0, 0), &ret_plas(e, 0, 0, 0, 0, 0) + m_nip, &ret(m_elem_plas(e), 0, 0, 0, 0, 0));
     }
 
     GooseFEM::MatrixPartitioned K(m_conn, m_dofs, m_iip);

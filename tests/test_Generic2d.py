@@ -23,7 +23,7 @@ class test_Generic2d(unittest.TestCase):
         dofs = mesh.dofs()
         dofs[mesh.nodesLeftOpenEdge(), ...] = dofs[mesh.nodesRightOpenEdge(), ...]
 
-        system = FrictionQPotFEM.Generic2d.HybridSystem(
+        system = FrictionQPotFEM.Generic2d.System(
             coor,
             mesh.conn(),
             dofs,
@@ -100,7 +100,7 @@ class test_Generic2d(unittest.TestCase):
         dofs = mesh.dofs()
         dofs[mesh.nodesLeftOpenEdge(), ...] = dofs[mesh.nodesRightOpenEdge(), ...]
 
-        system = FrictionQPotFEM.Generic2d.HybridSystem(
+        system = FrictionQPotFEM.Generic2d.System(
             coor,
             mesh.conn(),
             dofs,
@@ -187,7 +187,7 @@ class test_Generic2d(unittest.TestCase):
         dofs = mesh.dofs()
         dofs[mesh.nodesLeftOpenEdge(), ...] = dofs[mesh.nodesRightOpenEdge(), ...]
 
-        system = FrictionQPotFEM.Generic2d.HybridSystem(
+        system = FrictionQPotFEM.Generic2d.System(
             coor,
             mesh.conn(),
             dofs,
@@ -265,7 +265,7 @@ class test_Generic2d(unittest.TestCase):
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
         nelem = mesh.nelem()
-        system = FrictionQPotFEM.Generic2d.HybridSystem(
+        system = FrictionQPotFEM.Generic2d.System(
             coor=mesh.coor(),
             conn=mesh.conn(),
             dofs=mesh.dofs(),
@@ -302,7 +302,7 @@ class test_Generic2d(unittest.TestCase):
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
         nelem = mesh.nelem()
-        system = FrictionQPotFEM.Generic2d.HybridSystem(
+        system = FrictionQPotFEM.Generic2d.System(
             coor=mesh.coor(),
             conn=mesh.conn(),
             dofs=mesh.dofsPeriodic(),
@@ -327,7 +327,7 @@ class test_Generic2d(unittest.TestCase):
         coor = mesh.coor()
         conn = mesh.conn()
         nelem = mesh.nelem()
-        system = FrictionQPotFEM.Generic2d.HybridSystem(
+        system = FrictionQPotFEM.Generic2d.System(
             coor=coor,
             conn=conn,
             dofs=mesh.dofsPeriodic(),
@@ -360,7 +360,7 @@ class test_Generic2d(unittest.TestCase):
         coor = mesh.coor()
         conn = mesh.conn()
         nelem = mesh.nelem()
-        system = FrictionQPotFEM.Generic2d.HybridSystem(
+        system = FrictionQPotFEM.Generic2d.System(
             coor=coor,
             conn=conn,
             dofs=mesh.dofsPeriodic(),

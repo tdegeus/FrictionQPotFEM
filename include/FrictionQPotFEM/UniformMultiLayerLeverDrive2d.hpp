@@ -130,12 +130,7 @@ inline void System::initEventDriven(double xlever, const T& active)
     this->minimise();
     FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(this->plastic_CurrentIndex(), 0)));
 
-    auto c = this->eventDriven_setDeltaU(m_u);
-    m_pert_layerdrive_active = active;
-    m_pert_layerdrive_targetubar = c * m_layerdrive_targetubar;
-    m_pert_lever_target = c * xlever;
-
-    // restore system
+    // restore yield strains
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
         for (size_t q = 0; q < m_nip; ++q) {
@@ -146,6 +141,15 @@ inline void System::initEventDriven(double xlever, const T& active)
             cusp.reset_epsy(epsy, false);
         }
     }
+
+    // store result
+
+    auto c = this->eventDriven_setDeltaU(m_u);
+    m_pert_layerdrive_active = active;
+    m_pert_layerdrive_targetubar = c * m_layerdrive_targetubar;
+    m_pert_lever_target = c * xlever;
+
+    // restore system
 
     this->setU(u0);
     this->setV(v0);

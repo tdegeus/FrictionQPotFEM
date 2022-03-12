@@ -178,6 +178,12 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def(
                 "quad", &SUB::System::quad, "quad", py::return_value_policy::reference_internal);
 
+            cls.def(
+                "material_elastic", &SUB::System::material_elastic, "material_elastic", py::return_value_policy::reference_internal);
+
+            cls.def(
+                "material_plastic", &SUB::System::material_plastic, "material_plastic", py::return_value_policy::reference_internal);
+
             cls.def("K", &SUB::System::K, "K");
             cls.def("G", &SUB::System::G, "G");
             cls.def("Sig", &SUB::System::Sig, "Sig");
