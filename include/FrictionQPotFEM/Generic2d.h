@@ -714,7 +714,7 @@ protected:
     xt::xtensor<double, 2> m_coor; ///< Nodal coordinates, see coor().
     xt::xtensor<size_t, 2> m_dofs; ///< DOFs, shape: [#m_nnode, #m_ndim].
     xt::xtensor<size_t, 1> m_iip; ///< Fixed DOFs.
-    size_t m_N; ///< Number of plastic elements, alias of #nelem_plas..
+    size_t m_N; ///< Number of plastic elements, alias of #m_nelem_plas.
     size_t m_nelem; ///< Number of elements.
     size_t m_nelem_elas; ///< Number of elastic elements.
     size_t m_nelem_plas; ///< Number of plastic elements.
