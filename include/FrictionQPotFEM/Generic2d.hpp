@@ -553,14 +553,14 @@ inline GooseFEM::MatrixPartitioned System::stiffness() const
     for (size_t e = 0; e < m_nelem_elas; ++e) {
         std::copy(
             &ret_elas(e, 0, 0, 0, 0, 0),
-            &ret_elas(e, 0, 0, 0, 0, 0) + m_nip,
+            &ret_elas(e, 0, 0, 0, 0, 0) + m_nip * 16,
             &ret(m_elem_elas(e), 0, 0, 0, 0, 0));
     }
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
         std::copy(
             &ret_plas(e, 0, 0, 0, 0, 0),
-            &ret_plas(e, 0, 0, 0, 0, 0) + m_nip,
+            &ret_plas(e, 0, 0, 0, 0, 0) + m_nip * 16,
             &ret(m_elem_plas(e), 0, 0, 0, 0, 0));
     }
 
@@ -675,10 +675,12 @@ inline double System::eventDriven_setDeltaU(const T& u, bool autoscale)
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, m_u.shape()));
     m_pert_u = u;
 
-    auto u0 = m_u;
-    this->setU(u);
-    m_pert_Epsd_plastic = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps());
-    this->setU(u0);
+    m_vector_plas.asElement(u, m_ue_plas);
+    m_quad_plas.symGradN_vector(m_ue_plas, m_Eps_plas);
+    m_pert_Epsd_plastic = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(m_Eps_plas);
+
+    m_vector_plas.asElement(m_u, m_ue_plas);
+    m_quad_plas.symGradN_vector(m_ue_plas, m_Eps_plas);
 
     if (!autoscale) {
         return 1.0;
