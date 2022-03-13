@@ -635,12 +635,24 @@ inline void System::computeFullStress()
     m_material_elas.stress(m_Sig_elas);
 
     for (size_t e = 0; e < m_nelem_elas; ++e) {
-        std::copy(&m_Eps_elas(e, 0, 0, 0), &m_Eps_elas(e, 0, 0, 0) + m_nip * 4, &m_Eps(m_elem_elas(e), 0, 0, 0));
-        std::copy(&m_Sig_elas(e, 0, 0, 0), &m_Sig_elas(e, 0, 0, 0) + m_nip * 4, &m_Sig(m_elem_elas(e), 0, 0, 0));
+        std::copy(
+            &m_Eps_elas(e, 0, 0, 0),
+            &m_Eps_elas(e, 0, 0, 0) + m_nip * 4,
+            &m_Eps(m_elem_elas(e), 0, 0, 0));
+        std::copy(
+            &m_Sig_elas(e, 0, 0, 0),
+            &m_Sig_elas(e, 0, 0, 0) + m_nip * 4,
+            &m_Sig(m_elem_elas(e), 0, 0, 0));
     }
     for (size_t e = 0; e < m_nelem_plas; ++e) {
-        std::copy(&m_Eps_plas(e, 0, 0, 0), &m_Eps_plas(e, 0, 0, 0) + m_nip * 4, &m_Eps(m_elem_plas(e), 0, 0, 0));
-        std::copy(&m_Sig_plas(e, 0, 0, 0), &m_Sig_plas(e, 0, 0, 0) + m_nip * 4, &m_Sig(m_elem_plas(e), 0, 0, 0));
+        std::copy(
+            &m_Eps_plas(e, 0, 0, 0),
+            &m_Eps_plas(e, 0, 0, 0) + m_nip * 4,
+            &m_Eps(m_elem_plas(e), 0, 0, 0));
+        std::copy(
+            &m_Sig_plas(e, 0, 0, 0),
+            &m_Sig_plas(e, 0, 0, 0) + m_nip * 4,
+            &m_Sig(m_elem_plas(e), 0, 0, 0));
     }
 
     m_eval_full = false;
