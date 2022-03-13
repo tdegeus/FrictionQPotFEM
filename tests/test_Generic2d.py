@@ -112,7 +112,7 @@ class test_Generic2d(unittest.TestCase):
         nelas = system.elastic().size
         nplas = system.plastic().size
 
-        epsy = 1e-3 * np.cumsum(np.random.random((nplas, 100)), axis=1)
+        epsy = 1e-2 * np.cumsum(np.random.random((nplas, 100)), axis=1)
         deps = 0.1 * np.min(np.diff(epsy, axis=1))
 
         system.setMassMatrix(np.ones(nelem))

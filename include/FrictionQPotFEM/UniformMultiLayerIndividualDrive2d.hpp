@@ -213,17 +213,18 @@ inline double System::initEventDriven(const S& ubar, const T& active)
     auto active0 = m_layerdrive_active;
     auto ubar0 = m_layerdrive_targetubar;
     auto t0 = m_t;
-    xt::xtensor<double, 3> epsy0(std::array<size_t, 3>{m_nelem_plas, m_nip, 2});
+    std::vector<std::vector<xt::xtensor<double, 1>>> epsy0;
+    epsy0.resize(m_nelem_plas);
+    double i = std::numeric_limits<double>::max();
+    xt::xtensor<double, 1> epsy_elas = {-i, i};
+    double d = xt::amin(xt::diff(this->epsy(), 1))();
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
+        epsy0[e].resize(m_nip);
         for (size_t q = 0; q < m_nip; ++q) {
             auto& cusp = m_material_plas.refCusp({e, q});
-            auto epsy = cusp.epsy();
-            epsy0(e, q, 0) = epsy(0);
-            epsy0(e, q, 1) = epsy(1);
-            epsy(1) = std::numeric_limits<double>::max();
-            epsy(0) = -epsy(1);
-            cusp.reset_epsy(epsy, false);
+            epsy0[e][q] = cusp.epsy();
+            cusp.reset_epsy(epsy_elas, false);
         }
     }
 
@@ -239,21 +240,22 @@ inline double System::initEventDriven(const S& ubar, const T& active)
     this->minimise();
     FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(this->plastic_CurrentIndex(), 0)));
 
+    auto deps = xt::amax(GMatElastoPlasticQPot::Cartesian2d::Epsd(GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps())))();
+    double c = 0.1 * d / deps;
+    this->setU(c * m_u);
+
     // restore yield strains
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
         for (size_t q = 0; q < m_nip; ++q) {
             auto& cusp = m_material_plas.refCusp({e, q});
-            auto epsy = cusp.epsy();
-            epsy(0) = epsy0(e, q, 0);
-            epsy(1) = epsy0(e, q, 1);
-            cusp.reset_epsy(epsy, false);
+            cusp.reset_epsy(epsy0[e][q], false);
         }
     }
 
     // store result
 
-    auto c = this->eventDriven_setDeltaU(m_u);
+    c = this->eventDriven_setDeltaU(c * m_u);
     m_pert_layerdrive_active = active;
     m_pert_layerdrive_targetubar = c * ubar;
 
