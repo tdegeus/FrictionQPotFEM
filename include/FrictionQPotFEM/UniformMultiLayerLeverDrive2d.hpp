@@ -130,10 +130,8 @@ inline void System::initEventDriven(double xlever, const T& active)
     this->setLeverTarget(xlever);
     this->minimise();
     FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(this->plastic_CurrentIndex(), 0)));
-
-    auto deps = xt::amax(GMatElastoPlasticQPot::Cartesian2d::Epsd(GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps())))();
-    double c = 0.1 * d / deps;
-    this->setU(c * m_u);
+    auto up = m_u;
+    m_u.fill(0.0);
 
     // restore yield strains
 
@@ -146,7 +144,7 @@ inline void System::initEventDriven(double xlever, const T& active)
 
     // store result
 
-    c = this->eventDriven_setDeltaU(m_u);
+    auto c = this->eventDriven_setDeltaU(up);
     m_pert_layerdrive_active = active;
     m_pert_layerdrive_targetubar = c * m_layerdrive_targetubar;
     m_pert_lever_target = c * xlever;

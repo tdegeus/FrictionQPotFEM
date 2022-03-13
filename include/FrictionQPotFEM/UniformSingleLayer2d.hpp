@@ -432,6 +432,12 @@ inline void LocalTriggerFineLayerFull::setState(
     xt::xtensor<double, 2> P = xt::empty<double>({size_t(2), N});
     xt::xtensor<double, 2> W = xt::empty<double>({size_t(2), N});
 
+    for (size_t i = 0; i < S.shape(0); ++i) {
+        S(i, 0) = 0.0;
+        P(i, 0) = 0.0;
+        W(i, 0) = 0.0;
+    }
+
     for (size_t e = 0; e < m_nelem_plas; ++e) {
 
         auto Eps_s = this->Eps_s(e);
@@ -478,8 +484,10 @@ inline void LocalTriggerFineLayerFull::setState(
                 P(i, 0) = 0.0;
                 P(i, N - 1) = 0.0;
             }
-            P(0, n - 1) = pmax;
-            P(1, n - 1) = pmin;
+            if (n > 0) {
+                P(0, n - 1) = pmax;
+                P(1, n - 1) = pmin;
+            }
 
             for (size_t j = 1; j < N - 1; ++j) {
                 if (j == n - 1) {
