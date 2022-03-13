@@ -217,7 +217,6 @@ inline double System::initEventDriven(const S& ubar, const T& active)
     epsy0.resize(m_nelem_plas);
     double i = std::numeric_limits<double>::max();
     xt::xtensor<double, 1> epsy_elas = {-i, i};
-    double d = xt::amin(xt::diff(this->epsy(), 1))();
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
         epsy0[e].resize(m_nip);
