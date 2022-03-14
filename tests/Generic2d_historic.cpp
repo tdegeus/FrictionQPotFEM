@@ -443,7 +443,7 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
             xt::xtensor<double, 2> Sigbar = xt::average(full.Sig(), dV, {0, 1});
 
             compute_Eps(inc) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)();
-            compute_Sig(inc) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Sigbar)();
+            compute_Sig(inc) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Sigbar)(); // here is a typo
         }
 
         REQUIRE(xt::allclose(compute_Eps, check_Eps));
