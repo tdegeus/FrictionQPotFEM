@@ -35,9 +35,10 @@ jobs:
         environment-name: myenv
         cache-env: true
         extra-specs: |
+          python-gmatelastoplasticqpot
           python-gmattensor
           python-goosefem
-          python-gmatelastoplasticqpot
+          python-prrng
           sel(linux): cxx-compiler
           sel(win): clang_win-64
 
@@ -49,6 +50,7 @@ jobs:
       run: |
         python basic.py
         python Generic2d.py
+        python Generic2d_historic.py
         python UniformMultiLayerIndividualDrive2d.py
         python UniformMultiLayerLeverDrive2d.py
         python UniformSingleLayer2d.py
