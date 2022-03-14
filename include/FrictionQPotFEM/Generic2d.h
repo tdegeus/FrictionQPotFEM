@@ -784,7 +784,7 @@ protected:
     bool m_set_visco = false; ///< Internal allocation check: interfacial damping specified.
     bool m_set_elas = false; ///< Internal allocation check: elastic elements were written.
     bool m_set_plas = false; ///< Internal allocation check: plastic elements were written.
-    bool m_eval_full = true; ///< Keep track of the need to recompute full variables.
+    bool m_eval_full = true; ///< Keep track of the need to recompute full stress/strain.
     xt::xtensor<double, 2> m_pert_u; ///< See eventDriven_setDeltaU()
     xt::xtensor<double, 4> m_pert_Epsd_plastic; ///< Strain deviator for #m_pert_u.
 
