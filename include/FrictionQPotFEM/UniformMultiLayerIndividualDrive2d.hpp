@@ -242,6 +242,9 @@ inline double System::initEventDriven(const S& ubar, const T& active)
     m_u.fill(0.0);
 
     // restore yield strains
+    // to avoid running out-of-bounds there  the displacements had to be reset to zero
+    // if the yield strains are result only later scaling is buggy because a typical yield strain
+    // can be inaccurate
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
         for (size_t q = 0; q < m_nip; ++q) {
