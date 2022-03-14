@@ -35,9 +35,10 @@ jobs:
         environment-name: myenv
         cache-env: true
         extra-specs: |
+          python-gmatelastoplasticqpot
           python-gmattensor
           python-goosefem
-          python-gmatelastoplasticqpot
+          python-prrng
           sel(linux): cxx-compiler
           sel(win): clang_win-64
 
