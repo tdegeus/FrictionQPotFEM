@@ -13,6 +13,10 @@ class test_Generic2d(unittest.TestCase):
     """
 
     def test_historic(self):
+        """
+        A simple historic run.
+        Thanks to prrng this test can be run on any platform, but also from any API (Python or C++).
+        """
 
         check_Eps = np.array(
             [
