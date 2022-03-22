@@ -660,7 +660,7 @@ inline double System::eventDrivenStep(
             double c = e_t * e_t + g_t * g_t - epsd_target * epsd_target;
             double D = std::sqrt(b * b - 4.0 * a * c);
 
-            FRICTIONQPOTFEM_REQUIRE(b >= 0.0);
+            FRICTIONQPOTFEM_REQUIRE(b >= 0.0 || iterative);
             scale(e, q) = (-b + D) / (2.0 * a);
         }
     }
