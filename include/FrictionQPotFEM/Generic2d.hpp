@@ -633,6 +633,16 @@ inline double System::eventDrivenStep(
         target = epsy_l + 0.5 * deps_kick;
     }
 
+    if (!kick) {
+        auto d = target - GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+        if (direction > 0 && xt::any(d < 0.0)) {
+            return 0.0;
+        }
+        if (direction < 0 && xt::any(d > 0.0)) {
+            return 0.0;
+        }
+    }
+
     auto Epsd_plastic = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps());
     auto scale = xt::empty_like(target);
 
