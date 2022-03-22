@@ -105,20 +105,27 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
             cls.def(
                 "setElastic",
-                &SUB::System::setElastic,
+                &SUB::System::setElastic<xt::pytensor<double, 1>, xt::pytensor<double, 1>>,
                 "setElastic",
                 py::arg("K_elem"),
                 py::arg("G_elem"));
 
             cls.def(
                 "setPlastic",
-                &SUB::System::setPlastic,
+                &SUB::System::setPlastic<
+                    xt::pytensor<double, 1>,
+                    xt::pytensor<double, 1>,
+                    xt::pytensor<double, 2>>,
                 "setPlastic",
                 py::arg("K_elem"),
                 py::arg("G_elem"),
                 py::arg("epsy_elem"));
 
-            cls.def("reset_epsy", &SUB::System::reset_epsy, "reset_epsy", py::arg("epsy_elem"));
+            cls.def(
+                "reset_epsy",
+                &SUB::System::reset_epsy<xt::pytensor<double, 2>>,
+                "reset_epsy",
+                py::arg("epsy_elem"));
 
             cls.def(
                 "isHomogeneousElastic", &SUB::System::isHomogeneousElastic, "isHomogeneousElastic");
