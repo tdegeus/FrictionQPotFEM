@@ -290,20 +290,15 @@ public:
 
     /**
     External force.
-    Note: the external force on the DOFs whose displacement are prescribed are response forces
-    computed during timeStep().
-
     \return Nodal force. Shape ``[nnode, ndim]``    .
     */
-    auto fext() const;
+    auto fext();
 
     /**
     Internal force.
-    Note: computed during timeStep().
-
     \return Nodal force. Shape ``[nnode, ndim]``    .
     */
-    auto fint() const;
+    auto fint();
 
     /**
     Force deriving from elasticity.
@@ -789,7 +784,7 @@ protected:
     bool m_set_visco = false; ///< Internal allocation check: interfacial damping specified.
     bool m_set_elas = false; ///< Internal allocation check: elastic elements were written.
     bool m_set_plas = false; ///< Internal allocation check: plastic elements were written.
-    bool m_eval_full = true; ///< Keep track of the need to recompute full stress/strain.
+    bool m_full_outdated = true; ///< Keep track of the need to recompute fields on full geometry.
     xt::xtensor<double, 2> m_pert_u; ///< See eventDriven_setDeltaU()
     xt::xtensor<double, 4> m_pert_Epsd_plastic; ///< Strain deviator for #m_pert_u.
 
@@ -817,15 +812,20 @@ protected:
         const L& elem_plastic);
 
     /**
-    Set m_allset = ``true`` if all prerequisites are satisfied.
+    Set #m_allset = ``true`` if all prerequisites are satisfied.
     */
     void evalAllSet();
 
     /**
-    Compute strain and stress tensors.
-    Uses m_u to update m_Sig and m_Eps.
+    Compute #m_Sig and #m_Eps using #m_u.
     */
-    void computeFullStress();
+    void computeEpsSig();
+
+    /**
+    Update #m_fmaterial based on the current displacement field #m_u.
+    This implies computing #m_Eps_plas and #m_Sig_plas.
+    */
+    void computeForceMaterial();
 
     /**
     Evaluate relevant forces when m_u is updated.
@@ -835,17 +835,7 @@ protected:
     /**
     Evaluate relevant forces when m_v is updated.
     */
-    virtual void updated_v();
-
-    /**
-    Update m_fmaterial based on the current displacement field m_u.
-    This implies taking the gradient of the stress tensor, m_Sig,
-    computed using computeFullStress.
-
-    Internal rule: This function is always evaluated after an update of m_u.
-    This is taken care off by calling setU, and never updating m_u directly.
-    */
-    virtual void computeForceMaterial();
+    void updated_v();
 
     /**
     Compute:

@@ -335,13 +335,8 @@ inline void System::setU(const T& u)
 {
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(u, {m_nnode, m_ndim}));
     xt::noalias(m_u) = u;
-    m_eval_full = true;
+    m_full_outdated = true;
     this->updated_u();
-}
-
-inline void System::updated_u()
-{
-    this->computeForceMaterial();
 }
 
 template <class T>
@@ -350,6 +345,18 @@ inline void System::setV(const T& v)
     FRICTIONQPOTFEM_ASSERT(xt::has_shape(v, {m_nnode, m_ndim}));
     xt::noalias(m_v) = v;
     this->updated_v();
+}
+
+template <class T>
+inline void System::setA(const T& a)
+{
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(a, {m_nnode, m_ndim}));
+    xt::noalias(m_a) = a;
+}
+
+inline void System::updated_u()
+{
+    this->computeForceMaterial();
 }
 
 inline void System::updated_v()
@@ -373,13 +380,6 @@ inline void System::updated_v()
             m_fdamp += m_ftmp;
         }
     }
-}
-
-template <class T>
-inline void System::setA(const T& a)
-{
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(a, {m_nnode, m_ndim}));
-    xt::noalias(m_a) = a;
 }
 
 template <class T>
@@ -445,13 +445,15 @@ inline auto& System::damping() const
     return m_D;
 }
 
-inline auto System::fext() const
+inline auto System::fext()
 {
+    this->computeInternalExternalResidualForce();
     return m_fext;
 }
 
-inline auto System::fint() const
+inline auto System::fint()
 {
+    this->computeInternalExternalResidualForce();
     return m_fint;
 }
 
@@ -543,13 +545,13 @@ inline xt::xtensor<double, 2> System::G() const
 
 inline xt::xtensor<double, 4> System::Sig()
 {
-    this->computeFullStress();
+    this->computeEpsSig();
     return m_Sig;
 }
 
 inline xt::xtensor<double, 4> System::Eps()
 {
-    this->computeFullStress();
+    this->computeEpsSig();
     return m_Eps;
 }
 
@@ -630,10 +632,10 @@ inline bool System::boundcheck_right(size_t n) const
     return m_material_plas.checkYieldBoundRight(n);
 }
 
-inline void System::computeFullStress()
+inline void System::computeEpsSig()
 {
     FRICTIONQPOTFEM_ASSERT(m_allset);
-    if (!m_eval_full) {
+    if (!m_full_outdated) {
         return;
     }
 
@@ -663,13 +665,13 @@ inline void System::computeFullStress()
             &m_Sig(m_elem_plas(e), 0, 0, 0));
     }
 
-    m_eval_full = false;
+    m_full_outdated = false;
 }
 
 inline void System::computeForceMaterial()
 {
     FRICTIONQPOTFEM_ASSERT(m_allset);
-    m_eval_full = true;
+    m_full_outdated = true;
 
     m_vector_plas.asElement(m_u, m_ue_plas);
     m_quad_plas.symGradN_vector(m_ue_plas, m_Eps_plas);
