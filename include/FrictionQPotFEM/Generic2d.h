@@ -120,24 +120,27 @@ public:
     Set material parameters for the elastic elements
     (taken uniform per element, ordering the same as in the constructor).
 
+    \tparam S e.g. `xt::xtensor<double, 1>`.
+    \tparam T e.g. `xt::xtensor<double, 1>`.
     \param K_elem Bulk modulus per element.
     \param G_elem Bulk modulus per element.
     */
-    virtual void
-    setElastic(const xt::xtensor<double, 1>& K_elem, const xt::xtensor<double, 1>& G_elem);
+    template <class S, class T>
+    void setElastic(const S& K_elem, const T& G_elem);
 
     /**
     Set material parameters for the plastic elements
     (taken uniform per element, ordering the same as in the constructor).
 
+    \tparam S e.g. `xt::xtensor<double, 1>`.
+    \tparam T e.g. `xt::xtensor<double, 1>`.
+    \tparam Y e.g. `xt::xtensor<double, 2>`.
     \param K_elem Bulk modulus per element.
     \param G_elem Bulk modulus per element.
     \param epsy_elem Yield history per element.
     */
-    virtual void setPlastic(
-        const xt::xtensor<double, 1>& K_elem,
-        const xt::xtensor<double, 1>& G_elem,
-        const xt::xtensor<double, 2>& epsy_elem);
+    template <class S, class T, class Y>
+    void setPlastic(const S& K_elem, const T& G_elem, const Y& epsy_elem);
 
     /**
     Get the current yield strains per plastic element.
@@ -149,9 +152,11 @@ public:
 
     /**
     Reset yield strains (to avoid re-construction).
+    \tparam T e.g. `xt::xtensor<double, 2>`.
     \param epsy_elem Yield history per element.
     */
-    virtual void reset_epsy(const xt::xtensor<double, 2>& epsy_elem);
+    template <class T>
+    void reset_epsy(const T& epsy_elem);
 
     /**
     Check if elasticity is homogeneous.

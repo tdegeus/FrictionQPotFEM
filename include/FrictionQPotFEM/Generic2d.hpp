@@ -222,12 +222,12 @@ inline void System::setDampingMatrix(const T& val_elem)
     this->evalAllSet();
 }
 
-inline void
-System::setElastic(const xt::xtensor<double, 1>& K_elem, const xt::xtensor<double, 1>& G_elem)
+template <class S, class T>
+inline void System::setElastic(const S& K_elem, const T& G_elem)
 {
     FRICTIONQPOTFEM_ASSERT(!m_set_elas || m_nelem_elas == 0);
-    FRICTIONQPOTFEM_ASSERT(K_elem.size() == m_nelem_elas);
-    FRICTIONQPOTFEM_ASSERT(G_elem.size() == m_nelem_elas);
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(K_elem, {m_nelem_elas}));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(G_elem, {m_nelem_elas}));
 
     if (m_nelem_elas > 0) {
         xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem_elas, m_nip}, 1);
@@ -250,14 +250,13 @@ System::setElastic(const xt::xtensor<double, 1>& K_elem, const xt::xtensor<doubl
     this->evalAllSet();
 }
 
-inline void System::setPlastic(
-    const xt::xtensor<double, 1>& K_elem,
-    const xt::xtensor<double, 1>& G_elem,
-    const xt::xtensor<double, 2>& epsy_elem)
+template <class S, class T, class Y>
+inline void System::setPlastic(const S& K_elem, const T& G_elem, const Y& epsy_elem)
 {
     FRICTIONQPOTFEM_ASSERT(!m_set_plas || m_nelem_plas == 0);
-    FRICTIONQPOTFEM_ASSERT(K_elem.size() == m_nelem_plas);
-    FRICTIONQPOTFEM_ASSERT(G_elem.size() == m_nelem_plas);
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(K_elem, {m_nelem_plas}));
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(G_elem, {m_nelem_plas}));
+    FRICTIONQPOTFEM_ASSERT(epsy_elem.dimension() == 2);
     FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
 
     if (m_nelem_plas > 0) {
@@ -278,9 +277,11 @@ inline void System::setPlastic(
     this->evalAllSet();
 }
 
-inline void System::reset_epsy(const xt::xtensor<double, 2>& epsy_elem)
+template <class T>
+inline void System::reset_epsy(const T& epsy_elem)
 {
     FRICTIONQPOTFEM_ASSERT(m_set_plas);
+    FRICTIONQPOTFEM_ASSERT(epsy_elem.dimension() == 2);
     FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
 
     if (m_nelem_plas > 0) {
