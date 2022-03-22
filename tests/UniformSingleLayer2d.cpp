@@ -17,42 +17,6 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
         }
     }
 
-    SECTION("System::plastic_SignDeltaEpsd")
-    {
-        GooseFEM::Mesh::Quad4::Regular mesh(3, 3);
-
-        FrictionQPotFEM::UniformSingleLayer2d::System sys(
-            mesh.coor(),
-            mesh.conn(),
-            mesh.dofs(),
-            xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
-            xt::xtensor<size_t, 1>{0, 1, 2, 6, 7, 8},
-            xt::xtensor<size_t, 1>{3, 4, 5});
-
-        sys.setMassMatrix(xt::ones<double>({mesh.nelem()}));
-        sys.setDampingMatrix(xt::ones<double>({mesh.nelem()}));
-
-        sys.setElastic(xt::ones<double>({6}), xt::ones<double>({6}));
-
-        sys.setPlastic(
-            xt::xtensor<double, 1>{1.0, 1.0, 1.0},
-            xt::xtensor<double, 1>{1.0, 1.0, 1.0},
-            xt::xtensor<double, 2>{
-                {1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}});
-
-        sys.setDt(1.0);
-
-        sys.addAffineSimpleShear(0.1);
-        auto u0 = sys.u();
-        sys.addAffineSimpleShear(0.1);
-        auto u = sys.u();
-        auto delta_u = u - u0;
-
-        REQUIRE(xt::all(xt::equal(sys.plastic_SignDeltaEpsd(delta_u), xt::ones<int>({3, 4}))));
-        REQUIRE(
-            xt::all(xt::equal(sys.plastic_SignDeltaEpsd(-delta_u), -1 * xt::ones<int>({3, 4}))));
-    }
-
     SECTION("System::addAffineSimpleShear")
     {
         GooseFEM::Mesh::Quad4::Regular mesh(3, 3);
@@ -81,7 +45,8 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
         for (size_t i = 0; i < 10; ++i) {
             double delta_gamma = 0.01;
             double gamma = delta_gamma * static_cast<double>(i + 1);
-            sys.addAffineSimpleShear(delta_gamma);
+            auto du = sys.affineSimpleShear(delta_gamma);
+            sys.setU(xt::eval(sys.u() + du));
             REQUIRE(xt::allclose(xt::view(sys.Eps(), xt::all(), xt::all(), 0, 1), gamma));
         }
     }
@@ -119,7 +84,8 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
         for (size_t i = 0; i < 10; ++i) {
             double delta_gamma = 0.01;
             double gamma = delta_gamma * static_cast<double>(i + 1);
-            sys.addAffineSimpleShearCentered(delta_gamma);
+            auto dus = sys.affineSimpleShearCentered(delta_gamma);
+            sys.setU(xt::eval(sys.u() + dus));
             auto u = sys.u();
             auto du = xt::eval(xt::view(u, xt::keep(top), 1) + xt::view(u, xt::keep(bot), 1));
             REQUIRE(xt::allclose(xt::view(sys.Eps(), xt::all(), xt::all(), 0, 1), gamma));

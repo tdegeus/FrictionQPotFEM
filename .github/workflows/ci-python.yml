@@ -44,7 +44,8 @@ jobs:
           sel(win): clang_win-64
 
     - name: Build and install Python module
-      run: python -m pip install . -vv
+      run: |
+        SKBUILD_CONFIGURE_OPTIONS="-DUSE_DEBUG=1" python -m pip install . -vv
 
     - name: Run Python tests
       run: python -m unittest discover tests

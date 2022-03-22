@@ -104,17 +104,17 @@ inline void System::initEventDriven(double xlever, const T& active)
     auto ubar0 = m_layerdrive_targetubar;
     auto xdrive0 = m_lever_target;
     auto t0 = m_t;
-    xt::xtensor<double, 3> epsy0(std::array<size_t, 3>{m_nelem_plas, m_nip, 2});
+    std::vector<std::vector<xt::xtensor<double, 1>>> epsy0;
+    epsy0.resize(m_nelem_plas);
+    double i = std::numeric_limits<double>::max();
+    xt::xtensor<double, 1> epsy_elas = {-i, i};
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
+        epsy0[e].resize(m_nip);
         for (size_t q = 0; q < m_nip; ++q) {
             auto& cusp = m_material_plas.refCusp({e, q});
-            auto epsy = cusp.epsy();
-            epsy0(e, q, 0) = epsy(0);
-            epsy0(e, q, 1) = epsy(1);
-            epsy(1) = std::numeric_limits<double>::max();
-            epsy(0) = -epsy(1);
-            cusp.reset_epsy(epsy, false);
+            epsy0[e][q] = cusp.epsy();
+            cusp.reset_epsy(epsy_elas, false);
         }
     }
 
@@ -129,23 +129,29 @@ inline void System::initEventDriven(double xlever, const T& active)
     this->setLeverTarget(xlever);
     this->minimise();
     FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(this->plastic_CurrentIndex(), 0)));
+    auto up = m_u;
+    m_u.fill(0.0);
 
-    auto c = this->eventDriven_setDeltaU(m_u);
+    // restore yield strains
+    // to avoid running out-of-bounds there  the displacements had to be reset to zero
+    // if the yield strains are result only later scaling is buggy because a typical yield strain
+    // can be inaccurate
+
+    for (size_t e = 0; e < m_nelem_plas; ++e) {
+        for (size_t q = 0; q < m_nip; ++q) {
+            auto& cusp = m_material_plas.refCusp({e, q});
+            cusp.reset_epsy(epsy0[e][q], false);
+        }
+    }
+
+    // store result
+
+    auto c = this->eventDriven_setDeltaU(up);
     m_pert_layerdrive_active = active;
     m_pert_layerdrive_targetubar = c * m_layerdrive_targetubar;
     m_pert_lever_target = c * xlever;
 
     // restore system
-
-    for (size_t e = 0; e < m_nelem_plas; ++e) {
-        for (size_t q = 0; q < m_nip; ++q) {
-            auto& cusp = m_material_plas.refCusp({e, q});
-            auto epsy = cusp.epsy();
-            epsy(0) = epsy0(e, q, 0);
-            epsy(1) = epsy0(e, q, 1);
-            cusp.reset_epsy(epsy, false);
-        }
-    }
 
     this->setU(u0);
     this->setV(v0);

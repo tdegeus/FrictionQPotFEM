@@ -114,7 +114,7 @@ inline void System::init(
         }
     }
 
-    this->initHybridSystem(coor, conn, dofs, iip, elas, plas);
+    this->initSystem(coor, conn, dofs, iip, elas, plas);
 
     m_fdrive = m_vector.allocate_nodevec(0.0);
     m_ud = m_vector.allocate_dofval(0.0);
@@ -213,17 +213,17 @@ inline double System::initEventDriven(const S& ubar, const T& active)
     auto active0 = m_layerdrive_active;
     auto ubar0 = m_layerdrive_targetubar;
     auto t0 = m_t;
-    xt::xtensor<double, 3> epsy0(std::array<size_t, 3>{m_nelem_plas, m_nip, 2});
+    std::vector<std::vector<xt::xtensor<double, 1>>> epsy0;
+    epsy0.resize(m_nelem_plas);
+    double i = std::numeric_limits<double>::max();
+    xt::xtensor<double, 1> epsy_elas = {-i, i};
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
+        epsy0[e].resize(m_nip);
         for (size_t q = 0; q < m_nip; ++q) {
             auto& cusp = m_material_plas.refCusp({e, q});
-            auto epsy = cusp.epsy();
-            epsy0(e, q, 0) = epsy(0);
-            epsy0(e, q, 1) = epsy(1);
-            epsy(1) = std::numeric_limits<double>::max();
-            epsy(0) = -epsy(1);
-            cusp.reset_epsy(epsy, false);
+            epsy0[e][q] = cusp.epsy();
+            cusp.reset_epsy(epsy_elas, false);
         }
     }
 
@@ -238,22 +238,28 @@ inline double System::initEventDriven(const S& ubar, const T& active)
     this->layerSetTargetUbar(ubar);
     this->minimise();
     FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(this->plastic_CurrentIndex(), 0)));
+    auto up = m_u;
+    m_u.fill(0.0);
 
-    auto c = this->eventDriven_setDeltaU(m_u);
-    m_pert_layerdrive_active = active;
-    m_pert_layerdrive_targetubar = c * ubar;
-
-    // restore system
+    // restore yield strains
+    // to avoid running out-of-bounds there  the displacements had to be reset to zero
+    // if the yield strains are result only later scaling is buggy because a typical yield strain
+    // can be inaccurate
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
         for (size_t q = 0; q < m_nip; ++q) {
             auto& cusp = m_material_plas.refCusp({e, q});
-            auto epsy = cusp.epsy();
-            epsy(0) = epsy0(e, q, 0);
-            epsy(1) = epsy0(e, q, 1);
-            cusp.reset_epsy(epsy, false);
+            cusp.reset_epsy(epsy0[e][q], false);
         }
     }
+
+    // store result
+
+    auto c = this->eventDriven_setDeltaU(up);
+    m_pert_layerdrive_active = active;
+    m_pert_layerdrive_targetubar = c * ubar;
+
+    // restore system
 
     this->setU(u0);
     this->setV(v0);
@@ -370,36 +376,6 @@ inline void System::layerSetUbar(const S& ubar, const T& prescribe)
     if (m_allset) {
         this->computeForceMaterial();
     }
-}
-
-inline void System::addAffineSimpleShear(double delta_gamma)
-{
-    FRICTIONQPOTFEM_WARNING_PYTHON("Use setU(u() + affineSimpleShear(...)) "
-                                   "instead of addAffineSimpleShear(...)");
-
-    for (size_t n = 0; n < m_nnode; ++n) {
-        m_u(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - m_coor(0, 1));
-    }
-
-    this->computeLayerUbarActive();
-    this->computeForceFromTargetUbar();
-    if (m_allset) {
-        this->computeForceMaterial();
-    }
-}
-
-template <class T>
-inline void System::layerTagetUbar_addAffineSimpleShear(double delta_gamma, const T& height)
-{
-    FRICTIONQPOTFEM_WARNING_PYTHON(
-        "layerTagetUbar_addAffineSimpleShear is deprecated. "
-        "It can be replaced by affineSimpleShear(...) and layerTargetUbar_affineSimpleShear(...)");
-
-    FRICTIONQPOTFEM_ASSERT(xt::has_shape(height, {m_n_layer}));
-    for (size_t i = 0; i < m_n_layer; ++i) {
-        m_layerdrive_targetubar(i, 0) += 2.0 * delta_gamma * height(i);
-    }
-    this->computeForceFromTargetUbar(); // the average displacement and other forces do not change
 }
 
 template <class T>

@@ -38,7 +38,7 @@ inline void System::init(
     const L& elem_elastic,
     const L& elem_plastic)
 {
-    this->initHybridSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+    this->initSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
 }
 
 inline std::string System::type() const
@@ -64,86 +64,10 @@ inline double System::typical_plastic_dV() const
     return dV;
 }
 
-inline double System::plastic_h() const
-{
-    FRICTIONQPOTFEM_WARNING_PYTHON("Deprecated: use typical_plastic_h().");
-    return this->typical_plastic_h();
-}
-
-inline double System::plastic_dV() const
-{
-    FRICTIONQPOTFEM_WARNING_PYTHON("Deprecated: use typical_plastic_dV().");
-    return this->typical_plastic_dV();
-}
-
-inline xt::xtensor<double, 2> System::Energy()
-{
-    FRICTIONQPOTFEM_WARNING_PYTHON(
-        "Deprecated: use this.material().Energy()."
-        "Careful though: one has to call 'evalSystem()' every time after 'setU'");
-
-    this->evalSystem();
-    return m_material.Energy();
-}
-
-inline auto System::plastic_signOfPerturbation(const xt::xtensor<double, 2>& delta_u)
-{
-    FRICTIONQPOTFEM_WARNING_PYTHON(
-        "Use plastic_SignDeltaEpsd(...) instead of plastic_signOfPerturbation(...)");
-
-    return this->plastic_SignDeltaEpsd(delta_u);
-}
-
-inline auto System::plastic_signOfSimpleShearPerturbation(double perturbation)
-{
-    auto u_0 = this->u();
-    auto eps_0 = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-    auto u_pert = this->u();
-
-    for (size_t n = 0; n < m_nnode; ++n) {
-        u_pert(n, 0) += perturbation * (m_coor(n, 1) - m_coor(0, 1));
-    }
-
-    this->setU(u_pert);
-    auto eps_pert = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-    this->setU(u_0);
-
-    xt::xtensor<double, 2> sign = xt::sign(eps_pert - eps_0);
-    return sign;
-}
-
-inline double System::addAffineSimpleShear(double delta_gamma)
-{
-    FRICTIONQPOTFEM_WARNING_PYTHON("Use setU(u() + affineSimpleShear(...)) "
-                                   "instead of addAffineSimpleShear(...)");
-    this->setU(this->u() + affineSimpleShear(delta_gamma));
-    return delta_gamma * 2.0;
-}
-
-inline double System::addAffineSimpleShearCentered(double delta_gamma)
-{
-    FRICTIONQPOTFEM_WARNING_PYTHON("Use setU(u() + affineSimpleShearCentered(...)) "
-                                   "instead of addAffineSimpleShearCentered(...)");
-    this->setU(this->u() + affineSimpleShearCentered(delta_gamma));
-    return delta_gamma * 2.0;
-}
-
 inline void System::initEventDrivenSimpleShear()
 {
     FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
     this->eventDriven_setDeltaU(this->affineSimpleShear(0.5));
-}
-
-inline double
-System::addSimpleShearEventDriven(double deps_kick, bool kick, double direction, bool dry_run)
-{
-    FRICTIONQPOTFEM_WARNING_PYTHON("Use initEventDrivenSimpleShear() + eventDrivenStep(...) "
-                                   "instead of addSimpleShearEventDriven(...)");
-
-    FRICTIONQPOTFEM_REQUIRE(!dry_run);
-    this->initEventDrivenSimpleShear();
-    eventDrivenStep(deps_kick, kick, static_cast<int>(direction), false, false);
-    return 0.0;
 }
 
 inline double System::addSimpleShearToFixedStress(double target_stress, bool dry_run)
@@ -152,7 +76,7 @@ inline double System::addSimpleShearToFixedStress(double target_stress, bool dry
 
     auto u_new = this->u();
     auto dV = m_quad.AsTensor<2>(this->dV());
-    double G = m_material.G().data()[0];
+    double G = m_material_plas.G().data()[0];
 
     xt::xtensor<double, 2> Epsbar = xt::average(this->Eps(), dV, {0, 1});
     xt::xtensor<double, 2> Sigbar = xt::average(this->Sig(), dV, {0, 1});
@@ -293,9 +217,10 @@ inline LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(const System& sys)
 {
     // Copy / allocate local variables
 
-    auto m = sys.material();
-    GMatElastoPlasticQPot::Cartesian2d::Array<2> material(m.shape());
-    material.setElastic(m.K(), m.G());
+    auto kappa = sys.K();
+    auto G = sys.G();
+    GMatElastoPlasticQPot::Cartesian2d::Array<2> material(kappa.shape());
+    material.setElastic(kappa, G);
 
     FRICTIONQPOTFEM_ASSERT(
         xt::all(xt::equal(material.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Elastic)));
@@ -507,6 +432,12 @@ inline void LocalTriggerFineLayerFull::setState(
     xt::xtensor<double, 2> P = xt::empty<double>({size_t(2), N});
     xt::xtensor<double, 2> W = xt::empty<double>({size_t(2), N});
 
+    for (size_t i = 0; i < S.shape(0); ++i) {
+        S(i, 0) = 0.0;
+        P(i, 0) = 0.0;
+        W(i, 0) = 0.0;
+    }
+
     for (size_t e = 0; e < m_nelem_plas; ++e) {
 
         auto Eps_s = this->Eps_s(e);
@@ -553,8 +484,10 @@ inline void LocalTriggerFineLayerFull::setState(
                 P(i, 0) = 0.0;
                 P(i, N - 1) = 0.0;
             }
-            P(0, n - 1) = pmax;
-            P(1, n - 1) = pmin;
+            if (n > 0) {
+                P(0, n - 1) = pmax;
+                P(1, n - 1) = pmin;
+            }
 
             for (size_t j = 1; j < N - 1; ++j) {
                 if (j == n - 1) {
