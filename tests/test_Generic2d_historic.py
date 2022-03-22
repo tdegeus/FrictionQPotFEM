@@ -41,7 +41,6 @@ class test_Generic2d(unittest.TestCase):
 
         top = mesh.nodesTopEdge()
         bottom = mesh.nodesBottomEdge()
-        top.size
         iip = np.concatenate((dofs[bottom].ravel(), dofs[top].ravel()))
 
         c = 1.0
@@ -53,10 +52,8 @@ class test_Generic2d(unittest.TestCase):
         alpha = np.sqrt(2.0) * qL * c * rho
         dt = 1.0 / (c * qh) / 10.0
 
-        k = 2.0
-
         generators = prrng.pcg32_array(np.arange(N), np.zeros(N))
-        epsy = np.hstack((generators.random([1]), generators.weibull([1000], k)))
+        epsy = np.hstack((generators.random([1]), generators.weibull([1000], k=2.0)))
         epsy *= 1.0e-3
         epsy += 1.0e-5
         epsy = np.cumsum(epsy, 1)
