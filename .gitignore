@@ -1,6 +1,8 @@
 __pycache__
 
 _skbuild
+_cmake_test_compile
+
 docs/html/*
 docs/xml/*
 

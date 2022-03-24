@@ -547,7 +547,7 @@ public:
     void timeStep();
 
     /**
-    Make a number of time steps.
+    Make a number of time steps, see timeStep().
     \param n Number of steps to make.
     */
     void timeSteps(size_t n);
@@ -578,6 +578,26 @@ public:
     size_t timeSteps_boundcheck(size_t n, size_t nmargin = 5);
 
     /**
+    Perform a series of time-steps until:
+    -   the next plastic event,
+    -   equilibrium, or
+    -   a maximum number of iterations.
+
+    \param tol Relative force tolerance for equilibrium. See System::residual for definition.
+    \param niter_tol Enforce the residual check for ``niter_tol`` consecutive increments.
+    \param max_iter Maximum number of iterations.
+
+    \return
+        -   *Number of iterations*:
+            If stopped by a plastic event or the maximum number of iterations.
+        -   `0`:
+            If stopped when the residual is reached
+            (so no plastic event occurred and the number of iterations was lower than the maximum).
+    */
+    size_t
+    timeStepsUntilEvent(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 10000000);
+
+    /**
     Make a number of steps with the following protocol.
     (1) Add a displacement \f$ \underline{v} \Delta t \f$ to each of the nodes.
     (2) Make a timeStep().
@@ -600,26 +620,6 @@ public:
     */
     template <class T>
     size_t flowSteps_boundcheck(size_t n, const T& v, size_t nmargin = 5);
-
-    /**
-    Perform a series of time-steps until:
-    -   the next plastic event,
-    -   equilibrium, or
-    -   a maximum number of iterations.
-
-    \param tol Relative force tolerance for equilibrium. See System::residual for definition.
-    \param niter_tol Enforce the residual check for ``niter_tol`` consecutive increments.
-    \param max_iter Maximum number of iterations.
-
-    \return
-        -   *Number of iterations*:
-            If stopped by a plastic event or the maximum number of iterations.
-        -   `0`:
-            If stopped when the residual is reached
-            (so no plastic event occurred and the number of iterations was lower than the maximum).
-    */
-    size_t
-    timeStepsUntilEvent(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 10000000);
 
     /**
     Minimise energy: run System::timeStep until a mechanical equilibrium has been reached.

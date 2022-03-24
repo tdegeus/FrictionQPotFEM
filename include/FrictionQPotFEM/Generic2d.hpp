@@ -389,12 +389,6 @@ inline void System::setFext(const T& fext)
     xt::noalias(m_fext) = fext;
 }
 
-inline void System::quench()
-{
-    m_v.fill(0.0);
-    m_a.fill(0.0);
-}
-
 inline auto System::elastic() const
 {
     return m_elem_elas;
@@ -475,6 +469,13 @@ inline double System::residual() const
         return r_fres / r_fext;
     }
     return r_fres;
+}
+
+inline void System::quench()
+{
+    m_v.fill(0.0);
+    m_a.fill(0.0);
+    this->updated_v();
 }
 
 inline double System::t() const
@@ -1041,6 +1042,36 @@ inline size_t System::timeSteps_boundcheck(size_t n, size_t nmargin)
     return n;
 }
 
+inline size_t System::timeStepsUntilEvent(double tol, size_t niter_tol, size_t max_iter)
+{
+    FRICTIONQPOTFEM_REQUIRE(tol < 1.0);
+    size_t iiter;
+    double tol2 = tol * tol;
+    GooseFEM::Iterate::StopList residuals(niter_tol);
+
+    auto idx_n = this->plastic_CurrentIndex();
+
+    for (iiter = 1; iiter < max_iter + 1; ++iiter) {
+
+        this->timeStep();
+
+        auto idx = this->plastic_CurrentIndex();
+
+        if (xt::any(xt::not_equal(idx, idx_n))) {
+            return iiter;
+        }
+
+        residuals.roll_insert(this->residual());
+
+        if ((residuals.descending() && residuals.all_less(tol)) || residuals.all_less(tol2)) {
+            this->quench();
+            return 0;
+        }
+    }
+
+    return iiter;
+}
+
 template <class T>
 inline void System::flowSteps(size_t n, const T& v)
 {
@@ -1071,36 +1102,6 @@ inline size_t System::flowSteps_boundcheck(size_t n, const T& v, size_t nmargin)
     }
 
     return n;
-}
-
-inline size_t System::timeStepsUntilEvent(double tol, size_t niter_tol, size_t max_iter)
-{
-    FRICTIONQPOTFEM_REQUIRE(tol < 1.0);
-    size_t iiter;
-    double tol2 = tol * tol;
-    GooseFEM::Iterate::StopList residuals(niter_tol);
-
-    auto idx_n = this->plastic_CurrentIndex();
-
-    for (iiter = 1; iiter < max_iter + 1; ++iiter) {
-
-        this->timeStep();
-
-        auto idx = this->plastic_CurrentIndex();
-
-        if (xt::any(xt::not_equal(idx, idx_n))) {
-            return iiter;
-        }
-
-        residuals.roll_insert(this->residual());
-
-        if ((residuals.descending() && residuals.all_less(tol)) || residuals.all_less(tol2)) {
-            this->quench();
-            return 0;
-        }
-    }
-
-    return iiter;
 }
 
 inline size_t System::minimise(double tol, size_t niter_tol, size_t max_iter)
