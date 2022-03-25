@@ -305,7 +305,7 @@ inline xt::xtensor<double, 2> System::epsy() const
         if (e == 0) {
             ret.resize({m_nelem_plas, val.size()});
         }
-        std::copy(val.cbegin(), val.cend(), &ret(e, 0));
+        std::copy(val.cbegin(), val.cend(), &ret(e, xt::missing));
     }
 
     return ret;
@@ -514,13 +514,21 @@ inline xt::xtensor<double, 2> System::K() const
 
     auto ret_elas = m_material_elas.K();
     auto ret_plas = m_material_plas.K();
+    size_t n = xt::strides(ret_elas, 0);
+    FRICTIONQPOTFEM_ASSERT(n == m_nip);
 
     for (size_t e = 0; e < m_nelem_elas; ++e) {
-        std::copy(&ret_elas(e, 0), &ret_elas(e, 0) + m_nip, &ret(m_elem_elas(e), 0));
+        std::copy(
+            &ret_elas(e, xt::missing),
+            &ret_elas(e, xt::missing) + n,
+            &ret(m_elem_elas(e), xt::missing));
     }
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
-        std::copy(&ret_plas(e, 0), &ret_plas(e, 0) + m_nip, &ret(m_elem_plas(e), 0));
+        std::copy(
+            &ret_plas(e, xt::missing),
+            &ret_plas(e, xt::missing) + n,
+            &ret(m_elem_plas(e), xt::missing));
     }
 
     return ret;
@@ -532,13 +540,21 @@ inline xt::xtensor<double, 2> System::G() const
 
     auto ret_elas = m_material_elas.G();
     auto ret_plas = m_material_plas.G();
+    size_t n = xt::strides(ret_elas, 0);
+    FRICTIONQPOTFEM_ASSERT(n == m_nip);
 
     for (size_t e = 0; e < m_nelem_elas; ++e) {
-        std::copy(&ret_elas(e, 0), &ret_elas(e, 0) + m_nip, &ret(m_elem_elas(e), 0));
+        std::copy(
+            &ret_elas(e, xt::missing),
+            &ret_elas(e, xt::missing) + n,
+            &ret(m_elem_elas(e), xt::missing));
     }
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
-        std::copy(&ret_plas(e, 0), &ret_plas(e, 0) + m_nip, &ret(m_elem_plas(e), 0));
+        std::copy(
+            &ret_plas(e, xt::missing),
+            &ret_plas(e, xt::missing) + n,
+            &ret(m_elem_plas(e), xt::missing));
     }
 
     return ret;
@@ -561,19 +577,21 @@ inline GooseFEM::MatrixPartitioned System::stiffness() const
     auto ret = m_quad.allocate_qtensor<4>(0.0);
     auto ret_plas = m_material_plas.Tangent();
     auto ret_elas = m_material_elas.Tangent();
+    size_t n = xt::strides(ret_elas, 0);
+    FRICTIONQPOTFEM_ASSERT(n == m_nip * 16);
 
     for (size_t e = 0; e < m_nelem_elas; ++e) {
         std::copy(
-            &ret_elas(e, 0, 0, 0, 0, 0),
-            &ret_elas(e, 0, 0, 0, 0, 0) + m_nip * 16,
-            &ret(m_elem_elas(e), 0, 0, 0, 0, 0));
+            &ret_elas(e, xt::missing),
+            &ret_elas(e, xt::missing) + n,
+            &ret(m_elem_elas(e), xt::missing));
     }
 
     for (size_t e = 0; e < m_nelem_plas; ++e) {
         std::copy(
-            &ret_plas(e, 0, 0, 0, 0, 0),
-            &ret_plas(e, 0, 0, 0, 0, 0) + m_nip * 16,
-            &ret(m_elem_plas(e), 0, 0, 0, 0, 0));
+            &ret_plas(e, xt::missing),
+            &ret_plas(e, xt::missing) + n,
+            &ret(m_elem_plas(e), xt::missing));
     }
 
     GooseFEM::MatrixPartitioned K(m_conn, m_dofs, m_iip);
@@ -645,25 +663,28 @@ inline void System::computeEpsSig()
     m_material_elas.setStrain(m_Eps_elas);
     m_material_elas.stress(m_Sig_elas);
 
+    size_t n = xt::strides(m_Eps_elas, 0);
+    FRICTIONQPOTFEM_ASSERT(n == m_nip * 4);
+
     for (size_t e = 0; e < m_nelem_elas; ++e) {
         std::copy(
-            &m_Eps_elas(e, 0, 0, 0),
-            &m_Eps_elas(e, 0, 0, 0) + m_nip * 4,
-            &m_Eps(m_elem_elas(e), 0, 0, 0));
+            &m_Eps_elas(e, xt::missing),
+            &m_Eps_elas(e, xt::missing) + n,
+            &m_Eps(m_elem_elas(e), xt::missing));
         std::copy(
-            &m_Sig_elas(e, 0, 0, 0),
-            &m_Sig_elas(e, 0, 0, 0) + m_nip * 4,
-            &m_Sig(m_elem_elas(e), 0, 0, 0));
+            &m_Sig_elas(e, xt::missing),
+            &m_Sig_elas(e, xt::missing) + n,
+            &m_Sig(m_elem_elas(e), xt::missing));
     }
     for (size_t e = 0; e < m_nelem_plas; ++e) {
         std::copy(
-            &m_Eps_plas(e, 0, 0, 0),
-            &m_Eps_plas(e, 0, 0, 0) + m_nip * 4,
-            &m_Eps(m_elem_plas(e), 0, 0, 0));
+            &m_Eps_plas(e, xt::missing),
+            &m_Eps_plas(e, xt::missing) + n,
+            &m_Eps(m_elem_plas(e), xt::missing));
         std::copy(
-            &m_Sig_plas(e, 0, 0, 0),
-            &m_Sig_plas(e, 0, 0, 0) + m_nip * 4,
-            &m_Sig(m_elem_plas(e), 0, 0, 0));
+            &m_Sig_plas(e, xt::missing),
+            &m_Sig_plas(e, xt::missing) + n,
+            &m_Sig(m_elem_plas(e), xt::missing));
     }
 
     m_full_outdated = false;
