@@ -202,6 +202,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def("Sig", &SUB::System::Sig, "Sig");
             cls.def("Eps", &SUB::System::Eps, "Eps");
             cls.def("plastic_Sig", &SUB::System::plastic_Sig, "plastic_Sig");
+            cls.def("plastic_Epsdot", &SUB::System::plastic_Epsdot, "plastic_Epsdot");
 
             cls.def(
                 "plastic_Eps",

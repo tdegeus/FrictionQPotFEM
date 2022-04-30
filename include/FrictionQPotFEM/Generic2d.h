@@ -418,6 +418,13 @@ public:
     xt::xtensor<double, 4> plastic_Eps() const;
 
     /**
+    Strain-rate tensor of integration points of plastic elements only, see System::plastic.
+
+    \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
+    */
+    xt::xtensor<double, 4> plastic_Epsdot() const;
+
+    /**
     Strain tensor of of a specific plastic element.
 
     \param e_plastic Plastic element (real element number = plastic()[e]).
