@@ -609,7 +609,7 @@ inline xt::xtensor<double, 4> System::plastic_Eps() const
     return m_Eps_plas;
 }
 
-inline xt::xtensor<double, 4> System::plastic_Epsdot() const
+inline xt::xtensor<double, 4> System::plastic_Epsdot()
 {
     // m_ue_plas, m_fe_plas are temporaries that can be reused
     if (!m_set_visco) {

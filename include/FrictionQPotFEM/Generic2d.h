@@ -422,7 +422,7 @@ public:
 
     \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
     */
-    xt::xtensor<double, 4> plastic_Epsdot() const;
+    xt::xtensor<double, 4> plastic_Epsdot();
 
     /**
     Strain tensor of of a specific plastic element.
