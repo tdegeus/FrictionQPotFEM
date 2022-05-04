@@ -397,6 +397,13 @@ public:
     xt::xtensor<double, 4> Eps();
 
     /**
+    Strain-rate tensor (the symmetric gradient of the nodal velocities) of each integration point.
+
+    \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
+    */
+    xt::xtensor<double, 4> Epsdot() const;
+
+    /**
     Stiffness tensor of each integration point.
 
     \return Integration point tensor. Shape: ``[nelem, nip, 2, 2, 2, 2]``.
