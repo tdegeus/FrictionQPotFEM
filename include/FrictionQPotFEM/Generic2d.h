@@ -397,6 +397,13 @@ public:
     xt::xtensor<double, 4> Eps();
 
     /**
+    Strain-rate tensor (the symmetric gradient of the nodal velocities) of each integration point.
+
+    \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
+    */
+    xt::xtensor<double, 4> Epsdot() const;
+
+    /**
     Stiffness tensor of each integration point.
 
     \return Integration point tensor. Shape: ``[nelem, nip, 2, 2, 2, 2]``.
@@ -416,6 +423,13 @@ public:
     \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
     */
     xt::xtensor<double, 4> plastic_Eps() const;
+
+    /**
+    Strain-rate tensor of integration points of plastic elements only, see System::plastic.
+
+    \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
+    */
+    xt::xtensor<double, 4> plastic_Epsdot();
 
     /**
     Strain tensor of of a specific plastic element.

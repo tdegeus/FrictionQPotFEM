@@ -572,6 +572,11 @@ inline xt::xtensor<double, 4> System::Eps()
     return m_Eps;
 }
 
+inline xt::xtensor<double, 4> System::Epsdot() const
+{
+    return m_quad.SymGradN_vector(m_vector.AsElement(m_v));
+}
+
 inline GooseFEM::MatrixPartitioned System::stiffness() const
 {
     auto ret = m_quad.allocate_qtensor<4>(0.0);
@@ -607,6 +612,17 @@ inline xt::xtensor<double, 4> System::plastic_Sig() const
 inline xt::xtensor<double, 4> System::plastic_Eps() const
 {
     return m_Eps_plas;
+}
+
+inline xt::xtensor<double, 4> System::plastic_Epsdot()
+{
+    // m_ue_plas, m_fe_plas are temporaries that can be reused
+    if (!m_set_visco) {
+        m_vector_plas.asElement(m_v, m_ue_plas);
+        m_quad_plas.symGradN_vector(m_ue_plas, m_Epsdot_plas);
+    }
+
+    return m_Epsdot_plas;
 }
 
 inline xt::xtensor<double, 2> System::plastic_Eps(size_t e_plastic, size_t q) const
