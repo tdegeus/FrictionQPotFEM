@@ -404,6 +404,13 @@ public:
     xt::xtensor<double, 4> Epsdot() const;
 
     /**
+    Symmetric gradient of the nodal accelerations of each integration point.
+
+    \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
+    */
+    xt::xtensor<double, 4> Epsddot() const;
+
+    /**
     Stiffness tensor of each integration point.
 
     \return Integration point tensor. Shape: ``[nelem, nip, 2, 2, 2, 2]``.
