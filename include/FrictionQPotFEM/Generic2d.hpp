@@ -577,6 +577,11 @@ inline xt::xtensor<double, 4> System::Epsdot() const
     return m_quad.SymGradN_vector(m_vector.AsElement(m_v));
 }
 
+inline xt::xtensor<double, 4> System::Epsddot() const
+{
+    return m_quad.SymGradN_vector(m_vector.AsElement(m_a));
+}
+
 inline GooseFEM::MatrixPartitioned System::stiffness() const
 {
     auto ret = m_quad.allocate_qtensor<4>(0.0);
