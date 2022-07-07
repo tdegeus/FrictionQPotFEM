@@ -12,54 +12,6 @@
 namespace FrictionQPotFEM {
 namespace Generic2d {
 
-inline std::vector<std::string> version_dependencies()
-{
-    std::vector<std::string> ret;
-
-    ret.push_back("frictionqpotfem=" + version());
-    ret.push_back("gmatelastoplasticqpot=" + GMatElastoPlasticQPot::version());
-    ret.push_back("gmattensor=" + GMatTensor::version());
-    ret.push_back("goosefem=" + GooseFEM::version());
-    ret.push_back("qpot=" + QPot::version());
-
-    ret.push_back(
-        "xtensor=" + detail::unquote(std::string(QUOTE(XTENSOR_VERSION_MAJOR))) + "." +
-        detail::unquote(std::string(QUOTE(XTENSOR_VERSION_MINOR))) + "." +
-        detail::unquote(std::string(QUOTE(XTENSOR_VERSION_PATCH))));
-
-#if defined(GOOSEFEM_EIGEN) || defined(EIGEN_WORLD_VERSION)
-    ret.push_back(
-        "eigen=" + detail::unquote(std::string(QUOTE(EIGEN_WORLD_VERSION))) + "." +
-        detail::unquote(std::string(QUOTE(EIGEN_MAJOR_VERSION))) + "." +
-        detail::unquote(std::string(QUOTE(EIGEN_MINOR_VERSION))));
-#endif
-
-#ifdef XSIMD_VERSION_MAJOR
-    ret.push_back(
-        "xsimd=" + detail::unquote(std::string(QUOTE(XSIMD_VERSION_MAJOR))) + "." +
-        detail::unquote(std::string(QUOTE(XSIMD_VERSION_MINOR))) + "." +
-        detail::unquote(std::string(QUOTE(XSIMD_VERSION_PATCH))));
-#endif
-
-#ifdef XTL_VERSION_MAJOR
-    ret.push_back(
-        "xtl=" + detail::unquote(std::string(QUOTE(XTL_VERSION_MAJOR))) + "." +
-        detail::unquote(std::string(QUOTE(XTL_VERSION_MINOR))) + "." +
-        detail::unquote(std::string(QUOTE(XTL_VERSION_PATCH))));
-#endif
-
-#ifdef XTENSOR_PYTHON_VERSION_MAJOR
-    ret.push_back(
-        "xtensor-python=" + detail::unquote(std::string(QUOTE(XTENSOR_PYTHON_VERSION_MAJOR))) +
-        "." + detail::unquote(std::string(QUOTE(XTENSOR_PYTHON_VERSION_MINOR))) + "." +
-        detail::unquote(std::string(QUOTE(XTENSOR_PYTHON_VERSION_PATCH))));
-#endif
-
-    std::sort(ret.begin(), ret.end(), std::greater<std::string>());
-
-    return ret;
-}
-
 template <class C, class E, class L>
 inline System::System(
     const C& coor,

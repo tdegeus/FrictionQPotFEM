@@ -7,21 +7,26 @@
 #ifndef FRICTIONQPOTFEM_GENERIC2D_H
 #define FRICTIONQPOTFEM_GENERIC2D_H
 
-#include "config.h"
-#include "version.h"
-
-#include <GMatElastoPlasticQPot/Cartesian2d.h>
-#include <GMatElastoPlasticQPot/version.h>
-#include <GMatTensor/Cartesian2d.h>
-#include <GooseFEM/GooseFEM.h>
-#include <GooseFEM/Matrix.h>
-#include <GooseFEM/MatrixPartitioned.h>
 #include <algorithm>
 #include <string>
+
 #include <xtensor/xnorm.hpp>
 #include <xtensor/xset_operation.hpp>
 #include <xtensor/xshape.hpp>
 #include <xtensor/xtensor.hpp>
+
+#include <GooseFEM/GooseFEM.h>
+#include <GooseFEM/Matrix.h>
+#include <GooseFEM/MatrixPartitioned.h>
+
+#include <GMatElastoPlasticQPot/Cartesian2d.h>
+#include <GMatElastoPlasticQPot/version.h>
+
+#include <GMatTensor/Cartesian2d.h>
+#include <GMatTensor/version.h>
+
+#include "config.h"
+#include "version.h"
 
 namespace FrictionQPotFEM {
 
@@ -41,7 +46,10 @@ The output is a list of strings, e.g.::
 
 \return List of strings.
 */
-inline std::vector<std::string> version_dependencies();
+inline std::vector<std::string> version_dependencies()
+{
+    return GMatTensor::version_dependencies();
+}
 
 /**
 System with elastic elements and plastic elements (GMatElastoPlasticQPot).

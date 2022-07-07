@@ -6,11 +6,14 @@ dependencies:
 - doxygen
 - fmt
 - gmatelastoplasticqpot
+- gmattensor >=0.10.2
 - goosefem
 - ninja
 - numpy
 - pybind11
 - python
+- python-gmatelastoplasticqpot
+- python-goosefem
 - qpot
 - scikit-build
 - setuptools_scm
