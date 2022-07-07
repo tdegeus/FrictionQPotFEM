@@ -11,6 +11,19 @@ class test_Generic2d(unittest.TestCase):
     Tests
     """
 
+    def test_version_dependencies(self):
+
+        deps = FrictionQPotFEM.Generic2d.version_dependencies()
+        deps = [i.split("=")[0] for i in deps]
+
+        self.assertTrue("frictionqpotfem" in deps)
+        self.assertTrue("gmatelastoplasticqpot" in deps)
+        self.assertTrue("gmattensor" in deps)
+        self.assertTrue("qpot" in deps)
+        self.assertTrue("xtensor" in deps)
+        self.assertTrue("xtensor-python" in deps)
+        self.assertTrue("xtl" in deps)
+
     def test_eventDrivenSimpleShear(self):
         """
         Simple test of event driven simple shear in a homogeneous system:
