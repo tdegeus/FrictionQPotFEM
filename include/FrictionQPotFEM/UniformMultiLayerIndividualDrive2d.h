@@ -24,7 +24,10 @@ namespace UniformMultiLayerIndividualDrive2d {
 /**
 \copydoc Generic2d::version_dependencies()
 */
-inline std::vector<std::string> version_dependencies();
+inline std::vector<std::string> version_dependencies()
+{
+    return Generic2d::version_dependencies();
+}
 
 /**
 System that comprises several layers (elastic or plastic).
@@ -69,36 +72,203 @@ public:
         const xt::xtensor<size_t, 1>& iip,
         const std::vector<xt::xtensor<size_t, 1>>& elem,
         const std::vector<xt::xtensor<size_t, 1>>& node,
-        const xt::xtensor<bool, 1>& layer_is_plastic);
+        const xt::xtensor<bool, 1>& layer_is_plastic)
+    {
+        this->init(coor, conn, dofs, iip, elem, node, layer_is_plastic);
+    }
 
-    size_t N() const override;
-    std::string type() const override;
+protected:
+    /**
+Constructor alias (as convenience for derived classes).
+
+\param coor Nodal coordinates.
+\param conn Connectivity.
+\param dofs DOFs per node.
+\param iip DOFs whose displacement is fixed.
+\param elem Elements per layer.
+\param node Nodes per layer.
+\param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
+*/
+    void init(
+        const xt::xtensor<double, 2>& coor,
+        const xt::xtensor<size_t, 2>& conn,
+        const xt::xtensor<size_t, 2>& dofs,
+        const xt::xtensor<size_t, 1>& iip,
+        const std::vector<xt::xtensor<size_t, 1>>& elem,
+        const std::vector<xt::xtensor<size_t, 1>>& node,
+        const xt::xtensor<bool, 1>& layer_is_plastic)
+    {
+        FRICTIONQPOTFEM_ASSERT(layer_is_plastic.size() == elem.size());
+        FRICTIONQPOTFEM_ASSERT(layer_is_plastic.size() == node.size());
+
+        m_n_layer = node.size();
+        m_layer_node = node;
+        m_layer_elem = elem;
+        m_layer_is_plastic = layer_is_plastic;
+
+        m_layerdrive_active.resize({m_n_layer, size_t(2)});
+        m_layerdrive_targetubar.resize({m_n_layer, size_t(2)});
+        m_layer_ubar.resize({m_n_layer, size_t(2)});
+        m_layer_dV1.resize({m_n_layer, size_t(2)});
+        m_slice_index.resize({m_n_layer});
+
+        m_layerdrive_targetubar.fill(0.0);
+        m_layerdrive_active.fill(false);
+
+        size_t n_elem_plas = 0;
+        size_t n_elem_elas = 0;
+        size_t n_layer_plas = 0;
+        size_t n_layer_elas = 0;
+
+        for (size_t i = 0; i < elem.size(); ++i) {
+            if (m_layer_is_plastic(i)) {
+                n_elem_plas += elem[i].size();
+                n_layer_plas++;
+            }
+            else {
+                n_elem_elas += elem[i].size();
+                n_layer_elas++;
+            }
+        }
+
+        xt::xtensor<size_t, 1> plas(std::array<size_t, 1>{n_elem_plas});
+        xt::xtensor<size_t, 1> elas(std::array<size_t, 1>{n_elem_elas});
+        m_slice_plas.resize({n_layer_plas + size_t(1)});
+        m_slice_elas.resize({n_layer_elas + size_t(1)});
+        m_slice_plas(0) = 0;
+        m_slice_elas(0) = 0;
+        m_N = 0;
+
+        n_elem_plas = 0;
+        n_elem_elas = 0;
+        n_layer_plas = 0;
+        n_layer_elas = 0;
+
+        for (size_t i = 0; i < m_n_layer; ++i) {
+            if (m_layer_is_plastic(i)) {
+                size_t l = m_slice_plas(n_layer_plas);
+                size_t u = n_elem_plas + elem[i].size();
+
+                m_slice_index(i) = n_layer_plas;
+                m_slice_plas(n_layer_plas + 1) = u;
+
+                xt::view(plas, xt::range(l, u)) = elem[i];
+
+                n_elem_plas += elem[i].size();
+                n_layer_plas++;
+
+                FRICTIONQPOTFEM_REQUIRE(m_N == elem[i].size() || m_N == 0);
+                m_N = elem[i].size();
+            }
+            else {
+                size_t l = m_slice_elas(n_layer_elas);
+                size_t u = n_elem_elas + elem[i].size();
+
+                m_slice_index(i) = n_layer_elas;
+                m_slice_elas(n_layer_elas + 1) = u;
+
+                xt::view(elas, xt::range(l, u)) = elem[i];
+
+                n_elem_elas += elem[i].size();
+                n_layer_elas++;
+            }
+        }
+
+        this->initSystem(coor, conn, dofs, iip, elas, plas);
+
+        m_fdrive = m_vector.allocate_nodevec(0.0);
+        m_ud = m_vector.allocate_dofval(0.0);
+        m_uq = m_quad.allocate_qtensor<1>(0.0);
+        m_dV = m_quad.dV();
+
+        size_t nip = m_quad.nip();
+        m_layer_dV1.fill(0.0);
+
+        for (size_t i = 0; i < m_n_layer; ++i) {
+            for (auto& e : m_layer_elem[i]) {
+                for (size_t q = 0; q < nip; ++q) {
+                    for (size_t d = 0; d < 2; ++d) {
+                        m_layer_dV1(i, d) += m_dV(e, q);
+                    }
+                }
+            }
+        }
+
+// sanity check nodes per layer
+#ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
+        for (size_t i = 0; i < m_n_layer; ++i) {
+            auto e = this->layerElements(i);
+            auto n = xt::unique(xt::view(m_conn, xt::keep(e)));
+            FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(xt::sort(n), xt::sort(node[i]))));
+        }
+#endif
+
+// sanity check elements per layer + slice of elas/plas element sets
+#ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
+        for (size_t i = 0; i < m_n_layer; ++i) {
+            xt::xtensor<size_t, 1> e;
+            size_t j = m_slice_index(i);
+            if (m_layer_is_plastic(i)) {
+                e = xt::view(m_elem_plas, xt::range(m_slice_plas(j), m_slice_plas(j + 1)));
+            }
+            else {
+                e = xt::view(m_elem_elas, xt::range(m_slice_elas(j), m_slice_elas(j + 1)));
+            }
+            FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(xt::sort(e), xt::sort(elem[i]))));
+        }
+#endif
+    }
+
+public:
+    size_t N() const override
+    {
+        return m_N;
+    }
+
+    std::string type() const override
+    {
+        return "FrictionQPotFEM.UniformMultiLayerIndividualDrive2d.System";
+    }
 
     /**
     Return number of layers.
     \return Number of layers.
     */
-    size_t nlayer() const;
-
-    /**
-    Return the nodes belonging to the i-th layer.
-    \param i Index of the layer.
-    \return List of node numbers.
-    */
-    xt::xtensor<size_t, 1> layerNodes(size_t i) const;
+    size_t nlayer() const
+    {
+        return m_n_layer;
+    }
 
     /**
     Return the elements belonging to the i-th layer.
     \param i Index of the layer.
     \return List of element numbers.
     */
-    xt::xtensor<size_t, 1> layerElements(size_t i) const;
+    xt::xtensor<size_t, 1> layerElements(size_t i) const
+    {
+        FRICTIONQPOTFEM_ASSERT(i < m_n_layer);
+        return m_layer_elem[i];
+    }
+
+    /**
+    Return the nodes belonging to the i-th layer.
+    \param i Index of the layer.
+    \return List of node numbers.
+    */
+    xt::xtensor<size_t, 1> layerNodes(size_t i) const
+    {
+        FRICTIONQPOTFEM_ASSERT(i < m_n_layer);
+        return m_layer_node[i];
+    }
 
     /**
     Return if a layer is elastic (`false`) or plastic (`true`).
     \return [#nlayer].
     */
-    xt::xtensor<bool, 1> layerIsPlastic() const;
+    xt::xtensor<bool, 1> layerIsPlastic() const
+    {
+        return m_layer_is_plastic;
+    }
 
     /**
     Set the stiffness of the springs connecting
@@ -110,7 +280,13 @@ public:
         If `true` the spring is a normal spring.
         If `false` the spring has no stiffness under compression.
     */
-    void layerSetDriveStiffness(double k, bool symmetric = true);
+    void layerSetDriveStiffness(double k, bool symmetric = true)
+    {
+        m_drive_spring_symmetric = symmetric;
+        m_drive_k = k;
+        this->computeLayerUbarActive();
+        this->computeForceFromTargetUbar();
+    }
 
     /**
     Initialise the event driven protocol by applying a perturbation to the loading springs
@@ -120,7 +296,7 @@ public:
     it just stores the relevant perturbations.
 
     \tparam S `xt::xtensor<double, 2>`
-    \param delta_ubar
+    \param ubar
         The perturbation in the target average position of each layer [#nlayer, 2].
 
     \tparam T `xt::xtensor<bool, 2>`
@@ -131,36 +307,126 @@ public:
     \return Value with which the input perturbation is scaled, see also eventDriven_deltaUbar().
     */
     template <class S, class T>
-    double initEventDriven(const S& delta_ubar, const T& active);
+    double initEventDriven(const S& ubar, const T& active)
+    {
+        FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
+        FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
+
+        // backup system
+
+        auto u0 = m_u;
+        auto v0 = m_v;
+        auto a0 = m_a;
+        auto active0 = m_layerdrive_active;
+        auto ubar0 = m_layerdrive_targetubar;
+        auto t0 = m_t;
+        std::vector<std::vector<xt::xtensor<double, 1>>> epsy0;
+        epsy0.resize(m_nelem_plas);
+        double i = std::numeric_limits<double>::max();
+        xt::xtensor<double, 1> epsy_elas = {-i, i};
+
+        for (size_t e = 0; e < m_nelem_plas; ++e) {
+            epsy0[e].resize(m_nip);
+            for (size_t q = 0; q < m_nip; ++q) {
+                auto& cusp = m_material_plas.refCusp({e, q});
+                epsy0[e][q] = cusp.epsy();
+                cusp.reset_epsy(epsy_elas, false);
+            }
+        }
+
+        // perturbation
+
+        m_u.fill(0.0);
+        m_v.fill(0.0);
+        m_a.fill(0.0);
+        this->updated_u();
+        FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(this->plastic_CurrentIndex(), 0)));
+        this->layerSetTargetActive(active);
+        this->layerSetTargetUbar(ubar);
+        this->minimise();
+        FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(this->plastic_CurrentIndex(), 0)));
+        auto up = m_u;
+        m_u.fill(0.0);
+
+        // restore yield strains
+        // to avoid running out-of-bounds there  the displacements had to be reset to zero
+        // if the yield strains are result only later scaling is buggy because a typical yield
+        // strain can be inaccurate
+
+        for (size_t e = 0; e < m_nelem_plas; ++e) {
+            for (size_t q = 0; q < m_nip; ++q) {
+                auto& cusp = m_material_plas.refCusp({e, q});
+                cusp.reset_epsy(epsy0[e][q], false);
+            }
+        }
+
+        // store result
+
+        auto c = this->eventDriven_setDeltaU(up);
+        m_pert_layerdrive_active = active;
+        m_pert_layerdrive_targetubar = c * ubar;
+
+        // restore system
+
+        this->setU(u0);
+        this->setV(v0);
+        this->setA(a0);
+        this->layerSetTargetActive(active0);
+        this->layerSetTargetUbar(ubar0);
+        this->setT(t0);
+
+        return c;
+    }
 
     /**
     Restore perturbation used from event driven protocol.
-    \param delta_ubar See eventDriven_deltaUbar().
+    \param ubar See eventDriven_deltaUbar().
     \param active See eventDriven_targetActive().
     \param delta_u See eventDriven_deltaU().
     \return Value with which the input perturbation is scaled, see also eventDriven_deltaU().
     */
     template <class S, class T, class U>
-    double initEventDriven(const S& delta_ubar, const T& active, const U& delta_u);
+    double initEventDriven(const S& ubar, const T& active, const U& delta_u)
+    {
+        FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
+        FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
+        FRICTIONQPOTFEM_ASSERT(xt::has_shape(delta_u, m_u.shape()));
+        double c = this->eventDriven_setDeltaU(delta_u);
+        m_pert_layerdrive_active = active;
+        m_pert_layerdrive_targetubar = c * ubar;
+        return c;
+    }
 
     /**
     Get target average position perturbation used for event driven code.
     \return [#nlayer, 2]
     */
-    xt::xtensor<double, 2> eventDriven_deltaUbar() const;
+    xt::xtensor<double, 2> eventDriven_deltaUbar() const
+    {
+        return m_pert_layerdrive_targetubar;
+    }
 
     /**
     Get if the target average position is prescribed in the event driven code.
     \return [#nlayer, 2]
     */
-    xt::xtensor<bool, 2> eventDriven_targetActive() const;
+    xt::xtensor<bool, 2> eventDriven_targetActive() const
+    {
+        return m_pert_layerdrive_active;
+    }
 
     double eventDrivenStep(
         double deps,
         bool kick,
         int direction = +1,
         bool yield_element = false,
-        bool fallback = false) override;
+        bool fallback = false) override
+    {
+        double c =
+            Generic2d::System::eventDrivenStep(deps, kick, direction, yield_element, fallback);
+        this->layerSetTargetUbar(m_layerdrive_targetubar + c * m_pert_layerdrive_targetubar);
+        return c;
+    }
 
     /**
     Turn on (or off) springs connecting
@@ -172,7 +438,13 @@ public:
         the spring is active (`true`) or not (`false`) [#nlayer, 2].
     */
     template <class T>
-    void layerSetTargetActive(const T& active);
+    void layerSetTargetActive(const T& active)
+    {
+        FRICTIONQPOTFEM_ASSERT(xt::has_shape(active, m_layerdrive_active.shape()));
+        m_layerdrive_active = active;
+        this->computeLayerUbarActive();
+        this->computeForceFromTargetUbar();
+    }
 
     /**
     List the average displacement of each layer.
@@ -181,19 +453,50 @@ public:
 
     \return Average displacement per layer [#nlayer, 2]
     */
-    xt::xtensor<double, 2> layerUbar();
+    xt::xtensor<double, 2> layerUbar()
+    {
+        // Recompute needed because computeLayerUbarActive() only computes the average
+        // on layers with an active spring.
+        // This function, in contrast, returns the average on all layers.
+
+        m_layer_ubar.fill(0.0);
+        size_t nip = m_quad.nip();
+
+        m_vector.asElement(m_u, m_ue);
+        m_quad.interpQuad_vector(m_ue, m_uq);
+
+        for (size_t i = 0; i < m_n_layer; ++i) {
+            for (auto& e : m_layer_elem[i]) {
+                for (size_t d = 0; d < 2; ++d) {
+                    for (size_t q = 0; q < nip; ++q) {
+                        m_layer_ubar(i, d) += m_uq(e, q, d) * m_dV(e, q);
+                    }
+                }
+            }
+        }
+
+        m_layer_ubar /= m_layer_dV1;
+
+        return m_layer_ubar;
+    }
 
     /**
     List the target average displacement per layer.
     \return [#nlayer, 2]
     */
-    xt::xtensor<double, 2> layerTargetUbar() const;
+    xt::xtensor<double, 2> layerTargetUbar() const
+    {
+        return m_layerdrive_targetubar;
+    }
 
     /**
     List if the driving spring is activate.
     \return [#nlayer, 2]
     */
-    xt::xtensor<bool, 2> layerTargetActive() const;
+    xt::xtensor<bool, 2> layerTargetActive() const
+    {
+        return m_layerdrive_active;
+    }
 
     /**
     Set the target average displacement per layer.
@@ -205,7 +508,12 @@ public:
     \param ubar The target average position of each layer [#nlayer, 2].
     */
     template <class T>
-    void layerSetTargetUbar(const T& ubar);
+    void layerSetTargetUbar(const T& ubar)
+    {
+        FRICTIONQPOTFEM_ASSERT(xt::has_shape(ubar, m_layerdrive_targetubar.shape()));
+        m_layerdrive_targetubar = ubar;
+        this->computeForceFromTargetUbar(); // average displacement and other forces do not change
+    }
 
     /**
     Move the layer such that the average displacement is exactly equal to its input value.
@@ -222,7 +530,27 @@ public:
         that can only be changed using layerSetTargetActive().
     */
     template <class S, class T>
-    void layerSetUbar(const S& ubar, const T& prescribe);
+    void layerSetUbar(const S& ubar, const T& prescribe)
+    {
+        auto current = this->layerUbar();
+
+        for (size_t i = 0; i < m_n_layer; ++i) {
+            for (size_t d = 0; d < 2; ++d) {
+                if (prescribe(i, d)) {
+                    double du = ubar(i, d) - current(i, d);
+                    for (auto& n : m_layer_node[i]) {
+                        m_u(n, d) += du;
+                    }
+                }
+            }
+        }
+
+        this->computeLayerUbarActive();
+        this->computeForceFromTargetUbar();
+        if (m_allset) {
+            this->computeForceMaterial();
+        }
+    }
 
     /**
     Get target average displacements that correspond to affine simple shear
@@ -237,7 +565,18 @@ public:
     */
     template <class T>
     xt::xtensor<double, 2>
-    layerTargetUbar_affineSimpleShear(double delta_gamma, const T& height) const;
+    layerTargetUbar_affineSimpleShear(double delta_gamma, const T& height) const
+    {
+        FRICTIONQPOTFEM_ASSERT(xt::has_shape(height, {m_n_layer}));
+
+        auto ret = xt::zeros_like(m_layerdrive_targetubar);
+
+        for (size_t i = 0; i < m_n_layer; ++i) {
+            ret(i, 0) += 2.0 * delta_gamma * height(i);
+        }
+
+        return ret;
+    }
 
     /**
     Nodal force induced by the driving springs.
@@ -247,7 +586,10 @@ public:
 
     \return nodevec [nnode, ndim].
     */
-    xt::xtensor<double, 2> fdrive() const;
+    xt::xtensor<double, 2> fdrive() const
+    {
+        return m_fdrive;
+    }
 
     /**
     Force of each of the driving springs.
@@ -257,13 +599,47 @@ public:
 
     \return [#nlayer, ndim].
     */
-    xt::xtensor<double, 2> layerFdrive() const;
+    xt::xtensor<double, 2> layerFdrive() const
+    {
+        xt::xtensor<double, 2> ret = xt::zeros<double>({m_n_layer, size_t(2)});
+
+        for (size_t i = 0; i < m_n_layer; ++i) {
+            for (size_t d = 0; d < 2; ++d) {
+                if (m_layerdrive_active(i, d)) {
+                    ret(i, d) = m_drive_k * (m_layerdrive_targetubar(i, d) - m_layer_ubar(i, d));
+                }
+            }
+        }
+
+        return ret;
+    }
 
 protected:
     /**
     Compute the average displacement of all layers with an active driving spring.
     */
-    void computeLayerUbarActive();
+    void computeLayerUbarActive()
+    {
+        m_layer_ubar.fill(0.0);
+        size_t nip = m_quad.nip();
+
+        m_vector.asElement(m_u, m_ue);
+        m_quad.interpQuad_vector(m_ue, m_uq);
+
+        for (size_t i = 0; i < m_n_layer; ++i) {
+            for (size_t d = 0; d < 2; ++d) {
+                if (m_layerdrive_active(i, d)) {
+                    for (auto& e : m_layer_elem[i]) {
+                        for (size_t q = 0; q < nip; ++q) {
+                            m_layer_ubar(i, d) += m_uq(e, q, d) * m_dV(e, q);
+                        }
+                    }
+                }
+            }
+        }
+
+        m_layer_ubar /= m_layer_dV1;
+    }
 
     /**
     Compute force deriving from the activate springs between the average displacement of
@@ -273,12 +649,40 @@ protected:
     Internal rule: computeLayerUbarActive() is called before this function,
     if the displacement changed since the last time the average was computed.
     */
-    void computeForceFromTargetUbar();
+    void computeForceFromTargetUbar()
+    {
+        m_uq.fill(0.0); // pre-allocated value that an be freely used
+        size_t nip = m_quad.nip();
+
+        for (size_t i = 0; i < m_n_layer; ++i) {
+            for (size_t d = 0; d < 2; ++d) {
+                if (m_layerdrive_active(i, d)) {
+                    double f = m_drive_k * (m_layer_ubar(i, d) - m_layerdrive_targetubar(i, d));
+                    if (m_drive_spring_symmetric || f < 0) { // buckle under compression
+                        for (auto& e : m_layer_elem[i]) {
+                            for (size_t q = 0; q < nip; ++q) {
+                                m_uq(e, q, d) = f;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        m_quad.int_N_vector_dV(m_uq, m_ue);
+        m_vector.assembleDofs(m_ue, m_ud);
+        m_vector.asNode(m_ud, m_fdrive);
+    }
 
     /**
     Evaluate relevant forces when m_u is updated.
     */
-    void updated_u() override;
+    void updated_u() override
+    {
+        this->computeLayerUbarActive();
+        this->computeForceFromTargetUbar();
+        this->computeForceMaterial();
+    }
 
     /**
     Compute:
@@ -289,27 +693,12 @@ protected:
     Internal rule: all relevant forces are expected to be updated before this function is
     called.
     */
-    void computeInternalExternalResidualForce() override;
-
-    /**
-    Constructor alias (as convenience for derived classes).
-
-    \param coor Nodal coordinates.
-    \param conn Connectivity.
-    \param dofs DOFs per node.
-    \param iip DOFs whose displacement is fixed.
-    \param elem Elements per layer.
-    \param node Nodes per layer.
-    \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
-    */
-    void init(
-        const xt::xtensor<double, 2>& coor,
-        const xt::xtensor<size_t, 2>& conn,
-        const xt::xtensor<size_t, 2>& dofs,
-        const xt::xtensor<size_t, 1>& iip,
-        const std::vector<xt::xtensor<size_t, 1>>& elem,
-        const std::vector<xt::xtensor<size_t, 1>>& node,
-        const xt::xtensor<bool, 1>& layer_is_plastic);
+    void computeInternalExternalResidualForce() override
+    {
+        xt::noalias(m_fint) = m_fdrive + m_fmaterial + m_fdamp;
+        m_vector.copy_p(m_fint, m_fext);
+        xt::noalias(m_fres) = m_fext - m_fint;
+    }
 
 protected:
     size_t m_N; ///< Linear system size.
@@ -338,7 +727,5 @@ protected:
 
 } // namespace UniformMultiLayerIndividualDrive2d
 } // namespace FrictionQPotFEM
-
-#include "UniformMultiLayerIndividualDrive2d.hpp"
 
 #endif
