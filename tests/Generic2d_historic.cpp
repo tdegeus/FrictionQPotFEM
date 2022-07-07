@@ -1,7 +1,6 @@
-#define CATCH_CONFIG_MAIN
 #include <FrictionQPotFEM/Generic2d.h>
 #include <GooseFEM/Iterate.h>
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xio.hpp>
 #include <xtensor/xrandom.hpp>

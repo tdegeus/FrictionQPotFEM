@@ -1,7 +1,6 @@
-#define CATCH_CONFIG_MAIN
 #include <FrictionQPotFEM/UniformMultiLayerLeverDrive2d.h>
 #include <GooseFEM/MeshQuad4.h>
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <xtensor/xrandom.hpp>
 
 TEST_CASE("FrictionQPotFEM::UniformMultiLayerLeverDrive2d", "UniformMultiLayerLeverDrive2d.h")
@@ -60,7 +59,7 @@ TEST_CASE("FrictionQPotFEM::UniformMultiLayerLeverDrive2d", "UniformMultiLayerLe
         sys.layerSetUbar(u_target, drive);
         sys.setLeverTarget(1.0 * height.back());
 
-        REQUIRE(sys.leverPosition() == Approx(sys.leverTarget()));
+        REQUIRE(sys.leverPosition() == Catch::Approx(sys.leverTarget()));
         REQUIRE(xt::allclose(sys.fdrive(), 0.0));
         REQUIRE(xt::allclose(sys.layerFdrive(), 0.0));
     }

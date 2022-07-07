@@ -1,6 +1,5 @@
-#define CATCH_CONFIG_MAIN
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <iostream>
 #include <xtensor/xrandom.hpp>
 
