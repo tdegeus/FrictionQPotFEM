@@ -1,7 +1,6 @@
-#define CATCH_CONFIG_MAIN
 #include <FrictionQPotFEM/UniformMultiLayerIndividualDrive2d.h>
 #include <GooseFEM/MeshQuad4.h>
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 #include <xtensor/xrandom.hpp>
 
 TEST_CASE(
