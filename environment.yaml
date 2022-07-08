@@ -4,6 +4,7 @@ dependencies:
 - catch2 >=3.0.0
 - cmake
 - doxygen
+- graphviz
 - fmt
 - gmatelastoplasticqpot
 - gmattensor >=0.10.2
