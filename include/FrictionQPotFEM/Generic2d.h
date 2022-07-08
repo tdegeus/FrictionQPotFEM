@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <string>
 
+#include "config.h"
+
 #include <xtensor/xnorm.hpp>
 #include <xtensor/xset_operation.hpp>
 #include <xtensor/xshape.hpp>
@@ -24,9 +26,6 @@
 
 #include <GMatTensor/Cartesian2d.h>
 #include <GMatTensor/version.h>
-
-#include "config.h"
-#include "version.h"
 
 namespace FrictionQPotFEM {
 

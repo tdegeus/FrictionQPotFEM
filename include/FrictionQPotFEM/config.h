@@ -107,9 +107,80 @@ They can be enabled by::
 #endif
 
 /**
+Current version.
+
+Either:
+
+-   Configure using CMake at install time. Internally uses::
+
+        python -c "from setuptools_scm import get_version; print(get_version())"
+
+-   Define externally using::
+
+        ver = `python -c "from setuptools_scm import get_version; print(get_version())"`
+        -DFRICTIONQPOTFEM_VERSION="${ver}"
+
+    From the root of this project. This is what ``setup.py`` does.
+
+Note that both ``CMakeLists.txt`` and ``setup.py`` will construct the version using
+``setuptools_scm``.
+Tip: use the environment variable ``SETUPTOOLS_SCM_PRETEND_VERSION`` to overwrite
+the automatic version.
+*/
+#ifndef FRICTIONQPOTFEM_VERSION
+#define FRICTIONQPOTFEM_VERSION "@PROJECT_VERSION@"
+#endif
+
+/**
 Friction simulations based on a disorder potential energy landscape and the finite element method.
 */
 namespace FrictionQPotFEM {
+
+/**
+Container type.
+*/
+namespace array_type {
+
+#ifdef FRICTIONQPOTSPRINGBLOCK_USE_XTENSOR_PYTHON
+
+/**
+Fixed (static) rank array.
+*/
+template <typename T, size_t N>
+using tensor = xt::pytensor<T, N>;
+
+#else
+
+/**
+Fixed (static) rank array.
+*/
+template <typename T, size_t N>
+using tensor = xt::xtensor<T, N>;
+
+#endif
+
+} // namespace array_type
+
+namespace detail {
+
+inline std::string unquote(const std::string& arg)
+{
+    std::string ret = arg;
+    ret.erase(std::remove(ret.begin(), ret.end(), '\"'), ret.end());
+    return ret;
 }
+
+} // namespace detail
+
+/**
+Return version string, e.g. `"0.8.0"`
+\return Version string.
+*/
+inline std::string version()
+{
+    return detail::unquote(std::string(QUOTE(FRICTIONQPOTFEM_VERSION)));
+}
+
+} // namespace FrictionQPotFEM
 
 #endif

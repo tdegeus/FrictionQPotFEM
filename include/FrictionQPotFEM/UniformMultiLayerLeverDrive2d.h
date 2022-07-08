@@ -9,7 +9,6 @@
 
 #include "UniformMultiLayerIndividualDrive2d.h"
 #include "config.h"
-#include "version.h"
 
 namespace FrictionQPotFEM {
 
