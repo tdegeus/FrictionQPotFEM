@@ -8,7 +8,7 @@ dependencies:
 - fmt
 - gmatelastoplasticqpot
 - gmattensor >=0.10.2
-- goosefem
+- goosefem >=1.2.0
 - ninja
 - numpy
 - pybind11

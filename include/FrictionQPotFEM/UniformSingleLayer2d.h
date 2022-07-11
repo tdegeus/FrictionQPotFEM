@@ -48,9 +48,9 @@ public:
     /**
     Define the geometry, including boundary conditions and element sets.
 
-    \tparam C Type of nodal coordinates, e.g. `xt::xtensor<double, 2>`
-    \tparam E Type of connectivity and DOFs, e.g. `xt::xtensor<size_t, 2>`
-    \tparam L Type of node/element lists, e.g. `xt::xtensor<size_t, 1>`
+    \tparam C Type of nodal coordinates, e.g. `array_type::tensor<double, 2>`
+    \tparam E Type of connectivity and DOFs, e.g. `array_type::tensor<size_t, 2>`
+    \tparam L Type of node/element lists, e.g. `array_type::tensor<size_t, 1>`
     \param coor Nodal coordinates.
     \param conn Connectivity.
     \param dofs DOFs per node.
@@ -160,9 +160,9 @@ public:
         auto dV = m_quad.AsTensor<2>(this->dV());
         double G = m_material_plas.G().data()[0];
 
-        xt::xtensor<double, 2> Epsbar = xt::average(this->Eps(), dV, {0, 1});
-        xt::xtensor<double, 2> Sigbar = xt::average(this->Sig(), dV, {0, 1});
-        xt::xtensor<double, 2> Epsd = GMatTensor::Cartesian2d::Deviatoric(Epsbar);
+        array_type::tensor<double, 2> Epsbar = xt::average(this->Eps(), dV, {0, 1});
+        array_type::tensor<double, 2> Sigbar = xt::average(this->Sig(), dV, {0, 1});
+        array_type::tensor<double, 2> Epsd = GMatTensor::Cartesian2d::Deviatoric(Epsbar);
         double epsxx = Epsd(0, 0);
         double epsxy = Epsd(0, 1);
 
@@ -260,8 +260,8 @@ public:
         }
 
         // deviatoric strain at the selected quadrature-point
-        xt::xtensor<double, 2> Eps = xt::view(this->plastic_Eps(), plastic_element, q);
-        xt::xtensor<double, 2> Epsd = GMatTensor::Cartesian2d::Deviatoric(Eps);
+        array_type::tensor<double, 2> Eps = xt::view(this->plastic_Eps(), plastic_element, q);
+        array_type::tensor<double, 2> Epsd = GMatTensor::Cartesian2d::Deviatoric(Eps);
 
         // new equivalent deviatoric strain: yield strain + small strain kick
         double eps_new = epsy(plastic_element, q) + deps_kick / 2.0;
@@ -314,7 +314,7 @@ public:
     \return
         Array of shape ``[N, 2]`` with columns ``[delta_eps, delta_epsxy]``.
     */
-    xt::xtensor<double, 2>
+    array_type::tensor<double, 2>
     plastic_ElementYieldBarrierForSimpleShear(double deps_kick = 0.0, size_t iquad = 0)
     {
         FRICTIONQPOTFEM_ASSERT(iquad < m_nip);
@@ -322,7 +322,7 @@ public:
         auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
         auto epsy = this->plastic_CurrentYieldRight();
         auto deps = xt::eval(epsy - eps);
-        xt::xtensor<double, 2> ret = xt::empty<double>({m_N, size_t(2)});
+        array_type::tensor<double, 2> ret = xt::empty<double>({m_N, size_t(2)});
         auto isort = xt::argsort(deps, 1);
 
         auto Eps = this->plastic_Eps();
@@ -375,7 +375,8 @@ public:
 
         auto kappa = sys.K();
         auto G = sys.G();
-        GMatElastoPlasticQPot::Cartesian2d::Array<2> material(kappa.shape());
+        std::array<size_t, 2> shape = {kappa.shape(0), kappa.shape(1)};
+        GMatElastoPlasticQPot::Cartesian2d::Array<2> material(shape);
         material.setElastic(kappa, G);
 
         FRICTIONQPOTFEM_ASSERT(
@@ -435,7 +436,7 @@ public:
             m_Eps_s.emplace_back(Eps.shape());
             m_Sig_s.emplace_back(Sig.shape());
 
-            xt::xtensor<double, 2> simple_shear = {{0.0, 1.0}, {1.0, 0.0}};
+            array_type::tensor<double, 2> simple_shear = {{0.0, 1.0}, {1.0, 0.0}};
 
             this->computePerturbation(
                 e,
@@ -465,7 +466,7 @@ public:
             m_Eps_p.emplace_back(Eps.shape());
             m_Sig_p.emplace_back(Sig.shape());
 
-            xt::xtensor<double, 2> pure_shear = {{1.0, 0.0}, {0.0, -1.0}};
+            array_type::tensor<double, 2> pure_shear = {{1.0, 0.0}, {0.0, -1.0}};
 
             this->computePerturbation(
                 e, pure_shear, m_u_p[e], m_Eps_p[e], m_Sig_p[e], K, solver, quad, vector, material);
@@ -501,10 +502,10 @@ protected:
     */
     void computePerturbation(
         size_t trigger_plastic,
-        const xt::xtensor<double, 2>& sig_star,
-        xt::xtensor<double, 2>& u,
-        xt::xtensor<double, 4>& Eps,
-        xt::xtensor<double, 4>& Sig,
+        const array_type::tensor<double, 2>& sig_star,
+        array_type::tensor<double, 2>& u,
+        array_type::tensor<double, 4>& Eps,
+        array_type::tensor<double, 4>& Sig,
         GooseFEM::MatrixPartitioned& K,
         GooseFEM::MatrixPartitionedSolver<>& solver,
         const GooseFEM::Element::Quad4::Quadrature& quad,
@@ -544,7 +545,7 @@ public:
     \param trigger_plastic Index of the plastic element.
     \return Nodal displacement. Shape [System::m_nelem, System::m_nip].
     */
-    xt::xtensor<double, 2> u_s(size_t trigger_plastic) const
+    array_type::tensor<double, 2> u_s(size_t trigger_plastic) const
     {
         FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
         size_t nconfig = m_u_s.size();
@@ -562,7 +563,7 @@ public:
     \param trigger_plastic Index of the plastic element.
     \return Nodal displacement. Shape [System::m_nelem, System::m_nip].
     */
-    xt::xtensor<double, 2> u_p(size_t trigger_plastic) const
+    array_type::tensor<double, 2> u_p(size_t trigger_plastic) const
     {
         FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
         size_t nconfig = m_u_p.size();
@@ -580,7 +581,7 @@ public:
     \param trigger_plastic Index of the plastic element.
     \return Integration point tensor. Shape [System::m_nelem, System::m_nip, 2, 2].
     */
-    virtual xt::xtensor<double, 4> Eps_s(size_t trigger_plastic) const
+    virtual array_type::tensor<double, 4> Eps_s(size_t trigger_plastic) const
     {
         FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
         size_t nconfig = m_u_s.size();
@@ -598,7 +599,7 @@ public:
     \param trigger_plastic Index of the plastic element.
     \return Integration point tensor. Shape [System::m_nelem, System::m_nip, 2, 2].
     */
-    virtual xt::xtensor<double, 4> Eps_p(size_t trigger_plastic) const
+    virtual array_type::tensor<double, 4> Eps_p(size_t trigger_plastic) const
     {
         FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
         size_t nconfig = m_u_p.size();
@@ -616,7 +617,7 @@ public:
     \param trigger_plastic Index of the plastic element.
     \return Integration point tensor. Shape [System::m_nelem, System::m_nip, 2, 2].
     */
-    virtual xt::xtensor<double, 4> Sig_s(size_t trigger_plastic) const
+    virtual array_type::tensor<double, 4> Sig_s(size_t trigger_plastic) const
     {
         FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
         size_t nconfig = m_u_s.size();
@@ -634,7 +635,7 @@ public:
     \param trigger_plastic Index of the plastic element.
     \return Integration point tensor. Shape [System::m_nelem, System::m_nip, 2, 2].
     */
-    virtual xt::xtensor<double, 4> Sig_p(size_t trigger_plastic) const
+    virtual array_type::tensor<double, 4> Sig_p(size_t trigger_plastic) const
     {
         FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
         size_t nconfig = m_u_p.size();
@@ -650,7 +651,7 @@ public:
     \param e Index of the plastic element.
     \return A copy of ``arg``.
     */
-    virtual xt::xtensor<double, 2> slice(const xt::xtensor<double, 2>& arg, size_t e) const
+    virtual array_type::tensor<double, 2> slice(const array_type::tensor<double, 2>& arg, size_t e) const
     {
         UNUSED(e);
         return arg;
@@ -663,7 +664,7 @@ public:
     \param e Index of the plastic element.
     \return A copy of ``arg``.
     */
-    virtual xt::xtensor<double, 4> slice(const xt::xtensor<double, 4>& arg, size_t e) const
+    virtual array_type::tensor<double, 4> slice(const array_type::tensor<double, 4>& arg, size_t e) const
     {
         UNUSED(e);
         return arg;
@@ -680,18 +681,18 @@ public:
     \param N Number of steps in which to discretise the yield surface.
     */
     void setState(
-        const xt::xtensor<double, 4>& Eps,
-        const xt::xtensor<double, 4>& Sig,
-        const xt::xtensor<double, 2>& epsy,
+        const array_type::tensor<double, 4>& Eps,
+        const array_type::tensor<double, 4>& Sig,
+        const array_type::tensor<double, 2>& epsy,
         size_t N = 100)
     {
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(Eps, m_shape_T2));
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(Sig, m_shape_T2));
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(epsy, {m_nelem_plas, m_nip}));
 
-        xt::xtensor<double, 2> S = xt::empty<double>({size_t(2), N});
-        xt::xtensor<double, 2> P = xt::empty<double>({size_t(2), N});
-        xt::xtensor<double, 2> W = xt::empty<double>({size_t(2), N});
+        array_type::tensor<double, 2> S = xt::empty<double>({size_t(2), N});
+        array_type::tensor<double, 2> P = xt::empty<double>({size_t(2), N});
+        array_type::tensor<double, 2> W = xt::empty<double>({size_t(2), N});
 
         for (size_t i = 0; i < S.shape(0); ++i) {
             S(i, 0) = 0.0;
@@ -765,9 +766,9 @@ public:
 
                 for (size_t i = 0; i < P.shape(0); ++i) {
                     for (size_t j = 0; j < P.shape(1); ++j) {
-                        xt::xtensor<double, 4> sig = P(i, j) * Sig_p + S(i, j) * Sig_s + Sig_slice;
-                        xt::xtensor<double, 4> deps = P(i, j) * Eps_p + S(i, j) * Eps_s;
-                        xt::xtensor<double, 2> w = GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
+                        array_type::tensor<double, 4> sig = P(i, j) * Sig_p + S(i, j) * Sig_s + Sig_slice;
+                        array_type::tensor<double, 4> deps = P(i, j) * Eps_p + S(i, j) * Eps_s;
+                        array_type::tensor<double, 2> w = GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
                         w *= dV_slice;
                         W(i, j) = xt::sum(w)();
                     }
@@ -791,9 +792,9 @@ public:
     \param epsy Next yield strains, see System::plastic_CurrentYieldRight.
     */
     void setStateMinimalSearch(
-        const xt::xtensor<double, 4>& Eps,
-        const xt::xtensor<double, 4>& Sig,
-        const xt::xtensor<double, 2>& epsy)
+        const array_type::tensor<double, 4>& Eps,
+        const array_type::tensor<double, 4>& Sig,
+        const array_type::tensor<double, 2>& epsy)
     {
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(Eps, m_shape_T2));
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(Sig, m_shape_T2));
@@ -865,9 +866,9 @@ public:
                 }
 
                 for (size_t i = 0; i < S.size(); ++i) {
-                    xt::xtensor<double, 4> sig = P[i] * Sig_p + S[i] * Sig_s + Sig_slice;
-                    xt::xtensor<double, 4> deps = P[i] * Eps_p + S[i] * Eps_s;
-                    xt::xtensor<double, 2> w = GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
+                    array_type::tensor<double, 4> sig = P[i] * Sig_p + S[i] * Sig_s + Sig_slice;
+                    array_type::tensor<double, 4> deps = P[i] * Eps_p + S[i] * Eps_s;
+                    array_type::tensor<double, 2> w = GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
                     w *= dV_slice;
                     W[i] = xt::sum(w)();
                 }
@@ -889,9 +890,9 @@ public:
     \param epsy Next yield strains, see System::plastic_CurrentYieldRight.
     */
     void setStateSimpleShear(
-        const xt::xtensor<double, 4>& Eps,
-        const xt::xtensor<double, 4>& Sig,
-        const xt::xtensor<double, 2>& epsy)
+        const array_type::tensor<double, 4>& Eps,
+        const array_type::tensor<double, 4>& Sig,
+        const array_type::tensor<double, 2>& epsy)
     {
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(Eps, m_shape_T2));
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(Sig, m_shape_T2));
@@ -927,9 +928,9 @@ public:
                 S[0] = (-b - std::sqrt(D)) / (2.0 * a);
 
                 for (size_t i = 0; i < S.size(); ++i) {
-                    xt::xtensor<double, 4> sig = S[i] * Sig_s + Sig_slice;
-                    xt::xtensor<double, 4> deps = S[i] * Eps_s;
-                    xt::xtensor<double, 2> w = GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
+                    array_type::tensor<double, 4> sig = S[i] * Sig_s + Sig_slice;
+                    array_type::tensor<double, 4> deps = S[i] * Eps_s;
+                    array_type::tensor<double, 2> w = GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
                     w *= dV_slice;
                     W[i] = xt::sum(w)();
                 }
@@ -954,7 +955,7 @@ public:
 
     \return Energy barriers.
     */
-    xt::xtensor<double, 2> barriers() const
+    array_type::tensor<double, 2> barriers() const
     {
         return m_Wmin / m_V;
     }
@@ -970,7 +971,7 @@ public:
 
     \return Pure shear contribution.
     */
-    xt::xtensor<double, 2> p() const
+    array_type::tensor<double, 2> p() const
     {
         return m_pmin;
     }
@@ -986,7 +987,7 @@ public:
 
     \return Simple shear contribution.
     */
-    xt::xtensor<double, 2> s() const
+    array_type::tensor<double, 2> s() const
     {
         return m_smin;
     }
@@ -999,7 +1000,7 @@ public:
 
     \return Shape [System::m_elem_plas, System::m_nip].
     */
-    xt::xtensor<double, 2> dgamma() const
+    array_type::tensor<double, 2> dgamma() const
     {
         return m_dgamma;
     }
@@ -1012,7 +1013,7 @@ public:
 
     \return Shape [System::m_elem_plas, System::m_nip].
     */
-    xt::xtensor<double, 2> dE() const
+    array_type::tensor<double, 2> dE() const
     {
         return m_dE;
     }
@@ -1029,7 +1030,7 @@ public:
     \param q Index of the integration point.
     \return Nodal displacement. Shape [System::m_nelem, System::m_nip].
     */
-    xt::xtensor<double, 2> delta_u(size_t e, size_t q) const
+    array_type::tensor<double, 2> delta_u(size_t e, size_t q) const
     {
         return m_pmin(e, q) * this->u_p(e) + m_smin(e, q) * this->u_s(e);
     }
@@ -1037,7 +1038,7 @@ public:
 protected:
     size_t m_nip; ///< Number of integration points.
     size_t m_nelem_plas; ///< Number of plastic elements.
-    xt::xtensor<size_t, 1> m_elem_plas; ///< Plastic elements.
+    array_type::tensor<size_t, 1> m_elem_plas; ///< Plastic elements.
 
     /**
     Perturbation for each plastic element.
@@ -1046,30 +1047,30 @@ protected:
     Because of the construction of the "FineLayer"-mesh, one roll of the mesh will not
     correspond to one roll of the middle layer, therefore a few percolations are needed.
     */
-    std::vector<xt::xtensor<double, 2>> m_u_s; ///< Disp. field for simple shear perturbation.
-    std::vector<xt::xtensor<double, 2>> m_u_p; ///< Displacement field for pure shear perturbation.
-    std::vector<xt::xtensor<double, 4>> m_Eps_s; ///< Strain field for simple shear perturbation.
-    std::vector<xt::xtensor<double, 4>> m_Eps_p; ///< Strain field for pure shear perturbation.
-    std::vector<xt::xtensor<double, 4>> m_Sig_s; ///< Stress field for simple shear perturbation.
-    std::vector<xt::xtensor<double, 4>> m_Sig_p; ///< Stress field for pure shear perturbation.
-    std::vector<xt::xtensor<size_t, 1>> m_nodemap; ///< Node-map for the roll.
-    std::vector<xt::xtensor<size_t, 1>> m_elemmap; ///< Element-map for the roll.
+    std::vector<array_type::tensor<double, 2>> m_u_s; ///< Disp. field for simple shear perturbation.
+    std::vector<array_type::tensor<double, 2>> m_u_p; ///< Displacement field for pure shear perturbation.
+    std::vector<array_type::tensor<double, 4>> m_Eps_s; ///< Strain field for simple shear perturbation.
+    std::vector<array_type::tensor<double, 4>> m_Eps_p; ///< Strain field for pure shear perturbation.
+    std::vector<array_type::tensor<double, 4>> m_Sig_s; ///< Stress field for simple shear perturbation.
+    std::vector<array_type::tensor<double, 4>> m_Sig_p; ///< Stress field for pure shear perturbation.
+    std::vector<array_type::tensor<size_t, 1>> m_nodemap; ///< Node-map for the roll.
+    std::vector<array_type::tensor<size_t, 1>> m_elemmap; ///< Element-map for the roll.
 
-    xt::xtensor<double, 2> m_dV; ///< Integration point volume.
+    array_type::tensor<double, 2> m_dV; ///< Integration point volume.
     double m_V; ///< Volume of a plastic element: assumed homogeneous!
     std::array<size_t, 4> m_shape_T2; ///< Shape of an integration point tensor.
 
-    xt::xtensor<double, 2> m_smin; ///< value of "s" at minimal work "W" [nip, N]
-    xt::xtensor<double, 2> m_pmin; ///< value of "p" at minimal work "W" [nip, N]
-    xt::xtensor<double, 2> m_Wmin; ///< value of minimal work "W" [nip, N]
+    array_type::tensor<double, 2> m_smin; ///< value of "s" at minimal work "W" [nip, N]
+    array_type::tensor<double, 2> m_pmin; ///< value of "p" at minimal work "W" [nip, N]
+    array_type::tensor<double, 2> m_Wmin; ///< value of minimal work "W" [nip, N]
 
     /**
     Strain change in the element for each plastic element::
 
         == Eps_s(plastic(e), q, 0, 1) [nip, N]
     */
-    xt::xtensor<double, 2> m_dgamma;
-    xt::xtensor<double, 2> m_dE; ///< == Eps_p(plastic(e), q, 0, 0) [nip, N]
+    array_type::tensor<double, 2> m_dgamma;
+    array_type::tensor<double, 2> m_dE; ///< == Eps_p(plastic(e), q, 0, 0) [nip, N]
 };
 
 /**
@@ -1127,7 +1128,7 @@ public:
     \param e Index of the plastic element.
     \return Slice of ``arg`` for the region of interest around ``e``.
     */
-    xt::xtensor<double, 2> slice(const xt::xtensor<double, 2>& arg, size_t e) const override
+    array_type::tensor<double, 2> slice(const array_type::tensor<double, 2>& arg, size_t e) const override
     {
         return xt::view(arg, xt::keep(m_elemslice[e]));
     }
@@ -1139,45 +1140,45 @@ public:
     \param e Index of the plastic element.
     \return Slice of ``arg`` for the region of interest around ``e``.
     */
-    xt::xtensor<double, 4> slice(const xt::xtensor<double, 4>& arg, size_t e) const override
+    array_type::tensor<double, 4> slice(const array_type::tensor<double, 4>& arg, size_t e) const override
     {
         return xt::view(arg, xt::keep(m_elemslice[e]));
     }
 
-    xt::xtensor<double, 4> Eps_s(size_t trigger_plastic) const override
+    array_type::tensor<double, 4> Eps_s(size_t trigger_plastic) const override
     {
         FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
         return m_Eps_s_slice[trigger_plastic];
     }
 
-    xt::xtensor<double, 4> Eps_p(size_t trigger_plastic) const override
+    array_type::tensor<double, 4> Eps_p(size_t trigger_plastic) const override
     {
         FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
         return m_Eps_p_slice[trigger_plastic];
     }
 
-    xt::xtensor<double, 4> Sig_s(size_t trigger_plastic) const override
+    array_type::tensor<double, 4> Sig_s(size_t trigger_plastic) const override
     {
         FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
         return m_Sig_s_slice[trigger_plastic];
     }
 
-    xt::xtensor<double, 4> Sig_p(size_t trigger_plastic) const override
+    array_type::tensor<double, 4> Sig_p(size_t trigger_plastic) const override
     {
         FRICTIONQPOTFEM_ASSERT(trigger_plastic < m_nelem_plas);
         return m_Sig_p_slice[trigger_plastic];
     }
 
 protected:
-    std::vector<xt::xtensor<size_t, 1>>
+    std::vector<array_type::tensor<size_t, 1>>
         m_elemslice; ///< Region-of-interest (ROI) per plastic element.
-    std::vector<xt::xtensor<double, 4>>
+    std::vector<array_type::tensor<double, 4>>
         m_Eps_s_slice; ///< LocalTriggerFineLayerFull::m_Eps_s for the ROI only.
-    std::vector<xt::xtensor<double, 4>>
+    std::vector<array_type::tensor<double, 4>>
         m_Eps_p_slice; ///< LocalTriggerFineLayerFull::m_Eps_p for the ROI only.
-    std::vector<xt::xtensor<double, 4>>
+    std::vector<array_type::tensor<double, 4>>
         m_Sig_s_slice; ///< LocalTriggerFineLayerFull::m_Sig_s for the ROI only.
-    std::vector<xt::xtensor<double, 4>>
+    std::vector<array_type::tensor<double, 4>>
         m_Sig_p_slice; ///< LocalTriggerFineLayerFull::m_Sig_p for the ROI only.
 };
 
