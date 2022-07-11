@@ -70,9 +70,9 @@ public:
     /**
     Define the geometry, including boundary conditions and element sets.
 
-    \tparam C Type of nodal coordinates, e.g. `xt::xtensor<double, 2>`
-    \tparam E Type of connectivity and DOFs, e.g. `xt::xtensor<size_t, 2>`
-    \tparam L Type of node/element lists, e.g. `xt::xtensor<size_t, 1>`
+    \tparam C Type of nodal coordinates, e.g. `array_type::tensor<double, 2>`
+    \tparam E Type of connectivity and DOFs, e.g. `array_type::tensor<size_t, 2>`
+    \tparam L Type of node/element lists, e.g. `array_type::tensor<size_t, 1>`
     \param coor Nodal coordinates.
     \param conn Connectivity.
     \param dofs DOFs per node.
@@ -96,9 +96,9 @@ protected:
     /**
     Constructor alias, useful for derived classes.
 
-    \tparam C Type of nodal coordinates, e.g. `xt::xtensor<double, 2>`
-    \tparam E Type of connectivity and DOFs, e.g. `xt::xtensor<size_t, 2>`
-    \tparam L Type of node/element lists, e.g. `xt::xtensor<size_t, 1>`
+    \tparam C Type of nodal coordinates, e.g. `array_type::tensor<double, 2>`
+    \tparam E Type of connectivity and DOFs, e.g. `array_type::tensor<size_t, 2>`
+    \tparam L Type of node/element lists, e.g. `array_type::tensor<size_t, 1>`
     \param coor Nodal coordinates.
     \param conn Connectivity.
     \param dofs DOFs per node.
@@ -138,7 +138,7 @@ protected:
 
 #ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
         // check that "elem_plastic" and "elem_plastic" together span all elements
-        xt::xtensor<size_t, 1> elem = xt::concatenate(xt::xtuple(m_elem_elas, m_elem_plas));
+        array_type::tensor<size_t, 1> elem = xt::concatenate(xt::xtuple(m_elem_elas, m_elem_plas));
         FRICTIONQPOTFEM_ASSERT(xt::sort(elem) == xt::arange<size_t>(m_nelem));
         // check that all "iip" or in "dofs"
         FRICTIONQPOTFEM_ASSERT(xt::all(xt::isin(m_iip, m_dofs)));
@@ -224,7 +224,7 @@ public:
     /**
     Set mass matrix, based on certain density (taken uniform per element).
 
-    \tparam T e.g. `xt::xtensor<double, 1>`.
+    \tparam T e.g. `array_type::tensor<double, 1>`.
     \param val_elem Density per element.
     */
     template <class T>
@@ -238,7 +238,7 @@ public:
             GooseFEM::Element::Quad4::Nodal::xi(),
             GooseFEM::Element::Quad4::Nodal::w());
 
-        xt::xtensor<double, 2> val_quad(std::array<size_t, 2>{m_nelem, nodalQuad.nip()});
+        array_type::tensor<double, 2> val_quad = xt::empty<double>({m_nelem, nodalQuad.nip()});
         for (size_t q = 0; q < nodalQuad.nip(); ++q) {
             xt::view(val_quad, xt::all(), q) = val_elem;
         }
@@ -279,7 +279,7 @@ public:
             GooseFEM::Element::Quad4::Nodal::xi(),
             GooseFEM::Element::Quad4::Nodal::w());
 
-        xt::xtensor<double, 2> val_quad(std::array<size_t, 2>{m_nelem, nodalQuad.nip()});
+        array_type::tensor<double, 2> val_quad = xt::empty<double>({m_nelem, nodalQuad.nip()});
         for (size_t q = 0; q < nodalQuad.nip(); ++q) {
             xt::view(val_quad, xt::all(), q) = val_elem;
         }
@@ -294,8 +294,8 @@ public:
     Set material parameters for the elastic elements
     (taken uniform per element, ordering the same as in the constructor).
 
-    \tparam S e.g. `xt::xtensor<double, 1>`.
-    \tparam T e.g. `xt::xtensor<double, 1>`.
+    \tparam S e.g. `array_type::tensor<double, 1>`.
+    \tparam T e.g. `array_type::tensor<double, 1>`.
     \param K_elem Bulk modulus per element.
     \param G_elem Bulk modulus per element.
     */
@@ -307,8 +307,8 @@ public:
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(G_elem, {m_nelem_elas}));
 
         if (m_nelem_elas > 0) {
-            xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem_elas, m_nip}, 1);
-            xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem_elas, m_nip}, 0);
+            array_type::tensor<size_t, 2> I = xt::ones<size_t>({m_nelem_elas, m_nip});
+            array_type::tensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_elas, m_nip});
 
             xt::view(idx, xt::range(0, m_nelem_elas), xt::all()) =
                 xt::arange<size_t>(m_nelem_elas).reshape({-1, 1});
@@ -332,9 +332,9 @@ public:
     Set material parameters for the plastic elements
     (taken uniform per element, ordering the same as in the constructor).
 
-    \tparam S e.g. `xt::xtensor<double, 1>`.
-    \tparam T e.g. `xt::xtensor<double, 1>`.
-    \tparam Y e.g. `xt::xtensor<double, 2>`.
+    \tparam S e.g. `array_type::tensor<double, 1>`.
+    \tparam T e.g. `array_type::tensor<double, 1>`.
+    \tparam Y e.g. `array_type::tensor<double, 2>`.
     \param K_elem Bulk modulus per element.
     \param G_elem Bulk modulus per element.
     \param epsy_elem Yield history per element.
@@ -349,8 +349,8 @@ public:
         FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
 
         if (m_nelem_plas > 0) {
-            xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem_plas, m_nip}, 1);
-            xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem_plas, m_nip}, 0);
+            array_type::tensor<size_t, 2> I = xt::ones<size_t>({m_nelem_plas, m_nip});
+            array_type::tensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
 
             xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) =
                 xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
@@ -369,7 +369,7 @@ public:
 public:
     /**
     Reset yield strains (to avoid re-construction).
-    \tparam T e.g. `xt::xtensor<double, 2>`.
+    \tparam T e.g. `array_type::tensor<double, 2>`.
     \param epsy_elem Yield history per element.
     */
     template <class T>
@@ -380,8 +380,8 @@ public:
         FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
 
         if (m_nelem_plas > 0) {
-            xt::xtensor<size_t, 2> I(std::array<size_t, 2>{m_nelem_plas, m_nip}, 1);
-            xt::xtensor<size_t, 2> idx(std::array<size_t, 2>{m_nelem_plas, m_nip}, 0);
+            array_type::tensor<size_t, 2> I = xt::ones<size_t>({m_nelem_plas, m_nip});
+            array_type::tensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
 
             xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) =
                 xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
@@ -397,15 +397,17 @@ public:
     points in the system.
     \return [plastic().size, n]
     */
-    xt::xtensor<double, 2> epsy() const
+    array_type::tensor<double, 2> epsy() const
     {
-        xt::xtensor<double, 2> ret;
+        using size_type = typename array_type::tensor<double, 2>::size_type;
+        array_type::tensor<double, 2> ret;
 
         for (size_t e = 0; e < m_nelem_plas; ++e) {
             auto cusp = m_material_plas.crefCusp({e, 0});
             auto val = cusp.epsy();
             if (e == 0) {
-                ret.resize({m_nelem_plas, val.size()});
+                std::array<size_type, 2> shape = {static_cast<size_type>(m_nelem_plas), static_cast<size_type>(val.size())};
+                ret.resize(shape);
             }
             std::copy(val.cbegin(), val.cend(), &ret(e, xt::missing));
         }
@@ -801,9 +803,9 @@ public:
 
     \return Integration point scalar. Shape: ``[nelem, nip]``.
     */
-    xt::xtensor<double, 2> K() const
+    array_type::tensor<double, 2> K() const
     {
-        xt::xtensor<double, 2> ret = xt::empty<double>({m_nelem, m_nip});
+        array_type::tensor<double, 2> ret = xt::empty<double>({m_nelem, m_nip});
 
         auto ret_elas = m_material_elas.K();
         auto ret_plas = m_material_plas.K();
@@ -833,9 +835,9 @@ public:
 
     \return Integration point scalar. Shape: ``[nelem, nip]``.
     */
-    xt::xtensor<double, 2> G() const
+    array_type::tensor<double, 2> G() const
     {
-        xt::xtensor<double, 2> ret = xt::empty<double>({m_nelem, m_nip});
+        array_type::tensor<double, 2> ret = xt::empty<double>({m_nelem, m_nip});
 
         auto ret_elas = m_material_elas.G();
         auto ret_plas = m_material_plas.G();
@@ -865,7 +867,7 @@ public:
 
     \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
     */
-    xt::xtensor<double, 4> Sig()
+    array_type::tensor<double, 4> Sig()
     {
         this->computeEpsSig();
         return m_Sig;
@@ -877,7 +879,7 @@ public:
 
     \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
     */
-    xt::xtensor<double, 4> Eps()
+    array_type::tensor<double, 4> Eps()
     {
         this->computeEpsSig();
         return m_Eps;
@@ -889,7 +891,7 @@ public:
 
     \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
     */
-    xt::xtensor<double, 4> Epsdot() const
+    array_type::tensor<double, 4> Epsdot() const
     {
         return m_quad.SymGradN_vector(m_vector.AsElement(m_v));
     }
@@ -900,7 +902,7 @@ public:
 
     \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
     */
-    xt::xtensor<double, 4> Epsddot() const
+    array_type::tensor<double, 4> Epsddot() const
     {
         return m_quad.SymGradN_vector(m_vector.AsElement(m_a));
     }
@@ -944,7 +946,7 @@ public:
 
     \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
     */
-    xt::xtensor<double, 4> plastic_Sig() const
+    array_type::tensor<double, 4> plastic_Sig() const
     {
         return m_Sig_plas;
     }
@@ -955,7 +957,7 @@ public:
 
     \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
     */
-    xt::xtensor<double, 4> plastic_Eps() const
+    array_type::tensor<double, 4> plastic_Eps() const
     {
         return m_Eps_plas;
     }
@@ -966,7 +968,7 @@ public:
 
     \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
     */
-    xt::xtensor<double, 4> plastic_Epsdot()
+    array_type::tensor<double, 4> plastic_Epsdot()
     {
         // m_ue_plas, m_fe_plas are temporaries that can be reused
         if (!m_set_visco) {
@@ -985,7 +987,7 @@ public:
     \param q Integration point (real element number = plastic()[e]).
     \return Integration point tensor. Shape: [2, 2].
     */
-    xt::xtensor<double, 2> plastic_Eps(size_t e_plastic, size_t q) const
+    array_type::tensor<double, 2> plastic_Eps(size_t e_plastic, size_t q) const
     {
         FRICTIONQPOTFEM_ASSERT(e_plastic < m_nelem_plas);
         FRICTIONQPOTFEM_ASSERT(q < m_nip);
@@ -998,7 +1000,7 @@ public:
 
     \return Integration point scalar. Shape: [plastic().size(), nip].
     */
-    xt::xtensor<double, 2> plastic_CurrentYieldLeft() const
+    array_type::tensor<double, 2> plastic_CurrentYieldLeft() const
     {
         return m_material_plas.CurrentYieldLeft();
     }
@@ -1009,7 +1011,7 @@ public:
 
     \return Integration point scalar. Shape: [plastic().size(), nip].
     */
-    xt::xtensor<double, 2> plastic_CurrentYieldRight() const
+    array_type::tensor<double, 2> plastic_CurrentYieldRight() const
     {
         return m_material_plas.CurrentYieldRight();
     }
@@ -1023,7 +1025,7 @@ public:
     \param offset Offset (number of yield strains).
     \return Integration point scalar. Shape: [plastic().size(), nip].
     */
-    xt::xtensor<double, 2> plastic_CurrentYieldLeft(size_t offset) const
+    array_type::tensor<double, 2> plastic_CurrentYieldLeft(size_t offset) const
     {
         return m_material_plas.CurrentYieldLeft(offset);
     }
@@ -1037,7 +1039,7 @@ public:
     \param offset Offset (number of yield strains).
     \return Integration point scalar. Shape: [plastic().size(), nip].
     */
-    xt::xtensor<double, 2> plastic_CurrentYieldRight(size_t offset) const
+    array_type::tensor<double, 2> plastic_CurrentYieldRight(size_t offset) const
     {
         return m_material_plas.CurrentYieldRight(offset);
     }
@@ -1048,7 +1050,7 @@ public:
 
     \return Integration point scalar. Shape: [plastic().size(), nip].
     */
-    xt::xtensor<size_t, 2> plastic_CurrentIndex() const
+    array_type::tensor<size_t, 2> plastic_CurrentIndex() const
     {
         return m_material_plas.CurrentIndex();
     }
@@ -1059,7 +1061,7 @@ public:
 
     \return Integration point scalar. Shape: [plastic().size(), nip].
     */
-    xt::xtensor<double, 2> plastic_Epsp() const
+    array_type::tensor<double, 2> plastic_Epsp() const
     {
         return m_material_plas.Epsp();
     }
@@ -1251,7 +1253,7 @@ public:
 
         FRICTIONQPOTFEM_WIP(iterative || direction > 0 || !xt::any(xt::equal(idx, 0)));
 
-        xt::xtensor<double, 2> target;
+        array_type::tensor<double, 2> target;
 
         if (direction > 0 && kick) { // direction > 0 && kick
             target = epsy_r + 0.5 * deps;
@@ -1786,7 +1788,7 @@ public:
                 return iiter;
             }
 
-            xt::xtensor<size_t, 1> idx = xt::view(this->plastic_CurrentIndex(), xt::all(), 0);
+            array_type::tensor<size_t, 1> idx = xt::view(this->plastic_CurrentIndex(), xt::all(), 0);
             if (static_cast<size_t>(xt::sum(xt::not_equal(idx_n, idx))()) >= A_truncate) {
                 return 0;
             }
@@ -1820,7 +1822,7 @@ public:
         size_t niter_tol = 20,
         size_t max_iter = 10000000)
     {
-        xt::xtensor<size_t, 1> idx_n = xt::view(this->plastic_CurrentIndex(), xt::all(), 0);
+        array_type::tensor<size_t, 1> idx_n = xt::view(this->plastic_CurrentIndex(), xt::all(), 0);
         return this->minimise_truncate(idx_n, A_truncate, S_truncate, tol, niter_tol, max_iter);
     }
 
@@ -1831,9 +1833,9 @@ public:
     \param delta_gamma Strain to add (the shear component of deformation gradient is twice that).
     \return Nodal displacements.
     */
-    xt::xtensor<double, 2> affineSimpleShear(double delta_gamma) const
+    array_type::tensor<double, 2> affineSimpleShear(double delta_gamma) const
     {
-        xt::xtensor<double, 2> ret = xt::zeros_like(m_u);
+        array_type::tensor<double, 2> ret = xt::zeros_like(m_u);
 
         for (size_t n = 0; n < m_nnode; ++n) {
             ret(n, 0) += 2.0 * delta_gamma * (m_coor(n, 1) - m_coor(0, 1));
@@ -1851,9 +1853,9 @@ public:
     \param delta_gamma Strain to add (the shear component of deformation gradient is twice that).
     \return Nodal displacements.
     */
-    xt::xtensor<double, 2> affineSimpleShearCentered(double delta_gamma) const
+    array_type::tensor<double, 2> affineSimpleShearCentered(double delta_gamma) const
     {
-        xt::xtensor<double, 2> ret = xt::zeros_like(m_u);
+        array_type::tensor<double, 2> ret = xt::zeros_like(m_u);
         size_t ll = m_conn(m_elem_plas(0), 0);
         size_t ul = m_conn(m_elem_plas(0), 3);
         double y0 = (m_coor(ul, 1) + m_coor(ll, 1)) / 2.0;
@@ -1866,12 +1868,12 @@ public:
     }
 
 protected:
-    xt::xtensor<size_t, 2> m_conn; ///< Connectivity, see conn().
-    xt::xtensor<size_t, 2> m_conn_elas; ///< Slice of #m_conn for elastic elements.
-    xt::xtensor<size_t, 2> m_conn_plas; ///< Slice of #m_conn for plastic elements.
-    xt::xtensor<double, 2> m_coor; ///< Nodal coordinates, see coor().
-    xt::xtensor<size_t, 2> m_dofs; ///< DOFs, shape: [#m_nnode, #m_ndim].
-    xt::xtensor<size_t, 1> m_iip; ///< Fixed DOFs.
+    array_type::tensor<size_t, 2> m_conn; ///< Connectivity, see conn().
+    array_type::tensor<size_t, 2> m_conn_elas; ///< Slice of #m_conn for elastic elements.
+    array_type::tensor<size_t, 2> m_conn_plas; ///< Slice of #m_conn for plastic elements.
+    array_type::tensor<double, 2> m_coor; ///< Nodal coordinates, see coor().
+    array_type::tensor<size_t, 2> m_dofs; ///< DOFs, shape: [#m_nnode, #m_ndim].
+    array_type::tensor<size_t, 1> m_iip; ///< Fixed DOFs.
     size_t m_N; ///< Number of plastic elements, alias of #m_nelem_plas.
     size_t m_nelem; ///< Number of elements.
     size_t m_nelem_elas; ///< Number of elastic elements.
@@ -1880,8 +1882,8 @@ protected:
     size_t m_nnode; ///< Number of nodes.
     size_t m_ndim; ///< Number of spatial dimensions.
     size_t m_nip; ///< Number of integration points.
-    xt::xtensor<size_t, 1> m_elem_elas; ///< Elastic elements.
-    xt::xtensor<size_t, 1> m_elem_plas; ///< Plastic elements.
+    array_type::tensor<size_t, 1> m_elem_elas; ///< Elastic elements.
+    array_type::tensor<size_t, 1> m_elem_plas; ///< Plastic elements.
     GooseFEM::Element::Quad4::Quadrature m_quad; ///< Quadrature for all elements.
     GooseFEM::Element::Quad4::Quadrature m_quad_elas; ///< #m_quad for elastic elements only.
     GooseFEM::Element::Quad4::Quadrature m_quad_plas; ///< #m_quad for plastic elements only.
@@ -1898,40 +1900,40 @@ protected:
     \warning To make sure that the right forces are computed at the right time,
     always call updated_u() after manually updating #m_u (setU() automatically take care of this).
     */
-    xt::xtensor<double, 2> m_u;
+    array_type::tensor<double, 2> m_u;
 
     /**
     Nodal velocities.
     \warning To make sure that the right forces are computed at the right time,
     always call updated_v() after manually updating #m_v (setV() automatically take care of this).
     */
-    xt::xtensor<double, 2> m_v;
+    array_type::tensor<double, 2> m_v;
 
-    xt::xtensor<double, 2> m_a; ///< Nodal accelerations.
-    xt::xtensor<double, 2> m_v_n; ///< Nodal velocities last time-step.
-    xt::xtensor<double, 2> m_a_n; ///< Nodal accelerations last time-step.
-    xt::xtensor<double, 3> m_ue; ///< Element vector (used for displacements).
-    xt::xtensor<double, 3> m_fe; ///< Element vector (used for forces).
-    xt::xtensor<double, 3> m_ue_elas; ///< El. vector for elastic elements (used for displacements).
-    xt::xtensor<double, 3> m_fe_elas; ///< El. vector for plastic elements (used for forces).
-    xt::xtensor<double, 3> m_ue_plas; ///< El. vector for elastic elements (used for displacements).
-    xt::xtensor<double, 3> m_fe_plas; ///< El. vector for plastic elements (used for forces).
-    xt::xtensor<double, 2> m_fmaterial; ///< Nodal force, deriving from elasticity.
-    xt::xtensor<double, 2> m_felas; ///< Nodal force, deriving from elasticity of elastic elements.
-    xt::xtensor<double, 2> m_fplas; ///< Nodal force, deriving from elasticity of plastic elements.
-    xt::xtensor<double, 2> m_fdamp; ///< Nodal force, deriving from damping.
-    xt::xtensor<double, 2> m_fvisco; ///< Nodal force, deriving from damping at the interface
-    xt::xtensor<double, 2> m_ftmp; ///< Temporary for internal use.
-    xt::xtensor<double, 2> m_fint; ///< Nodal force: total internal force.
-    xt::xtensor<double, 2> m_fext; ///< Nodal force: total external force (reaction force)
-    xt::xtensor<double, 2> m_fres; ///< Nodal force: residual force.
-    xt::xtensor<double, 4> m_Eps; ///< Integration point tensor: strain.
-    xt::xtensor<double, 4> m_Sig; ///< Integration point tensor: stress.
-    xt::xtensor<double, 4> m_Eps_elas; ///< Integration point tensor: strain for elastic elements.
-    xt::xtensor<double, 4> m_Eps_plas; ///< Integration point tensor: strain for plastic elements.
-    xt::xtensor<double, 4> m_Sig_elas; ///< Integration point tensor: stress for elastic elements.
-    xt::xtensor<double, 4> m_Sig_plas; ///< Integration point tensor: stress for plastic elements.
-    xt::xtensor<double, 4> m_Epsdot_plas; ///< Integration point tensor: strain-rate for plastic el.
+    array_type::tensor<double, 2> m_a; ///< Nodal accelerations.
+    array_type::tensor<double, 2> m_v_n; ///< Nodal velocities last time-step.
+    array_type::tensor<double, 2> m_a_n; ///< Nodal accelerations last time-step.
+    array_type::tensor<double, 3> m_ue; ///< Element vector (used for displacements).
+    array_type::tensor<double, 3> m_fe; ///< Element vector (used for forces).
+    array_type::tensor<double, 3> m_ue_elas; ///< El. vector for elastic elements (used for displacements).
+    array_type::tensor<double, 3> m_fe_elas; ///< El. vector for plastic elements (used for forces).
+    array_type::tensor<double, 3> m_ue_plas; ///< El. vector for elastic elements (used for displacements).
+    array_type::tensor<double, 3> m_fe_plas; ///< El. vector for plastic elements (used for forces).
+    array_type::tensor<double, 2> m_fmaterial; ///< Nodal force, deriving from elasticity.
+    array_type::tensor<double, 2> m_felas; ///< Nodal force, deriving from elasticity of elastic elements.
+    array_type::tensor<double, 2> m_fplas; ///< Nodal force, deriving from elasticity of plastic elements.
+    array_type::tensor<double, 2> m_fdamp; ///< Nodal force, deriving from damping.
+    array_type::tensor<double, 2> m_fvisco; ///< Nodal force, deriving from damping at the interface
+    array_type::tensor<double, 2> m_ftmp; ///< Temporary for internal use.
+    array_type::tensor<double, 2> m_fint; ///< Nodal force: total internal force.
+    array_type::tensor<double, 2> m_fext; ///< Nodal force: total external force (reaction force)
+    array_type::tensor<double, 2> m_fres; ///< Nodal force: residual force.
+    array_type::tensor<double, 4> m_Eps; ///< Integration point tensor: strain.
+    array_type::tensor<double, 4> m_Sig; ///< Integration point tensor: stress.
+    array_type::tensor<double, 4> m_Eps_elas; ///< Integration point tensor: strain for elastic elements.
+    array_type::tensor<double, 4> m_Eps_plas; ///< Integration point tensor: strain for plastic elements.
+    array_type::tensor<double, 4> m_Sig_elas; ///< Integration point tensor: stress for elastic elements.
+    array_type::tensor<double, 4> m_Sig_plas; ///< Integration point tensor: stress for plastic elements.
+    array_type::tensor<double, 4> m_Epsdot_plas; ///< Integration point tensor: strain-rate for plastic el.
     GooseFEM::Matrix m_K_elas; ///< Stiffness matrix for elastic elements only.
     double m_t = 0.0; ///< Current time.
     double m_dt = 0.0; ///< Time-step.
@@ -1943,8 +1945,8 @@ protected:
     bool m_set_elas = false; ///< Internal allocation check: elastic elements were written.
     bool m_set_plas = false; ///< Internal allocation check: plastic elements were written.
     bool m_full_outdated = true; ///< Keep track of the need to recompute fields on full geometry.
-    xt::xtensor<double, 2> m_pert_u; ///< See eventDriven_setDeltaU()
-    xt::xtensor<double, 4> m_pert_Epsd_plastic; ///< Strain deviator for #m_pert_u.
+    array_type::tensor<double, 2> m_pert_u; ///< See eventDriven_setDeltaU()
+    array_type::tensor<double, 4> m_pert_Epsd_plastic; ///< Strain deviator for #m_pert_u.
 };
 
 } // namespace Generic2d

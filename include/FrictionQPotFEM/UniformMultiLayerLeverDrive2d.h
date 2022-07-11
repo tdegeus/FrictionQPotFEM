@@ -59,13 +59,13 @@ public:
     \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
     */
     System(
-        const xt::xtensor<double, 2>& coor,
-        const xt::xtensor<size_t, 2>& conn,
-        const xt::xtensor<size_t, 2>& dofs,
-        const xt::xtensor<size_t, 1>& iip,
-        const std::vector<xt::xtensor<size_t, 1>>& elem,
-        const std::vector<xt::xtensor<size_t, 1>>& node,
-        const xt::xtensor<bool, 1>& layer_is_plastic)
+        const array_type::tensor<double, 2>& coor,
+        const array_type::tensor<size_t, 2>& conn,
+        const array_type::tensor<size_t, 2>& dofs,
+        const array_type::tensor<size_t, 1>& iip,
+        const std::vector<array_type::tensor<size_t, 1>>& elem,
+        const std::vector<array_type::tensor<size_t, 1>>& node,
+        const array_type::tensor<bool, 1>& layer_is_plastic)
     {
         this->init_lever(coor, conn, dofs, iip, elem, node, layer_is_plastic);
     }
@@ -84,23 +84,26 @@ protected:
     \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
     */
     void init_lever(
-        const xt::xtensor<double, 2>& coor,
-        const xt::xtensor<size_t, 2>& conn,
-        const xt::xtensor<size_t, 2>& dofs,
-        const xt::xtensor<size_t, 1>& iip,
-        const std::vector<xt::xtensor<size_t, 1>>& elem,
-        const std::vector<xt::xtensor<size_t, 1>>& node,
-        const xt::xtensor<bool, 1>& layer_is_plastic)
+        const array_type::tensor<double, 2>& coor,
+        const array_type::tensor<size_t, 2>& conn,
+        const array_type::tensor<size_t, 2>& dofs,
+        const array_type::tensor<size_t, 1>& iip,
+        const std::vector<array_type::tensor<size_t, 1>>& elem,
+        const std::vector<array_type::tensor<size_t, 1>>& node,
+        const array_type::tensor<bool, 1>& layer_is_plastic)
     {
         this->init(coor, conn, dofs, iip, elem, node, layer_is_plastic);
 
-        m_lever_hi.resize({m_n_layer});
+        using size_type = typename decltype(m_lever_hi)::size_type;
+        std::array<size_type, 1> shape = {static_cast<size_type>(m_n_layer)};
+
+        m_lever_hi.resize(shape);
         m_lever_hi.fill(0.0);
 
-        m_lever_hi_H.resize({m_n_layer});
+        m_lever_hi_H.resize(shape);
         m_lever_hi_H.fill(0.0);
 
-        m_lever_hi_H_2.resize({m_n_layer});
+        m_lever_hi_H_2.resize(shape);
         m_lever_hi_H_2.fill(0.0);
 
         m_lever_H = 0.0;
@@ -117,7 +120,7 @@ public:
     /**
     Set the lever properties.
 
-    \tparam T e.g. `xt::xtensor<double, 1>`
+    \tparam T e.g. `array_type::tensor<double, 1>`
     \param H The height of the spring pulling the lever.
     \param hi The height \f$ h_i \f$ of the loading frame of each layer [nlayer].
     */
@@ -195,10 +198,10 @@ public:
         auto ubar0 = m_layerdrive_targetubar;
         auto xdrive0 = m_lever_target;
         auto t0 = m_t;
-        std::vector<std::vector<xt::xtensor<double, 1>>> epsy0;
+        std::vector<std::vector<array_type::tensor<double, 1>>> epsy0;
         epsy0.resize(m_nelem_plas);
         double i = std::numeric_limits<double>::max();
-        xt::xtensor<double, 1> epsy_elas = {-i, i};
+        array_type::tensor<double, 1> epsy_elas = {-i, i};
 
         for (size_t e = 0; e < m_nelem_plas; ++e) {
             epsy0[e].resize(m_nip);
@@ -339,9 +342,9 @@ protected:
 private:
     bool m_lever_set = false; ///< Lock class until properties have been set.
     double m_lever_H; ///< See setLeverProperties().
-    xt::xtensor<double, 1> m_lever_hi; ///< See setLeverProperties().
-    xt::xtensor<double, 1> m_lever_hi_H; ///< m_lever_hi / H
-    xt::xtensor<double, 1> m_lever_hi_H_2; ///< (m_lever_hi / H)^2
+    array_type::tensor<double, 1> m_lever_hi; ///< See setLeverProperties().
+    array_type::tensor<double, 1> m_lever_hi_H; ///< m_lever_hi / H
+    array_type::tensor<double, 1> m_lever_hi_H_2; ///< (m_lever_hi / H)^2
     double m_lever_target; ///< See setLeverTarget().
     double m_lever_u; ///< Current position of the lever.
     double m_pert_lever_target; ///< Perturbation in target position for event driven load.

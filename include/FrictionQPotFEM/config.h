@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <string>
+#include <xtensor/xtensor.hpp>
 
 /**
 \cond
@@ -141,7 +142,7 @@ Container type.
 */
 namespace array_type {
 
-#ifdef FRICTIONQPOTSPRINGBLOCK_USE_XTENSOR_PYTHON
+#ifdef FRICTIONQPOTFEM_USE_XTENSOR_PYTHON
 
 /**
 Fixed (static) rank array.

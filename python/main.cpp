@@ -12,6 +12,10 @@
 #include <xtensor-python/pytensor.hpp>
 #include <xtensor-python/xtensor_python_config.hpp>
 
+#define FRICTIONQPOTFEM_USE_XTENSOR_PYTHON
+#define GMATELASTOPLASTICQPOT_USE_XTENSOR_PYTHON
+#define GOOSEFEM_USE_XTENSOR_PYTHON
+#define QPOT_USE_XTENSOR_PYTHON
 #include <FrictionQPotFEM/UniformMultiLayerIndividualDrive2d.h>
 #include <FrictionQPotFEM/UniformMultiLayerLeverDrive2d.h>
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
@@ -536,13 +540,13 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
         cls.def(
             py::init<
-                const xt::xtensor<double, 2>&,
-                const xt::xtensor<size_t, 2>&,
-                const xt::xtensor<size_t, 2>&,
-                const xt::xtensor<size_t, 1>&,
-                const std::vector<xt::xtensor<size_t, 1>>&,
-                const std::vector<xt::xtensor<size_t, 1>>&,
-                const xt::xtensor<bool, 1>&>(),
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<size_t, 2>&,
+                const xt::pytensor<size_t, 2>&,
+                const xt::pytensor<size_t, 1>&,
+                const std::vector<xt::pytensor<size_t, 1>>&,
+                const std::vector<xt::pytensor<size_t, 1>>&,
+                const xt::pytensor<bool, 1>&>(),
             "System",
             py::arg("coor"),
             py::arg("conn"),
@@ -609,13 +613,13 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
         cls.def(
             "layerSetTargetUbar",
-            &SUB::System::layerSetTargetUbar<xt::xtensor<double, 2>>,
+            &SUB::System::layerSetTargetUbar<xt::pytensor<double, 2>>,
             "layerSetTargetUbar",
             py::arg("ubar"));
 
         cls.def(
             "layerSetUbar",
-            &SUB::System::layerSetUbar<xt::xtensor<double, 2>, xt::xtensor<bool, 2>>,
+            &SUB::System::layerSetUbar<xt::pytensor<double, 2>, xt::pytensor<bool, 2>>,
             "layerSetUbar",
             py::arg("ubar"),
             py::arg("prescribe"));
@@ -657,13 +661,13 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
         cls.def(
             py::init<
-                const xt::xtensor<double, 2>&,
-                const xt::xtensor<size_t, 2>&,
-                const xt::xtensor<size_t, 2>&,
-                const xt::xtensor<size_t, 1>&,
-                const std::vector<xt::xtensor<size_t, 1>>&,
-                const std::vector<xt::xtensor<size_t, 1>>&,
-                const xt::xtensor<bool, 1>&>(),
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<size_t, 2>&,
+                const xt::pytensor<size_t, 2>&,
+                const xt::pytensor<size_t, 1>&,
+                const std::vector<xt::pytensor<size_t, 1>>&,
+                const std::vector<xt::pytensor<size_t, 1>>&,
+                const xt::pytensor<bool, 1>&>(),
             "System",
             py::arg("coor"),
             py::arg("conn"),
