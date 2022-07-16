@@ -1108,6 +1108,7 @@ public:
         See GooseFEM::Mesh::Quad4::FineLayer::elementgrid_around_ravel.
     */
     LocalTriggerFineLayer(const System& sys, size_t roi = 5)
+        : LocalTriggerFineLayerFull::LocalTriggerFineLayerFull(sys)
     {
         GooseFEM::Mesh::Quad4::FineLayer mesh(sys.coor(), sys.conn());
 
