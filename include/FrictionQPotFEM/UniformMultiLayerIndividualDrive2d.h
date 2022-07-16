@@ -711,23 +711,27 @@ protected:
     std::vector<array_type::tensor<size_t, 1>> m_layer_node; ///< Nodes per layer.
     std::vector<array_type::tensor<size_t, 1>> m_layer_elem; ///< Elements per layer.
     array_type::tensor<bool, 1> m_layer_is_plastic; ///< Per layer ``true`` if the layer is plastic.
-    array_type::tensor<size_t, 1> m_slice_index; ///< Per layer the index in m_slice_plas or m_slice_elas.
+    array_type::tensor<size_t, 1>
+        m_slice_index; ///< Per layer the index in m_slice_plas or m_slice_elas.
     array_type::tensor<size_t, 1> m_slice_plas; ///< How to slice elastic(): start and end index
     array_type::tensor<size_t, 1> m_slice_elas; ///< How to slice plastic(): start and end index
 
     bool m_drive_spring_symmetric = true; ///< If false the drive spring buckles in compression
     double m_drive_k = 1.0; ///< Stiffness of the drive control frame
     array_type::tensor<bool, 2> m_layerdrive_active; ///< See `prescribe` in layerSetTargetUbar()
-    array_type::tensor<double, 2> m_layerdrive_targetubar; ///< Per layer, the prescribed average position.
+    array_type::tensor<double, 2>
+        m_layerdrive_targetubar; ///< Per layer, the prescribed average position.
     array_type::tensor<double, 2> m_layer_ubar; ///< See computeLayerUbarActive().
     array_type::tensor<double, 2> m_fdrive; ///< Force related to driving frame
-    array_type::tensor<double, 2> m_layer_dV1; ///< volume per layer (as vector, same for all dimensions)
+    array_type::tensor<double, 2>
+        m_layer_dV1; ///< volume per layer (as vector, same for all dimensions)
     array_type::tensor<double, 2> m_dV; ///< copy of m_quad.dV()
     array_type::tensor<double, 3> m_uq; ///< qvector
     array_type::tensor<double, 1> m_ud; ///< dofval
 
     array_type::tensor<bool, 2> m_pert_layerdrive_active; ///< Event driven: applied lever setting.
-    array_type::tensor<double, 2> m_pert_layerdrive_targetubar; ///< Event driven: applied lever setting.
+    array_type::tensor<double, 2>
+        m_pert_layerdrive_targetubar; ///< Event driven: applied lever setting.
 };
 
 } // namespace UniformMultiLayerIndividualDrive2d

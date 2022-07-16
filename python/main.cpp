@@ -148,22 +148,11 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "Damping proportional to the strain-rate at the interface");
 
             cls.def_property(
-                "rho",
-                &SUB::System::rho,
-                &SUB::System::setRho,
-                "Homogeneous mass density");
+                "rho", &SUB::System::rho, &SUB::System::setRho, "Homogeneous mass density");
 
-            cls.def_property(
-                "dt",
-                &SUB::System::dt,
-                &SUB::System::setDt,
-                "Time step");
+            cls.def_property("dt", &SUB::System::dt, &SUB::System::setDt, "Time step");
 
-            cls.def_property(
-                "t",
-                &SUB::System::t,
-                &SUB::System::setT,
-                "Current time");
+            cls.def_property("t", &SUB::System::t, &SUB::System::setT, "Current time");
 
             cls.def("setU", &SUB::System::setU<xt::pytensor<double, 2>>, "setU", py::arg("u"));
             cls.def("setV", &SUB::System::setV<xt::pytensor<double, 2>>, "setV", py::arg("v"));

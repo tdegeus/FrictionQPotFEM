@@ -651,7 +651,8 @@ public:
     \param e Index of the plastic element.
     \return A copy of ``arg``.
     */
-    virtual array_type::tensor<double, 2> slice(const array_type::tensor<double, 2>& arg, size_t e) const
+    virtual array_type::tensor<double, 2>
+    slice(const array_type::tensor<double, 2>& arg, size_t e) const
     {
         UNUSED(e);
         return arg;
@@ -664,7 +665,8 @@ public:
     \param e Index of the plastic element.
     \return A copy of ``arg``.
     */
-    virtual array_type::tensor<double, 4> slice(const array_type::tensor<double, 4>& arg, size_t e) const
+    virtual array_type::tensor<double, 4>
+    slice(const array_type::tensor<double, 4>& arg, size_t e) const
     {
         UNUSED(e);
         return arg;
@@ -766,9 +768,14 @@ public:
 
                 for (size_t i = 0; i < P.shape(0); ++i) {
                     for (size_t j = 0; j < P.shape(1); ++j) {
-                        array_type::tensor<double, 4> sig = P(i, j) * Sig_p + S(i, j) * Sig_s + Sig_slice;
+                        array_type::tensor<double, 4> sig =
+                            P(i, j) * Sig_p + S(i, j) * Sig_s + Sig_slice;
+
                         array_type::tensor<double, 4> deps = P(i, j) * Eps_p + S(i, j) * Eps_s;
-                        array_type::tensor<double, 2> w = GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
+
+                        array_type::tensor<double, 2> w =
+                            GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
+
                         w *= dV_slice;
                         W(i, j) = xt::sum(w)();
                     }
@@ -868,7 +875,8 @@ public:
                 for (size_t i = 0; i < S.size(); ++i) {
                     array_type::tensor<double, 4> sig = P[i] * Sig_p + S[i] * Sig_s + Sig_slice;
                     array_type::tensor<double, 4> deps = P[i] * Eps_p + S[i] * Eps_s;
-                    array_type::tensor<double, 2> w = GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
+                    array_type::tensor<double, 2> w =
+                        GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
                     w *= dV_slice;
                     W[i] = xt::sum(w)();
                 }
@@ -930,7 +938,8 @@ public:
                 for (size_t i = 0; i < S.size(); ++i) {
                     array_type::tensor<double, 4> sig = S[i] * Sig_s + Sig_slice;
                     array_type::tensor<double, 4> deps = S[i] * Eps_s;
-                    array_type::tensor<double, 2> w = GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
+                    array_type::tensor<double, 2> w =
+                        GMatTensor::Cartesian2d::A2s_ddot_B2s(sig, deps);
                     w *= dV_slice;
                     W[i] = xt::sum(w)();
                 }
@@ -1047,12 +1056,18 @@ protected:
     Because of the construction of the "FineLayer"-mesh, one roll of the mesh will not
     correspond to one roll of the middle layer, therefore a few percolations are needed.
     */
-    std::vector<array_type::tensor<double, 2>> m_u_s; ///< Disp. field for simple shear perturbation.
-    std::vector<array_type::tensor<double, 2>> m_u_p; ///< Displacement field for pure shear perturbation.
-    std::vector<array_type::tensor<double, 4>> m_Eps_s; ///< Strain field for simple shear perturbation.
-    std::vector<array_type::tensor<double, 4>> m_Eps_p; ///< Strain field for pure shear perturbation.
-    std::vector<array_type::tensor<double, 4>> m_Sig_s; ///< Stress field for simple shear perturbation.
-    std::vector<array_type::tensor<double, 4>> m_Sig_p; ///< Stress field for pure shear perturbation.
+    std::vector<array_type::tensor<double, 2>>
+        m_u_s; ///< Disp. field for simple shear perturbation.
+    std::vector<array_type::tensor<double, 2>>
+        m_u_p; ///< Displacement field for pure shear perturbation.
+    std::vector<array_type::tensor<double, 4>>
+        m_Eps_s; ///< Strain field for simple shear perturbation.
+    std::vector<array_type::tensor<double, 4>>
+        m_Eps_p; ///< Strain field for pure shear perturbation.
+    std::vector<array_type::tensor<double, 4>>
+        m_Sig_s; ///< Stress field for simple shear perturbation.
+    std::vector<array_type::tensor<double, 4>>
+        m_Sig_p; ///< Stress field for pure shear perturbation.
     std::vector<array_type::tensor<size_t, 1>> m_nodemap; ///< Node-map for the roll.
     std::vector<array_type::tensor<size_t, 1>> m_elemmap; ///< Element-map for the roll.
 
@@ -1128,7 +1143,8 @@ public:
     \param e Index of the plastic element.
     \return Slice of ``arg`` for the region of interest around ``e``.
     */
-    array_type::tensor<double, 2> slice(const array_type::tensor<double, 2>& arg, size_t e) const override
+    array_type::tensor<double, 2>
+    slice(const array_type::tensor<double, 2>& arg, size_t e) const override
     {
         return xt::view(arg, xt::keep(m_elemslice[e]));
     }
@@ -1140,7 +1156,8 @@ public:
     \param e Index of the plastic element.
     \return Slice of ``arg`` for the region of interest around ``e``.
     */
-    array_type::tensor<double, 4> slice(const array_type::tensor<double, 4>& arg, size_t e) const override
+    array_type::tensor<double, 4>
+    slice(const array_type::tensor<double, 4>& arg, size_t e) const override
     {
         return xt::view(arg, xt::keep(m_elemslice[e]));
     }
