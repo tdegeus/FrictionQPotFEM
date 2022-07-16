@@ -39,8 +39,8 @@ namespace detail {
 
 bool is_same(double a, double b)
 {
-  return std::nextafter(a, std::numeric_limits<double>::lowest()) <= b
-    && std::nextafter(a, std::numeric_limits<double>::max()) >= b;
+    return std::nextafter(a, std::numeric_limits<double>::lowest()) <= b &&
+           std::nextafter(a, std::numeric_limits<double>::max()) >= b;
 }
 
 } // namespace detail
@@ -452,14 +452,14 @@ public:
     */
     array_type::tensor<double, 2> epsy() const
     {
-        using size_type = typename array_type::tensor<double, 2>::size_type;
+        using S = typename array_type::tensor<double, 2>::size_type;
         array_type::tensor<double, 2> ret;
 
         for (size_t e = 0; e < m_nelem_plas; ++e) {
             auto cusp = m_material_plas.crefCusp({e, 0});
             auto val = cusp.epsy();
             if (e == 0) {
-                std::array<size_type, 2> shape = {static_cast<size_type>(m_nelem_plas), static_cast<size_type>(val.size())};
+                std::array<S, 2> shape = {static_cast<S>(m_nelem_plas), static_cast<S>(val.size())};
                 ret.resize(shape);
             }
             std::copy(val.cbegin(), val.cend(), &ret(e, xt::missing));
@@ -1846,7 +1846,9 @@ public:
                 return iiter;
             }
 
-            array_type::tensor<size_t, 1> idx = xt::view(this->plastic_CurrentIndex(), xt::all(), 0);
+            array_type::tensor<size_t, 1> idx =
+                xt::view(this->plastic_CurrentIndex(), xt::all(), 0);
+
             if (static_cast<size_t>(xt::sum(xt::not_equal(idx_n, idx))()) >= A_truncate) {
                 return 0;
             }
@@ -1972,13 +1974,17 @@ protected:
     array_type::tensor<double, 2> m_a_n; ///< Nodal accelerations last time-step.
     array_type::tensor<double, 3> m_ue; ///< Element vector (used for displacements).
     array_type::tensor<double, 3> m_fe; ///< Element vector (used for forces).
-    array_type::tensor<double, 3> m_ue_elas; ///< El. vector for elastic elements (used for displacements).
+    array_type::tensor<double, 3>
+        m_ue_elas; ///< El. vector for elastic elements (used for displacements).
     array_type::tensor<double, 3> m_fe_elas; ///< El. vector for plastic elements (used for forces).
-    array_type::tensor<double, 3> m_ue_plas; ///< El. vector for elastic elements (used for displacements).
+    array_type::tensor<double, 3>
+        m_ue_plas; ///< El. vector for elastic elements (used for displacements).
     array_type::tensor<double, 3> m_fe_plas; ///< El. vector for plastic elements (used for forces).
     array_type::tensor<double, 2> m_fmaterial; ///< Nodal force, deriving from elasticity.
-    array_type::tensor<double, 2> m_felas; ///< Nodal force, deriving from elasticity of elastic elements.
-    array_type::tensor<double, 2> m_fplas; ///< Nodal force, deriving from elasticity of plastic elements.
+    array_type::tensor<double, 2>
+        m_felas; ///< Nodal force, deriving from elasticity of elastic elements.
+    array_type::tensor<double, 2>
+        m_fplas; ///< Nodal force, deriving from elasticity of plastic elements.
     array_type::tensor<double, 2> m_fdamp; ///< Nodal force, deriving from damping.
     array_type::tensor<double, 2> m_fvisco; ///< Nodal force, deriving from damping at the interface
     array_type::tensor<double, 2> m_ftmp; ///< Temporary for internal use.
@@ -1987,11 +1993,16 @@ protected:
     array_type::tensor<double, 2> m_fres; ///< Nodal force: residual force.
     array_type::tensor<double, 4> m_Eps; ///< Integration point tensor: strain.
     array_type::tensor<double, 4> m_Sig; ///< Integration point tensor: stress.
-    array_type::tensor<double, 4> m_Eps_elas; ///< Integration point tensor: strain for elastic elements.
-    array_type::tensor<double, 4> m_Eps_plas; ///< Integration point tensor: strain for plastic elements.
-    array_type::tensor<double, 4> m_Sig_elas; ///< Integration point tensor: stress for elastic elements.
-    array_type::tensor<double, 4> m_Sig_plas; ///< Integration point tensor: stress for plastic elements.
-    array_type::tensor<double, 4> m_Epsdot_plas; ///< Integration point tensor: strain-rate for plastic el.
+    array_type::tensor<double, 4>
+        m_Eps_elas; ///< Integration point tensor: strain for elastic elements.
+    array_type::tensor<double, 4>
+        m_Eps_plas; ///< Integration point tensor: strain for plastic elements.
+    array_type::tensor<double, 4>
+        m_Sig_elas; ///< Integration point tensor: stress for elastic elements.
+    array_type::tensor<double, 4>
+        m_Sig_plas; ///< Integration point tensor: stress for plastic elements.
+    array_type::tensor<double, 4>
+        m_Epsdot_plas; ///< Integration point tensor: strain-rate for plastic el.
     GooseFEM::Matrix m_K_elas; ///< Stiffness matrix for elastic elements only.
     double m_t = 0.0; ///< Current time.
     double m_dt = 0.0; ///< Time-step.
