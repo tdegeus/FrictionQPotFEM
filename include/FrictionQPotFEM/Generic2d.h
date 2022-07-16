@@ -245,7 +245,6 @@ public:
 
 public:
     /**
-    \todo test that the correct homogeneous rho is extracted
     Set the mass density to a homogeneous quantity.
     To use a non-homogeneous density use setMassMatrix().
     \param rho Mass density.
