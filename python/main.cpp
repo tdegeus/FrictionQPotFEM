@@ -197,7 +197,6 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def("fmaterial", &SUB::System::fmaterial, "fmaterial");
             cls.def("fdamp", &SUB::System::fdamp, "fdamp");
             cls.def("residual", &SUB::System::residual, "residual");
-            cls.def("t", &SUB::System::t, "t");
             cls.def("dV", &SUB::System::dV, "dV");
 
             cls.def(

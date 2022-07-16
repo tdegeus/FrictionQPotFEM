@@ -65,7 +65,7 @@ class test_Generic2d(unittest.TestCase):
         system.setDampingMatrix(alpha * np.ones(mesh.nelem()))
         system.setElastic(K * np.ones(elastic.size), G * np.ones(elastic.size))
         system.setPlastic(K * np.ones(plastic.size), G * np.ones(plastic.size), epsy)
-        system.setDt(dt)
+        system.dt = dt
 
         # Run
 
