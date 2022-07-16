@@ -35,6 +35,16 @@ For the moment this not part of the public API and can be subjected to changes.
 */
 namespace Generic2d {
 
+namespace detail {
+
+bool is_same(double a, double b)
+{
+  return std::nextafter(a, std::numeric_limits<double>::lowest()) <= b
+    && std::nextafter(a, std::numeric_limits<double>::max()) >= b;
+}
+
+} // namespace detail
+
 /**
 Return versions of this library and of all of its dependencies.
 The output is a list of strings, e.g.::
@@ -222,8 +232,29 @@ protected:
 
 public:
     /**
-    Set mass matrix, based on certain density (taken uniform per element).
+    Homogeneous mass density.
+    Zero is returned when the mass density is not homogeneous.
+    */
+    double rho() const
+    {
+        return m_rho;
+    }
 
+public:
+    /**
+    Set the mass density to a homogeneous quantity.
+    \param rho Mass density.
+    */
+    void setRho(double rho)
+    {
+        m_rho = rho;
+        return setMassMatrix(xt::eval(rho * xt::ones<double>({m_nelem})));
+    }
+
+public:
+    /**
+    Overwrite mass matrix, based on certain density that is uniform per element.
+    To use a homogeneous system, use setRho().
     \tparam T e.g. `array_type::tensor<double, 1>`.
     \param val_elem Density per element.
     */
@@ -232,6 +263,13 @@ public:
     {
         FRICTIONQPOTFEM_ASSERT(!m_set_M);
         FRICTIONQPOTFEM_ASSERT(val_elem.size() == m_nelem);
+
+        if (xt::allclose(val_elem, val_elem(0))) {
+            m_rho = val_elem(0);
+        }
+        else {
+            m_rho = 0.0;
+        }
 
         GooseFEM::Element::Quad4::Quadrature nodalQuad(
             m_vector.AsElement(m_coor),
@@ -252,13 +290,28 @@ public:
     /**
     Set the value of the damping at the interface.
     Note that you can specify either setEta() or setDampingMatrix() or both.
-
     \param eta Damping parameter
     */
     void setEta(double eta)
     {
-        m_set_visco = true;
-        m_eta = eta;
+        if (detail::is_same(eta, 0.0)) {
+            m_set_visco = false;
+            m_eta = 0.0;
+        }
+        else {
+            m_set_visco = true;
+            m_eta = eta;
+        }
+    }
+
+public:
+    /**
+    Get the damping at the interface.
+    \return Float
+    */
+    double eta() const
+    {
+        return m_eta;
     }
 
 public:
@@ -431,14 +484,13 @@ public:
 
 public:
     /**
-    Set time.
+    Get time step.
     */
-    void setT(double t)
+    double dt() const
     {
-        m_t = t;
+        return m_dt;
     }
 
-public:
     /**
     Set time step. Using for example in System::timeStep and System::minimise.
     */
@@ -732,12 +784,18 @@ public:
 public:
     /**
     Current time.
-
-    \return Current time.
     */
     double t() const
     {
         return m_t;
+    }
+
+    /**
+    Set time.
+    */
+    void setT(double t)
+    {
+        m_t = t;
     }
 
 public:
@@ -1938,6 +1996,7 @@ protected:
     double m_t = 0.0; ///< Current time.
     double m_dt = 0.0; ///< Time-step.
     double m_eta = 0.0; ///< Damping at the interface
+    double m_rho = 0.0; ///< Mass density (only if homogeneous)
     bool m_allset = false; ///< Internal allocation check.
     bool m_set_M = false; ///< Internal allocation check: mass matrix was written.
     bool m_set_D = false; ///< Internal allocation check: damping matrix was written.

@@ -92,21 +92,24 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("elem_elastic"),
                 py::arg("elem_plastic"));
 
-            cls.def("N", &SUB::System::N, "N");
-            cls.def("type", &SUB::System::type, "type");
+            cls.def_property_readonly("N", &SUB::System::N, "Number of plastic elements");
+            cls.def_property_readonly("type", &SUB::System::type, "Class identifier");
 
+            // todo
             cls.def(
                 "setMassMatrix",
                 &SUB::System::setMassMatrix<xt::pytensor<double, 1>>,
                 "setMassMatrix",
                 py::arg("rho_elem"));
 
+            // todo
             cls.def(
                 "setDampingMatrix",
                 &SUB::System::setDampingMatrix<xt::pytensor<double, 1>>,
                 "setDampingMatrix",
                 py::arg("alpha_elem"));
 
+            // todo
             cls.def(
                 "setElastic",
                 &SUB::System::setElastic<xt::pytensor<double, 1>, xt::pytensor<double, 1>>,
@@ -114,6 +117,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("K_elem"),
                 py::arg("G_elem"));
 
+            // todo
             cls.def(
                 "setPlastic",
                 &SUB::System::setPlastic<
@@ -125,18 +129,42 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("G_elem"),
                 py::arg("epsy_elem"));
 
+            // todo
             cls.def(
                 "reset_epsy",
                 &SUB::System::reset_epsy<xt::pytensor<double, 2>>,
                 "reset_epsy",
                 py::arg("epsy_elem"));
 
-            cls.def(
-                "isHomogeneousElastic", &SUB::System::isHomogeneousElastic, "isHomogeneousElastic");
+            cls.def_property_readonly(
+                "isHomogeneousElastic",
+                &SUB::System::isHomogeneousElastic,
+                "``True`` is elasticity is the same everywhere");
 
-            cls.def("setEta", &SUB::System::setEta, "setEta", py::arg("eta"));
-            cls.def("setDt", &SUB::System::setDt, "setDt", py::arg("dt"));
-            cls.def("setT", &SUB::System::setT, "setT", py::arg("t"));
+            cls.def_property(
+                "eta",
+                &SUB::System::eta,
+                &SUB::System::setEta,
+                "Damping proportional to the strain-rate at the interface");
+
+            cls.def_property(
+                "rho",
+                &SUB::System::rho,
+                &SUB::System::setRho,
+                "Homogeneous mass density");
+
+            cls.def_property(
+                "dt",
+                &SUB::System::dt,
+                &SUB::System::setDt,
+                "Time step");
+
+            cls.def_property(
+                "t",
+                &SUB::System::t,
+                &SUB::System::setT,
+                "Current time");
+
             cls.def("setU", &SUB::System::setU<xt::pytensor<double, 2>>, "setU", py::arg("u"));
             cls.def("setV", &SUB::System::setV<xt::pytensor<double, 2>>, "setV", py::arg("v"));
             cls.def("setA", &SUB::System::setA<xt::pytensor<double, 2>>, "setA", py::arg("a"));
