@@ -137,9 +137,10 @@ Constructor alias (as convenience for derived classes).
         array_type::tensor<size_t, 1> plas = xt::empty<size_t>({n_elem_plas});
         array_type::tensor<size_t, 1> elas = xt::empty<size_t>({n_elem_elas});
 
-        std::array<size_type, 1> resize = {static_cast<size_type>(n_layer_plas) + 1};
-        m_slice_plas.resize(resize);
-        m_slice_elas.resize(resize);
+        std::array<size_type, 1> size_plas = {static_cast<size_type>(n_layer_plas) + 1};
+        std::array<size_type, 1> size_elas = {static_cast<size_type>(n_layer_elas) + 1};
+        m_slice_plas.resize(size_plas);
+        m_slice_elas.resize(size_elas);
         m_slice_plas(0) = 0;
         m_slice_elas(0) = 0;
         m_N = 0;
