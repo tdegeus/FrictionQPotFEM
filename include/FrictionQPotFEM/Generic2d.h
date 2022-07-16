@@ -223,6 +223,7 @@ public:
 
 protected:
     /**
+    \todo Remove for new constructor.
     Set #m_allset = ``true`` if all prerequisites are satisfied.
     */
     void evalAllSet()
@@ -232,8 +233,10 @@ protected:
 
 public:
     /**
-    Homogeneous mass density.
-    Zero is returned when the mass density is not homogeneous.
+    Mass density.
+    The output is non-zero only if the density is homogeneous.
+    I.e. a zero value does not mean that there is no mass.
+    \return Float
     */
     double rho() const
     {
@@ -242,13 +245,14 @@ public:
 
 public:
     /**
+    \todo test that the correct homogeneous rho is extracted
     Set the mass density to a homogeneous quantity.
+    To use a non-homogeneous density use setMassMatrix().
     \param rho Mass density.
     */
     void setRho(double rho)
     {
-        m_rho = rho;
-        return setMassMatrix(xt::eval(rho * xt::ones<double>({m_nelem})));
+        return this->setMassMatrix(xt::eval(rho * xt::ones<double>({m_nelem})));
     }
 
 public:
@@ -316,6 +320,29 @@ public:
 
 public:
     /**
+    Set background damping density (proportional to the velocity),
+    To use a non-homogeneous density use setDampingMatrix().
+    \param alpha Damping parameter.
+    */
+    void setAlpha(double alpha)
+    {
+        return this->setDampingMatrix(xt::eval(alpha * xt::ones<double>({m_nelem})));
+    }
+
+public:
+    /**
+    Background damping density.
+    The output is non-zero only if the density is homogeneous.
+    I.e. a zero value does not mean that there is no damping.
+    \return Float
+    */
+    double alpha() const
+    {
+        return m_alpha;
+    }
+
+public:
+    /**
     Set damping matrix, based on certain density (taken uniform per element).
     Note that you can specify either setEta() or setDampingMatrix() or both.
 
@@ -326,6 +353,13 @@ public:
     {
         FRICTIONQPOTFEM_ASSERT(!m_set_D);
         FRICTIONQPOTFEM_ASSERT(val_elem.size() == m_nelem);
+
+        if (xt::allclose(val_elem, val_elem(0))) {
+            m_alpha = val_elem(0);
+        }
+        else {
+            m_alpha = 0.0;
+        }
 
         GooseFEM::Element::Quad4::Quadrature nodalQuad(
             m_vector.AsElement(m_coor),
@@ -697,8 +731,8 @@ public:
 
 public:
     /**
-    Damping matrix, see System::m_D.
-
+    Damping matrix, see setAlpha() and setDampingMatrix().
+    Note that there can be second source of damping, see setEta().
     \return Damping matrix (diagonal).
     */
     auto& damping() const
@@ -2007,7 +2041,8 @@ protected:
     double m_t = 0.0; ///< Current time.
     double m_dt = 0.0; ///< Time-step.
     double m_eta = 0.0; ///< Damping at the interface
-    double m_rho = 0.0; ///< Mass density (only if homogeneous)
+    double m_rho = 0.0; ///< Mass density (non-zero only if homogeneous).
+    double m_alpha = 0.0; ///< Background damping density (non-zero only if homogeneous).
     bool m_allset = false; ///< Internal allocation check.
     bool m_set_M = false; ///< Internal allocation check: mass matrix was written.
     bool m_set_D = false; ///< Internal allocation check: damping matrix was written.
