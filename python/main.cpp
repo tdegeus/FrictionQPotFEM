@@ -148,7 +148,16 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "Damping proportional to the strain-rate at the interface");
 
             cls.def_property(
-                "rho", &SUB::System::rho, &SUB::System::setRho, "Homogeneous mass density");
+                "alpha",
+                &SUB::System::alpha,
+                &SUB::System::setAlpha,
+                "Homogeneous background damping density. Otherwise use setDampingMatrix.");
+
+            cls.def_property(
+                "rho",
+                &SUB::System::rho,
+                &SUB::System::setRho,
+                "Homogeneous mass density. Otherwise use setMassMatrix.");
 
             cls.def_property("dt", &SUB::System::dt, &SUB::System::setDt, "Time step");
 
