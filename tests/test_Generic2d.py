@@ -31,7 +31,6 @@ class test_Generic2d(unittest.TestCase):
         """
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
-        nelem = mesh.nelem()
         coor = mesh.coor()
         dofs = mesh.dofs()
         dofs[mesh.nodesLeftOpenEdge(), ...] = dofs[mesh.nodesRightOpenEdge(), ...]
@@ -50,11 +49,11 @@ class test_Generic2d(unittest.TestCase):
 
         epsy = np.cumsum(np.ones((nplas, 5)), axis=1)
 
-        system.setMassMatrix(np.ones(nelem))
-        system.setDampingMatrix(np.ones(nelem))
+        system.rho = 1
+        system.alpha = 1
         system.setElastic(np.ones(nelas), np.ones(nelas))
         system.setPlastic(np.ones(nplas), np.ones(nplas), epsy)
-        system.setDt(1.0)
+        system.dt = 1
 
         delta_u = np.zeros_like(coor)
 
@@ -108,7 +107,6 @@ class test_Generic2d(unittest.TestCase):
         """
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
-        nelem = mesh.nelem()
         coor = mesh.coor()
         dofs = mesh.dofs()
         dofs[mesh.nodesLeftOpenEdge(), ...] = dofs[mesh.nodesRightOpenEdge(), ...]
@@ -128,11 +126,11 @@ class test_Generic2d(unittest.TestCase):
         epsy = 1e-2 * np.cumsum(np.random.random((nplas, 100)), axis=1)
         deps = 0.1 * np.min(np.diff(epsy, axis=1))
 
-        system.setMassMatrix(np.ones(nelem))
-        system.setDampingMatrix(np.ones(nelem))
+        system.rho = 1
+        system.alpha = 1
         system.setElastic(np.ones(nelas), np.ones(nelas))
         system.setPlastic(np.ones(nplas), np.ones(nplas), epsy)
-        system.setDt(1.0)
+        system.dt = 1
 
         delta_u = np.zeros_like(coor)
 
@@ -195,7 +193,6 @@ class test_Generic2d(unittest.TestCase):
         """
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
-        nelem = mesh.nelem()
         coor = mesh.coor()
         dofs = mesh.dofs()
         dofs[mesh.nodesLeftOpenEdge(), ...] = dofs[mesh.nodesRightOpenEdge(), ...]
@@ -214,11 +211,11 @@ class test_Generic2d(unittest.TestCase):
 
         epsy = np.cumsum(np.ones((nplas, 5)), axis=1)
 
-        system.setMassMatrix(np.ones(nelem))
-        system.setDampingMatrix(np.ones(nelem))
+        system.rho = 1
+        system.alpha = 1
         system.setElastic(np.ones(nelas), np.ones(nelas))
         system.setPlastic(np.ones(nplas), np.ones(nplas), epsy)
-        system.setDt(1.0)
+        system.dt = 1
 
         epsy_element = np.zeros(epsy.shape)
         mat = system.material_plastic()
@@ -277,7 +274,6 @@ class test_Generic2d(unittest.TestCase):
         """
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
-        nelem = mesh.nelem()
         system = FrictionQPotFEM.Generic2d.System(
             coor=mesh.coor(),
             conn=mesh.conn(),
@@ -287,11 +283,11 @@ class test_Generic2d(unittest.TestCase):
             elem_plastic=[3, 4, 5],
         )
 
-        system.setMassMatrix(np.ones(nelem))
-        system.setDampingMatrix(np.ones(nelem))
+        system.rho = 1
+        system.alpha = 1
         system.setElastic(np.ones(6), np.ones(6))
         system.setPlastic(np.ones(3), np.ones(3), [[100.0], [100.0], [100.0]])
-        system.setDt(1.0)
+        system.dt = 1
 
         x = mesh.coor()
         v = np.zeros_like(x)
@@ -304,17 +300,16 @@ class test_Generic2d(unittest.TestCase):
         # displacement is added affinely in an elastic system:
         # there is not residual force -> the system stays uniform
         self.assertTrue(np.allclose(system.u(), 10 * v))
-        self.assertTrue(np.allclose(system.t(), 10))
+        self.assertTrue(np.allclose(system.t, 10))
 
         system.timeSteps(10)
 
         self.assertTrue(np.allclose(system.u(), 10 * v))
-        self.assertTrue(np.allclose(system.t(), 20))
+        self.assertTrue(np.allclose(system.t, 20))
 
     def test_damping_alpha_no_eta(self):
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
-        nelem = mesh.nelem()
         system = FrictionQPotFEM.Generic2d.System(
             coor=mesh.coor(),
             conn=mesh.conn(),
@@ -325,11 +320,11 @@ class test_Generic2d(unittest.TestCase):
         )
 
         alpha = 1.2
-        system.setMassMatrix(np.ones(nelem))
-        system.setDampingMatrix(alpha * np.ones(nelem))
+        system.rho = 1
+        system.alpha = alpha
         system.setElastic(np.ones(6), np.ones(6))
         system.setPlastic(np.ones(3), np.ones(3), [[100.0], [100.0], [100.0]])
-        system.setDt(1.0)
+        system.dt = 1
 
         system.setV(np.ones_like(mesh.coor()))
         assert np.allclose(system.vector().AsDofs(system.fdamp()), alpha)
@@ -339,7 +334,6 @@ class test_Generic2d(unittest.TestCase):
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
         coor = mesh.coor()
         conn = mesh.conn()
-        nelem = mesh.nelem()
         system = FrictionQPotFEM.Generic2d.System(
             coor=coor,
             conn=conn,
@@ -350,11 +344,11 @@ class test_Generic2d(unittest.TestCase):
         )
 
         eta = 3.4
-        system.setMassMatrix(np.ones(nelem))
-        system.setEta(eta)
+        system.rho = 1
+        system.eta = eta
         system.setElastic(np.ones(6), np.ones(6))
         system.setPlastic(np.ones(3), np.ones(3), [[100.0], [100.0], [100.0]])
-        system.setDt(1.0)
+        system.dt = 1
 
         f = np.zeros_like(coor)
         v = np.zeros_like(coor)
@@ -372,7 +366,6 @@ class test_Generic2d(unittest.TestCase):
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
         coor = mesh.coor()
         conn = mesh.conn()
-        nelem = mesh.nelem()
         system = FrictionQPotFEM.Generic2d.System(
             coor=coor,
             conn=conn,
@@ -384,12 +377,12 @@ class test_Generic2d(unittest.TestCase):
 
         alpha = 1.2
         eta = 3.4
-        system.setMassMatrix(np.ones(nelem))
-        system.setEta(eta)
-        system.setDampingMatrix(alpha * np.ones(nelem))
+        system.rho = 1
+        system.eta = eta
+        system.alpha = alpha
         system.setElastic(np.ones(6), np.ones(6))
         system.setPlastic(np.ones(3), np.ones(3), [[100.0], [100.0], [100.0]])
-        system.setDt(1.0)
+        system.dt = 1
 
         f = np.zeros_like(coor)
         v = np.zeros_like(coor)

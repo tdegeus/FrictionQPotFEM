@@ -88,7 +88,7 @@ class test_UniformMultiLayerIndividualDrive2d(unittest.TestCase):
         system.setDampingMatrix(alpha * np.ones(mesh.nelem()))
         system.setElastic(K * np.ones(nelas), G * np.ones(nelas))
         system.setPlastic(K * np.ones(nplas), G * np.ones(nplas), epsy)
-        system.setDt(dt)
+        system.dt = dt
         system.layerSetTargetActive(active)
         system.layerSetDriveStiffness(1e-3)
 

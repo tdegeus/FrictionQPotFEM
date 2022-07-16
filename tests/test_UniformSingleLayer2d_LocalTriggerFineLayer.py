@@ -213,7 +213,7 @@ sys.setElastic(10 * iel, 1 * iel)
 sys.setPlastic(10 * ipl, 1 * ipl, epsy)
 sys.setMassMatrix(np.ones(nelem))
 sys.setDampingMatrix(np.ones(nelem))
-sys.setDt(1)
+sys.dt = 1
 
 modelTrigger = model.LocalTriggerFineLayerFull(sys)
 modelTrigger.setState(Eps, Sig, 0.5 * np.ones((len(plastic), 4)), 100)

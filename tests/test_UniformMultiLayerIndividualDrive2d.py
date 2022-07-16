@@ -14,7 +14,6 @@ class test_Generic2d(unittest.TestCase):
     def test_eventDrivenSimpleShear(self):
 
         mesh = GooseFEM.Mesh.Quad4.Regular(nx=3, ny=2 * 3 + 1)
-        nelem = mesh.nelem()
         coor = mesh.coor()
         conn = mesh.conn()
         elem = mesh.elementgrid()
@@ -38,11 +37,11 @@ class test_Generic2d(unittest.TestCase):
 
         epsy = 1e-3 * np.cumsum(np.ones((nplas, 5)), axis=1)
 
-        system.setMassMatrix(np.ones(nelem))
-        system.setDampingMatrix(np.ones(nelem))
+        system.rho = 1
+        system.alpha = 1
         system.setElastic(np.ones(nelas), np.ones(nelas))
         system.setPlastic(np.ones(nplas), np.ones(nplas), epsy)
-        system.setDt(1.0)
+        system.dt = 1
         system.layerSetDriveStiffness(1e-3)
 
         drive_active = np.zeros((3, 2), dtype=bool)

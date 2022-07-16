@@ -23,8 +23,8 @@ class Test(unittest.TestCase):
             [3, 4, 5],
         )
 
-        self.assertEqual(system.N(), 3)
-        self.assertEqual(system.type(), "FrictionQPotFEM.Generic2d.System")
+        self.assertEqual(system.N, 3)
+        self.assertEqual(system.type, "FrictionQPotFEM.Generic2d.System")
 
     def test_FrictionQPotFEM_UniformSingleLayer2d_System(self):
 
@@ -39,8 +39,8 @@ class Test(unittest.TestCase):
             [3, 4, 5],
         )
 
-        self.assertEqual(system.N(), 3)
-        self.assertEqual(system.type(), "FrictionQPotFEM.UniformSingleLayer2d.System")
+        self.assertEqual(system.N, 3)
+        self.assertEqual(system.type, "FrictionQPotFEM.UniformSingleLayer2d.System")
 
     def test_FrictionQPotFEM_UniformMultiLayerIndividualDrive2d_System(self):
 
@@ -56,8 +56,8 @@ class Test(unittest.TestCase):
             [False, True, False],
         )
 
-        self.assertEqual(system.N(), 3)
-        self.assertEqual(system.type(), "FrictionQPotFEM.UniformMultiLayerIndividualDrive2d.System")
+        self.assertEqual(system.N, 3)
+        self.assertEqual(system.type, "FrictionQPotFEM.UniformMultiLayerIndividualDrive2d.System")
 
     def test_FrictionQPotFEM_UniformMultiLayerLeverDrive2d_System(self):
 
@@ -73,8 +73,8 @@ class Test(unittest.TestCase):
             [False, True, False],
         )
 
-        self.assertEqual(system.N(), 3)
-        self.assertEqual(system.type(), "FrictionQPotFEM.UniformMultiLayerLeverDrive2d.System")
+        self.assertEqual(system.N, 3)
+        self.assertEqual(system.type, "FrictionQPotFEM.UniformMultiLayerLeverDrive2d.System")
 
 
 if __name__ == "__main__":
