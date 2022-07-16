@@ -55,6 +55,10 @@ class test_Generic2d(unittest.TestCase):
         system.setPlastic(np.ones(nplas), np.ones(nplas), epsy)
         system.dt = 1
 
+        self.assertEqual(system.rho, 1)
+        self.assertEqual(system.alpha, 1)
+        self.assertEqual(system.dt, 1)
+
         delta_u = np.zeros_like(coor)
 
         for i in range(delta_u.shape[0]):
