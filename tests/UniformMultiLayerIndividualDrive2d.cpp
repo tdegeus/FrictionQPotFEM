@@ -22,15 +22,39 @@ TEST_CASE(
         auto dofs = stitch.dofs();
         auto bottom = stitch.nodeset(mesh.nodesBottomEdge(), 0);
         auto iip = xt::ravel(xt::view(dofs, xt::keep(bottom)));
+        auto layers = stitch.elemmap();
+
+        size_t nelas = 0;
+        size_t nplas = 0;
+
+        for (size_t i = 0; i < layers.size(); ++i) {
+            if (is_plastic[i]) {
+                nplas += layers[i].size();
+            }
+            else {
+                nelas += layers[i].size();
+            }
+        }
 
         FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
             stitch.coor(),
             stitch.conn(),
             dofs,
             iip,
-            stitch.elemmap(),
+            layers,
             stitch.nodemap(),
-            is_plastic);
+            is_plastic,
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({nelas}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({nelas}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({nplas}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({nplas}))),
+            FrictionQPotFEM::epsy_initelastic_toquad(xt::ones<double>({nplas, size_t(1)})),
+            1,
+            1,
+            1,
+            0,
+            xt::ones<bool>({layers.size(), size_t(2)}),
+            1);
 
         REQUIRE(xt::all(xt::equal(is_plastic, sys.layerIsPlastic())));
     }
@@ -50,27 +74,19 @@ TEST_CASE(
         auto dofs = stitch.dofs();
         auto bottom = stitch.nodeset(mesh.nodesBottomEdge(), 0);
         auto iip = xt::ravel(xt::view(dofs, xt::keep(bottom)));
+        auto layers = stitch.elemmap();
 
-        FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
-            stitch.coor(),
-            stitch.conn(),
-            dofs,
-            iip,
-            stitch.elemmap(),
-            stitch.nodemap(),
-            is_plastic);
+        size_t nelas = 0;
+        size_t nplas = 0;
 
-        // to pass internal fail safes
-        size_t nelas = sys.elastic().size();
-        size_t nplas = sys.plastic().size();
-        xt::xtensor<double, 1> Ielas = xt::ones<double>({nelas});
-        xt::xtensor<double, 1> Iplas = xt::ones<double>({nplas});
-
-        sys.setMassMatrix(xt::ones<double>({stitch.nelem()}));
-        sys.setDampingMatrix(xt::ones<double>({stitch.nelem()}));
-        sys.setElastic(1.0 * Ielas, 1.0 * Ielas);
-        sys.setPlastic(1.0 * Iplas, 1.0 * Iplas, xt::ones<double>({nplas, size_t(1)}));
-        sys.setDt(1.0);
+        for (size_t i = 0; i < layers.size(); ++i) {
+            if (is_plastic[i]) {
+                nplas += layers[i].size();
+            }
+            else {
+                nelas += layers[i].size();
+            }
+        }
 
         xt::xtensor<bool, 2> drive = xt::zeros<bool>({nlayer, size_t(2)});
         xt::xtensor<double, 2> u_target = xt::zeros<double>({nlayer, size_t(2)});
@@ -79,8 +95,26 @@ TEST_CASE(
         u_target(2, 0) = 1.0;
         u_target(4, 0) = 2.0;
 
-        sys.layerSetDriveStiffness(1.0);
-        sys.layerSetTargetActive(drive);
+        FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
+            stitch.coor(),
+            stitch.conn(),
+            dofs,
+            iip,
+            layers,
+            stitch.nodemap(),
+            is_plastic,
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({nelas}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({nelas}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({nplas}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({nplas}))),
+            FrictionQPotFEM::epsy_initelastic_toquad(xt::ones<double>({nplas, size_t(1)})),
+            1,
+            1,
+            1,
+            0,
+            drive,
+            1);
+
         sys.layerSetTargetUbar(u_target);
 
         xt::xtensor<double, 2> f = xt::zeros<double>({stitch.nnode(), stitch.ndim()});
@@ -159,27 +193,19 @@ TEST_CASE(
         auto dofs = stitch.dofs();
         auto bottom = stitch.nodeset(mesh.nodesBottomEdge(), 0);
         auto iip = xt::ravel(xt::view(dofs, xt::keep(bottom)));
+        auto layers = stitch.elemmap();
 
-        FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
-            stitch.coor(),
-            stitch.conn(),
-            dofs,
-            iip,
-            stitch.elemmap(),
-            stitch.nodemap(),
-            is_plastic);
+        size_t nelas = 0;
+        size_t nplas = 0;
 
-        size_t nelas = sys.elastic().size();
-        size_t nplas = sys.plastic().size();
-        xt::xtensor<double, 1> Ielas = xt::ones<double>({nelas});
-        xt::xtensor<double, 1> Iplas = xt::ones<double>({nplas});
-        xt::xtensor<double, 2> epsy = 100.0 * xt::ones<double>({nplas, size_t(1)});
-
-        sys.setDt(1.0);
-        sys.setMassMatrix(xt::eval(xt::ones<double>({stitch.nelem()})));
-        sys.setDampingMatrix(xt::eval(xt::ones<double>({stitch.nelem()})));
-        sys.setElastic(1.0 * Ielas, 1.0 * Ielas);
-        sys.setPlastic(1.0 * Iplas, 1.0 * Iplas, epsy);
+        for (size_t i = 0; i < layers.size(); ++i) {
+            if (is_plastic[i]) {
+                nplas += layers[i].size();
+            }
+            else {
+                nelas += layers[i].size();
+            }
+        }
 
         xt::xtensor<bool, 2> drive = xt::zeros<bool>({5, 2});
         xt::xtensor<double, 2> u_target = xt::zeros<double>({5, 2});
@@ -188,8 +214,26 @@ TEST_CASE(
         u_target(2, 0) = 1.0;
         u_target(4, 0) = 2.0;
 
-        sys.layerSetDriveStiffness(1.0);
-        sys.layerSetTargetActive(drive);
+        FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
+            stitch.coor(),
+            stitch.conn(),
+            dofs,
+            iip,
+            layers,
+            stitch.nodemap(),
+            is_plastic,
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({nelas}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({nelas}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({nplas}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({nplas}))),
+            FrictionQPotFEM::epsy_initelastic_toquad(100.0 * xt::ones<double>({nplas, size_t(1)})),
+            1, // dt
+            1,
+            1,
+            0,
+            drive,
+            1); // k_drive
+
         sys.layerSetTargetUbar(u_target);
         sys.layerSetUbar(u_target, drive);
 
@@ -235,7 +279,6 @@ TEST_CASE(
         auto bottom = stitch.nodeset(layer_elas.nodesBottomEdge(), 0);
         auto top = stitch.nodeset(layer_elas.nodesTopEdge(), 2);
 
-        auto nelem = stitch.nelem();
         auto coor = stitch.coor();
         auto conn = stitch.conn();
         auto dofs = stitch.dofs();
@@ -263,23 +306,32 @@ TEST_CASE(
         xt::xtensor<double, 2> epsy = 0.01 * xt::ones<double>({plas.size(), size_t(100)});
         epsy = xt::cumsum(epsy, 1);
 
-        FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
-            coor, conn, dofs, iip, stitch.elemmap(), stitch.nodemap(), is_plastic);
-
-        sys.setMassMatrix(1.0 * xt::ones<double>({nelem}));
-        sys.setDampingMatrix(0.01 * xt::ones<double>({nelem}));
-        sys.setElastic(10.0 * Ielas, 1.0 * Ielas);
-        sys.setPlastic(10.0 * Iplas, 1.0 * Iplas, epsy);
-        sys.setDt(0.1);
-
         xt::xtensor<bool, 2> drive = xt::zeros<bool>({3, 2});
         xt::xtensor<double, 2> u_target = xt::zeros<double>({3, 2});
         drive(0, 0) = true;
         drive(2, 0) = true;
         u_target(2, 0) = 0.1;
 
-        sys.layerSetDriveStiffness(1.0);
-        sys.layerSetTargetActive(drive);
+        FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System sys(
+            coor,
+            conn,
+            dofs,
+            iip,
+            stitch.elemmap(),
+            stitch.nodemap(),
+            is_plastic,
+            FrictionQPotFEM::moduli_toquad(xt::eval(10 * xt::ones<double>({nelas}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(1 * xt::ones<double>({nelas}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(10 * xt::ones<double>({nplas}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(1 * xt::ones<double>({nplas}))),
+            FrictionQPotFEM::epsy_initelastic_toquad(epsy),
+            0.1, // dt
+            1, // rho
+            0.01, // alpha
+            0,
+            drive,
+            1.0); // k_drive
+
         sys.layerSetTargetUbar(u_target);
 
         sys.minimise();

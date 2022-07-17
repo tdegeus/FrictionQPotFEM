@@ -1,3 +1,6 @@
+import unittest
+
+import FrictionQPotFEM
 import FrictionQPotFEM.UniformSingleLayer2d as model
 import GMatElastoPlasticQPot.Cartesian2d as GMat
 import GMatTensor.Cartesian2d as gtens
@@ -12,7 +15,7 @@ def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
 
     # pre-stress
     Sigstar = np.zeros(quad.shape_qtensor(2))
-    for q in range(nip):
+    for q in range(quad.nip):
         Sigstar[trigger, q, :, :] = sigma_star_test
         Sigstar[trigger, q, :, :] = sigma_star_test
 
@@ -93,171 +96,195 @@ def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p, e):
     return (dE / np.sum(dV[e, :])).reshape(P.shape)
 
 
-# ------------------------
-# initialise configuration
-# ------------------------
+class test_Generic2d(unittest.TestCase):
+    """
+    Tests
+    """
 
-# mesh
-# ----
+    def test_basic(self):
 
-# define mesh
-mesh = GooseFEM.Mesh.Quad4.FineLayer(21, 21)
+        # ------------------------
+        # initialise configuration
+        # ------------------------
 
-# mesh dimensions
-nelem = mesh.nelem
-nne = mesh.nne
-ndim = mesh.ndim
+        # mesh
+        # ----
 
-# mesh definitions
-coor = mesh.coor()
-conn = mesh.conn()
-dofs = mesh.dofs()
+        # define mesh
+        mesh = GooseFEM.Mesh.Quad4.FineLayer(21, 21)
 
-# node sets
-nodesLft = mesh.nodesLeftOpenEdge()
-nodesRgt = mesh.nodesRightOpenEdge()
-nodesTop = mesh.nodesTopEdge()
-nodesBot = mesh.nodesBottomEdge()
+        # mesh dimensions
+        nelem = mesh.nelem
+        mesh.nne
+        mesh.ndim
 
-# element sets
-plastic = mesh.elementsMiddleLayer()
-elastic = np.setdiff1d(np.arange(nelem), plastic)
+        # mesh definitions
+        coor = mesh.coor()
+        conn = mesh.conn()
+        dofs = mesh.dofs()
 
-# periodicity and fixed displacements DOFs
-# ----------------------------------------
+        # node sets
+        nodesLft = mesh.nodesLeftOpenEdge()
+        nodesRgt = mesh.nodesRightOpenEdge()
+        nodesTop = mesh.nodesTopEdge()
+        nodesBot = mesh.nodesBottomEdge()
 
-dofs[nodesRgt, :] = dofs[nodesLft, :]
+        # element sets
+        plastic = mesh.elementsMiddleLayer()
+        elastic = np.setdiff1d(np.arange(nelem), plastic)
 
-dofs = GooseFEM.Mesh.renumber(dofs)
+        # periodicity and fixed displacements DOFs
+        # ----------------------------------------
 
-iip = np.concatenate((dofs[nodesBot, 0], dofs[nodesBot, 1], dofs[nodesTop, 0], dofs[nodesTop, 1]))
+        dofs[nodesRgt, :] = dofs[nodesLft, :]
 
-# simulation variables
-# --------------------
+        dofs = GooseFEM.Mesh.renumber(dofs)
 
-# vector definition
-vector = GooseFEM.VectorPartitioned(conn, dofs, iip)
+        iip = np.concatenate(
+            (dofs[nodesBot, 0], dofs[nodesBot, 1], dofs[nodesTop, 0], dofs[nodesTop, 1])
+        )
 
-# allocate system matrix
-K = GooseFEM.MatrixPartitioned(conn, dofs, iip)
-Solver = GooseFEM.MatrixPartitionedSolver()
+        # simulation variables
+        # --------------------
 
-# nodal quantities
-disp = np.zeros(coor.shape)
-fint = np.zeros(coor.shape)
-fext = np.zeros(coor.shape)
-fres = np.zeros(coor.shape)
+        # vector definition
+        vector = GooseFEM.VectorPartitioned(conn, dofs, iip)
 
-# element/material definition
-# ---------------------------
+        # allocate system matrix
+        K = GooseFEM.MatrixPartitioned(conn, dofs, iip)
+        Solver = GooseFEM.MatrixPartitionedSolver()
 
-# element definition
-quad = GooseFEM.Element.Quad4.Quadrature(vector.AsElement(coor))
-nip = quad.nip
+        # nodal quantities
+        disp = np.zeros(coor.shape)
+        fint = np.zeros(coor.shape)
+        fext = np.zeros(coor.shape)
+        fres = np.zeros(coor.shape)
 
-# material definition
-mat = GMat.Array2d([nelem, nip])
+        # element/material definition
+        # ---------------------------
 
-iden = np.zeros(mat.shape(), dtype=int)
-iden[elastic, :] = 1
-mat.setElastic(iden, 10.0, 1.0)
+        # element definition
+        quad = GooseFEM.Element.Quad4.Quadrature(vector.AsElement(coor))
 
-iden = np.zeros(mat.shape(), dtype=int)
-iden[plastic, :] = 1
-mat.setElastic(iden, 10.0, 1.0)
+        # material definition
+        mat = GMat.Array2d([nelem, quad.nip])
 
-# solve
-# -----
+        iden = np.zeros(mat.shape(), dtype=int)
+        iden[elastic, :] = 1
+        mat.setElastic(iden, 10.0, 1.0)
 
-# strain, stress, tangent
-ue = vector.AsElement(disp)
-Eps = quad.SymGradN_vector(ue)
-mat.setStrain(Eps)
-Sig = mat.Stress()
-C = mat.Tangent()
+        iden = np.zeros(mat.shape(), dtype=int)
+        iden[plastic, :] = 1
+        mat.setElastic(iden, 10.0, 1.0)
 
-# stiffness matrix
-Ke = quad.Int_gradN_dot_tensor4_dot_gradNT_dV(C)
-K.assemble(Ke)
+        # solve
+        # -----
 
-# residual force
-fe = quad.Int_gradN_dot_tensor2_dV(Sig)
-fint = vector.AssembleNode(fe)
-fext = vector.Copy_p(fint, fext)
-fres = fext - fint
+        # strain, stress, tangent
+        ue = vector.AsElement(disp)
+        Eps = quad.SymGradN_vector(ue)
+        mat.setStrain(Eps)
+        Sig = mat.Stress()
+        C = mat.Tangent()
 
-# set fixed displacements
-disp[nodesTop, 0] = +5.0
-disp[nodesTop, 1] = np.sin(np.linspace(0, 2.0 * np.pi, len(nodesTop)) - np.pi)
-disp[nodesBot, 1] = np.cos(np.linspace(0, 2.0 * np.pi, len(nodesBot)) - np.pi)
+        # stiffness matrix
+        Ke = quad.Int_gradN_dot_tensor4_dot_gradNT_dV(C)
+        K.assemble(Ke)
 
-# solve
-disp = Solver.Solve(K, fres, disp)
+        # residual force
+        fe = quad.Int_gradN_dot_tensor2_dV(Sig)
+        fint = vector.AssembleNode(fe)
+        fext = vector.Copy_p(fint, fext)
+        fres = fext - fint
 
-# compute new state
-ue = vector.AsElement(disp)
-Eps = quad.SymGradN_vector(ue)
-mat.setStrain(Eps)
-Sig = mat.Stress()
+        # set fixed displacements
+        disp[nodesTop, 0] = +5.0
+        disp[nodesTop, 1] = np.sin(np.linspace(0, 2.0 * np.pi, len(nodesTop)) - np.pi)
+        disp[nodesBot, 1] = np.cos(np.linspace(0, 2.0 * np.pi, len(nodesBot)) - np.pi)
 
-# ----------------------
-# Effect of perturbation
-# ----------------------
+        # solve
+        disp = Solver.Solve(K, fres, disp)
 
-sys = model.System(coor, conn, dofs, iip, elastic, plastic)
+        # compute new state
+        ue = vector.AsElement(disp)
+        Eps = quad.SymGradN_vector(ue)
+        mat.setStrain(Eps)
+        Sig = mat.Stress()
 
-epsy = np.cumsum(np.ones(50 * len(plastic)).reshape(len(plastic), -1), axis=0)
-iel = np.ones(len(elastic))
-ipl = np.ones(len(plastic))
-sys.setElastic(10 * iel, 1 * iel)
-sys.setPlastic(10 * ipl, 1 * ipl, epsy)
-sys.setMassMatrix(np.ones(nelem))
-sys.setDampingMatrix(np.ones(nelem))
-sys.dt = 1
+        # ----------------------
+        # Effect of perturbation
+        # ----------------------
 
-modelTrigger = model.LocalTriggerFineLayerFull(sys)
-modelTrigger.setState(Eps, Sig, 0.5 * np.ones((len(plastic), 4)), 100)
+        epsy = np.cumsum(np.ones(50 * plastic.size).reshape(plastic.size, -1), axis=0)
 
-Barrier = []
+        sys = model.System(
+            coor=coor,
+            conn=conn,
+            dofs=dofs,
+            iip=iip,
+            elastic_elem=elastic,
+            elastic_K=10 * FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            elastic_G=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            plastic_elem=plastic,
+            plastic_K=10 * FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_G=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_epsy=FrictionQPotFEM.epsy_initelastic_toquad(epsy),
+            dt=1,
+            rho=1,
+            alpha=1,
+            eta=0,
+        )
 
-for itrigger, trigger in enumerate(plastic):
+        modelTrigger = model.LocalTriggerFineLayerFull(sys)
+        modelTrigger.setState(Eps, Sig, 0.5 * np.ones((len(plastic), 4)), 100)
 
-    Sigstar_s = np.array([[0.0, +1.0], [+1.0, 0.0]])
+        Barrier = []
 
-    Sigstar_p = np.array([[+1.0, 0.0], [0.0, -1.0]])
+        for itrigger, trigger in enumerate(plastic):
 
-    Epsstar_s, u_s, Eps_s, Sig_s = ComputePerturbation(
-        Sigstar_s, trigger, mat, quad, vector, K, Solver
-    )
-    Epsstar_p, u_p, Eps_p, Sig_p = ComputePerturbation(
-        Sigstar_p, trigger, mat, quad, vector, K, Solver
-    )
+            Sigstar_s = np.array([[0.0, +1.0], [+1.0, 0.0]])
 
-    assert np.allclose(u_s, modelTrigger.u_s(itrigger))
-    assert np.allclose(u_p, modelTrigger.u_p(itrigger))
-    assert np.allclose(Eps_s, modelTrigger.Eps_s(itrigger))
-    assert np.allclose(Eps_p, modelTrigger.Eps_p(itrigger))
-    assert np.allclose(Sig_s, modelTrigger.Sig_s(itrigger))
-    assert np.allclose(Sig_p, modelTrigger.Sig_p(itrigger))
+            Sigstar_p = np.array([[+1.0, 0.0], [0.0, -1.0]])
 
-    # Current state for triggered element
-    Epsd = GMat.Deviatoric(Eps[trigger, 0])
-    gamma = Epsd[0, 1]
-    E = Epsd[0, 0]
+            Epsstar_s, u_s, Eps_s, Sig_s = ComputePerturbation(
+                Sigstar_s, trigger, mat, quad, vector, K, Solver
+            )
+            Epsstar_p, u_p, Eps_p, Sig_p = ComputePerturbation(
+                Sigstar_p, trigger, mat, quad, vector, K, Solver
+            )
 
-    # Find which (s, p) lie on the yield surface,
-    # and to which energy change those perturbations lead
-    Py, Sy = GetYieldSurface(E, gamma, Epsstar_p[0, 0], Epsstar_s[0, 1])
-    Ey = ComputeEnergy(Py, Sy, Eps, Sig, quad.dV, Eps_s, Sig_s, Eps_p, Sig_p, plastic[itrigger])
+            self.assertTrue(np.allclose(u_s, modelTrigger.u_s(itrigger)))
+            self.assertTrue(np.allclose(u_p, modelTrigger.u_p(itrigger)))
+            self.assertTrue(np.allclose(Eps_s, modelTrigger.Eps_s(itrigger)))
+            self.assertTrue(np.allclose(Eps_p, modelTrigger.Eps_p(itrigger)))
+            self.assertTrue(np.allclose(Sig_s, modelTrigger.Sig_s(itrigger)))
+            self.assertTrue(np.allclose(Sig_p, modelTrigger.Sig_p(itrigger)))
 
-    # Plot perturbed configuration
+            # Current state for triggered element
+            Epsd = GMat.Deviatoric(Eps[trigger, 0])
+            gamma = Epsd[0, 1]
+            E = Epsd[0, 0]
 
-    smin = Sy.ravel()[np.argmin(Ey)]
-    pmin = Py.ravel()[np.argmin(Ey)]
-    Barrier += [np.min(Ey)]
+            # Find which (s, p) lie on the yield surface,
+            # and to which energy change those perturbations lead
+            Py, Sy = GetYieldSurface(E, gamma, Epsstar_p[0, 0], Epsstar_s[0, 1])
+            Ey = ComputeEnergy(
+                Py, Sy, Eps, Sig, quad.dV, Eps_s, Sig_s, Eps_p, Sig_p, plastic[itrigger]
+            )
 
-    delta_u = pmin * u_p + smin * u_s
-    assert np.allclose(delta_u, modelTrigger.delta_u(itrigger, 0))
+            # Plot perturbed configuration
 
-Barrier = np.array(Barrier)
-assert np.allclose(Barrier, modelTrigger.barriers()[:, 0])
+            smin = Sy.ravel()[np.argmin(Ey)]
+            pmin = Py.ravel()[np.argmin(Ey)]
+            Barrier += [np.min(Ey)]
+
+            delta_u = pmin * u_p + smin * u_s
+            self.assertTrue(np.allclose(delta_u, modelTrigger.delta_u(itrigger, 0)))
+
+        Barrier = np.array(Barrier)
+        self.assertTrue(np.allclose(Barrier, modelTrigger.barriers()[:, 0]))
+
+
+if __name__ == "__main__":
+
+    unittest.main()

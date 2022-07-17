@@ -60,12 +60,23 @@ class test_Generic2d(unittest.TestCase):
 
         # Initialise system
 
-        system = FrictionQPotFEM.Generic2d.System(coor, conn, dofs, iip, elastic, plastic)
-        system.setMassMatrix(rho * np.ones(mesh.nelem))
-        system.setDampingMatrix(alpha * np.ones(mesh.nelem))
-        system.setElastic(K * np.ones(elastic.size), G * np.ones(elastic.size))
-        system.setPlastic(K * np.ones(plastic.size), G * np.ones(plastic.size), epsy)
-        system.dt = dt
+        system = FrictionQPotFEM.Generic2d.System(
+            coor=coor,
+            conn=conn,
+            dofs=dofs,
+            iip=iip,
+            elastic_elem=elastic,
+            elastic_K=FrictionQPotFEM.moduli_toquad(K * np.ones(elastic.size)),
+            elastic_G=FrictionQPotFEM.moduli_toquad(G * np.ones(elastic.size)),
+            plastic_elem=plastic,
+            plastic_K=FrictionQPotFEM.moduli_toquad(K * np.ones(plastic.size)),
+            plastic_G=FrictionQPotFEM.moduli_toquad(G * np.ones(plastic.size)),
+            plastic_epsy=FrictionQPotFEM.epsy_initelastic_toquad(epsy),
+            dt=dt,
+            rho=rho,
+            alpha=alpha,
+            eta=0,
+        )
 
         # Run
 
@@ -86,7 +97,7 @@ class test_Generic2d(unittest.TestCase):
                     for k in range(mesh.ndim):
                         u[i, j] += dF[inc, j, k] * (coor[i, k] - coor[0, k])
 
-            system.setU(u)
+            system.u = u
             system.minimise()
 
             Epsbar = np.average(system.Eps, weights=dV, axis=(0, 1))

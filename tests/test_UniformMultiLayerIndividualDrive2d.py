@@ -21,28 +21,32 @@ class test_Generic2d(unittest.TestCase):
         dofs[mesh.nodesLeftEdge()[1:], ...] = dofs[mesh.nodesRightEdge()[1:], ...]
         layers = [elem[:3, :].ravel(), elem[3, :].ravel(), elem[4:, :].ravel()]
         layers = [np.sort(i) for i in layers]
+        is_plastic = [False, True, False]
 
-        system = FrictionQPotFEM.UniformMultiLayerIndividualDrive2d.System(
-            coor,
-            conn,
-            dofs,
-            dofs[mesh.nodesBottomEdge(), :].ravel(),
-            layers,
-            [np.unique(conn[i, :]) for i in layers],
-            [False, True, False],
-        )
-
-        nelas = system.elastic.size
-        nplas = system.plastic.size
-
+        nelas = sum(i.size for i, p in zip(layers, is_plastic) if not p)
+        nplas = sum(i.size for i, p in zip(layers, is_plastic) if p)
         epsy = 1e-3 * np.cumsum(np.ones((nplas, 5)), axis=1)
 
-        system.rho = 1
-        system.alpha = 1
-        system.setElastic(np.ones(nelas), np.ones(nelas))
-        system.setPlastic(np.ones(nplas), np.ones(nplas), epsy)
-        system.dt = 1
-        system.layerSetDriveStiffness(1e-3)
+        system = FrictionQPotFEM.UniformMultiLayerIndividualDrive2d.System(
+            coor=coor,
+            conn=conn,
+            dofs=dofs,
+            iip=dofs[mesh.nodesBottomEdge(), :].ravel(),
+            elem=layers,
+            node=[np.unique(conn[i, :]) for i in layers],
+            layer_is_plastic=is_plastic,
+            elastic_K=FrictionQPotFEM.moduli_toquad(np.ones(nelas)),
+            elastic_G=FrictionQPotFEM.moduli_toquad(np.ones(nelas)),
+            plastic_K=FrictionQPotFEM.moduli_toquad(np.ones(nplas)),
+            plastic_G=FrictionQPotFEM.moduli_toquad(np.ones(nplas)),
+            plastic_epsy=FrictionQPotFEM.epsy_initelastic_toquad(epsy),
+            dt=1,
+            rho=1,
+            alpha=1,
+            eta=0,
+            drive_is_active=np.ones((len(layers), 2)),
+            k_drive=1e-3,
+        )
 
         drive_active = np.zeros((3, 2), dtype=bool)
         drive_u = np.zeros((3, 2), dtype=float)
@@ -59,7 +63,7 @@ class test_Generic2d(unittest.TestCase):
                 delta_ubar = system.eventDriven_deltaUbar
             else:
                 system.initEventDriven(delta_ubar, delta_active, delta_u)
-                system.setU(np.zeros_like(coor))
+                system.u = np.zeros_like(coor)
 
             directions = [1, 1, 1, 1, 1, 1, -1, -1, -1]
             kicks = [False, False, True, False, True, False, False, True, False]

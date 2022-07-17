@@ -57,6 +57,19 @@ public:
     \param elem Elements per layer.
     \param node Nodes per layer.
     \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
+    \param elastic_K Bulk modulus per quad. point of each elastic element, see setElastic().
+    \param elastic_G Shear modulus per quad. point of each elastic element, see setElastic().
+    \param plastic_K Bulk modulus per quad. point of each plastic element, see Plastic().
+    \param plastic_G Shear modulus per quad. point of each plastic element, see Plastic().
+    \param plastic_epsy Yield strain per quad. point of each plastic element, see Plastic().
+    \param dt Time step, set setDt().
+    \param rho Mass density, see setMassMatrix().
+    \param alpha Background damping density, see setDampingMatrix().
+    \param eta Damping at the interface (homogeneous), see setEta().
+    \param drive_is_active Per layer (de)activate drive for each DOF, see layerSetTargetActive().
+    \param k_drive Stiffness of driving spring, see layerSetDriveStiffness().
+    \param H The height of the spring pulling the lever, see setLeverProperties().
+    \param hi The height of the loading frame of each layer, setLeverProperties().
     */
     System(
         const array_type::tensor<double, 2>& coor,
@@ -65,34 +78,40 @@ public:
         const array_type::tensor<size_t, 1>& iip,
         const std::vector<array_type::tensor<size_t, 1>>& elem,
         const std::vector<array_type::tensor<size_t, 1>>& node,
-        const array_type::tensor<bool, 1>& layer_is_plastic)
+        const array_type::tensor<bool, 1>& layer_is_plastic,
+        const array_type::tensor<double, 2>& elastic_K,
+        const array_type::tensor<double, 2>& elastic_G,
+        const array_type::tensor<double, 2>& plastic_K,
+        const array_type::tensor<double, 2>& plastic_G,
+        const array_type::tensor<double, 3>& plastic_epsy,
+        double dt,
+        double rho,
+        double alpha,
+        double eta,
+        const array_type::tensor<bool, 2>& drive_is_active,
+        double k_drive,
+        double H,
+        const array_type::tensor<double, 1>& hi)
     {
-        this->init_lever(coor, conn, dofs, iip, elem, node, layer_is_plastic);
-    }
-
-protected:
-    /**
-    Define basic geometry.
-    This function class UniformMultiLayerIndividualDrive2d::init().
-
-    \param coor Nodal coordinates.
-    \param conn Connectivity.
-    \param dofs DOFs per node.
-    \param iip DOFs whose displacement is fixed.
-    \param elem Elements per layer.
-    \param node Nodes per layer.
-    \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
-    */
-    void init_lever(
-        const array_type::tensor<double, 2>& coor,
-        const array_type::tensor<size_t, 2>& conn,
-        const array_type::tensor<size_t, 2>& dofs,
-        const array_type::tensor<size_t, 1>& iip,
-        const std::vector<array_type::tensor<size_t, 1>>& elem,
-        const std::vector<array_type::tensor<size_t, 1>>& node,
-        const array_type::tensor<bool, 1>& layer_is_plastic)
-    {
-        this->init(coor, conn, dofs, iip, elem, node, layer_is_plastic);
+        this->init(
+            coor,
+            conn,
+            dofs,
+            iip,
+            elem,
+            node,
+            layer_is_plastic,
+            elastic_K,
+            elastic_G,
+            plastic_K,
+            plastic_G,
+            plastic_epsy,
+            dt,
+            rho,
+            alpha,
+            eta,
+            drive_is_active,
+            k_drive);
 
         using size_type = typename decltype(m_lever_hi)::size_type;
         std::array<size_type, 1> shape = {static_cast<size_type>(m_n_layer)};
@@ -109,6 +128,8 @@ protected:
         m_lever_H = 0.0;
         m_lever_target = 0.0;
         m_lever_u = 0.0;
+
+        this->setLeverProperties(H, hi);
     }
 
 public:
@@ -118,7 +139,7 @@ public:
     }
 
     /**
-    Set the lever properties.
+    Overwrite the lever properties.
 
     \tparam T e.g. `array_type::tensor<double, 1>`
     \param H The height of the spring pulling the lever.
@@ -139,7 +160,7 @@ public:
     }
 
     /**
-    Set the target 'position' of the spring pulling the lever.
+    Overwrite the target 'position' of the spring pulling the lever.
 
     \param xdrive Lever position
     */

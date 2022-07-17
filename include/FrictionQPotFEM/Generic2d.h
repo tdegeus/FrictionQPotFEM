@@ -30,6 +30,74 @@
 namespace FrictionQPotFEM {
 
 /**
+Convert array of yield strains stored per element [nelem, n]:
+
+1.  Pre-prepend elastic: epsy[e, :] -> [-epsy[e, 0], epsy[e, :]]
+2.  Broadcast to be the same for all quadrature points, converting the shape to [nelem, nip, n].
+
+\param arg Yield strains per element.
+\param nip Number of integration points.
+\return Broadcast yield strains.
+*/
+inline array_type::tensor<double, 3> epsy_initelastic_toquad(
+    const array_type::tensor<double, 2>& arg,
+    size_t nip = GooseFEM::Element::Quad4::Gauss::nip())
+{
+    array_type::tensor<double, 3> ret = xt::empty<double>({arg.shape(0), nip, arg.shape(1) + 1});
+
+    for (size_t e = 0; e < arg.shape(0); ++e) {
+        for (size_t q = 0; q < nip; ++q) {
+            std::copy(&arg(e, 0), &arg(e, 0) + arg.shape(1), &ret(e, q, 1));
+            ret(e, q, 0) = -arg(e, 0);
+        }
+    }
+
+    return ret;
+}
+
+/**
+Broadcast array of moduli stored per element [nelem] to be the same for all quadrature points,
+converting the shape to [nelem, nip].
+
+\param arg Moduli per element.
+\param nip Number of integration points.
+\return Broadcast moduli.
+*/
+inline array_type::tensor<double, 2> moduli_toquad(
+    const array_type::tensor<double, 1>& arg,
+    size_t nip = GooseFEM::Element::Quad4::Gauss::nip())
+{
+    array_type::tensor<double, 2> ret = xt::empty<double>({arg.shape(0), nip});
+
+    for (size_t e = 0; e < arg.shape(0); ++e) {
+        for (size_t q = 0; q < nip; ++q) {
+            ret(e, q) = arg(e);
+        }
+    }
+
+    return ret;
+}
+
+/**
+Extract uniform value (throw if not uniform):
+
+-   If `all(arg[0] == arg)` return `arg[0]`.
+-   Otherwise throw.
+
+\param arg Values.
+\return Uniform value.
+*/
+template <class T>
+inline typename T::value_type getuniform(const T& arg)
+{
+    if (xt::allclose(arg.flat(0), arg)) {
+        return arg.flat(0);
+    }
+
+    throw std::runtime_error("Values not uniform");
+}
+
+/**
 Generic system of elastic and plastic elements.
 For the moment this not part of the public API and can be subjected to changes.
 */
@@ -87,50 +155,82 @@ public:
     \param conn Connectivity.
     \param dofs DOFs per node.
     \param iip DOFs whose displacement is fixed.
-    \param elem_elastic Elastic elements.
-    \param elem_plastic Plastic elements.
+    \param elastic_elem Elastic elements.
+    \param elastic_K Bulk modulus per quad. point of each elastic element, see setElastic().
+    \param elastic_G Shear modulus per quad. point of each elastic element, see setElastic().
+    \param plastic_elem Plastic elements.
+    \param plastic_K Bulk modulus per quad. point of each plastic element, see Plastic().
+    \param plastic_G Shear modulus per quad. point of each plastic element, see Plastic().
+    \param plastic_epsy Yield strain per quad. point of each plastic element, see Plastic().
+    \param dt Time step, set setDt().
+    \param rho Mass density, see setMassMatrix().
+    \param alpha Background damping density, see setDampingMatrix().
+    \param eta Damping at the interface (homogeneous), see setEta().
     */
-    template <class C, class E, class L>
+    template <class C, class E, class L, class M, class Y>
     System(
         const C& coor,
         const E& conn,
         const E& dofs,
         const L& iip,
-        const L& elem_elastic,
-        const L& elem_plastic)
+        const L& elastic_elem,
+        const M& elastic_K,
+        const M& elastic_G,
+        const L& plastic_elem,
+        const M& plastic_K,
+        const M& plastic_G,
+        const Y& plastic_epsy,
+        double dt,
+        double rho,
+        double alpha,
+        double eta)
     {
-        this->initSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+        this->initSystem(
+            coor,
+            conn,
+            dofs,
+            iip,
+            elastic_elem,
+            elastic_K,
+            elastic_G,
+            plastic_elem,
+            plastic_K,
+            plastic_G,
+            plastic_epsy,
+            dt,
+            rho,
+            alpha,
+            eta);
     }
 
 protected:
     /**
-    Constructor alias, useful for derived classes.
-
-    \tparam C Type of nodal coordinates, e.g. `array_type::tensor<double, 2>`
-    \tparam E Type of connectivity and DOFs, e.g. `array_type::tensor<size_t, 2>`
-    \tparam L Type of node/element lists, e.g. `array_type::tensor<size_t, 1>`
-    \param coor Nodal coordinates.
-    \param conn Connectivity.
-    \param dofs DOFs per node.
-    \param iip DOFs whose displacement is fixed.
-    \param elem_elastic Elastic elements.
-    \param elem_plastic Plastic elements.
+    \cond
     */
-    template <class C, class E, class L>
+    template <class C, class E, class L, class M, class Y>
     void initSystem(
         const C& coor,
         const E& conn,
         const E& dofs,
         const L& iip,
-        const L& elem_elastic,
-        const L& elem_plastic)
+        const L& elastic_elem,
+        const M& elastic_K,
+        const M& elastic_G,
+        const L& plastic_elem,
+        const M& plastic_K,
+        const M& plastic_G,
+        const Y& plastic_epsy,
+        double dt,
+        double rho,
+        double alpha,
+        double eta)
     {
         m_coor = coor;
         m_conn = conn;
         m_dofs = dofs;
         m_iip = iip;
-        m_elem_elas = elem_elastic;
-        m_elem_plas = elem_plastic;
+        m_elem_elas = elastic_elem;
+        m_elem_plas = plastic_elem;
 
         m_conn_elas = xt::view(m_conn, xt::keep(m_elem_elas), xt::all());
         m_conn_plas = xt::view(m_conn, xt::keep(m_elem_plas), xt::all());
@@ -201,7 +301,17 @@ protected:
         m_material_plas = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem_plas, m_nip});
 
         m_K_elas = GooseFEM::Matrix(m_conn_elas, m_dofs);
+
+        this->setDt(dt);
+        this->setRho(rho);
+        this->setAlpha(alpha);
+        this->setEta(eta);
+        this->setElastic(elastic_K, elastic_G);
+        this->setPlastic(plastic_K, plastic_G, plastic_epsy);
     }
+    /**
+    \endcond
+    */
 
 public:
     /**
@@ -245,7 +355,7 @@ public:
 
 public:
     /**
-    Set the mass density to a homogeneous quantity.
+    Overwrite the mass density to a homogeneous quantity.
     To use a non-homogeneous density use setMassMatrix().
     \param rho Mass density.
     */
@@ -257,6 +367,7 @@ public:
 public:
     /**
     Overwrite mass matrix, based on certain density that is uniform per element.
+    This function allows for more heterogeneity than the constructor.
     To use a homogeneous system, use setRho().
     \tparam T e.g. `array_type::tensor<double, 1>`.
     \param val_elem Density per element.
@@ -291,7 +402,7 @@ public:
 
 public:
     /**
-    Set the value of the damping at the interface.
+    Overwrite the value of the damping at the interface.
     Note that you can specify either setEta() or setDampingMatrix() or both.
     \param eta Damping parameter
     */
@@ -319,7 +430,7 @@ public:
 
 public:
     /**
-    Set background damping density (proportional to the velocity),
+    Overwrite background damping density (proportional to the velocity),
     To use a non-homogeneous density use setDampingMatrix().
     \param alpha Damping parameter.
     */
@@ -342,7 +453,8 @@ public:
 
 public:
     /**
-    Set damping matrix, based on certain density (taken uniform per element).
+    Overwrite damping matrix, based on certain density (taken uniform per element).
+    This function allows for more heterogeneity than the constructor.
     Note that you can specify either setEta() or setDampingMatrix() or both.
 
     \param val_elem Damping per element.
@@ -377,29 +489,24 @@ public:
 
 public:
     /**
-    Set material parameters for the elastic elements
+    Overwrite material parameters for the elastic elements
     (taken uniform per element, ordering the same as in the constructor).
 
     \tparam S e.g. `array_type::tensor<double, 1>`.
     \tparam T e.g. `array_type::tensor<double, 1>`.
-    \param K_elem Bulk modulus per element.
-    \param G_elem Bulk modulus per element.
+    \param K Bulk modulus per integration point.
+    \param G Bulk modulus per integration point.
     */
     template <class S, class T>
-    void setElastic(const S& K_elem, const T& G_elem)
+    void setElastic(const S& K, const T& G)
     {
         FRICTIONQPOTFEM_ASSERT(!m_set_elas || m_nelem_elas == 0);
-        FRICTIONQPOTFEM_ASSERT(xt::has_shape(K_elem, {m_nelem_elas}));
-        FRICTIONQPOTFEM_ASSERT(xt::has_shape(G_elem, {m_nelem_elas}));
+        FRICTIONQPOTFEM_ASSERT(xt::has_shape(K, {m_nelem_elas, m_nip}));
+        FRICTIONQPOTFEM_ASSERT(xt::has_shape(G, {m_nelem_elas, m_nip}));
 
         if (m_nelem_elas > 0) {
-            array_type::tensor<size_t, 2> I = xt::ones<size_t>({m_nelem_elas, m_nip});
-            array_type::tensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_elas, m_nip});
 
-            xt::view(idx, xt::range(0, m_nelem_elas), xt::all()) =
-                xt::arange<size_t>(m_nelem_elas).reshape({-1, 1});
-
-            m_material_elas.setElastic(I, idx, K_elem, G_elem);
+            m_material_elas.setElastic(K, G);
             m_material_elas.setStrain(m_Eps_elas);
 
             FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(
@@ -415,33 +522,39 @@ public:
 
 public:
     /**
-    Set material parameters for the plastic elements
+    Overwrite material parameters for the plastic elements
     (taken uniform per element, ordering the same as in the constructor).
 
     \tparam S e.g. `array_type::tensor<double, 1>`.
     \tparam T e.g. `array_type::tensor<double, 1>`.
     \tparam Y e.g. `array_type::tensor<double, 2>`.
-    \param K_elem Bulk modulus per element.
-    \param G_elem Bulk modulus per element.
-    \param epsy_elem Yield history per element.
+    \param K Bulk modulus per integration point.
+    \param G Bulk modulus per integration point.
+    \param epsy Yield history per integration point.
     */
     template <class S, class T, class Y>
-    void setPlastic(const S& K_elem, const T& G_elem, const Y& epsy_elem)
+    void setPlastic(const S& K, const T& G, const Y& epsy)
     {
         FRICTIONQPOTFEM_ASSERT(!m_set_plas || m_nelem_plas == 0);
-        FRICTIONQPOTFEM_ASSERT(xt::has_shape(K_elem, {m_nelem_plas}));
-        FRICTIONQPOTFEM_ASSERT(xt::has_shape(G_elem, {m_nelem_plas}));
-        FRICTIONQPOTFEM_ASSERT(epsy_elem.dimension() == 2);
-        FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
+        FRICTIONQPOTFEM_ASSERT(xt::has_shape(K, {m_nelem_plas, m_nip}));
+        FRICTIONQPOTFEM_ASSERT(xt::has_shape(G, {m_nelem_plas, m_nip}));
+        FRICTIONQPOTFEM_ASSERT(epsy.dimension() == 3);
+        FRICTIONQPOTFEM_ASSERT(epsy.shape(0) == m_nelem_plas);
+        FRICTIONQPOTFEM_ASSERT(epsy.shape(1) == m_nip);
 
         if (m_nelem_plas > 0) {
-            array_type::tensor<size_t, 2> I = xt::ones<size_t>({m_nelem_plas, m_nip});
-            array_type::tensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
 
-            xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) =
-                xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
+            xt::xarray<double> tmp_K = K;
+            xt::xarray<double> tmp_G = G;
+            xt::xarray<double> tmp_epsy = epsy;
+            tmp_K.reshape({K.size()});
+            tmp_G.reshape({G.size()});
+            tmp_epsy.reshape({epsy.shape(0) * epsy.shape(1), epsy.shape(2)});
+            xt::xarray<bool> I = xt::ones<bool>({m_nelem_plas, m_nip});
+            xt::xarray<size_t> idx = xt::arange<size_t>(m_nelem_plas * m_nip);
+            idx.reshape({m_nelem_plas, m_nip});
 
-            m_material_plas.setCusp(I, idx, K_elem, G_elem, epsy_elem);
+            m_material_plas.setCusp(I, idx, tmp_K, tmp_G, tmp_epsy, false);
             m_material_plas.setStrain(m_Eps_plas);
 
             FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(
@@ -525,7 +638,7 @@ public:
     }
 
     /**
-    Set time step. Using for example in System::timeStep and System::minimise.
+    Overwrite time step. Using for example in System::timeStep and System::minimise.
     */
     void setDt(double dt)
     {
@@ -535,7 +648,7 @@ public:
 
 public:
     /**
-    Set nodal displacements.
+    Overwrite nodal displacements.
     Internally, this updates the relevant forces using updated_u().
 
     \param u ``[nnode, ndim]``.
@@ -551,7 +664,7 @@ public:
 
 public:
     /**
-    Set nodal velocities.
+    Overwrite nodal velocities.
     Internally, this updates the relevant forces using updated_v().
 
     \param v ``[nnode, ndim]``.
@@ -566,7 +679,7 @@ public:
 
 public:
     /**
-    Set nodal accelerations.
+    Overwrite nodal accelerations.
 
     \param a ``[nnode, ndim]``.
     */
@@ -615,7 +728,7 @@ protected:
 
 public:
     /**
-    Set external force.
+    Overwrite external force.
     Note: the external force on the DOFs whose displacement are prescribed are response forces
     computed during timeStep(). Internally on the system of unknown DOFs is solved, so any
     change to the response forces is ignored.
@@ -824,7 +937,7 @@ public:
     }
 
     /**
-    Set time.
+    Overwrite time.
     */
     void setT(double t)
     {

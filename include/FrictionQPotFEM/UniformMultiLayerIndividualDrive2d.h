@@ -63,6 +63,17 @@ public:
     \param elem Elements per layer.
     \param node Nodes per layer.
     \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
+    \param elastic_K Bulk modulus per quad. point of each elastic element, see setElastic().
+    \param elastic_G Shear modulus per quad. point of each elastic element, see setElastic().
+    \param plastic_K Bulk modulus per quad. point of each plastic element, see Plastic().
+    \param plastic_G Shear modulus per quad. point of each plastic element, see Plastic().
+    \param plastic_epsy Yield strain per quad. point of each plastic element, see Plastic().
+    \param dt Time step, set setDt().
+    \param rho Mass density, see setMassMatrix().
+    \param alpha Background damping density, see setDampingMatrix().
+    \param eta Damping at the interface (homogeneous), see setEta().
+    \param drive_is_active Per layer (de)activate drive for each DOF, see layerSetTargetActive().
+    \param k_drive Stiffness of driving spring, see layerSetDriveStiffness().
     */
     System(
         const array_type::tensor<double, 2>& coor,
@@ -71,23 +82,44 @@ public:
         const array_type::tensor<size_t, 1>& iip,
         const std::vector<array_type::tensor<size_t, 1>>& elem,
         const std::vector<array_type::tensor<size_t, 1>>& node,
-        const array_type::tensor<bool, 1>& layer_is_plastic)
+        const array_type::tensor<bool, 1>& layer_is_plastic,
+        const array_type::tensor<double, 2>& elastic_K,
+        const array_type::tensor<double, 2>& elastic_G,
+        const array_type::tensor<double, 2>& plastic_K,
+        const array_type::tensor<double, 2>& plastic_G,
+        const array_type::tensor<double, 3>& plastic_epsy,
+        double dt,
+        double rho,
+        double alpha,
+        double eta,
+        const array_type::tensor<bool, 2>& drive_is_active,
+        double k_drive)
     {
-        this->init(coor, conn, dofs, iip, elem, node, layer_is_plastic);
+        this->init(
+            coor,
+            conn,
+            dofs,
+            iip,
+            elem,
+            node,
+            layer_is_plastic,
+            elastic_K,
+            elastic_G,
+            plastic_K,
+            plastic_G,
+            plastic_epsy,
+            dt,
+            rho,
+            alpha,
+            eta,
+            drive_is_active,
+            k_drive);
     }
 
 protected:
     /**
-Constructor alias (as convenience for derived classes).
-
-\param coor Nodal coordinates.
-\param conn Connectivity.
-\param dofs DOFs per node.
-\param iip DOFs whose displacement is fixed.
-\param elem Elements per layer.
-\param node Nodes per layer.
-\param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
-*/
+    \cond
+    */
     void init(
         const array_type::tensor<double, 2>& coor,
         const array_type::tensor<size_t, 2>& conn,
@@ -95,7 +127,18 @@ Constructor alias (as convenience for derived classes).
         const array_type::tensor<size_t, 1>& iip,
         const std::vector<array_type::tensor<size_t, 1>>& elem,
         const std::vector<array_type::tensor<size_t, 1>>& node,
-        const array_type::tensor<bool, 1>& layer_is_plastic)
+        const array_type::tensor<bool, 1>& layer_is_plastic,
+        const array_type::tensor<double, 2>& elastic_K,
+        const array_type::tensor<double, 2>& elastic_G,
+        const array_type::tensor<double, 2>& plastic_K,
+        const array_type::tensor<double, 2>& plastic_G,
+        const array_type::tensor<double, 3>& plastic_epsy,
+        double dt,
+        double rho,
+        double alpha,
+        double eta,
+        const array_type::tensor<bool, 2>& drive_is_active,
+        double k_drive)
     {
         FRICTIONQPOTFEM_ASSERT(layer_is_plastic.size() == elem.size());
         FRICTIONQPOTFEM_ASSERT(layer_is_plastic.size() == node.size());
@@ -180,7 +223,22 @@ Constructor alias (as convenience for derived classes).
             }
         }
 
-        this->initSystem(coor, conn, dofs, iip, elas, plas);
+        this->initSystem(
+            coor,
+            conn,
+            dofs,
+            iip,
+            elas,
+            elastic_K,
+            elastic_G,
+            plas,
+            plastic_K,
+            plastic_G,
+            plastic_epsy,
+            dt,
+            rho,
+            alpha,
+            eta);
 
         m_fdrive = m_vector.allocate_nodevec(0.0);
         m_ud = m_vector.allocate_dofval(0.0);
@@ -223,7 +281,13 @@ Constructor alias (as convenience for derived classes).
             FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(xt::sort(e), xt::sort(elem[i]))));
         }
 #endif
+
+        this->layerSetDriveStiffness(k_drive);
+        this->layerSetTargetActive(drive_is_active);
     }
+    /**
+    \endcond
+    */
 
 public:
     size_t N() const override
@@ -505,7 +569,7 @@ public:
     }
 
     /**
-    Set the target average displacement per layer.
+    Overwrite the target average displacement per layer.
     Only layers that have an active driving spring will feel a force
     (if its average displacement is different from the target displacement),
     see layerSetTargetActive().
@@ -717,8 +781,8 @@ protected:
     array_type::tensor<size_t, 1> m_slice_plas; ///< How to slice elastic(): start and end index
     array_type::tensor<size_t, 1> m_slice_elas; ///< How to slice plastic(): start and end index
 
-    bool m_drive_spring_symmetric = true; ///< If false the drive spring buckles in compression
-    double m_drive_k = 1.0; ///< Stiffness of the drive control frame
+    bool m_drive_spring_symmetric; ///< If false the drive spring buckles in compression
+    double m_drive_k; ///< Stiffness of the drive control frame
     array_type::tensor<bool, 2> m_layerdrive_active; ///< See `prescribe` in layerSetTargetUbar()
     array_type::tensor<double, 2>
         m_layerdrive_targetubar; ///< Per layer, the prescribed average position.

@@ -55,42 +55,52 @@ public:
     \param conn Connectivity.
     \param dofs DOFs per node.
     \param iip DOFs whose displacement is fixed.
-    \param elem_elastic Elastic elements.
-    \param elem_plastic Plastic elements.
+    \param elastic_elem Elastic elements.
+    \param elastic_K Bulk modulus per quad. point of each elastic element, see setElastic().
+    \param elastic_G Shear modulus per quad. point of each elastic element, see setElastic().
+    \param plastic_elem Plastic elements.
+    \param plastic_K Bulk modulus per quad. point of each plastic element, see Plastic().
+    \param plastic_G Shear modulus per quad. point of each plastic element, see Plastic().
+    \param plastic_epsy Yield strain per quad. point of each plastic element, see Plastic().
+    \param dt Time step, set setDt().
+    \param rho Mass density, see setMassMatrix().
+    \param alpha Background damping density, see setDampingMatrix().
+    \param eta Damping at the interface (homogeneous), see setEta().
     */
-    template <class C, class E, class L>
+    template <class C, class E, class L, class M, class Y>
     System(
         const C& coor,
         const E& conn,
         const E& dofs,
         const L& iip,
-        const L& elem_elastic,
-        const L& elem_plastic)
+        const L& elastic_elem,
+        const M& elastic_K,
+        const M& elastic_G,
+        const L& plastic_elem,
+        const M& plastic_K,
+        const M& plastic_G,
+        const Y& plastic_epsy,
+        double dt,
+        double rho,
+        double alpha,
+        double eta)
     {
-        this->init(coor, conn, dofs, iip, elem_elastic, elem_plastic);
-    }
-
-protected:
-    /**
-    Constructor alias, useful for derived classes.
-
-    \param coor Nodal coordinates.
-    \param conn Connectivity.
-    \param dofs DOFs per node.
-    \param iip DOFs whose displacement is fixed.
-    \param elem_elastic Elastic elements.
-    \param elem_plastic Plastic elements.
-    */
-    template <class C, class E, class L>
-    void init(
-        const C& coor,
-        const E& conn,
-        const E& dofs,
-        const L& iip,
-        const L& elem_elastic,
-        const L& elem_plastic)
-    {
-        this->initSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+        this->initSystem(
+            coor,
+            conn,
+            dofs,
+            iip,
+            elastic_elem,
+            elastic_K,
+            elastic_G,
+            plastic_elem,
+            plastic_K,
+            plastic_G,
+            plastic_epsy,
+            dt,
+            rho,
+            alpha,
+            eta);
     }
 
 public:

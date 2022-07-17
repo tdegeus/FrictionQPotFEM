@@ -356,17 +356,22 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
 
         // Initialise system
 
-        FrictionQPotFEM::Generic2d::System full(coor, conn, dofs, iip, elastic, plastic);
-        full.setMassMatrix(rho * xt::ones<double>({mesh.nelem()}));
-        full.setDampingMatrix(alpha * xt::ones<double>({mesh.nelem()}));
-
-        full.setElastic(
-            K * xt::ones<double>({elastic.size()}), G * xt::ones<double>({elastic.size()}));
-
-        full.setPlastic(
-            K * xt::ones<double>({plastic.size()}), G * xt::ones<double>({plastic.size()}), epsy);
-
-        full.setDt(dt);
+        FrictionQPotFEM::Generic2d::System full(
+            coor,
+            conn,
+            dofs,
+            iip,
+            elastic,
+            FrictionQPotFEM::moduli_toquad(xt::eval(K * xt::ones<double>({elastic.size()}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(G * xt::ones<double>({elastic.size()}))),
+            plastic,
+            FrictionQPotFEM::moduli_toquad(xt::eval(K * xt::ones<double>({plastic.size()}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(G * xt::ones<double>({plastic.size()}))),
+            FrictionQPotFEM::epsy_initelastic_toquad(epsy),
+            dt,
+            rho,
+            alpha,
+            0);
 
         // Run
 
