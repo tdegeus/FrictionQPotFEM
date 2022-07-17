@@ -174,78 +174,47 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("fext"));
 
             cls.def("quench", &SUB::System::quench, "quench");
-            cls.def("elastic", &SUB::System::elastic, "elastic");
-            cls.def("plastic", &SUB::System::plastic, "plastic");
-            cls.def("conn", &SUB::System::conn, "conn");
-            cls.def("coor", &SUB::System::coor, "coor");
-            cls.def("dofs", &SUB::System::dofs, "dofs");
-            cls.def("u", &SUB::System::u, "u");
-            cls.def("v", &SUB::System::v, "v");
-            cls.def("a", &SUB::System::a, "a");
+            cls.def_property_readonly("elastic", &SUB::System::elastic, "elastic");
+            cls.def_property_readonly("plastic", &SUB::System::plastic, "plastic");
+            cls.def_property_readonly("conn", &SUB::System::conn, "conn");
+            cls.def_property_readonly("coor", &SUB::System::coor, "coor");
+            cls.def_property_readonly("dofs", &SUB::System::dofs, "dofs");
+            cls.def_property_readonly("u", &SUB::System::u, "u");
+            cls.def_property_readonly("v", &SUB::System::v, "v");
+            cls.def_property_readonly("a", &SUB::System::a, "a");
 
-            cls.def(
-                "mass", &SUB::System::mass, "mass", py::return_value_policy::reference_internal);
+            cls.def_property_readonly("mass", &SUB::System::mass, "mass");
 
-            cls.def(
-                "damping",
-                &SUB::System::damping,
-                "damping",
-                py::return_value_policy::reference_internal);
+            cls.def_property_readonly("damping", &SUB::System::damping, "damping");
 
-            cls.def("fext", &SUB::System::fext, "fext");
-            cls.def("fint", &SUB::System::fint, "fint");
-            cls.def("fmaterial", &SUB::System::fmaterial, "fmaterial");
-            cls.def("fdamp", &SUB::System::fdamp, "fdamp");
+            cls.def_property_readonly("fext", &SUB::System::fext, "fext");
+            cls.def_property_readonly("fint", &SUB::System::fint, "fint");
+            cls.def_property_readonly("fmaterial", &SUB::System::fmaterial, "fmaterial");
+            cls.def_property_readonly("fdamp", &SUB::System::fdamp, "fdamp");
             cls.def("residual", &SUB::System::residual, "residual");
-            cls.def("dV", &SUB::System::dV, "dV");
+            cls.def_property_readonly("dV", &SUB::System::dV, "dV");
 
-            cls.def(
-                "stiffness",
-                &SUB::System::stiffness,
-                "stiffness",
-                py::return_value_policy::reference_internal);
+            cls.def("stiffness", &SUB::System::stiffness, "stiffness");
 
-            cls.def(
-                "vector",
-                &SUB::System::vector,
-                "vector",
-                py::return_value_policy::reference_internal);
+            cls.def_property_readonly("vector", &SUB::System::vector, "vector");
 
-            cls.def(
-                "quad", &SUB::System::quad, "quad", py::return_value_policy::reference_internal);
+            cls.def_property_readonly("quad", &SUB::System::quad, "quad");
 
-            cls.def(
-                "material_elastic",
-                &SUB::System::material_elastic,
-                "material_elastic",
-                py::return_value_policy::reference_internal);
+            cls.def_property_readonly(
+                "material_elastic", &SUB::System::material_elastic, "material_elastic");
 
-            cls.def(
-                "material_plastic",
-                &SUB::System::material_plastic,
-                "material_plastic",
-                py::return_value_policy::reference_internal);
+            cls.def_property_readonly(
+                "material_plastic", &SUB::System::material_plastic, "material_plastic");
 
             cls.def("K", &SUB::System::K, "K");
             cls.def("G", &SUB::System::G, "G");
-            cls.def("Sig", &SUB::System::Sig, "Sig");
-            cls.def("Eps", &SUB::System::Eps, "Eps");
+            cls.def_property_readonly("Sig", &SUB::System::Sig, "Sig");
+            cls.def_property_readonly("Eps", &SUB::System::Eps, "Eps");
             cls.def("Epsdot", &SUB::System::Epsdot, "Epsdot");
             cls.def("Epsddot", &SUB::System::Epsddot, "Epsddot");
-            cls.def("plastic_Sig", &SUB::System::plastic_Sig, "plastic_Sig");
+            cls.def_property_readonly("plastic_Sig", &SUB::System::plastic_Sig, "plastic_Sig");
+            cls.def_property_readonly("plastic_Eps", &SUB::System::plastic_Eps, "plastic_Eps");
             cls.def("plastic_Epsdot", &SUB::System::plastic_Epsdot, "plastic_Epsdot");
-
-            cls.def(
-                "plastic_Eps",
-                py::overload_cast<>(&SUB::System::plastic_Eps, py::const_),
-                "plastic_Eps");
-
-            cls.def(
-                "plastic_Eps",
-                py::overload_cast<size_t, size_t>(&SUB::System::plastic_Eps, py::const_),
-                "plastic_Eps",
-                py::arg("e_plastic"),
-                py::arg("q"));
 
             cls.def(
                 "boundcheck_right",
@@ -287,7 +256,8 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("delta_u"),
                 py::arg("autoscale") = true);
 
-            cls.def("eventDriven_deltaU", &SUB::System::eventDriven_deltaU, "eventDriven_deltaU");
+            cls.def_property_readonly(
+                "eventDriven_deltaU", &SUB::System::eventDriven_deltaU, "eventDriven_deltaU");
 
             cls.def(
                 "eventDrivenStep",
@@ -506,8 +476,8 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("epsy"));
 
             cls.def("barriers", &SUB::LocalTriggerFineLayerFull::barriers);
-            cls.def("p", &SUB::LocalTriggerFineLayerFull::p);
-            cls.def("s", &SUB::LocalTriggerFineLayerFull::s);
+            cls.def_property_readonly("p", &SUB::LocalTriggerFineLayerFull::p);
+            cls.def_property_readonly("s", &SUB::LocalTriggerFineLayerFull::s);
             cls.def("delta_u", &SUB::LocalTriggerFineLayerFull::delta_u);
             cls.def("u_s", &SUB::LocalTriggerFineLayerFull::u_s);
             cls.def("u_p", &SUB::LocalTriggerFineLayerFull::u_p);
@@ -515,7 +485,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def("Eps_p", &SUB::LocalTriggerFineLayerFull::Eps_p);
             cls.def("Sig_s", &SUB::LocalTriggerFineLayerFull::Sig_s);
             cls.def("Sig_p", &SUB::LocalTriggerFineLayerFull::Sig_p);
-            cls.def("dgamma", &SUB::LocalTriggerFineLayerFull::dgamma);
+            cls.def_property_readonly("dgamma", &SUB::LocalTriggerFineLayerFull::dgamma);
             cls.def("dE", &SUB::LocalTriggerFineLayerFull::dE);
 
             cls.def("__repr__", [](const SUB::LocalTriggerFineLayerFull&) {
@@ -587,7 +557,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
         cls.def("layerElements", &SUB::System::layerElements, "layerElements", py::arg("i"));
 
-        cls.def("layerIsPlastic", &SUB::System::layerIsPlastic, "layerIsPlastic");
+        cls.def_property_readonly("layerIsPlastic", &SUB::System::layerIsPlastic, "layerIsPlastic");
 
         cls.def(
             "layerSetDriveStiffness",
@@ -618,10 +588,10 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             py::arg("active"),
             py::arg("delta_u"));
 
-        cls.def(
+        cls.def_property_readonly(
             "eventDriven_deltaUbar", &SUB::System::eventDriven_deltaUbar, "eventDriven_deltaUbar");
 
-        cls.def(
+        cls.def_property_readonly(
             "eventDriven_targetActive",
             &SUB::System::eventDriven_targetActive,
             "eventDriven_targetActive");
@@ -633,8 +603,10 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             py::arg("active"));
 
         cls.def("layerUbar", &SUB::System::layerUbar, "layerUbar");
-        cls.def("layerTargetUbar", &SUB::System::layerTargetUbar, "layerTargetUbar");
-        cls.def("layerTargetActive", &SUB::System::layerTargetActive, "layerTargetActive");
+        cls.def_property_readonly(
+            "layerTargetUbar", &SUB::System::layerTargetUbar, "layerTargetUbar");
+        cls.def_property_readonly(
+            "layerTargetActive", &SUB::System::layerTargetActive, "layerTargetActive");
 
         cls.def(
             "layerSetTargetUbar",
@@ -656,7 +628,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             py::arg("delta_gamma"),
             py::arg("height"));
 
-        cls.def("fdrive", &SUB::System::fdrive, "fdrive");
+        cls.def_property_readonly("fdrive", &SUB::System::fdrive, "fdrive");
 
         cls.def("layerFdrive", &SUB::System::layerFdrive, "layerFdrive");
 

@@ -33,7 +33,7 @@ class test_Generic2d(unittest.TestCase):
         dofs = mesh.dofs()
 
         plastic = mesh.elementsMiddleLayer()
-        elastic = np.setdiff1d(np.arange(mesh.nelem()), plastic)
+        elastic = np.setdiff1d(np.arange(mesh.nelem), plastic)
 
         left = mesh.nodesLeftOpenEdge()
         right = mesh.nodesRightOpenEdge()
@@ -61,8 +61,8 @@ class test_Generic2d(unittest.TestCase):
         # Initialise system
 
         system = FrictionQPotFEM.Generic2d.System(coor, conn, dofs, iip, elastic, plastic)
-        system.setMassMatrix(rho * np.ones(mesh.nelem()))
-        system.setDampingMatrix(alpha * np.ones(mesh.nelem()))
+        system.setMassMatrix(rho * np.ones(mesh.nelem))
+        system.setDampingMatrix(alpha * np.ones(mesh.nelem))
         system.setElastic(K * np.ones(elastic.size), G * np.ones(elastic.size))
         system.setPlastic(K * np.ones(plastic.size), G * np.ones(plastic.size), epsy)
         system.dt = dt
@@ -75,32 +75,31 @@ class test_Generic2d(unittest.TestCase):
         collect_Eps = np.zeros(dF.shape[0])
         collect_Sig = np.zeros(dF.shape[0])
         collect_Sig_plastic = np.zeros(dF.shape[0])
-        quad = system.quad()
-        dV = quad.AsTensor(2, quad.dV())
+        dV = system.quad.AsTensor(2, system.dV)
 
         for inc in range(dF.shape[0]):
 
-            u = system.u()
+            u = system.u
 
-            for i in range(mesh.nnode()):
-                for j in range(mesh.ndim()):
-                    for k in range(mesh.ndim()):
+            for i in range(mesh.nnode):
+                for j in range(mesh.ndim):
+                    for k in range(mesh.ndim):
                         u[i, j] += dF[inc, j, k] * (coor[i, k] - coor[0, k])
 
             system.setU(u)
             system.minimise()
 
-            Epsbar = np.average(system.Eps(), weights=dV, axis=(0, 1))
-            Sigbar = np.average(system.Sig(), weights=dV, axis=(0, 1))
+            Epsbar = np.average(system.Eps, weights=dV, axis=(0, 1))
+            Sigbar = np.average(system.Sig, weights=dV, axis=(0, 1))
             collect_Eps[inc] = GMat.Epsd(Epsbar)
             collect_Sig[inc] = GMat.Sigd(Sigbar)
-            collect_Sig_plastic[inc] = GMat.Sigd(np.mean(system.plastic_Sig(), axis=(0, 1)))
+            collect_Sig_plastic[inc] = GMat.Sigd(np.mean(system.plastic_Sig, axis=(0, 1)))
 
         with h5py.File(os.path.splitext(__file__)[0] + ".h5") as file:
             self.assertTrue(np.allclose(collect_Eps, file["Eps"][...]))
             self.assertTrue(np.allclose(collect_Sig, file["Sig"][...]))
             self.assertTrue(np.allclose(collect_Sig_plastic, file["Sig_plastic"][...]))
-            self.assertTrue(np.allclose(system.u(), file["u_last"][...]))
+            self.assertTrue(np.allclose(system.u, file["u_last"][...]))
 
 
 if __name__ == "__main__":

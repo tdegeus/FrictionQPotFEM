@@ -980,7 +980,7 @@ public:
 
     \return Pure shear contribution.
     */
-    array_type::tensor<double, 2> p() const
+    const array_type::tensor<double, 2>& p() const
     {
         return m_pmin;
     }
@@ -996,7 +996,7 @@ public:
 
     \return Simple shear contribution.
     */
-    array_type::tensor<double, 2> s() const
+    const array_type::tensor<double, 2>& s() const
     {
         return m_smin;
     }
@@ -1009,7 +1009,7 @@ public:
 
     \return Shape [System::m_elem_plas, System::m_nip].
     */
-    array_type::tensor<double, 2> dgamma() const
+    const array_type::tensor<double, 2>& dgamma() const
     {
         return m_dgamma;
     }
@@ -1022,7 +1022,7 @@ public:
 
     \return Shape [System::m_elem_plas, System::m_nip].
     */
-    array_type::tensor<double, 2> dE() const
+    const array_type::tensor<double, 2>& dE() const
     {
         return m_dE;
     }

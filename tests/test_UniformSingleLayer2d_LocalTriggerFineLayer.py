@@ -104,9 +104,9 @@ def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p, e):
 mesh = GooseFEM.Mesh.Quad4.FineLayer(21, 21)
 
 # mesh dimensions
-nelem = mesh.nelem()
-nne = mesh.nne()
-ndim = mesh.ndim()
+nelem = mesh.nelem
+nne = mesh.nne
+ndim = mesh.ndim
 
 # mesh definitions
 coor = mesh.coor()
@@ -153,7 +153,7 @@ fres = np.zeros(coor.shape)
 
 # element definition
 quad = GooseFEM.Element.Quad4.Quadrature(vector.AsElement(coor))
-nip = quad.nip()
+nip = quad.nip
 
 # material definition
 mat = GMat.Array2d([nelem, nip])
@@ -248,7 +248,7 @@ for itrigger, trigger in enumerate(plastic):
     # Find which (s, p) lie on the yield surface,
     # and to which energy change those perturbations lead
     Py, Sy = GetYieldSurface(E, gamma, Epsstar_p[0, 0], Epsstar_s[0, 1])
-    Ey = ComputeEnergy(Py, Sy, Eps, Sig, quad.dV(), Eps_s, Sig_s, Eps_p, Sig_p, plastic[itrigger])
+    Ey = ComputeEnergy(Py, Sy, Eps, Sig, quad.dV, Eps_s, Sig_s, Eps_p, Sig_p, plastic[itrigger])
 
     # Plot perturbed configuration
 

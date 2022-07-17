@@ -44,8 +44,8 @@ class test_Generic2d(unittest.TestCase):
             [3, 4, 5],
         )
 
-        nelas = system.elastic().size
-        nplas = system.plastic().size
+        nelas = system.elastic.size
+        nplas = system.plastic.size
 
         epsy = np.cumsum(np.ones((nplas, 5)), axis=1)
 
@@ -68,7 +68,7 @@ class test_Generic2d(unittest.TestCase):
 
             if loop == 0:
                 system.eventDriven_setDeltaU(delta_u)
-                delta_u = system.eventDriven_deltaU()
+                delta_u = system.eventDriven_deltaU
             else:
                 system.eventDriven_setDeltaU(delta_u)
                 system.setU(np.zeros_like(coor))
@@ -102,7 +102,7 @@ class test_Generic2d(unittest.TestCase):
                     break
 
                 system.eventDrivenStep(0.1, kick, direction)
-                self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), eps_expect))
+                self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps), eps_expect))
                 self.assertTrue(system.residual() < 1e-5)
 
     def test_eventDrivenSimpleShear_random(self):
@@ -124,8 +124,8 @@ class test_Generic2d(unittest.TestCase):
             [3, 4, 5],
         )
 
-        nelas = system.elastic().size
-        nplas = system.plastic().size
+        nelas = system.elastic.size
+        nplas = system.plastic.size
 
         epsy = 1e-2 * np.cumsum(np.random.random((nplas, 100)), axis=1)
         deps = 0.1 * np.min(np.diff(epsy, axis=1))
@@ -148,9 +148,14 @@ class test_Generic2d(unittest.TestCase):
 
         for inc, kick in enumerate(kicks):
             idx_n = system.plastic_CurrentIndex()
-            u_n = system.u()
+            u_n = np.copy(system.u)
+            uptr = system.u
 
             system.eventDrivenStep(deps, kick, iterative=True)
+
+            if not kick:
+                self.assertTrue(not np.allclose(u_n, uptr))
+
             idx = system.plastic_CurrentIndex()
             if kick:
                 self.assertTrue(not np.all(idx == idx_n))
@@ -167,7 +172,7 @@ class test_Generic2d(unittest.TestCase):
 
         for kick in kicks:
             idx_n = system.plastic_CurrentIndex()
-            u_n = system.u()
+            u_n = np.copy(system.u)
 
             system.setU(u_n)
             system.eventDrivenStep(deps, kick, -1, iterative=True)
@@ -210,8 +215,8 @@ class test_Generic2d(unittest.TestCase):
             [3, 4, 5],
         )
 
-        nelas = system.elastic().size
-        nplas = system.plastic().size
+        nelas = system.elastic.size
+        nplas = system.plastic.size
 
         epsy = np.cumsum(np.ones((nplas, 5)), axis=1)
 
@@ -222,7 +227,7 @@ class test_Generic2d(unittest.TestCase):
         system.dt = 1
 
         epsy_element = np.zeros(epsy.shape)
-        mat = system.material_plastic()
+        mat = system.material_plastic
         for e in range(mat.shape()[0]):
             c = mat.refCusp([e, 1])
             y = c.epsy() + 0.1
@@ -238,7 +243,7 @@ class test_Generic2d(unittest.TestCase):
 
             if loop == 0:
                 system.eventDriven_setDeltaU(delta_u)
-                delta_u = system.eventDriven_deltaU()
+                delta_u = system.eventDriven_deltaU
             else:
                 system.eventDriven_setDeltaU(delta_u)
                 system.setU(np.zeros_like(coor))
@@ -267,7 +272,7 @@ class test_Generic2d(unittest.TestCase):
 
                 system.eventDrivenStep(0.05, kick, direction, yield_element=True)
 
-                self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), eps_expect))
+                self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps), eps_expect))
                 self.assertTrue(system.residual() < 1e-5)
 
     def test_flowSteps(self):
@@ -282,7 +287,7 @@ class test_Generic2d(unittest.TestCase):
             coor=mesh.coor(),
             conn=mesh.conn(),
             dofs=mesh.dofs(),
-            iip=np.arange(mesh.nnode() * mesh.ndim()),
+            iip=np.arange(mesh.nnode * mesh.ndim),
             elem_elastic=[0, 1, 2, 6, 7, 8],
             elem_plastic=[3, 4, 5],
         )
@@ -303,12 +308,12 @@ class test_Generic2d(unittest.TestCase):
 
         # displacement is added affinely in an elastic system:
         # there is not residual force -> the system stays uniform
-        self.assertTrue(np.allclose(system.u(), 10 * v))
+        self.assertTrue(np.allclose(system.u, 10 * v))
         self.assertTrue(np.allclose(system.t, 10))
 
         system.timeSteps(10)
 
-        self.assertTrue(np.allclose(system.u(), 10 * v))
+        self.assertTrue(np.allclose(system.u, 10 * v))
         self.assertTrue(np.allclose(system.t, 20))
 
     def test_damping_alpha_no_eta(self):
@@ -331,7 +336,7 @@ class test_Generic2d(unittest.TestCase):
         system.dt = 1
 
         system.setV(np.ones_like(mesh.coor()))
-        assert np.allclose(system.vector().AsDofs(system.fdamp()), alpha)
+        assert np.allclose(system.vector.AsDofs(system.fdamp), alpha)
 
     def test_damping_no_alpha_eta(self):
 
@@ -363,7 +368,7 @@ class test_Generic2d(unittest.TestCase):
         f[conn[-3:, :2], 0] = eta
 
         system.setV(v)
-        assert np.allclose(system.fdamp(), f)
+        assert np.allclose(system.fdamp, f)
 
     def test_damping_alpha_eta(self):
 
@@ -398,7 +403,7 @@ class test_Generic2d(unittest.TestCase):
         f[conn[-3:, :2], 0] += eta
 
         system.setV(v)
-        assert np.allclose(system.fdamp(), f)
+        assert np.allclose(system.fdamp, f)
 
 
 if __name__ == "__main__":

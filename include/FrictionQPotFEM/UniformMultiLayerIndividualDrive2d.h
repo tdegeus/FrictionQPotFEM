@@ -271,7 +271,7 @@ public:
     Return if a layer is elastic (`false`) or plastic (`true`).
     \return [#nlayer].
     */
-    array_type::tensor<bool, 1> layerIsPlastic() const
+    const array_type::tensor<bool, 1>& layerIsPlastic() const
     {
         return m_layer_is_plastic;
     }
@@ -407,7 +407,7 @@ public:
     Get target average position perturbation used for event driven code.
     \return [#nlayer, 2]
     */
-    array_type::tensor<double, 2> eventDriven_deltaUbar() const
+    const array_type::tensor<double, 2>& eventDriven_deltaUbar() const
     {
         return m_pert_layerdrive_targetubar;
     }
@@ -416,7 +416,7 @@ public:
     Get if the target average position is prescribed in the event driven code.
     \return [#nlayer, 2]
     */
-    array_type::tensor<bool, 2> eventDriven_targetActive() const
+    const array_type::tensor<bool, 2>& eventDriven_targetActive() const
     {
         return m_pert_layerdrive_active;
     }
@@ -490,7 +490,7 @@ public:
     List the target average displacement per layer.
     \return [#nlayer, 2]
     */
-    array_type::tensor<double, 2> layerTargetUbar() const
+    const array_type::tensor<double, 2>& layerTargetUbar() const
     {
         return m_layerdrive_targetubar;
     }
@@ -499,7 +499,7 @@ public:
     List if the driving spring is activate.
     \return [#nlayer, 2]
     */
-    array_type::tensor<bool, 2> layerTargetActive() const
+    const array_type::tensor<bool, 2>& layerTargetActive() const
     {
         return m_layerdrive_active;
     }
@@ -592,7 +592,7 @@ public:
 
     \return nodevec [nnode, ndim].
     */
-    array_type::tensor<double, 2> fdrive() const
+    const array_type::tensor<double, 2>& fdrive() const
     {
         return m_fdrive;
     }

@@ -36,8 +36,8 @@ class test_Generic2d(unittest.TestCase):
             [False, True, False],
         )
 
-        nelas = system.elastic().size
-        nplas = system.plastic().size
+        nelas = system.elastic.size
+        nplas = system.plastic.size
 
         Hi = []
         for layer in layers:
@@ -64,9 +64,9 @@ class test_Generic2d(unittest.TestCase):
             if loop == 0:
                 system.initEventDriven(0.1, drive_active)
                 delta_xlever = system.eventDriven_deltaLeverPosition()
-                delta_active = system.eventDriven_targetActive()
-                delta_u = system.eventDriven_deltaU()
-                delta_ubar = system.eventDriven_deltaUbar()
+                delta_active = system.eventDriven_targetActive
+                delta_u = system.eventDriven_deltaU
+                delta_ubar = system.eventDriven_deltaUbar
             else:
                 system.initEventDriven(delta_xlever, delta_active, delta_u, delta_ubar)
                 system.setU(np.zeros_like(coor))
@@ -80,7 +80,7 @@ class test_Generic2d(unittest.TestCase):
 
                 eps_expect = epsy[0, index] + m * 0.5 * 1e-4
                 system.eventDrivenStep(1e-4, kick, direction)
-                self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps()), eps_expect))
+                self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps), eps_expect))
                 self.assertTrue(system.residual() < 1e-5)
 
 

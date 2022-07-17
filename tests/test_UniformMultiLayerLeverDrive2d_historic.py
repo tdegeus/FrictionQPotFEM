@@ -62,8 +62,8 @@ class test_UniformMultiLayerIndividualDrive2d(unittest.TestCase):
             layer_is_plastic=[False, True, False, True, False],
         )
 
-        nelas = system.elastic().size
-        nplas = system.plastic().size
+        nelas = system.elastic.size
+        nplas = system.plastic.size
 
         # Parameters
 
@@ -84,8 +84,8 @@ class test_UniformMultiLayerIndividualDrive2d(unittest.TestCase):
 
         # Initialise system
 
-        system.setMassMatrix(rho * np.ones(mesh.nelem()))
-        system.setDampingMatrix(alpha * np.ones(mesh.nelem()))
+        system.setMassMatrix(rho * np.ones(mesh.nelem))
+        system.setDampingMatrix(alpha * np.ones(mesh.nelem))
         system.setElastic(K * np.ones(nelas), G * np.ones(nelas))
         system.setPlastic(K * np.ones(nplas), G * np.ones(nplas), epsy)
         system.dt = dt
@@ -101,8 +101,7 @@ class test_UniformMultiLayerIndividualDrive2d(unittest.TestCase):
         collect_Eps = np.zeros(ninc)
         collect_Sig = np.zeros(ninc)
         collect_Sig_plastic = np.zeros(ninc)
-        quad = system.quad()
-        dV = quad.AsTensor(2, quad.dV())
+        dV = system.quad.AsTensor(2, system.dV)
 
         for inc in range(ninc):
 
@@ -112,17 +111,17 @@ class test_UniformMultiLayerIndividualDrive2d(unittest.TestCase):
             else:
                 system.eventDrivenStep(deps=1e-5, kick=False, iterative=True, yield_element=False)
 
-            Epsbar = np.average(system.Eps(), weights=dV, axis=(0, 1))
-            Sigbar = np.average(system.Sig(), weights=dV, axis=(0, 1))
+            Epsbar = np.average(system.Eps, weights=dV, axis=(0, 1))
+            Sigbar = np.average(system.Sig, weights=dV, axis=(0, 1))
             collect_Eps[inc] = GMat.Epsd(Epsbar)
             collect_Sig[inc] = GMat.Sigd(Sigbar)
-            collect_Sig_plastic[inc] = GMat.Sigd(np.mean(system.plastic_Sig(), axis=(0, 1)))
+            collect_Sig_plastic[inc] = GMat.Sigd(np.mean(system.plastic_Sig, axis=(0, 1)))
 
         with h5py.File(os.path.splitext(__file__)[0] + ".h5") as file:
             self.assertTrue(np.allclose(collect_Eps, file["Eps"][...]))
             self.assertTrue(np.allclose(collect_Sig, file["Sig"][...]))
             self.assertTrue(np.allclose(collect_Sig_plastic, file["Sig_plastic"][...]))
-            self.assertTrue(np.allclose(system.u(), file["u_last"][...]))
+            self.assertTrue(np.allclose(system.u, file["u_last"][...]))
 
 
 if __name__ == "__main__":

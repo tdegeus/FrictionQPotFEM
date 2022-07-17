@@ -635,7 +635,7 @@ public:
 
     \return List of element numbers.
     */
-    auto elastic() const
+    const auto& elastic() const
     {
         return m_elem_elas;
     }
@@ -646,7 +646,7 @@ public:
 
     \return List of element numbers.
     */
-    auto plastic() const
+    const auto& plastic() const
     {
         return m_elem_plas;
     }
@@ -657,7 +657,7 @@ public:
 
     \return Connectivity.
     */
-    auto conn() const
+    const auto& conn() const
     {
         return m_conn;
     }
@@ -668,7 +668,7 @@ public:
 
     \return Nodal coordinates.
     */
-    auto coor() const
+    const auto& coor() const
     {
         return m_coor;
     }
@@ -679,7 +679,7 @@ public:
 
     \return DOFs per node.
     */
-    auto dofs() const
+    const auto& dofs() const
     {
         return m_dofs;
     }
@@ -690,7 +690,7 @@ public:
 
     \return Nodal displacements.
     */
-    auto u() const
+    const auto& u() const
     {
         return m_u;
     }
@@ -701,7 +701,7 @@ public:
 
     \return Nodal velocities.
     */
-    auto v() const
+    const auto& v() const
     {
         return m_v;
     }
@@ -712,7 +712,7 @@ public:
 
     \return Nodal accelerations.
     */
-    auto a() const
+    const auto& a() const
     {
         return m_a;
     }
@@ -744,7 +744,7 @@ public:
     External force.
     \return Nodal force. Shape ``[nnode, ndim]``    .
     */
-    auto fext()
+    const auto& fext()
     {
         this->computeInternalExternalResidualForce();
         return m_fext;
@@ -755,7 +755,7 @@ public:
     Internal force.
     \return Nodal force. Shape ``[nnode, ndim]``    .
     */
-    auto fint()
+    const auto& fint()
     {
         this->computeInternalExternalResidualForce();
         return m_fint;
@@ -767,7 +767,7 @@ public:
 
     \return Nodal force. Shape ``[nnode, ndim]``    .
     */
-    auto fmaterial() const
+    const auto& fmaterial() const
     {
         return m_fmaterial;
     }
@@ -780,7 +780,7 @@ public:
 
     \return Nodal force. Shape ``[nnode, ndim]``    .
     */
-    auto fdamp() const
+    const auto& fdamp() const
     {
         return m_fdamp;
     }
@@ -837,7 +837,7 @@ public:
 
     \return Integration point volume (System::m_quad::dV).
     */
-    auto dV() const
+    const auto& dV() const
     {
         return m_quad.dV();
     }
@@ -958,7 +958,7 @@ public:
 
     \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
     */
-    array_type::tensor<double, 4> Sig()
+    const array_type::tensor<double, 4>& Sig()
     {
         this->computeEpsSig();
         return m_Sig;
@@ -970,7 +970,7 @@ public:
 
     \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
     */
-    array_type::tensor<double, 4> Eps()
+    const array_type::tensor<double, 4>& Eps()
     {
         this->computeEpsSig();
         return m_Eps;
@@ -1037,7 +1037,7 @@ public:
 
     \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
     */
-    array_type::tensor<double, 4> plastic_Sig() const
+    const array_type::tensor<double, 4>& plastic_Sig() const
     {
         return m_Sig_plas;
     }
@@ -1048,7 +1048,7 @@ public:
 
     \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
     */
-    array_type::tensor<double, 4> plastic_Eps() const
+    const array_type::tensor<double, 4>& plastic_Eps() const
     {
         return m_Eps_plas;
     }
@@ -1068,21 +1068,6 @@ public:
         }
 
         return m_Epsdot_plas;
-    }
-
-public:
-    /**
-    Strain tensor of of a specific plastic element.
-
-    \param e_plastic Plastic element (real element number = plastic()[e]).
-    \param q Integration point (real element number = plastic()[e]).
-    \return Integration point tensor. Shape: [2, 2].
-    */
-    array_type::tensor<double, 2> plastic_Eps(size_t e_plastic, size_t q) const
-    {
-        FRICTIONQPOTFEM_ASSERT(e_plastic < m_nelem_plas);
-        FRICTIONQPOTFEM_ASSERT(q < m_nip);
-        return xt::view(m_Eps_plas, e_plastic, q, xt::all(), xt::all());
     }
 
 public:
@@ -1290,7 +1275,7 @@ public:
     Get displacement perturbation used for event driven code, see eventDriven_setDeltaU().
     \return Nodal displacements.
     */
-    auto eventDriven_deltaU() const
+    const auto& eventDriven_deltaU() const
     {
         return m_pert_u;
     }
