@@ -37,15 +37,19 @@ attached to it.
 The assumption is made that the lever has no inertia:
 its position is computed by assuming that the sum of moments acting on it is zero.
 */
-class System : public UniformMultiLayerIndividualDrive2d::System {
+/**
+Class that uses GMatElastoPlasticQPot to evaluate stress everywhere
+*/
+class System : public UniformMultiLayerIndividualDrive2d::SystemLayerBase<System>
+{
+private:
+    friend UniformMultiLayerIndividualDrive2d::SystemLayerBase<System>;
 
 private:
-    using UniformMultiLayerIndividualDrive2d::System::initEventDriven;
+    using initEventDriven;
 
 public:
     System() = default;
-
-    virtual ~System(){};
 
     /**
     Define basic geometry.
@@ -67,32 +71,7 @@ public:
         const std::vector<array_type::tensor<size_t, 1>>& node,
         const array_type::tensor<bool, 1>& layer_is_plastic)
     {
-        this->init_lever(coor, conn, dofs, iip, elem, node, layer_is_plastic);
-    }
-
-protected:
-    /**
-    Define basic geometry.
-    This function class UniformMultiLayerIndividualDrive2d::init().
-
-    \param coor Nodal coordinates.
-    \param conn Connectivity.
-    \param dofs DOFs per node.
-    \param iip DOFs whose displacement is fixed.
-    \param elem Elements per layer.
-    \param node Nodes per layer.
-    \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
-    */
-    void init_lever(
-        const array_type::tensor<double, 2>& coor,
-        const array_type::tensor<size_t, 2>& conn,
-        const array_type::tensor<size_t, 2>& dofs,
-        const array_type::tensor<size_t, 1>& iip,
-        const std::vector<array_type::tensor<size_t, 1>>& elem,
-        const std::vector<array_type::tensor<size_t, 1>>& node,
-        const array_type::tensor<bool, 1>& layer_is_plastic)
-    {
-        this->init(coor, conn, dofs, iip, elem, node, layer_is_plastic);
+        this->initSystemBase(coor, conn, dofs, iip, elem, node, layer_is_plastic);
 
         using size_type = typename decltype(m_lever_hi)::size_type;
         std::array<size_type, 1> shape = {static_cast<size_type>(m_n_layer)};
@@ -111,12 +90,18 @@ protected:
         m_lever_u = 0.0;
     }
 
-public:
-    std::string type() const override
+private:
+    size_t N_impl() const
+    {
+        return m_N;
+    }
+
+    std::string type_impl() const
     {
         return "FrictionQPotFEM.UniformMultiLayerLeverDrive2d.System";
     }
 
+public:
     /**
     Set the lever properties.
 
@@ -277,20 +262,21 @@ public:
         return c;
     }
 
-    double eventDrivenStep(
+private:
+    double eventDrivenStep_impl(
         double deps,
         bool kick,
         int direction = +1,
         bool yield_element = false,
-        bool fallback = false) override
+        bool fallback = false)
     {
-        double c =
-            Generic2d::System::eventDrivenStep(deps, kick, direction, yield_element, fallback);
+        double c = eventDrivenStep_default_impl(deps, kick, direction, yield_element, fallback);
         this->layerSetTargetUbar(m_layerdrive_targetubar + c * m_pert_layerdrive_targetubar);
         this->setLeverTarget(m_lever_target + c * m_pert_lever_target);
         return c;
     }
 
+public:
     /**
     Get target 'position' of the spring pulling the lever perturbation used for event driven code.
     \return Value
@@ -300,13 +286,13 @@ public:
         return m_pert_lever_target;
     }
 
-protected:
+private:
     /**
     Evaluate relevant forces when m_u is updated.
     The assumption is made that the lever has no inertia:
     its position is computed by assuming that the sum of moments acting on it is zero.
     */
-    void updated_u() override
+    void updated_u_impl()
     {
         FRICTIONQPOTFEM_ASSERT(m_lever_set);
 
@@ -337,6 +323,13 @@ protected:
         // Update forces
         this->computeForceFromTargetUbar();
         this->computeForceMaterial();
+    }
+
+    void computeInternalExternalResidualForce_impl()
+    {
+        xt::noalias(m_fint) = m_fdrive + m_fmaterial + m_fdamp;
+        m_vector.copy_p(m_fint, m_fext);
+        xt::noalias(m_fres) = m_fext - m_fint;
     }
 
 private:
