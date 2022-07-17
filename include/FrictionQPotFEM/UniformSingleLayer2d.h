@@ -36,15 +36,14 @@ inline std::vector<std::string> version_dependencies()
 /**
 Class that uses GMatElastoPlasticQPot to evaluate stress everywhere
 */
-class System : public Generic2d::System {
+class System : public SystemBase<System>
+{
+private:
+    friend SystemBase<System>;
 
 public:
     System() = default;
 
-public:
-    virtual ~System(){};
-
-public:
     /**
     Define the geometry, including boundary conditions and element sets.
 
@@ -67,36 +66,40 @@ public:
         const L& elem_elastic,
         const L& elem_plastic)
     {
-        this->init(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+        this->initSystemBase(coor, conn, dofs, iip, elem_elastic, elem_plastic);
     }
 
-protected:
-    /**
-    Constructor alias, useful for derived classes.
-
-    \param coor Nodal coordinates.
-    \param conn Connectivity.
-    \param dofs DOFs per node.
-    \param iip DOFs whose displacement is fixed.
-    \param elem_elastic Elastic elements.
-    \param elem_plastic Plastic elements.
-    */
-    template <class C, class E, class L>
-    void init(
-        const C& coor,
-        const E& conn,
-        const E& dofs,
-        const L& iip,
-        const L& elem_elastic,
-        const L& elem_plastic)
+private:
+    size_t N_impl() const
     {
-        this->initSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+        return N_default_impl();
     }
 
-public:
-    std::string type() const override
+    std::string type_impl() const
     {
         return "FrictionQPotFEM.UniformSingleLayer2d.System";
+    }
+
+    void updated_u_impl()
+    {
+        this->computeForceMaterial();
+    }
+
+    void computeInternalExternalResidualForce_impl()
+    {
+        xt::noalias(m_fint) = m_fmaterial + m_fdamp;
+        m_vector.copy_p(m_fint, m_fext);
+        xt::noalias(m_fres) = m_fext - m_fint;
+    }
+
+    double eventDrivenStep_impl(
+        double deps,
+        bool kick,
+        int direction,
+        bool yield_element,
+        bool iterative)
+    {
+        return eventDrivenStep_default_impl(deps, kick, direction, yield_element, iterative);
     }
 
 public:

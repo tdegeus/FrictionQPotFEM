@@ -13,22 +13,6 @@
 namespace FrictionQPotFEM {
 
 /**
-System in 2-d with:
--   Several weak layers.
--   Each layer driven independently through a spring.
--   Uniform elasticity.
-*/
-namespace UniformMultiLayerIndividualDrive2d {
-
-/**
-\copydoc Generic2d::version_dependencies()
-*/
-inline std::vector<std::string> version_dependencies()
-{
-    return Generic2d::version_dependencies();
-}
-
-/**
 System that comprises several layers (elastic or plastic).
 The average displacement of each layer can be coupled to a prescribed target value
 using a linear spring (one spring per spatial dimension):
@@ -46,15 +30,28 @@ Terminology:
 -   `target_active`: the average displacement per layer/DOF is only enforced if the spring
                      is active, see layerTargetActive() and layerSetTargetActive().
 */
-class System : public Generic2d::System {
-
+template <class Derived>
+class SystemLayerBase : public SystemBase<Derived> {
 public:
-    System() = default;
-
-    virtual ~System(){};
-
     /**
-    Define basic geometry.
+    Underlying type.
+    */
+    using derived_type = Derived;
+
+private:
+    auto derived_cast() -> derived_type&
+    {
+        return *static_cast<derived_type*>(this);
+    }
+
+    auto derived_cast() const -> const derived_type&
+    {
+        return *static_cast<const derived_type*>(this);
+    }
+
+protected:
+    /**
+    Constructor alias (as convenience for derived classes).
 
     \param coor Nodal coordinates.
     \param conn Connectivity.
@@ -64,31 +61,7 @@ public:
     \param node Nodes per layer.
     \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
     */
-    System(
-        const array_type::tensor<double, 2>& coor,
-        const array_type::tensor<size_t, 2>& conn,
-        const array_type::tensor<size_t, 2>& dofs,
-        const array_type::tensor<size_t, 1>& iip,
-        const std::vector<array_type::tensor<size_t, 1>>& elem,
-        const std::vector<array_type::tensor<size_t, 1>>& node,
-        const array_type::tensor<bool, 1>& layer_is_plastic)
-    {
-        this->init(coor, conn, dofs, iip, elem, node, layer_is_plastic);
-    }
-
-protected:
-    /**
-Constructor alias (as convenience for derived classes).
-
-\param coor Nodal coordinates.
-\param conn Connectivity.
-\param dofs DOFs per node.
-\param iip DOFs whose displacement is fixed.
-\param elem Elements per layer.
-\param node Nodes per layer.
-\param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
-*/
-    void init(
+    void initSystemLayerBase(
         const array_type::tensor<double, 2>& coor,
         const array_type::tensor<size_t, 2>& conn,
         const array_type::tensor<size_t, 2>& dofs,
@@ -180,7 +153,7 @@ Constructor alias (as convenience for derived classes).
             }
         }
 
-        this->initSystem(coor, conn, dofs, iip, elas, plas);
+        this->initSystemBase(coor, conn, dofs, iip, elas, plas);
 
         m_fdrive = m_vector.allocate_nodevec(0.0);
         m_ud = m_vector.allocate_dofval(0.0);
@@ -226,16 +199,6 @@ Constructor alias (as convenience for derived classes).
     }
 
 public:
-    size_t N() const override
-    {
-        return m_N;
-    }
-
-    std::string type() const override
-    {
-        return "FrictionQPotFEM.UniformMultiLayerIndividualDrive2d.System";
-    }
-
     /**
     Return number of layers.
     \return Number of layers.
@@ -419,19 +382,6 @@ public:
     const array_type::tensor<bool, 2>& eventDriven_targetActive() const
     {
         return m_pert_layerdrive_active;
-    }
-
-    double eventDrivenStep(
-        double deps,
-        bool kick,
-        int direction = +1,
-        bool yield_element = false,
-        bool fallback = false) override
-    {
-        double c =
-            Generic2d::System::eventDrivenStep(deps, kick, direction, yield_element, fallback);
-        this->layerSetTargetUbar(m_layerdrive_targetubar + c * m_pert_layerdrive_targetubar);
-        return c;
     }
 
     /**
@@ -680,32 +630,6 @@ protected:
         m_vector.asNode(m_ud, m_fdrive);
     }
 
-    /**
-    Evaluate relevant forces when m_u is updated.
-    */
-    void updated_u() override
-    {
-        this->computeLayerUbarActive();
-        this->computeForceFromTargetUbar();
-        this->computeForceMaterial();
-    }
-
-    /**
-    Compute:
-    -   m_fint = m_fdrive + m_fmaterial + m_fdamp
-    -   m_fext[iip] = m_fint[iip]
-    -   m_fres = m_fext - m_fint
-
-    Internal rule: all relevant forces are expected to be updated before this function is
-    called.
-    */
-    void computeInternalExternalResidualForce() override
-    {
-        xt::noalias(m_fint) = m_fdrive + m_fmaterial + m_fdamp;
-        m_vector.copy_p(m_fint, m_fext);
-        xt::noalias(m_fres) = m_fext - m_fint;
-    }
-
 protected:
     size_t m_N; ///< Linear system size.
     size_t m_n_layer; ///< Number of layers.
@@ -734,6 +658,106 @@ protected:
     array_type::tensor<double, 2>
         m_pert_layerdrive_targetubar; ///< Event driven: applied lever setting.
 };
+
+/**
+System in 2-d with:
+-   Several weak layers.
+-   Each layer driven independently through a spring.
+-   Uniform elasticity.
+*/
+namespace UniformMultiLayerIndividualDrive2d {
+
+/**
+\copydoc Generic2d::version_dependencies()
+*/
+inline std::vector<std::string> version_dependencies()
+{
+    return Generic2d::version_dependencies();
+}
+
+/**
+Class that uses GMatElastoPlasticQPot to evaluate stress everywhere
+*/
+class System : public SystemLayerBase<System>
+{
+private:
+    friend SystemBase<System>;
+    friend SystemLayerBase<System>;
+
+public:
+    System() = default;
+
+    /**
+    Define basic geometry.
+
+    \param coor Nodal coordinates.
+    \param conn Connectivity.
+    \param dofs DOFs per node.
+    \param iip DOFs whose displacement is fixed.
+    \param elem Elements per layer.
+    \param node Nodes per layer.
+    \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
+    */
+    System(
+        const array_type::tensor<double, 2>& coor,
+        const array_type::tensor<size_t, 2>& conn,
+        const array_type::tensor<size_t, 2>& dofs,
+        const array_type::tensor<size_t, 1>& iip,
+        const std::vector<array_type::tensor<size_t, 1>>& elem,
+        const std::vector<array_type::tensor<size_t, 1>>& node,
+        const array_type::tensor<bool, 1>& layer_is_plastic)
+    {
+        this->initSystemBase(coor, conn, dofs, iip, elem, node, layer_is_plastic);
+    }
+
+private:
+    size_t N_impl() const
+    {
+        return m_N;
+    }
+
+    std::string type_impl() const
+    {
+        return "FrictionQPotFEM.UniformMultiLayerIndividualDrive2d.System";
+    }
+
+    double eventDrivenStep_impl(
+        double deps,
+        bool kick,
+        int direction,
+        bool yield_element,
+        bool fallback)
+    {
+        double c = eventDrivenStep_default_impl(deps, kick, direction, yield_element, fallback);
+        this->layerSetTargetUbar(m_layerdrive_targetubar + c * m_pert_layerdrive_targetubar);
+        return c;
+    }
+
+    /**
+    Evaluate relevant forces when m_u is updated.
+    */
+    void updated_u_impl()
+    {
+        this->computeLayerUbarActive();
+        this->computeForceFromTargetUbar();
+        this->computeForceMaterial();
+    }
+
+    /**
+    Compute:
+    -   m_fint = m_fdrive + m_fmaterial + m_fdamp
+    -   m_fext[iip] = m_fint[iip]
+    -   m_fres = m_fext - m_fint
+
+    Internal rule: all relevant forces are expected to be updated before this function is
+    called.
+    */
+    void computeInternalExternalResidualForce_impl()
+    {
+        xt::noalias(m_fint) = m_fdrive + m_fmaterial + m_fdamp;
+        m_vector.copy_p(m_fint, m_fext);
+        xt::noalias(m_fres) = m_fext - m_fint;
+    }
 
 } // namespace UniformMultiLayerIndividualDrive2d
 } // namespace FrictionQPotFEM

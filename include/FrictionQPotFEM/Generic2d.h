@@ -29,12 +29,6 @@
 
 namespace FrictionQPotFEM {
 
-/**
-Generic system of elastic and plastic elements.
-For the moment this not part of the public API and can be subjected to changes.
-*/
-namespace Generic2d {
-
 namespace detail {
 
 bool is_same(double a, double b)
@@ -46,21 +40,6 @@ bool is_same(double a, double b)
 } // namespace detail
 
 /**
-Return versions of this library and of all of its dependencies.
-The output is a list of strings, e.g.::
-
-    "frictionqpotfem=0.7.1",
-    "goosefem=0.7.0",
-    ...
-
-\return List of strings.
-*/
-inline std::vector<std::string> version_dependencies()
-{
-    return GMatTensor::version_dependencies();
-}
-
-/**
 System with elastic elements and plastic elements (GMatElastoPlasticQPot).
 
 For efficiency, the nodal forces for the elastic elements are evaluated using the tangent.
@@ -68,38 +47,23 @@ This means that getting stresses and strains in those elements is not for free.
 Therefore, there are separate methods to get stresses and strains only in the plastic elements
 (as they are readily available as they are needed for the force computation).
 */
-class System {
-
-public:
-    System() = default;
-
-public:
-    virtual ~System(){};
-
+template <class Derived>
+class SystemBase {
 public:
     /**
-    Define the geometry, including boundary conditions and element sets.
-
-    \tparam C Type of nodal coordinates, e.g. `array_type::tensor<double, 2>`
-    \tparam E Type of connectivity and DOFs, e.g. `array_type::tensor<size_t, 2>`
-    \tparam L Type of node/element lists, e.g. `array_type::tensor<size_t, 1>`
-    \param coor Nodal coordinates.
-    \param conn Connectivity.
-    \param dofs DOFs per node.
-    \param iip DOFs whose displacement is fixed.
-    \param elem_elastic Elastic elements.
-    \param elem_plastic Plastic elements.
+    Underlying type.
     */
-    template <class C, class E, class L>
-    System(
-        const C& coor,
-        const E& conn,
-        const E& dofs,
-        const L& iip,
-        const L& elem_elastic,
-        const L& elem_plastic)
+    using derived_type = Derived;
+
+private:
+    auto derived_cast() -> derived_type&
     {
-        this->initSystem(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+        return *static_cast<derived_type*>(this);
+    }
+
+    auto derived_cast() const -> const derived_type&
+    {
+        return *static_cast<const derived_type*>(this);
     }
 
 protected:
@@ -117,7 +81,7 @@ protected:
     \param elem_plastic Plastic elements.
     */
     template <class C, class E, class L>
-    void initSystem(
+    void initSystemBase(
         const C& coor,
         const E& conn,
         const E& dofs,
@@ -207,7 +171,13 @@ public:
     /**
     Return the linear system size (in number of blocks).
     */
-    virtual size_t N() const
+    size_t N() const
+    {
+        return derived_cast().N_impl();
+    }
+
+protected:
+    size_t N_default_impl() const
     {
         return m_nelem_plas;
     }
@@ -216,9 +186,9 @@ public:
     /**
     Return the type of system.
     */
-    virtual std::string type() const
+    std::string type() const
     {
-        return "FrictionQPotFEM.Generic2d.System";
+        return derived_cast().type_impl();
     }
 
 protected:
@@ -581,9 +551,9 @@ protected:
     /**
     Evaluate relevant forces when m_u is updated.
     */
-    virtual void updated_u()
+    void updated_u()
     {
-        this->computeForceMaterial();
+        return derived_cast().updated_u_impl();
     }
 
 protected:
@@ -1226,11 +1196,9 @@ protected:
 
     Internal rule: all relevant forces are expected to be updated before this function is called.
     */
-    virtual void computeInternalExternalResidualForce()
+    void computeInternalExternalResidualForce()
     {
-        xt::noalias(m_fint) = m_fmaterial + m_fdamp;
-        m_vector.copy_p(m_fint, m_fext);
-        xt::noalias(m_fres) = m_fext - m_fint;
+        derived_cast().computeInternalExternalResidualForce_impl();
     }
 
 public:
@@ -1312,12 +1280,23 @@ public:
     \return
         Factor with which the displacement perturbation, see eventDriven_deltaU(), is scaled.
     */
-    virtual double eventDrivenStep(
+    double eventDrivenStep(
         double deps,
         bool kick,
         int direction = 1,
         bool yield_element = false,
         bool iterative = false)
+    {
+        return derived_cast().eventDrivenStep_impl(deps, kick, direction, yield_element, iterative);
+    }
+
+protected:
+    double eventDrivenStep_default_impl(
+        double deps,
+        bool kick,
+        int direction,
+        bool yield_element,
+        bool iterative)
     {
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_pert_u, m_u.shape()));
         FRICTIONQPOTFEM_ASSERT(direction == 1 || direction == -1);
@@ -1539,6 +1518,7 @@ public:
         return ret;
     }
 
+public:
     /**
     Make a time-step: apply velocity-Verlet integration.
     Forces are computed where needed using:
@@ -2036,6 +2016,94 @@ protected:
     bool m_full_outdated = true; ///< Keep track of the need to recompute fields on full geometry.
     array_type::tensor<double, 2> m_pert_u; ///< See eventDriven_setDeltaU()
     array_type::tensor<double, 4> m_pert_Epsd_plastic; ///< Strain deviator for #m_pert_u.
+};
+
+/**
+Generic system of elastic and plastic elements.
+For the moment this not part of the public API and can be subjected to changes.
+*/
+namespace Generic2d {
+
+/**
+Return versions of this library and of all of its dependencies.
+The output is a list of strings, e.g.::
+
+    "frictionqpotfem=0.7.1",
+    "goosefem=0.7.0",
+    ...
+
+\return List of strings.
+*/
+inline std::vector<std::string> version_dependencies()
+{
+    return GMatTensor::version_dependencies();
+}
+
+class System : public SystemBase<System>
+{
+private:
+    friend SystemBase<System>;
+
+public:
+    System() = default;
+
+    /**
+    Define the geometry, including boundary conditions and element sets.
+
+    \tparam C Type of nodal coordinates, e.g. `array_type::tensor<double, 2>`
+    \tparam E Type of connectivity and DOFs, e.g. `array_type::tensor<size_t, 2>`
+    \tparam L Type of node/element lists, e.g. `array_type::tensor<size_t, 1>`
+    \param coor Nodal coordinates.
+    \param conn Connectivity.
+    \param dofs DOFs per node.
+    \param iip DOFs whose displacement is fixed.
+    \param elem_elastic Elastic elements.
+    \param elem_plastic Plastic elements.
+    */
+    template <class C, class E, class L>
+    System(
+        const C& coor,
+        const E& conn,
+        const E& dofs,
+        const L& iip,
+        const L& elem_elastic,
+        const L& elem_plastic)
+    {
+        this->initSystemBase(coor, conn, dofs, iip, elem_elastic, elem_plastic);
+    }
+
+private:
+    size_t N_impl() const
+    {
+        return N_default_impl();
+    }
+
+    std::string type_impl() const
+    {
+        return "FrictionQPotFEM.Generic2d.System";
+    }
+
+    void updated_u_impl()
+    {
+        this->computeForceMaterial();
+    }
+
+    void computeInternalExternalResidualForce_impl()
+    {
+        xt::noalias(m_fint) = m_fmaterial + m_fdamp;
+        m_vector.copy_p(m_fint, m_fext);
+        xt::noalias(m_fres) = m_fext - m_fint;
+    }
+
+    double eventDrivenStep_impl(
+        double deps,
+        bool kick,
+        int direction,
+        bool yield_element,
+        bool iterative)
+    {
+        return eventDrivenStep_default_impl(deps, kick, direction, yield_element, iterative);
+    }
 };
 
 } // namespace Generic2d
