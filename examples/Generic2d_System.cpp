@@ -52,17 +52,22 @@ int main()
 
     // Initialise system
 
-    FrictionQPotFEM::Generic2d::System sys(coor, conn, dofs, iip, elastic, plastic);
-
-    sys.setMassMatrix(rho * xt::ones<double>({mesh.nelem()}));
-    sys.setDampingMatrix(alpha * xt::ones<double>({mesh.nelem()}));
-
-    xt::xtensor<double, 1> iel = xt::ones<double>({elastic.size()});
-    xt::xtensor<double, 1> ipl = xt::ones<double>({elastic.size()});
-    sys.setElastic(K * iel, G * iel);
-    sys.setPlastic(K * ipl, G * ipl, epsy);
-
-    sys.setDt(dt);
+    FrictionQPotFEM::Generic2d::System sys(
+        coor,
+        conn,
+        dofs,
+        iip,
+        elastic,
+        FrictionQPotFEM::moduli_toquad(xt::eval(K * xt::ones<double>({elastic.size()}))),
+        FrictionQPotFEM::moduli_toquad(xt::eval(G * xt::ones<double>({elastic.size()}))),
+        plastic,
+        FrictionQPotFEM::moduli_toquad(xt::eval(K * xt::ones<double>({plastic.size()}))),
+        FrictionQPotFEM::moduli_toquad(xt::eval(G * xt::ones<double>({plastic.size()}))),
+        FrictionQPotFEM::epsy_initelastic_toquad(epsy),
+        dt,
+        rho,
+        alpha,
+        0);
 
     // Run
 

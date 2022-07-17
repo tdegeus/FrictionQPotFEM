@@ -18,25 +18,27 @@ class test_Generic2d(unittest.TestCase):
         dofs = mesh.dofs()
         dofs[mesh.nodesLeftOpenEdge(), ...] = dofs[mesh.nodesRightOpenEdge(), ...]
 
+        elastic = np.array([0, 1, 2, 6, 7, 8], dtype=np.uint64)
+        plastic = np.array([3, 4, 5], dtype=np.uint64)
+        epsy = 1e-3 * np.cumsum(np.ones((plastic.size, 5)), axis=1)
+
         system = FrictionQPotFEM.UniformSingleLayer2d.System(
-            coor,
-            mesh.conn(),
-            dofs,
-            dofs[np.concatenate((mesh.nodesBottomEdge(), mesh.nodesTopEdge())), :].ravel(),
-            [0, 1, 2, 6, 7, 8],
-            [3, 4, 5],
+            coor=coor,
+            conn=mesh.conn(),
+            dofs=dofs,
+            iip=dofs[np.concatenate((mesh.nodesBottomEdge(), mesh.nodesTopEdge())), :].ravel(),
+            elastic_elem=elastic,
+            elastic_K=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            elastic_G=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            plastic_elem=plastic,
+            plastic_K=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_G=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_epsy=FrictionQPotFEM.epsy_initelastic_toquad(epsy),
+            dt=1,
+            rho=1,
+            alpha=1,
+            eta=0,
         )
-
-        nelas = system.elastic.size
-        nplas = system.plastic.size
-
-        epsy = 1e-3 * np.cumsum(np.ones((nplas, 5)), axis=1)
-
-        system.rho = 1
-        system.alpha = 1
-        system.setElastic(np.ones(nelas), np.ones(nelas))
-        system.setPlastic(np.ones(nplas), np.ones(nplas), epsy)
-        system.dt = 1
 
         for loop in range(2):
 
@@ -45,7 +47,7 @@ class test_Generic2d(unittest.TestCase):
                 delta_u = system.eventDriven_deltaU
             else:
                 system.eventDriven_setDeltaU(delta_u)
-                system.setU(np.zeros_like(coor))
+                system.u = np.zeros_like(coor)
 
             directions = [1, 1, 1, 1, 1, 1, -1, -1, -1]
             kicks = [False, False, True, False, True, False, False, True, False]

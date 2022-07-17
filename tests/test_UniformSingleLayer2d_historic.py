@@ -61,13 +61,22 @@ class test_UniformSingleLayer2d(unittest.TestCase):
         # Initialise system
 
         system = FrictionQPotFEM.UniformSingleLayer2d.System(
-            coor, conn, dofs, iip, elastic, plastic
+            coor=coor,
+            conn=conn,
+            dofs=dofs,
+            iip=iip,
+            elastic_elem=elastic,
+            elastic_K=K * FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            elastic_G=G * FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            plastic_elem=plastic,
+            plastic_K=K * FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_G=G * FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_epsy=FrictionQPotFEM.epsy_initelastic_toquad(epsy),
+            dt=dt,
+            rho=rho,
+            alpha=alpha,
+            eta=0,
         )
-        system.setMassMatrix(rho * np.ones(mesh.nelem))
-        system.setDampingMatrix(alpha * np.ones(mesh.nelem))
-        system.setElastic(K * np.ones(elastic.size), G * np.ones(elastic.size))
-        system.setPlastic(K * np.ones(plastic.size), G * np.ones(plastic.size), epsy)
-        system.dt = dt
 
         # Run
 

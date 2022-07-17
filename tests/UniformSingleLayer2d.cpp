@@ -20,26 +20,27 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
     {
         GooseFEM::Mesh::Quad4::Regular mesh(3, 3);
 
+        xt::xtensor<size_t, 1> elas = {0, 1, 2, 6, 7, 8};
+        xt::xtensor<size_t, 1> plas = {3, 4, 5};
+        xt::xtensor<double, 2> epsy = {
+            {1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}};
+
         FrictionQPotFEM::UniformSingleLayer2d::System sys(
             mesh.coor(),
             mesh.conn(),
             mesh.dofs(),
             xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
-            xt::xtensor<size_t, 1>{0, 1, 2, 6, 7, 8},
-            xt::xtensor<size_t, 1>{3, 4, 5});
-
-        sys.setMassMatrix(xt::ones<double>({mesh.nelem()}));
-        sys.setDampingMatrix(xt::ones<double>({mesh.nelem()}));
-
-        sys.setElastic(xt::ones<double>({6}), xt::ones<double>({6}));
-
-        sys.setPlastic(
-            xt::xtensor<double, 1>{1.0, 1.0, 1.0},
-            xt::xtensor<double, 1>{1.0, 1.0, 1.0},
-            xt::xtensor<double, 2>{
-                {1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}});
-
-        sys.setDt(1.0);
+            elas,
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({elas.size()}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({elas.size()}))),
+            plas,
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({plas.size()}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({plas.size()}))),
+            FrictionQPotFEM::epsy_initelastic_toquad(epsy),
+            1,
+            1,
+            1,
+            0);
 
         for (size_t i = 0; i < 10; ++i) {
             double delta_gamma = 0.01;
@@ -54,26 +55,27 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
     {
         GooseFEM::Mesh::Quad4::Regular mesh(3, 3);
 
+        xt::xtensor<size_t, 1> elas = {0, 1, 2, 6, 7, 8};
+        xt::xtensor<size_t, 1> plas = {3, 4, 5};
+        xt::xtensor<double, 2> epsy = {
+            {1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}};
+
         FrictionQPotFEM::UniformSingleLayer2d::System sys(
             mesh.coor(),
             mesh.conn(),
             mesh.dofs(),
             xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
-            xt::xtensor<size_t, 1>{0, 1, 2, 6, 7, 8},
-            xt::xtensor<size_t, 1>{3, 4, 5});
-
-        sys.setMassMatrix(xt::ones<double>({mesh.nelem()}));
-        sys.setDampingMatrix(xt::ones<double>({mesh.nelem()}));
-
-        sys.setElastic(xt::ones<double>({6}), xt::ones<double>({6}));
-
-        sys.setPlastic(
-            xt::xtensor<double, 1>{1.0, 1.0, 1.0},
-            xt::xtensor<double, 1>{1.0, 1.0, 1.0},
-            xt::xtensor<double, 2>{
-                {1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}, {1.0, 2.0, 3.0, 4.0}});
-
-        sys.setDt(1.0);
+            elas,
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({elas.size()}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({elas.size()}))),
+            plas,
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({plas.size()}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({plas.size()}))),
+            FrictionQPotFEM::epsy_initelastic_toquad(epsy),
+            1,
+            1,
+            1,
+            0);
 
         auto plastic = sys.plastic();
         auto conn = sys.conn();
@@ -96,25 +98,26 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
     {
         GooseFEM::Mesh::Quad4::Regular mesh(1, 1);
 
+        xt::xtensor<size_t, 1> elas = {};
+        xt::xtensor<size_t, 1> plas = {0};
+        xt::xtensor<double, 2> epsy = {{1.0, 2.0, 3.0, 4.0}};
+
         FrictionQPotFEM::UniformSingleLayer2d::System sys(
             mesh.coor(),
             mesh.conn(),
             mesh.dofs(),
             xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
-            xt::xtensor<size_t, 1>{},
-            xt::xtensor<size_t, 1>{0});
-
-        sys.setMassMatrix(xt::ones<double>({1}));
-        sys.setDampingMatrix(xt::ones<double>({1}));
-
-        sys.setElastic(xt::xtensor<double, 1>{}, xt::xtensor<double, 1>{});
-
-        sys.setPlastic(
-            xt::xtensor<double, 1>{1.0},
-            xt::xtensor<double, 1>{1.0},
-            xt::xtensor<double, 2>{{1.0, 2.0, 3.0, 4.0}});
-
-        sys.setDt(1.0);
+            elas,
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({elas.size()}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({elas.size()}))),
+            plas,
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({plas.size()}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({plas.size()}))),
+            FrictionQPotFEM::epsy_initelastic_toquad(epsy),
+            1,
+            1,
+            1,
+            0);
 
         REQUIRE(sys.isHomogeneousElastic());
 
@@ -178,25 +181,26 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
     {
         GooseFEM::Mesh::Quad4::Regular mesh(1, 1);
 
+        xt::xtensor<size_t, 1> elas = {};
+        xt::xtensor<size_t, 1> plas = {0};
+        xt::xtensor<double, 2> epsy = {{1.0, 2.0, 3.0, 4.0}};
+
         FrictionQPotFEM::UniformSingleLayer2d::System sys(
             mesh.coor(),
             mesh.conn(),
             mesh.dofs(),
             xt::eval(xt::arange<size_t>(mesh.nnode() * mesh.ndim())),
-            xt::xtensor<size_t, 1>{},
-            xt::xtensor<size_t, 1>{0});
-
-        sys.setMassMatrix(xt::ones<double>({1}));
-        sys.setDampingMatrix(xt::ones<double>({1}));
-
-        sys.setElastic(xt::xtensor<double, 1>{}, xt::xtensor<double, 1>{});
-
-        sys.setPlastic(
-            xt::xtensor<double, 1>{1.0},
-            xt::xtensor<double, 1>{1.0},
-            xt::xtensor<double, 2>{{1.0, 2.0, 3.0, 4.0}});
-
-        sys.setDt(1.0);
+            elas,
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({elas.size()}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({elas.size()}))),
+            plas,
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({plas.size()}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({plas.size()}))),
+            FrictionQPotFEM::epsy_initelastic_toquad(epsy),
+            1,
+            1,
+            1,
+            0);
 
         REQUIRE(sys.isHomogeneousElastic());
 
@@ -245,25 +249,26 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
         xt::view(iip, xt::range(2 * nfix, 3 * nfix)) = xt::view(dofs, xt::keep(top), 0);
         xt::view(iip, xt::range(3 * nfix, 4 * nfix)) = xt::view(dofs, xt::keep(top), 1);
 
+        xt::xtensor<size_t, 1> elas = {0, 1, 2, 3, 5, 6, 7, 8};
+        xt::xtensor<size_t, 1> plas = {4};
+        xt::xtensor<double, 2> epsy = {{1.0, 2.0, 3.0, 4.0}};
+
         FrictionQPotFEM::UniformSingleLayer2d::System sys(
             mesh.coor(),
             mesh.conn(),
             dofs,
             iip,
-            xt::xtensor<size_t, 1>{0, 1, 2, 3, 5, 6, 7, 8},
-            xt::xtensor<size_t, 1>{4});
-
-        sys.setMassMatrix(xt::ones<double>({mesh.nelem()}));
-        sys.setDampingMatrix(xt::ones<double>({mesh.nelem()}));
-
-        sys.setElastic(1.0 * xt::ones<double>({8}), 1.0 * xt::ones<double>({8}));
-
-        sys.setPlastic(
-            xt::xtensor<double, 1>{1.0},
-            xt::xtensor<double, 1>{1.0},
-            xt::xtensor<double, 2>{{1.0, 2.0, 3.0, 4.0}});
-
-        sys.setDt(1.0);
+            elas,
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({elas.size()}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({elas.size()}))),
+            plas,
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({plas.size()}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(xt::ones<double>({plas.size()}))),
+            FrictionQPotFEM::epsy_initelastic_toquad(epsy),
+            1,
+            1,
+            1,
+            0);
 
         REQUIRE(sys.isHomogeneousElastic());
 

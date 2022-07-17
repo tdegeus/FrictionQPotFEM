@@ -6,6 +6,20 @@ import GooseFEM
 import numpy as np
 
 
+def initelastic_allquad(draw, nip=4):
+    """
+    'Broadcast' to initialise elastic, same for all integration points.
+    """
+
+    epsy = np.empty([draw.shape[0], nip, draw.shape[1] + 1])
+
+    for q in range(nip):
+        epsy[:, q, 0] = -draw[:, 0]
+        epsy[:, q, 1:] = draw
+
+    return epsy
+
+
 class test_Generic2d(unittest.TestCase):
     """
     Tests
@@ -35,25 +49,31 @@ class test_Generic2d(unittest.TestCase):
         dofs = mesh.dofs()
         dofs[mesh.nodesLeftOpenEdge(), ...] = dofs[mesh.nodesRightOpenEdge(), ...]
 
-        system = FrictionQPotFEM.Generic2d.System(
-            coor,
-            mesh.conn(),
-            dofs,
-            dofs[np.concatenate((mesh.nodesBottomEdge(), mesh.nodesTopEdge())), :].ravel(),
-            [0, 1, 2, 6, 7, 8],
-            [3, 4, 5],
+        elastic = np.array([0, 1, 2, 6, 7, 8], dtype=np.uint64)
+        plastic = np.array([3, 4, 5], dtype=np.uint64)
+        epsy = np.cumsum(np.ones((plastic.size, 5)), axis=1)
+
+        self.assertTrue(
+            np.allclose(initelastic_allquad(epsy), FrictionQPotFEM.epsy_initelastic_toquad(epsy))
         )
 
-        nelas = system.elastic.size
-        nplas = system.plastic.size
-
-        epsy = np.cumsum(np.ones((nplas, 5)), axis=1)
-
-        system.rho = 1
-        system.alpha = 1
-        system.setElastic(np.ones(nelas), np.ones(nelas))
-        system.setPlastic(np.ones(nplas), np.ones(nplas), epsy)
-        system.dt = 1
+        system = FrictionQPotFEM.Generic2d.System(
+            coor=coor,
+            conn=mesh.conn(),
+            dofs=dofs,
+            iip=dofs[np.concatenate((mesh.nodesBottomEdge(), mesh.nodesTopEdge())), :].ravel(),
+            elastic_elem=elastic,
+            elastic_K=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            elastic_G=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            plastic_elem=plastic,
+            plastic_K=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_G=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_epsy=FrictionQPotFEM.epsy_initelastic_toquad(epsy),
+            dt=1,
+            rho=1,
+            alpha=1,
+            eta=0,
+        )
 
         self.assertEqual(system.rho, 1)
         self.assertEqual(system.alpha, 1)
@@ -71,7 +91,7 @@ class test_Generic2d(unittest.TestCase):
                 delta_u = system.eventDriven_deltaU
             else:
                 system.eventDriven_setDeltaU(delta_u)
-                system.setU(np.zeros_like(coor))
+                system.u = np.zeros_like(coor)
 
             settings = [
                 [+1, 0, 0, -1, 0],  # :   .|    |    |    |
@@ -115,26 +135,28 @@ class test_Generic2d(unittest.TestCase):
         dofs = mesh.dofs()
         dofs[mesh.nodesLeftOpenEdge(), ...] = dofs[mesh.nodesRightOpenEdge(), ...]
 
-        system = FrictionQPotFEM.Generic2d.System(
-            coor,
-            mesh.conn(),
-            dofs,
-            dofs[np.concatenate((mesh.nodesBottomEdge(), mesh.nodesTopEdge())), :].ravel(),
-            [0, 1, 2, 6, 7, 8],
-            [3, 4, 5],
-        )
-
-        nelas = system.elastic.size
-        nplas = system.plastic.size
-
-        epsy = 1e-2 * np.cumsum(np.random.random((nplas, 100)), axis=1)
+        elastic = np.array([0, 1, 2, 6, 7, 8], dtype=np.uint64)
+        plastic = np.array([3, 4, 5], dtype=np.uint64)
+        epsy = 1e-2 * np.cumsum(np.random.random((plastic.size, 100)), axis=1)
         deps = 0.1 * np.min(np.diff(epsy, axis=1))
 
-        system.rho = 1
-        system.alpha = 1
-        system.setElastic(np.ones(nelas), np.ones(nelas))
-        system.setPlastic(np.ones(nplas), np.ones(nplas), epsy)
-        system.dt = 1
+        system = FrictionQPotFEM.Generic2d.System(
+            coor=coor,
+            conn=mesh.conn(),
+            dofs=dofs,
+            iip=dofs[np.concatenate((mesh.nodesBottomEdge(), mesh.nodesTopEdge())), :].ravel(),
+            elastic_elem=elastic,
+            elastic_K=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            elastic_G=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            plastic_elem=plastic,
+            plastic_K=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_G=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_epsy=FrictionQPotFEM.epsy_initelastic_toquad(epsy),
+            dt=1,
+            rho=1,
+            alpha=1,
+            eta=0,
+        )
 
         delta_u = np.zeros_like(coor)
 
@@ -162,7 +184,7 @@ class test_Generic2d(unittest.TestCase):
             else:
                 self.assertTrue(np.all(idx == idx_n))
 
-            system.setU(u_n)
+            system.u = u_n
             system.eventDrivenStep(deps, kick)
             idx = system.plastic_CurrentIndex()
             if kick:
@@ -174,7 +196,7 @@ class test_Generic2d(unittest.TestCase):
             idx_n = system.plastic_CurrentIndex()
             u_n = np.copy(system.u)
 
-            system.setU(u_n)
+            system.u = u_n
             system.eventDrivenStep(deps, kick, -1, iterative=True)
             idx = system.plastic_CurrentIndex()
             if kick:
@@ -187,7 +209,7 @@ class test_Generic2d(unittest.TestCase):
                     system.eventDrivenStep(deps, kick, -1)
                 break
 
-            system.setU(u_n)
+            system.u = u_n
             system.eventDrivenStep(deps, kick, -1)
             idx = system.plastic_CurrentIndex()
             if kick:
@@ -206,25 +228,27 @@ class test_Generic2d(unittest.TestCase):
         dofs = mesh.dofs()
         dofs[mesh.nodesLeftOpenEdge(), ...] = dofs[mesh.nodesRightOpenEdge(), ...]
 
+        elastic = np.array([0, 1, 2, 6, 7, 8], dtype=np.uint64)
+        plastic = np.array([3, 4, 5], dtype=np.uint64)
+        epsy = np.cumsum(np.ones((plastic.size, 5)), axis=1)
+
         system = FrictionQPotFEM.Generic2d.System(
-            coor,
-            mesh.conn(),
-            dofs,
-            dofs[np.concatenate((mesh.nodesBottomEdge(), mesh.nodesTopEdge())), :].ravel(),
-            [0, 1, 2, 6, 7, 8],
-            [3, 4, 5],
+            coor=coor,
+            conn=mesh.conn(),
+            dofs=dofs,
+            iip=dofs[np.concatenate((mesh.nodesBottomEdge(), mesh.nodesTopEdge())), :].ravel(),
+            elastic_elem=elastic,
+            elastic_K=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            elastic_G=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            plastic_elem=plastic,
+            plastic_K=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_G=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_epsy=FrictionQPotFEM.epsy_initelastic_toquad(epsy),
+            dt=1,
+            rho=1,
+            alpha=1,
+            eta=0,
         )
-
-        nelas = system.elastic.size
-        nplas = system.plastic.size
-
-        epsy = np.cumsum(np.ones((nplas, 5)), axis=1)
-
-        system.rho = 1
-        system.alpha = 1
-        system.setElastic(np.ones(nelas), np.ones(nelas))
-        system.setPlastic(np.ones(nplas), np.ones(nplas), epsy)
-        system.dt = 1
 
         epsy_element = np.zeros(epsy.shape)
         mat = system.material_plastic
@@ -246,7 +270,7 @@ class test_Generic2d(unittest.TestCase):
                 delta_u = system.eventDriven_deltaU
             else:
                 system.eventDriven_setDeltaU(delta_u)
-                system.setU(np.zeros_like(coor))
+                system.u = np.zeros_like(coor)
 
             settings = [
                 [+1, 0, 0, -1, 0],  # :   .|    |    |    |
@@ -283,20 +307,28 @@ class test_Generic2d(unittest.TestCase):
         """
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
+
+        elastic = np.array([0, 1, 2, 6, 7, 8], dtype=np.uint64)
+        plastic = np.array([3, 4, 5], dtype=np.uint64)
+        epsy = 100 * np.ones((plastic.size, 1))
+
         system = FrictionQPotFEM.Generic2d.System(
             coor=mesh.coor(),
             conn=mesh.conn(),
             dofs=mesh.dofs(),
             iip=np.arange(mesh.nnode * mesh.ndim),
-            elem_elastic=[0, 1, 2, 6, 7, 8],
-            elem_plastic=[3, 4, 5],
+            elastic_elem=elastic,
+            elastic_K=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            elastic_G=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            plastic_elem=plastic,
+            plastic_K=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_G=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_epsy=FrictionQPotFEM.epsy_initelastic_toquad(epsy),
+            dt=1,
+            rho=1,
+            alpha=1,
+            eta=0,
         )
-
-        system.rho = 1
-        system.alpha = 1
-        system.setElastic(np.ones(6), np.ones(6))
-        system.setPlastic(np.ones(3), np.ones(3), [[100.0], [100.0], [100.0]])
-        system.dt = 1
 
         x = mesh.coor()
         v = np.zeros_like(x)
@@ -319,23 +351,31 @@ class test_Generic2d(unittest.TestCase):
     def test_damping_alpha_no_eta(self):
 
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
+
+        elastic = np.array([0, 1, 2, 6, 7, 8], dtype=np.uint64)
+        plastic = np.array([3, 4, 5], dtype=np.uint64)
+        epsy = np.ones((plastic.size, 1))
+        alpha = 1.2
+
         system = FrictionQPotFEM.Generic2d.System(
             coor=mesh.coor(),
             conn=mesh.conn(),
             dofs=mesh.dofsPeriodic(),
             iip=[],
-            elem_elastic=[0, 1, 2, 6, 7, 8],
-            elem_plastic=[3, 4, 5],
+            elastic_elem=elastic,
+            elastic_K=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            elastic_G=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            plastic_elem=plastic,
+            plastic_K=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_G=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_epsy=FrictionQPotFEM.epsy_initelastic_toquad(epsy),
+            dt=1,
+            rho=1,
+            alpha=alpha,
+            eta=0,
         )
 
-        alpha = 1.2
-        system.rho = 1
-        system.alpha = alpha
-        system.setElastic(np.ones(6), np.ones(6))
-        system.setPlastic(np.ones(3), np.ones(3), [[100.0], [100.0], [100.0]])
-        system.dt = 1
-
-        system.setV(np.ones_like(mesh.coor()))
+        system.v = np.ones_like(mesh.coor())
         assert np.allclose(system.vector.AsDofs(system.fdamp), alpha)
 
     def test_damping_no_alpha_eta(self):
@@ -343,21 +383,29 @@ class test_Generic2d(unittest.TestCase):
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
         coor = mesh.coor()
         conn = mesh.conn()
+
+        elastic = np.array([0, 1, 2, 6, 7, 8], dtype=np.uint64)
+        plastic = np.array([3, 4, 5], dtype=np.uint64)
+        epsy = np.ones((plastic.size, 1))
+        eta = 3.4
+
         system = FrictionQPotFEM.Generic2d.System(
             coor=coor,
             conn=conn,
             dofs=mesh.dofsPeriodic(),
             iip=[],
-            elem_elastic=[0, 1, 2, 6, 7, 8],
-            elem_plastic=[3, 4, 5],
+            elastic_elem=elastic,
+            elastic_K=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            elastic_G=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            plastic_elem=plastic,
+            plastic_K=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_G=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_epsy=FrictionQPotFEM.epsy_initelastic_toquad(epsy),
+            dt=1,
+            rho=1,
+            alpha=0,
+            eta=eta,
         )
-
-        eta = 3.4
-        system.rho = 1
-        system.eta = eta
-        system.setElastic(np.ones(6), np.ones(6))
-        system.setPlastic(np.ones(3), np.ones(3), [[100.0], [100.0], [100.0]])
-        system.dt = 1
 
         f = np.zeros_like(coor)
         v = np.zeros_like(coor)
@@ -367,7 +415,7 @@ class test_Generic2d(unittest.TestCase):
         f[conn[:3, -2:], 0] = -eta
         f[conn[-3:, :2], 0] = eta
 
-        system.setV(v)
+        system.v = v
         assert np.allclose(system.fdamp, f)
 
     def test_damping_alpha_eta(self):
@@ -375,23 +423,30 @@ class test_Generic2d(unittest.TestCase):
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
         coor = mesh.coor()
         conn = mesh.conn()
+
+        elastic = np.array([0, 1, 2, 6, 7, 8], dtype=np.uint64)
+        plastic = np.array([3, 4, 5], dtype=np.uint64)
+        epsy = np.ones((plastic.size, 1))
+        alpha = 1.2
+        eta = 3.4
+
         system = FrictionQPotFEM.Generic2d.System(
             coor=coor,
             conn=conn,
             dofs=mesh.dofsPeriodic(),
             iip=[],
-            elem_elastic=[0, 1, 2, 6, 7, 8],
-            elem_plastic=[3, 4, 5],
+            elastic_elem=elastic,
+            elastic_K=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            elastic_G=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            plastic_elem=plastic,
+            plastic_K=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_G=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_epsy=FrictionQPotFEM.epsy_initelastic_toquad(epsy),
+            dt=1,
+            rho=1,
+            alpha=alpha,
+            eta=eta,
         )
-
-        alpha = 1.2
-        eta = 3.4
-        system.rho = 1
-        system.eta = eta
-        system.alpha = alpha
-        system.setElastic(np.ones(6), np.ones(6))
-        system.setPlastic(np.ones(3), np.ones(3), [[100.0], [100.0], [100.0]])
-        system.dt = 1
 
         f = np.zeros_like(coor)
         v = np.zeros_like(coor)
@@ -402,7 +457,7 @@ class test_Generic2d(unittest.TestCase):
         f[conn[:3, -2:], 0] += -eta
         f[conn[-3:, :2], 0] += eta
 
-        system.setV(v)
+        system.v = v
         assert np.allclose(system.fdamp, f)
 
 

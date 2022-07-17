@@ -57,6 +57,26 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
     mod.def("version", &M::version, "Return version string.");
 
+    mod.def(
+        "epsy_initelastic_toquad",
+        &M::epsy_initelastic_toquad,
+        "Convert array of yield strains per element: init elastic, same for all quadrature points",
+        py::arg("arg"),
+        py::arg("nip") = GooseFEM::Element::Quad4::Gauss::nip());
+
+    mod.def(
+        "moduli_toquad",
+        &M::moduli_toquad,
+        "Convert array of moduli per element to be the same for all quadrature points",
+        py::arg("arg"),
+        py::arg("nip") = GooseFEM::Element::Quad4::Gauss::nip());
+
+    mod.def(
+        "getuniform",
+        &M::getuniform<xt::pyarray<double>>,
+        "Extract uniform value (throw if not uniform)",
+        py::arg("arg"));
+
     // -------------------------
     // FrictionQPotFEM.Generic2d
     // -------------------------
@@ -83,14 +103,32 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                     const xt::pytensor<size_t, 2>&,
                     const xt::pytensor<size_t, 1>&,
                     const xt::pytensor<size_t, 1>&,
-                    const xt::pytensor<size_t, 1>&>(),
+                    const xt::pytensor<double, 2>&,
+                    const xt::pytensor<double, 2>&,
+                    const xt::pytensor<size_t, 1>&,
+                    const xt::pytensor<double, 2>&,
+                    const xt::pytensor<double, 2>&,
+                    const xt::pytensor<double, 3>&,
+                    double,
+                    double,
+                    double,
+                    double>(),
                 "System",
                 py::arg("coor"),
                 py::arg("conn"),
                 py::arg("dofs"),
                 py::arg("iip"),
-                py::arg("elem_elastic"),
-                py::arg("elem_plastic"));
+                py::arg("elastic_elem"),
+                py::arg("elastic_K"),
+                py::arg("elastic_G"),
+                py::arg("plastic_elem"),
+                py::arg("plastic_K"),
+                py::arg("plastic_G"),
+                py::arg("plastic_epsy"),
+                py::arg("dt"),
+                py::arg("rho"),
+                py::arg("alpha"),
+                py::arg("eta"));
 
             cls.def_property_readonly("N", &SUB::System::N, "Number of plastic elements");
             cls.def_property_readonly("type", &SUB::System::type, "Class identifier");
@@ -163,31 +201,29 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
             cls.def_property("t", &SUB::System::t, &SUB::System::setT, "Current time");
 
-            cls.def("setU", &SUB::System::setU<xt::pytensor<double, 2>>, "setU", py::arg("u"));
-            cls.def("setV", &SUB::System::setV<xt::pytensor<double, 2>>, "setV", py::arg("v"));
-            cls.def("setA", &SUB::System::setA<xt::pytensor<double, 2>>, "setA", py::arg("a"));
-
-            cls.def(
-                "setFext",
-                &SUB::System::setFext<xt::pytensor<double, 2>>,
-                "setFext",
-                py::arg("fext"));
-
             cls.def("quench", &SUB::System::quench, "quench");
             cls.def_property_readonly("elastic", &SUB::System::elastic, "elastic");
             cls.def_property_readonly("plastic", &SUB::System::plastic, "plastic");
             cls.def_property_readonly("conn", &SUB::System::conn, "conn");
             cls.def_property_readonly("coor", &SUB::System::coor, "coor");
             cls.def_property_readonly("dofs", &SUB::System::dofs, "dofs");
-            cls.def_property_readonly("u", &SUB::System::u, "u");
-            cls.def_property_readonly("v", &SUB::System::v, "v");
-            cls.def_property_readonly("a", &SUB::System::a, "a");
+
+            cls.def_property(
+                "u", &SUB::System::u, &SUB::System::setU<xt::pytensor<double, 2>>, "u");
+
+            cls.def_property(
+                "v", &SUB::System::v, &SUB::System::setV<xt::pytensor<double, 2>>, "v");
+
+            cls.def_property(
+                "a", &SUB::System::a, &SUB::System::setA<xt::pytensor<double, 2>>, "a");
 
             cls.def_property_readonly("mass", &SUB::System::mass, "mass");
 
             cls.def_property_readonly("damping", &SUB::System::damping, "damping");
 
-            cls.def_property_readonly("fext", &SUB::System::fext, "fext");
+            cls.def_property(
+                "fext", &SUB::System::fext, &SUB::System::setFext<xt::pytensor<double, 2>>, "fext");
+
             cls.def_property_readonly("fint", &SUB::System::fint, "fint");
             cls.def_property_readonly("fmaterial", &SUB::System::fmaterial, "fmaterial");
             cls.def_property_readonly("fdamp", &SUB::System::fdamp, "fdamp");
@@ -395,14 +431,32 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                     const xt::pytensor<size_t, 2>&,
                     const xt::pytensor<size_t, 1>&,
                     const xt::pytensor<size_t, 1>&,
-                    const xt::pytensor<size_t, 1>&>(),
+                    const xt::pytensor<double, 2>&,
+                    const xt::pytensor<double, 2>&,
+                    const xt::pytensor<size_t, 1>&,
+                    const xt::pytensor<double, 2>&,
+                    const xt::pytensor<double, 2>&,
+                    const xt::pytensor<double, 3>&,
+                    double,
+                    double,
+                    double,
+                    double>(),
                 "System",
                 py::arg("coor"),
                 py::arg("conn"),
                 py::arg("dofs"),
                 py::arg("iip"),
-                py::arg("elem_elastic"),
-                py::arg("elem_plastic"));
+                py::arg("elastic_elem"),
+                py::arg("elastic_K"),
+                py::arg("elastic_G"),
+                py::arg("plastic_elem"),
+                py::arg("plastic_K"),
+                py::arg("plastic_G"),
+                py::arg("plastic_epsy"),
+                py::arg("dt"),
+                py::arg("rho"),
+                py::arg("alpha"),
+                py::arg("eta"));
 
             cls.def("typical_plastic_h", &SUB::System::typical_plastic_h, "typical_plastic_h");
             cls.def("typical_plastic_dV", &SUB::System::typical_plastic_dV, "typical_plastic_dV");
@@ -541,7 +595,18 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 const xt::pytensor<size_t, 1>&,
                 const std::vector<xt::pytensor<size_t, 1>>&,
                 const std::vector<xt::pytensor<size_t, 1>>&,
-                const xt::pytensor<bool, 1>&>(),
+                const xt::pytensor<bool, 1>&,
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<double, 3>&,
+                double,
+                double,
+                double,
+                double,
+                const xt::pytensor<bool, 2>&,
+                double>(),
             "System",
             py::arg("coor"),
             py::arg("conn"),
@@ -549,7 +614,18 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             py::arg("iip"),
             py::arg("elem"),
             py::arg("node"),
-            py::arg("layer_is_plastic"));
+            py::arg("layer_is_plastic"),
+            py::arg("elastic_K"),
+            py::arg("elastic_G"),
+            py::arg("plastic_K"),
+            py::arg("plastic_G"),
+            py::arg("plastic_epsy"),
+            py::arg("dt"),
+            py::arg("rho"),
+            py::arg("alpha"),
+            py::arg("eta"),
+            py::arg("drive_is_active"),
+            py::arg("k_drive"));
 
         cls.def("nlayer", &SUB::System::nlayer, "nlayer");
 
@@ -664,7 +740,20 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 const xt::pytensor<size_t, 1>&,
                 const std::vector<xt::pytensor<size_t, 1>>&,
                 const std::vector<xt::pytensor<size_t, 1>>&,
-                const xt::pytensor<bool, 1>&>(),
+                const xt::pytensor<bool, 1>&,
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<double, 2>&,
+                const xt::pytensor<double, 3>&,
+                double,
+                double,
+                double,
+                double,
+                const xt::pytensor<bool, 2>&,
+                double,
+                double,
+                const xt::pytensor<double, 1>&>(),
             "System",
             py::arg("coor"),
             py::arg("conn"),
@@ -672,7 +761,20 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             py::arg("iip"),
             py::arg("elem"),
             py::arg("node"),
-            py::arg("layer_is_plastic"));
+            py::arg("layer_is_plastic"),
+            py::arg("elastic_K"),
+            py::arg("elastic_G"),
+            py::arg("plastic_K"),
+            py::arg("plastic_G"),
+            py::arg("plastic_epsy"),
+            py::arg("dt"),
+            py::arg("rho"),
+            py::arg("alpha"),
+            py::arg("eta"),
+            py::arg("drive_is_active"),
+            py::arg("k_drive"),
+            py::arg("H"),
+            py::arg("hi"));
 
         cls.def(
             "setLeverProperties",

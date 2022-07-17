@@ -43,29 +43,17 @@ class test_UniformMultiLayerIndividualDrive2d(unittest.TestCase):
             elem[8:, :].ravel(),
         ]
         layers = [np.sort(i) for i in layers]
+        is_plastic = [False, True, False, True, False]
 
         left = mesh.nodesLeftOpenEdge()
         right = mesh.nodesRightOpenEdge()
         dofs[left] = dofs[right]
 
-        top = mesh.nodesTopEdge()
-        bottom = mesh.nodesBottomEdge()
-        np.concatenate((dofs[bottom].ravel(), dofs[top].ravel()))
+        mesh.nodesTopEdge()
+        mesh.nodesBottomEdge()
 
-        system = FrictionQPotFEM.UniformMultiLayerLeverDrive2d.System(
-            coor=coor,
-            conn=conn,
-            dofs=dofs,
-            iip=dofs[mesh.nodesBottomEdge(), :].ravel(),
-            elem=layers,
-            node=[np.unique(conn[i, :]) for i in layers],
-            layer_is_plastic=[False, True, False, True, False],
-        )
-
-        nelas = system.elastic.size
-        nplas = system.plastic.size
-
-        # Parameters
+        nelas = sum(i.size for i, p in zip(layers, is_plastic) if not p)
+        nplas = sum(i.size for i, p in zip(layers, is_plastic) if p)
 
         c = 1.0
         G = 1.0
@@ -82,16 +70,28 @@ class test_UniformMultiLayerIndividualDrive2d(unittest.TestCase):
         epsy += 1.0e-5
         epsy = np.cumsum(epsy, 1)
 
-        # Initialise system
-
-        system.setMassMatrix(rho * np.ones(mesh.nelem))
-        system.setDampingMatrix(alpha * np.ones(mesh.nelem))
-        system.setElastic(K * np.ones(nelas), G * np.ones(nelas))
-        system.setPlastic(K * np.ones(nplas), G * np.ones(nplas), epsy)
-        system.dt = dt
-        system.layerSetTargetActive(active)
-        system.layerSetDriveStiffness(1e-3)
-        system.setLeverProperties(12 * h, height)
+        system = FrictionQPotFEM.UniformMultiLayerLeverDrive2d.System(
+            coor=coor,
+            conn=conn,
+            dofs=dofs,
+            iip=dofs[mesh.nodesBottomEdge(), :].ravel(),
+            elem=layers,
+            node=[np.unique(conn[i, :]) for i in layers],
+            layer_is_plastic=is_plastic,
+            elastic_K=FrictionQPotFEM.moduli_toquad(K * np.ones(nelas)),
+            elastic_G=FrictionQPotFEM.moduli_toquad(G * np.ones(nelas)),
+            plastic_K=FrictionQPotFEM.moduli_toquad(K * np.ones(nplas)),
+            plastic_G=FrictionQPotFEM.moduli_toquad(G * np.ones(nplas)),
+            plastic_epsy=FrictionQPotFEM.epsy_initelastic_toquad(epsy),
+            dt=dt,
+            rho=rho,
+            alpha=alpha,
+            eta=0,
+            drive_is_active=active,
+            k_drive=1e-3,
+            H=12 * h,
+            hi=height,
+        )
 
         # Drive
 

@@ -23,21 +23,17 @@ int main(int argc, char* argv[])
         H5Easy::load<xt::xtensor<size_t, 2>>(data, "/dofs"),
         H5Easy::load<xt::xtensor<size_t, 1>>(data, "/dofsP"),
         H5Easy::load<xt::xtensor<size_t, 1>>(data, "/elastic/elem"),
-        H5Easy::load<xt::xtensor<size_t, 1>>(data, "/cusp/elem"));
-
-    sys.setMassMatrix(H5Easy::load<xt::xtensor<double, 1>>(data, "/rho"));
-    sys.setDampingMatrix(H5Easy::load<xt::xtensor<double, 1>>(data, "/damping/alpha"));
-
-    sys.setElastic(
-        H5Easy::load<xt::xtensor<double, 1>>(data, "/elastic/K"),
-        H5Easy::load<xt::xtensor<double, 1>>(data, "/elastic/G"));
-
-    sys.setPlastic(
-        H5Easy::load<xt::xtensor<double, 1>>(data, "/cusp/K"),
-        H5Easy::load<xt::xtensor<double, 1>>(data, "/cusp/G"),
-        H5Easy::load<xt::xtensor<double, 2>>(data, "/cusp/epsy"));
-
-    sys.setDt(H5Easy::load<double>(data, "/run/dt"));
+        FrictionQPotFEM::moduli_toquad(H5Easy::load<xt::xtensor<double, 1>>(data, "/elastic/K")),
+        FrictionQPotFEM::moduli_toquad(H5Easy::load<xt::xtensor<double, 1>>(data, "/elastic/G")),
+        H5Easy::load<xt::xtensor<size_t, 1>>(data, "/cusp/elem"),
+        FrictionQPotFEM::moduli_toquad(H5Easy::load<xt::xtensor<double, 1>>(data, "/cusp/K")),
+        FrictionQPotFEM::moduli_toquad(H5Easy::load<xt::xtensor<double, 1>>(data, "/cusp/G")),
+        FrictionQPotFEM::epsy_initelastic_toquad(
+            H5Easy::load<xt::xtensor<double, 2>>(data, "/cusp/epsy")),
+        H5Easy::load<double>(data, "/run/dt"),
+        FrictionQPotFEM::getuniform(H5Easy::load<xt::xtensor<double, 1>>(data, "/rho")),
+        FrictionQPotFEM::getuniform(H5Easy::load<xt::xtensor<double, 1>>(data, "/damping/alpha")),
+        0);
 
     size_t ninc = xt::amax(H5Easy::load<xt::xtensor<size_t, 1>>(data, "/stored"))();
     bool kick = true;

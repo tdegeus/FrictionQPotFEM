@@ -47,14 +47,22 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d_LocalTrigger", "UniformSingleLa
 
         // Initialise system
 
-        FrictionQPotFEM::UniformSingleLayer2d::System sys(coor, conn, dofs, iip, elastic, plastic);
-        sys.setMassMatrix(rho * xt::ones<double>({mesh.nelem()}));
-        sys.setDampingMatrix(alpha * xt::ones<double>({mesh.nelem()}));
-        sys.setElastic(
-            K * xt::ones<double>({elastic.size()}), G * xt::ones<double>({elastic.size()}));
-        sys.setPlastic(
-            K * xt::ones<double>({plastic.size()}), G * xt::ones<double>({plastic.size()}), epsy);
-        sys.setDt(dt);
+        FrictionQPotFEM::UniformSingleLayer2d::System sys(
+            coor,
+            conn,
+            dofs,
+            iip,
+            elastic,
+            FrictionQPotFEM::moduli_toquad(xt::eval(K * xt::ones<double>({elastic.size()}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(G * xt::ones<double>({elastic.size()}))),
+            plastic,
+            FrictionQPotFEM::moduli_toquad(xt::eval(K * xt::ones<double>({plastic.size()}))),
+            FrictionQPotFEM::moduli_toquad(xt::eval(G * xt::ones<double>({plastic.size()}))),
+            FrictionQPotFEM::epsy_initelastic_toquad(epsy),
+            dt,
+            rho,
+            alpha,
+            0);
 
         {
             FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayerFull trigger(sys);
