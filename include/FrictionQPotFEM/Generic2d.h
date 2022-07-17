@@ -1798,7 +1798,7 @@ public:
             }
         }
 
-        std::cout << "residuals = " << xt::adapt(residuals.get()) << std::endl;
+        std::cout << "residuals = " << xt::adapt(residuals.data()) << std::endl;
         bool converged = false;
         FRICTIONQPOTFEM_REQUIRE(converged == true);
         return 0; // irrelevant, the code never goes here
@@ -1838,7 +1838,7 @@ public:
             }
         }
 
-        std::cout << "residuals = " << xt::adapt(residuals.get()) << std::endl;
+        std::cout << "residuals = " << xt::adapt(residuals.data()) << std::endl;
         bool converged = false;
         FRICTIONQPOTFEM_REQUIRE(converged == true);
         return 0; // irrelevant, the code never goes here
@@ -1887,7 +1887,7 @@ public:
             }
         }
 
-        std::cout << "residuals = " << xt::adapt(residuals.get()) << std::endl;
+        std::cout << "residuals = " << xt::adapt(residuals.data()) << std::endl;
         bool converged = false;
         FRICTIONQPOTFEM_REQUIRE(converged == true);
         return 0; // irrelevant, the code never goes here
