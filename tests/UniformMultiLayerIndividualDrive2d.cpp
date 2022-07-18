@@ -339,6 +339,6 @@ TEST_CASE(
         u_target(1, 0) = 0.05; // expected result (layer not prescribed)
 
         REQUIRE(xt::allclose(u_target, sys.layerUbar(), 5e-2, 5e-3));
-        REQUIRE(xt::all(xt::equal(sys.plastic_CurrentIndex(), 5)));
+        REQUIRE(xt::all(xt::equal(sys.plastic().i(), 5)));
     }
 }

@@ -77,7 +77,7 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
             1,
             0);
 
-        auto plastic = sys.plastic();
+        auto plastic = sys.plastic_elem();
         auto conn = sys.conn();
         auto bot = xt::view(conn, xt::keep(plastic), 0); // missing last node, but ok for test
         auto top = xt::view(conn, xt::keep(plastic), 3);
@@ -276,7 +276,7 @@ TEST_CASE("FrictionQPotFEM::UniformSingleLayer2d", "UniformSingleLayer2d.h")
         sys.triggerElementWithLocalSimpleShear(delta_eps, 0);
 
         auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(sys.Eps());
-        auto plastic = sys.plastic();
+        auto plastic = sys.plastic_elem();
         auto eps_p = xt::view(eps, xt::keep(plastic), xt::all());
 
         REQUIRE(xt::allclose(eps_p, 1.0 + delta_eps / 2.0));

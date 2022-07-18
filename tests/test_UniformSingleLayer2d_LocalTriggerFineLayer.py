@@ -37,10 +37,9 @@ def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
 
     ue = vector.AsElement(disp)
     Eps = quad.SymGradN_vector(ue)
-    mat.setStrain(Eps)
-    Sig = mat.Stress()
+    mat.Eps = Eps
 
-    return GMat.Deviatoric(Eps[trigger, 0]), disp, Eps, Sig
+    return gtens.Deviatoric(Eps[trigger, 0]), disp, np.copy(mat.Eps), np.copy(mat.Sig)
 
 
 def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N=100):
@@ -167,32 +166,21 @@ class test_Generic2d(unittest.TestCase):
         quad = GooseFEM.Element.Quad4.Quadrature(vector.AsElement(coor))
 
         # material definition
-        mat = GMat.Array2d([nelem, quad.nip])
-
-        iden = np.zeros(mat.shape(), dtype=int)
-        iden[elastic, :] = 1
-        mat.setElastic(iden, 10.0, 1.0)
-
-        iden = np.zeros(mat.shape(), dtype=int)
-        iden[plastic, :] = 1
-        mat.setElastic(iden, 10.0, 1.0)
+        mat = GMat.Elastic2d(10 * np.ones([nelem, quad.nip]), np.ones([nelem, quad.nip]))
 
         # solve
         # -----
 
         # strain, stress, tangent
         ue = vector.AsElement(disp)
-        Eps = quad.SymGradN_vector(ue)
-        mat.setStrain(Eps)
-        Sig = mat.Stress()
-        C = mat.Tangent()
+        mat.Eps = quad.SymGradN_vector(ue)
 
         # stiffness matrix
-        Ke = quad.Int_gradN_dot_tensor4_dot_gradNT_dV(C)
+        Ke = quad.Int_gradN_dot_tensor4_dot_gradNT_dV(mat.C)
         K.assemble(Ke)
 
         # residual force
-        fe = quad.Int_gradN_dot_tensor2_dV(Sig)
+        fe = quad.Int_gradN_dot_tensor2_dV(mat.Sig)
         fint = vector.AssembleNode(fe)
         fext = vector.Copy_p(fint, fext)
         fres = fext - fint
@@ -208,8 +196,8 @@ class test_Generic2d(unittest.TestCase):
         # compute new state
         ue = vector.AsElement(disp)
         Eps = quad.SymGradN_vector(ue)
-        mat.setStrain(Eps)
-        Sig = mat.Stress()
+        mat.Eps = Eps
+        Sig = np.copy(mat.Sig)
 
         # ----------------------
         # Effect of perturbation
@@ -249,6 +237,7 @@ class test_Generic2d(unittest.TestCase):
             Epsstar_s, u_s, Eps_s, Sig_s = ComputePerturbation(
                 Sigstar_s, trigger, mat, quad, vector, K, Solver
             )
+
             Epsstar_p, u_p, Eps_p, Sig_p = ComputePerturbation(
                 Sigstar_p, trigger, mat, quad, vector, K, Solver
             )
@@ -261,7 +250,7 @@ class test_Generic2d(unittest.TestCase):
             self.assertTrue(np.allclose(Sig_p, modelTrigger.Sig_p(itrigger)))
 
             # Current state for triggered element
-            Epsd = GMat.Deviatoric(Eps[trigger, 0])
+            Epsd = gtens.Deviatoric(Eps[trigger, 0])
             gamma = Epsd[0, 1]
             E = Epsd[0, 0]
 

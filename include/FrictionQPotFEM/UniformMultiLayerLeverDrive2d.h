@@ -218,19 +218,20 @@ public:
         auto ubar0 = m_layerdrive_targetubar;
         auto xdrive0 = m_lever_target;
         auto t0 = m_t;
-        std::vector<std::vector<array_type::tensor<double, 1>>> epsy0;
-        epsy0.resize(m_nelem_plas);
-        double i = std::numeric_limits<double>::max();
-        array_type::tensor<double, 1> epsy_elas = {-i, i};
+
+        array_type::tensor<double, 3> epsy0 = m_plas.epsy();
+        array_type::tensor<double, 3> rigid = xt::empty<double>({m_nelem_plas, m_nip, size_t(2)});
+
+        double infty = std::numeric_limits<double>::max();
 
         for (size_t e = 0; e < m_nelem_plas; ++e) {
-            epsy0[e].resize(m_nip);
             for (size_t q = 0; q < m_nip; ++q) {
-                auto& cusp = m_material_plas.refCusp({e, q});
-                epsy0[e][q] = cusp.epsy();
-                cusp.reset_epsy(epsy_elas, false);
+                rigid(e, q, 0) = -infty;
+                rigid(e, q, 1) = infty;
             }
         }
+
+        m_plas.set_epsy(rigid);
 
         // perturbation
 
@@ -238,25 +239,17 @@ public:
         m_v.fill(0.0);
         m_a.fill(0.0);
         this->updated_u();
-        FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(this->plastic_CurrentIndex(), 0)));
+        FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(m_plas.i(), 0)));
         this->layerSetTargetActive(active);
         this->setLeverTarget(xlever);
         this->minimise();
-        FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(this->plastic_CurrentIndex(), 0)));
+        FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(m_plas.i(), 0)));
         auto up = m_u;
         m_u.fill(0.0);
 
         // restore yield strains
-        // to avoid running out-of-bounds there  the displacements had to be reset to zero
-        // if the yield strains are result only later scaling is buggy because a typical yield
-        // strain can be inaccurate
 
-        for (size_t e = 0; e < m_nelem_plas; ++e) {
-            for (size_t q = 0; q < m_nip; ++q) {
-                auto& cusp = m_material_plas.refCusp({e, q});
-                cusp.reset_epsy(epsy0[e][q], false);
-            }
-        }
+        m_plas.set_epsy(epsy0);
 
         // store result
 

@@ -122,8 +122,14 @@ class test_Generic2d(unittest.TestCase):
                     break
 
                 system.eventDrivenStep(0.1, kick, direction)
-                self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps), eps_expect))
+
+                self.assertTrue(np.allclose(GMat.Epsd(system.plastic.Eps), eps_expect))
                 self.assertTrue(system.residual() < 1e-5)
+
+                self.assertTrue(system.boundcheck_right(0))
+
+                if index == 3:
+                    self.assertFalse(system.boundcheck_right(3))
 
     def test_eventDrivenSimpleShear_random(self):
         """
@@ -169,7 +175,7 @@ class test_Generic2d(unittest.TestCase):
         kicks[1::2] = True
 
         for inc, kick in enumerate(kicks):
-            idx_n = system.plastic_CurrentIndex()
+            idx_n = np.copy(system.plastic.i)
             u_n = np.copy(system.u)
             uptr = system.u
 
@@ -178,7 +184,7 @@ class test_Generic2d(unittest.TestCase):
             if not kick:
                 self.assertTrue(not np.allclose(u_n, uptr))
 
-            idx = system.plastic_CurrentIndex()
+            idx = system.plastic.i
             if kick:
                 self.assertTrue(not np.all(idx == idx_n))
             else:
@@ -186,19 +192,19 @@ class test_Generic2d(unittest.TestCase):
 
             system.u = u_n
             system.eventDrivenStep(deps, kick)
-            idx = system.plastic_CurrentIndex()
+            idx = system.plastic.i
             if kick:
                 self.assertTrue(not np.all(idx == idx_n))
             else:
                 self.assertTrue(np.all(idx == idx_n))
 
         for kick in kicks:
-            idx_n = system.plastic_CurrentIndex()
+            idx_n = np.copy(system.plastic.i)
             u_n = np.copy(system.u)
 
             system.u = u_n
             system.eventDrivenStep(deps, kick, -1, iterative=True)
-            idx = system.plastic_CurrentIndex()
+            idx = system.plastic.i
             if kick:
                 self.assertTrue(not np.all(idx == idx_n))
             else:
@@ -211,7 +217,7 @@ class test_Generic2d(unittest.TestCase):
 
             system.u = u_n
             system.eventDrivenStep(deps, kick, -1)
-            idx = system.plastic_CurrentIndex()
+            idx = system.plastic.i
             if kick:
                 self.assertTrue(not np.all(idx == idx_n))
             else:
@@ -250,14 +256,6 @@ class test_Generic2d(unittest.TestCase):
             eta=0,
         )
 
-        epsy_element = np.zeros(epsy.shape)
-        mat = system.material_plastic
-        for e in range(mat.shape()[0]):
-            c = mat.refCusp([e, 1])
-            y = c.epsy() + 0.1
-            epsy_element[e, :] = y[1:]
-            c.reset_epsy(y, init_elastic=False)
-
         delta_u = np.zeros_like(coor)
 
         for i in range(delta_u.shape[0]):
@@ -287,7 +285,7 @@ class test_Generic2d(unittest.TestCase):
                 if not kick:
                     eps_expect = epsy[0, index] + f * 0.5 * 0.05
                 else:
-                    eps_expect = epsy_element[0, index] + f * 0.5 * 0.05
+                    eps_expect = epsy[0, index] + f * 0.5 * 0.05
 
                 if throw:
                     with self.assertRaises(IndexError):
@@ -296,7 +294,7 @@ class test_Generic2d(unittest.TestCase):
 
                 system.eventDrivenStep(0.05, kick, direction, yield_element=True)
 
-                self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps), eps_expect))
+                self.assertTrue(np.allclose(GMat.Epsd(system.plastic.Eps), eps_expect))
                 self.assertTrue(system.residual() < 1e-5)
 
     def test_flowSteps(self):
