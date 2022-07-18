@@ -149,7 +149,6 @@ public:
     void setLeverProperties(double H, const T& hi)
     {
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(hi, m_lever_hi.shape()));
-        m_lever_set = true;
         m_lever_hi = hi;
         m_lever_H = H;
 
@@ -329,8 +328,6 @@ protected:
     */
     void updated_u() override
     {
-        FRICTIONQPOTFEM_ASSERT(m_lever_set);
-
         this->computeLayerUbarActive();
 
         // Position of the lever based on equilibrium
@@ -361,7 +358,6 @@ protected:
     }
 
 private:
-    bool m_lever_set = false; ///< Lock class until properties have been set. // todo: remove
     double m_lever_H; ///< See setLeverProperties().
     array_type::tensor<double, 1> m_lever_hi; ///< See setLeverProperties().
     array_type::tensor<double, 1> m_lever_hi_H; ///< m_lever_hi / H
