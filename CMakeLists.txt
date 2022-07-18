@@ -207,8 +207,7 @@ if(BUILD_DOCS OR BUILD_ALL)
         "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}"
         "${GooseFEM_INCLUDE}/GooseFEM"
         "${GMatElastoPlasticQPot_INCLUDE}/GMatElastoPlasticQPot"
-        "${GMatTensor_INCLUDE}/GMatTensor"
-        "${QPot_INCLUDE}/QPot")
+        "${GMatTensor_INCLUDE}/GMatTensor")
 
     set(${PROJECT_NAME}_DOCS_STRIP
         "${CMAKE_CURRENT_SOURCE_DIR}/include"

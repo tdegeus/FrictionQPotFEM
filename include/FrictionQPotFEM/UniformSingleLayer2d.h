@@ -168,7 +168,7 @@ public:
 
         auto u_new = this->u();
         auto dV = m_quad.AsTensor<2>(this->dV());
-        double G = m_material_plas.G().data()[0];
+        double G = m_plas.G().flat(0);
 
         array_type::tensor<double, 2> Epsbar = xt::average(this->Eps(), dV, {0, 1});
         array_type::tensor<double, 2> Sigbar = xt::average(this->Sig(), dV, {0, 1});
@@ -217,9 +217,9 @@ public:
     */
     double addElasticSimpleShearToFixedStress(double target_stress, bool dry_run = false)
     {
-        auto idx = this->plastic_CurrentIndex();
+        auto idx = m_plas.i();
         auto ret = this->addSimpleShearToFixedStress(target_stress, dry_run);
-        FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(idx, this->plastic_CurrentIndex())));
+        FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(idx, m_plas.i())));
         return ret;
     }
 
@@ -234,7 +234,7 @@ public:
         Size of the local stain kick to apply.
 
     \param plastic_element
-        Which plastic element to trigger: System::plastic()(plastic_element).
+        Which plastic element to trigger: System::plastic_elem()(plastic_element).
 
     \param trigger_weakest
         If ``true``, trigger the weakest integration point.
@@ -254,12 +254,12 @@ public:
     {
         FRICTIONQPOTFEM_ASSERT(plastic_element < m_nelem_plas);
 
-        auto idx = this->plastic_CurrentIndex();
-        auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+        auto idx = m_plas.i();
+        auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(m_plas.Eps());
         auto up = m_vector.AsDofs_p(m_u);
 
         // distance to yielding on the positive side
-        auto epsy = this->plastic_CurrentYieldRight();
+        const auto& epsy = m_plas.epsy_right();
         auto deps = epsy - eps;
 
         // find integration point closest to yielding
@@ -270,7 +270,7 @@ public:
         }
 
         // deviatoric strain at the selected quadrature-point
-        array_type::tensor<double, 2> Eps = xt::view(this->plastic_Eps(), plastic_element, q);
+        array_type::tensor<double, 2> Eps = xt::view(m_plas.Eps(), plastic_element, q);
         array_type::tensor<double, 2> Epsd = GMatTensor::Cartesian2d::Deviatoric(Eps);
 
         // new equivalent deviatoric strain: yield strain + small strain kick
@@ -294,8 +294,8 @@ public:
         //   (N.B. storing to nodes directly does not ensure periodicity)
         this->setU(m_vector.AsNode(udofs));
 
-        eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-        auto idx_new = this->plastic_CurrentIndex();
+        eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(m_plas.Eps());
+        const auto& idx_new = m_plas.i();
         auto up_new = m_vector.AsDofs_p(m_u);
 
         FRICTIONQPOTFEM_REQUIRE(dgamma >= 0.0);
@@ -329,14 +329,13 @@ public:
     {
         FRICTIONQPOTFEM_ASSERT(iquad < m_nip);
 
-        auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-        auto epsy = this->plastic_CurrentYieldRight();
+        auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(m_plas.Eps());
+        const auto& epsy = m_plas.epsy_right();
         auto deps = xt::eval(epsy - eps);
         array_type::tensor<double, 2> ret = xt::empty<double>({m_N, size_t(2)});
         auto isort = xt::argsort(deps, 1);
 
-        auto Eps = this->plastic_Eps();
-        auto Epsd = GMatTensor::Cartesian2d::Deviatoric(Eps);
+        auto Epsd = GMatTensor::Cartesian2d::Deviatoric(m_plas.Eps());
 
         for (size_t e = 0; e < m_N; ++e) {
             size_t q = isort(e, iquad);
@@ -383,21 +382,14 @@ public:
     {
         // Copy / allocate local variables
 
-        auto kappa = sys.K();
-        auto G = sys.G();
-        std::array<size_t, 2> shape = {kappa.shape(0), kappa.shape(1)};
-        GMatElastoPlasticQPot::Cartesian2d::Array<2> material(shape);
-        material.setElastic(kappa, G);
-
-        FRICTIONQPOTFEM_ASSERT(
-            xt::all(xt::equal(material.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Elastic)));
+        GMatElastoPlasticQPot::Cartesian2d::Elastic<2> material(sys.K(), sys.G());
 
         auto vector = sys.vector();
         auto K = sys.stiffness();
         auto quad = sys.quad();
         GooseFEM::MatrixPartitionedSolver<> solver;
 
-        m_elem_plas = sys.plastic();
+        m_elem_plas = sys.plastic_elem();
         m_nelem_plas = m_elem_plas.size();
         m_nip = quad.nip();
 
@@ -510,6 +502,7 @@ protected:
     \param vector Book-keeping of the System.
     \param material Material definition of the System.
     */
+    template <class T>
     void computePerturbation(
         size_t trigger_plastic,
         const array_type::tensor<double, 2>& sig_star,
@@ -520,7 +513,7 @@ protected:
         GooseFEM::MatrixPartitionedSolver<>& solver,
         const GooseFEM::Element::Quad4::Quadrature& quad,
         const GooseFEM::VectorPartitioned& vector,
-        GMatElastoPlasticQPot::Cartesian2d::Array<2>& material)
+        T& material)
     {
         size_t trigger_element = m_elem_plas(trigger_plastic);
 
@@ -541,8 +534,8 @@ protected:
 
         vector.asElement(u, fe);
         quad.symGradN_vector(fe, Eps);
-        material.setStrain(Eps);
-        material.stress(Sig);
+        material.set_Eps(Eps);
+        std::copy(material.Sig().begin(), material.Sig().end(), Sig.begin());
     }
 
 public:

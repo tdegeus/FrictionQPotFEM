@@ -85,7 +85,7 @@ class test_Generic2d(unittest.TestCase):
 
                 eps_expect = epsy[0, index] + m * 0.5 * 1e-4
                 system.eventDrivenStep(1e-4, kick, direction)
-                self.assertTrue(np.allclose(GMat.Epsd(system.plastic_Eps), eps_expect))
+                self.assertTrue(np.allclose(GMat.Epsd(system.plastic.Eps), eps_expect))
                 self.assertTrue(system.residual() < 1e-5)
 
 

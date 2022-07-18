@@ -390,19 +390,20 @@ public:
         auto active0 = m_layerdrive_active;
         auto ubar0 = m_layerdrive_targetubar;
         auto t0 = m_t;
-        std::vector<std::vector<array_type::tensor<double, 1>>> epsy0;
-        epsy0.resize(m_nelem_plas);
-        double i = std::numeric_limits<double>::max();
-        array_type::tensor<double, 1> epsy_elas = {-i, i};
+
+        array_type::tensor<double, 3> epsy0 = m_plas.epsy();
+        array_type::tensor<double, 3> rigid = xt::empty<double>({m_nelem_plas, m_nip, size_t(2)});
+
+        double infty = std::numeric_limits<double>::max();
 
         for (size_t e = 0; e < m_nelem_plas; ++e) {
-            epsy0[e].resize(m_nip);
             for (size_t q = 0; q < m_nip; ++q) {
-                auto& cusp = m_material_plas.refCusp({e, q});
-                epsy0[e][q] = cusp.epsy();
-                cusp.reset_epsy(epsy_elas, false);
+                rigid(e, q, 0) = -infty;
+                rigid(e, q, 1) = infty;
             }
         }
+
+        m_plas.set_epsy(rigid);
 
         // perturbation
 
@@ -410,25 +411,17 @@ public:
         m_v.fill(0.0);
         m_a.fill(0.0);
         this->updated_u();
-        FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(this->plastic_CurrentIndex(), 0)));
+        FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(m_plas.i(), 0)));
         this->layerSetTargetActive(active);
         this->layerSetTargetUbar(ubar);
         this->minimise();
-        FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(this->plastic_CurrentIndex(), 0)));
+        FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(m_plas.i(), 0)));
         auto up = m_u;
         m_u.fill(0.0);
 
         // restore yield strains
-        // to avoid running out-of-bounds there  the displacements had to be reset to zero
-        // if the yield strains are result only later scaling is buggy because a typical yield
-        // strain can be inaccurate
 
-        for (size_t e = 0; e < m_nelem_plas; ++e) {
-            for (size_t q = 0; q < m_nip; ++q) {
-                auto& cusp = m_material_plas.refCusp({e, q});
-                cusp.reset_epsy(epsy0[e][q], false);
-            }
-        }
+        m_plas.set_epsy(epsy0);
 
         // store result
 
@@ -776,8 +769,8 @@ protected:
     array_type::tensor<bool, 1> m_layer_is_plastic; ///< Per layer ``true`` if the layer is plastic.
     array_type::tensor<size_t, 1>
         m_slice_index; ///< Per layer the index in m_slice_plas or m_slice_elas.
-    array_type::tensor<size_t, 1> m_slice_plas; ///< How to slice elastic(): start and end index
-    array_type::tensor<size_t, 1> m_slice_elas; ///< How to slice plastic(): start and end index
+    array_type::tensor<size_t, 1> m_slice_plas; ///< How to slice elastic_elem(): start & end index
+    array_type::tensor<size_t, 1> m_slice_elas; ///< How to slice plastic_elem(): start & end index
 
     bool m_drive_spring_symmetric; ///< If false the drive spring buckles in compression
     double m_drive_k; ///< Stiffness of the drive control frame

@@ -100,11 +100,11 @@ class test_Generic2d(unittest.TestCase):
             system.u = u
             system.minimise()
 
-            Epsbar = np.average(system.Eps, weights=dV, axis=(0, 1))
-            Sigbar = np.average(system.Sig, weights=dV, axis=(0, 1))
+            Epsbar = np.average(system.Eps(), weights=dV, axis=(0, 1))
+            Sigbar = np.average(system.Sig(), weights=dV, axis=(0, 1))
             collect_Eps[inc] = GMat.Epsd(Epsbar)
             collect_Sig[inc] = GMat.Sigd(Sigbar)
-            collect_Sig_plastic[inc] = GMat.Sigd(np.mean(system.plastic_Sig, axis=(0, 1)))
+            collect_Sig_plastic[inc] = GMat.Sigd(np.mean(system.plastic.Sig, axis=(0, 1)))
 
         with h5py.File(os.path.splitext(__file__)[0] + ".h5") as file:
             self.assertTrue(np.allclose(collect_Eps, file["Eps"][...]))

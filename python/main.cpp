@@ -133,46 +133,17 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def_property_readonly("N", &SUB::System::N, "Number of plastic elements");
             cls.def_property_readonly("type", &SUB::System::type, "Class identifier");
 
-            // todo
             cls.def(
                 "setMassMatrix",
                 &SUB::System::setMassMatrix<xt::pytensor<double, 1>>,
                 "setMassMatrix",
                 py::arg("rho_elem"));
 
-            // todo
             cls.def(
                 "setDampingMatrix",
                 &SUB::System::setDampingMatrix<xt::pytensor<double, 1>>,
                 "setDampingMatrix",
                 py::arg("alpha_elem"));
-
-            // todo
-            cls.def(
-                "setElastic",
-                &SUB::System::setElastic<xt::pytensor<double, 1>, xt::pytensor<double, 1>>,
-                "setElastic",
-                py::arg("K_elem"),
-                py::arg("G_elem"));
-
-            // todo
-            cls.def(
-                "setPlastic",
-                &SUB::System::setPlastic<
-                    xt::pytensor<double, 1>,
-                    xt::pytensor<double, 1>,
-                    xt::pytensor<double, 2>>,
-                "setPlastic",
-                py::arg("K_elem"),
-                py::arg("G_elem"),
-                py::arg("epsy_elem"));
-
-            // todo
-            cls.def(
-                "reset_epsy",
-                &SUB::System::reset_epsy<xt::pytensor<double, 2>>,
-                "reset_epsy",
-                py::arg("epsy_elem"));
 
             cls.def_property_readonly(
                 "isHomogeneousElastic",
@@ -202,8 +173,13 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def_property("t", &SUB::System::t, &SUB::System::setT, "Current time");
 
             cls.def("quench", &SUB::System::quench, "quench");
-            cls.def_property_readonly("elastic", &SUB::System::elastic, "elastic");
-            cls.def_property_readonly("plastic", &SUB::System::plastic, "plastic");
+
+            cls.def_property_readonly(
+                "elastic_elem", &SUB::System::elastic_elem, "Element numbers of elastic elements");
+
+            cls.def_property_readonly(
+                "plastic_elem", &SUB::System::plastic_elem, "Element numbers of plastic elements");
+
             cls.def_property_readonly("conn", &SUB::System::conn, "conn");
             cls.def_property_readonly("coor", &SUB::System::coor, "coor");
             cls.def_property_readonly("dofs", &SUB::System::dofs, "dofs");
@@ -227,29 +203,20 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def_property_readonly("fint", &SUB::System::fint, "fint");
             cls.def_property_readonly("fmaterial", &SUB::System::fmaterial, "fmaterial");
             cls.def_property_readonly("fdamp", &SUB::System::fdamp, "fdamp");
-            cls.def("residual", &SUB::System::residual, "residual");
             cls.def_property_readonly("dV", &SUB::System::dV, "dV");
-
-            cls.def("stiffness", &SUB::System::stiffness, "stiffness");
-
             cls.def_property_readonly("vector", &SUB::System::vector, "vector");
-
             cls.def_property_readonly("quad", &SUB::System::quad, "quad");
+            cls.def_property_readonly("elastic", &SUB::System::elastic, "elastic");
+            cls.def_property_readonly("plastic", &SUB::System::plastic, "plastic");
 
-            cls.def_property_readonly(
-                "material_elastic", &SUB::System::material_elastic, "material_elastic");
-
-            cls.def_property_readonly(
-                "material_plastic", &SUB::System::material_plastic, "material_plastic");
-
+            cls.def("residual", &SUB::System::residual, "residual");
+            cls.def("stiffness", &SUB::System::stiffness, "stiffness");
             cls.def("K", &SUB::System::K, "K");
             cls.def("G", &SUB::System::G, "G");
-            cls.def_property_readonly("Sig", &SUB::System::Sig, "Sig");
-            cls.def_property_readonly("Eps", &SUB::System::Eps, "Eps");
+            cls.def("Sig", &SUB::System::Sig, "Sig");
+            cls.def("Eps", &SUB::System::Eps, "Eps");
             cls.def("Epsdot", &SUB::System::Epsdot, "Epsdot");
             cls.def("Epsddot", &SUB::System::Epsddot, "Epsddot");
-            cls.def_property_readonly("plastic_Sig", &SUB::System::plastic_Sig, "plastic_Sig");
-            cls.def_property_readonly("plastic_Eps", &SUB::System::plastic_Eps, "plastic_Eps");
             cls.def("plastic_Epsdot", &SUB::System::plastic_Epsdot, "plastic_Epsdot");
 
             cls.def(
@@ -257,33 +224,6 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 &SUB::System::boundcheck_right,
                 "boundcheck_right",
                 py::arg("n"));
-
-            cls.def(
-                "plastic_CurrentYieldLeft",
-                py::overload_cast<>(&SUB::System::plastic_CurrentYieldLeft, py::const_),
-                "plastic_CurrentYieldLeft");
-
-            cls.def(
-                "plastic_CurrentYieldRight",
-                py::overload_cast<>(&SUB::System::plastic_CurrentYieldRight, py::const_),
-                "plastic_CurrentYieldRight");
-
-            cls.def(
-                "plastic_CurrentYieldLeft",
-                py::overload_cast<size_t>(&SUB::System::plastic_CurrentYieldLeft, py::const_),
-                "plastic_CurrentYieldLeft",
-                py::arg("offset"));
-
-            cls.def(
-                "plastic_CurrentYieldRight",
-                py::overload_cast<size_t>(&SUB::System::plastic_CurrentYieldRight, py::const_),
-                "plastic_CurrentYieldRight",
-                py::arg("offset"));
-
-            cls.def(
-                "plastic_CurrentIndex", &SUB::System::plastic_CurrentIndex, "plastic_CurrentIndex");
-
-            cls.def("plastic_Epsp", &SUB::System::plastic_Epsp, "plastic_Epsp");
 
             cls.def(
                 "eventDriven_setDeltaU",

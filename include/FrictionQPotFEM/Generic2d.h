@@ -289,26 +289,23 @@ protected:
 
         m_Eps = m_quad.allocate_qtensor<2>(0.0);
         m_Sig = m_quad.allocate_qtensor<2>(0.0);
-        m_Eps_elas = m_quad_elas.allocate_qtensor<2>(0.0);
-        m_Sig_elas = m_quad_elas.allocate_qtensor<2>(0.0);
-        m_Eps_plas = m_quad_plas.allocate_qtensor<2>(0.0);
-        m_Sig_plas = m_quad_plas.allocate_qtensor<2>(0.0);
         m_Epsdot_plas = m_quad_plas.allocate_qtensor<2>(0.0);
 
         m_M = GooseFEM::MatrixDiagonalPartitioned(m_conn, m_dofs, m_iip);
         m_D = GooseFEM::MatrixDiagonal(m_conn, m_dofs);
 
-        m_material_elas = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem_elas, m_nip});
-        m_material_plas = GMatElastoPlasticQPot::Cartesian2d::Array<2>({m_nelem_plas, m_nip});
-
         m_K_elas = GooseFEM::Matrix(m_conn_elas, m_dofs);
+
+        // allocated to strain-free state, matching #m_u
+        m_elas = GMatElastoPlasticQPot::Cartesian2d::Elastic<2>(elastic_K, elastic_G);
+        m_plas = GMatElastoPlasticQPot::Cartesian2d::Cusp<2>(plastic_K, plastic_G, plastic_epsy);
+
+        m_K_elas.assemble(m_quad_elas.Int_gradN_dot_tensor4_dot_gradNT_dV(m_elas.C()));
 
         this->setDt(dt);
         this->setRho(rho);
         this->setAlpha(alpha);
         this->setEta(eta);
-        this->setElastic(elastic_K, elastic_G);
-        this->setPlastic(plastic_K, plastic_G, plastic_epsy);
     }
     /**
     \endcond
@@ -478,124 +475,6 @@ public:
 
 public:
     /**
-    Overwrite material parameters for the elastic elements
-    (taken uniform per element, ordering the same as in the constructor).
-
-    \tparam S e.g. `array_type::tensor<double, 1>`.
-    \tparam T e.g. `array_type::tensor<double, 1>`.
-    \param K Bulk modulus per integration point.
-    \param G Bulk modulus per integration point.
-    */
-    template <class S, class T>
-    void setElastic(const S& K, const T& G)
-    {
-        FRICTIONQPOTFEM_ASSERT(xt::has_shape(K, {m_nelem_elas, m_nip}));
-        FRICTIONQPOTFEM_ASSERT(xt::has_shape(G, {m_nelem_elas, m_nip}));
-
-        if (m_nelem_elas > 0) {
-
-            m_material_elas.setElastic(K, G);
-            m_material_elas.setStrain(m_Eps_elas);
-
-            FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(
-                m_material_elas.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
-
-            m_K_elas.assemble(
-                m_quad_elas.Int_gradN_dot_tensor4_dot_gradNT_dV(m_material_elas.Tangent()));
-        }
-    }
-
-public:
-    /**
-    Overwrite material parameters for the plastic elements
-    (taken uniform per element, ordering the same as in the constructor).
-
-    \tparam S e.g. `array_type::tensor<double, 1>`.
-    \tparam T e.g. `array_type::tensor<double, 1>`.
-    \tparam Y e.g. `array_type::tensor<double, 2>`.
-    \param K Bulk modulus per integration point.
-    \param G Bulk modulus per integration point.
-    \param epsy Yield history per integration point.
-    */
-    template <class S, class T, class Y>
-    void setPlastic(const S& K, const T& G, const Y& epsy)
-    {
-        FRICTIONQPOTFEM_ASSERT(xt::has_shape(K, {m_nelem_plas, m_nip}));
-        FRICTIONQPOTFEM_ASSERT(xt::has_shape(G, {m_nelem_plas, m_nip}));
-        FRICTIONQPOTFEM_ASSERT(epsy.dimension() == 3);
-        FRICTIONQPOTFEM_ASSERT(epsy.shape(0) == m_nelem_plas);
-        FRICTIONQPOTFEM_ASSERT(epsy.shape(1) == m_nip);
-
-        if (m_nelem_plas > 0) {
-
-            xt::xarray<double> tmp_K = K;
-            xt::xarray<double> tmp_G = G;
-            xt::xarray<double> tmp_epsy = epsy;
-            tmp_K.reshape({K.size()});
-            tmp_G.reshape({G.size()});
-            tmp_epsy.reshape({epsy.shape(0) * epsy.shape(1), epsy.shape(2)});
-            xt::xarray<bool> I = xt::ones<bool>({m_nelem_plas, m_nip});
-            xt::xarray<size_t> idx = xt::arange<size_t>(m_nelem_plas * m_nip);
-            idx.reshape({m_nelem_plas, m_nip});
-
-            m_material_plas.setCusp(I, idx, tmp_K, tmp_G, tmp_epsy, false);
-            m_material_plas.setStrain(m_Eps_plas);
-
-            FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(
-                m_material_plas.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
-        }
-    }
-
-public:
-    /**
-    Reset yield strains (to avoid re-construction).
-    \tparam T e.g. `array_type::tensor<double, 2>`.
-    \param epsy_elem Yield history per element.
-    */
-    template <class T>
-    void reset_epsy(const T& epsy_elem)
-    {
-        FRICTIONQPOTFEM_ASSERT(epsy_elem.dimension() == 2);
-        FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
-
-        if (m_nelem_plas > 0) {
-            array_type::tensor<size_t, 2> I = xt::ones<size_t>({m_nelem_plas, m_nip});
-            array_type::tensor<size_t, 2> idx = xt::zeros<size_t>({m_nelem_plas, m_nip});
-
-            xt::view(idx, xt::range(0, m_nelem_plas), xt::all()) =
-                xt::arange<size_t>(m_nelem_plas).reshape({-1, 1});
-
-            m_material_plas.reset_epsy(I, idx, epsy_elem);
-        }
-    }
-
-public:
-    /**
-    Get the current yield strains per plastic element.
-    Note that in this system the yield strains history is always the same for all the integration
-    points in the system.
-    \return [plastic().size, n]
-    */
-    array_type::tensor<double, 2> epsy() const
-    {
-        using S = typename array_type::tensor<double, 2>::size_type;
-        array_type::tensor<double, 2> ret;
-
-        for (size_t e = 0; e < m_nelem_plas; ++e) {
-            auto cusp = m_material_plas.crefCusp({e, 0});
-            auto val = cusp.epsy();
-            if (e == 0) {
-                std::array<S, 2> shape = {static_cast<S>(m_nelem_plas), static_cast<S>(val.size())};
-                ret.resize(shape);
-            }
-            std::copy(val.cbegin(), val.cend(), &ret(e, xt::missing));
-        }
-
-        return ret;
-    }
-
-public:
-    /**
     Check if elasticity is homogeneous.
 
     \return ``true`` is elasticity is homogeneous (``false`` otherwise).
@@ -727,7 +606,7 @@ public:
 
     \return List of element numbers.
     */
-    const auto& elastic() const
+    const auto& elastic_elem() const
     {
         return m_elem_elas;
     }
@@ -738,7 +617,7 @@ public:
 
     \return List of element numbers.
     */
-    const auto& plastic() const
+    const auto& plastic_elem() const
     {
         return m_elem_plas;
     }
@@ -960,24 +839,22 @@ public:
 
 public:
     /**
-    GMatElastoPlasticQPot Array definition for the elastic elements.
-
-    \return GMatElastoPlasticQPot::Cartesian2d::Array<2>" (#m_material_elas).
+    Elastic material mode, used for all elastic elements.
+    \return GMatElastoPlasticQPot::Cartesian2d::Elastic<2>&
     */
-    const GMatElastoPlasticQPot::Cartesian2d::Array<2>& material_elastic() const
+    GMatElastoPlasticQPot::Cartesian2d::Elastic<2>& elastic()
     {
-        return m_material_elas;
+        return m_elas;
     }
 
 public:
     /**
-    GMatElastoPlasticQPot Array definition for the plastic elements.
-
-    \return GMatElastoPlasticQPot::Cartesian2d::Array<2>" (#m_material_plas).
+    Elastic material mode, used for all elastic elements.
+    \return GMatElastoPlasticQPot::Cartesian2d::Cusp<2>&
     */
-    const GMatElastoPlasticQPot::Cartesian2d::Array<2>& material_plastic() const
+    GMatElastoPlasticQPot::Cartesian2d::Cusp<2>& plastic()
     {
-        return m_material_plas;
+        return m_plas;
     }
 
 public:
@@ -990,8 +867,8 @@ public:
     {
         array_type::tensor<double, 2> ret = xt::empty<double>({m_nelem, m_nip});
 
-        auto ret_elas = m_material_elas.K();
-        auto ret_plas = m_material_plas.K();
+        const auto& ret_elas = m_elas.K();
+        const auto& ret_plas = m_plas.K();
         size_t n = xt::strides(ret_elas, 0);
         FRICTIONQPOTFEM_ASSERT(n == m_nip);
 
@@ -1022,8 +899,8 @@ public:
     {
         array_type::tensor<double, 2> ret = xt::empty<double>({m_nelem, m_nip});
 
-        auto ret_elas = m_material_elas.G();
-        auto ret_plas = m_material_plas.G();
+        const auto& ret_elas = m_elas.G();
+        const auto& ret_plas = m_plas.G();
         size_t n = xt::strides(ret_elas, 0);
         FRICTIONQPOTFEM_ASSERT(n == m_nip);
 
@@ -1099,8 +976,8 @@ public:
     GooseFEM::MatrixPartitioned stiffness() const
     {
         auto ret = m_quad.allocate_qtensor<4>(0.0);
-        auto ret_plas = m_material_plas.Tangent();
-        auto ret_elas = m_material_elas.Tangent();
+        const auto& ret_plas = m_plas.C();
+        const auto& ret_elas = m_elas.C();
         size_t n = xt::strides(ret_elas, 0);
         FRICTIONQPOTFEM_ASSERT(n == m_nip * 16);
 
@@ -1125,31 +1002,9 @@ public:
 
 public:
     /**
-    Stress tensor of integration points of plastic elements only, see System::plastic.
-
-    \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
-    */
-    const array_type::tensor<double, 4>& plastic_Sig() const
-    {
-        return m_Sig_plas;
-    }
-
-public:
-    /**
-    Strain tensor of integration points of plastic elements only, see System::plastic.
-
-    \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
-    */
-    const array_type::tensor<double, 4>& plastic_Eps() const
-    {
-        return m_Eps_plas;
-    }
-
-public:
-    /**
     Strain-rate tensor of integration points of plastic elements only, see System::plastic.
 
-    \return Integration point tensor. Shape: [plastic().size(), nip, 2, 2].
+    \return Integration point tensor. Shape: [plastic_elem().size(), nip, 2, 2].
     */
     array_type::tensor<double, 4> plastic_Epsdot()
     {
@@ -1164,85 +1019,14 @@ public:
 
 public:
     /**
-    Current yield strain left (in the negative equivalent strain direction).
-
-    \return Integration point scalar. Shape: [plastic().size(), nip].
-    */
-    array_type::tensor<double, 2> plastic_CurrentYieldLeft() const
-    {
-        return m_material_plas.CurrentYieldLeft();
-    }
-
-public:
-    /**
-    Current yield strain right (in the positive equivalent strain direction).
-
-    \return Integration point scalar. Shape: [plastic().size(), nip].
-    */
-    array_type::tensor<double, 2> plastic_CurrentYieldRight() const
-    {
-        return m_material_plas.CurrentYieldRight();
-    }
-
-public:
-    /**
-    Yield strain at an offset to the current yield strain left
-    (in the negative equivalent strain direction).
-    If ``offset = 0`` the result is the same result as the basic System::plastic_CurrentYieldLeft.
-
-    \param offset Offset (number of yield strains).
-    \return Integration point scalar. Shape: [plastic().size(), nip].
-    */
-    array_type::tensor<double, 2> plastic_CurrentYieldLeft(size_t offset) const
-    {
-        return m_material_plas.CurrentYieldLeft(offset);
-    }
-
-public:
-    /**
-    Yield strain at an offset to the current yield strain right
-    (in the positive equivalent strain direction).
-    If ``offset = 0`` the result is the same result as the basic System::plastic_CurrentYieldRight.
-
-    \param offset Offset (number of yield strains).
-    \return Integration point scalar. Shape: [plastic().size(), nip].
-    */
-    array_type::tensor<double, 2> plastic_CurrentYieldRight(size_t offset) const
-    {
-        return m_material_plas.CurrentYieldRight(offset);
-    }
-
-public:
-    /**
-    Current index in the landscape.
-
-    \return Integration point scalar. Shape: [plastic().size(), nip].
-    */
-    array_type::tensor<size_t, 2> plastic_CurrentIndex() const
-    {
-        return m_material_plas.CurrentIndex();
-    }
-
-public:
-    /**
-    Plastic strain.
-
-    \return Integration point scalar. Shape: [plastic().size(), nip].
-    */
-    array_type::tensor<double, 2> plastic_Epsp() const
-    {
-        return m_material_plas.Epsp();
-    }
-
-public:
-    /**
     Check that the current yield-index is at least `n` away from the end.
     \param n Margin.
     \return `true` if the current yield-index is at least `n` away from the end.
     */
     bool boundcheck_right(size_t n) const
     {
-        return m_material_plas.checkYieldBoundRight(n);
+        FRICTIONQPOTFEM_REQUIRE(m_plas.epsy().shape(2) > n);
+        return xt::all(m_plas.i() < m_plas.epsy().shape(2) - n);
     }
 
 protected:
@@ -1255,32 +1039,36 @@ protected:
             return;
         }
 
-        m_vector_elas.asElement(m_u, m_ue_elas);
-        m_quad_elas.symGradN_vector(m_ue_elas, m_Eps_elas);
-        m_material_elas.setStrain(m_Eps_elas);
-        m_material_elas.stress(m_Sig_elas);
+        auto& Eps_elas = m_elas.Eps();
+        auto& Sig_elas = m_elas.Sig();
+        const auto& Eps_plas = m_plas.Eps();
+        const auto& Sig_plas = m_plas.Sig();
 
-        size_t n = xt::strides(m_Eps_elas, 0);
+        m_vector_elas.asElement(m_u, m_ue_elas);
+        m_quad_elas.symGradN_vector(m_ue_elas, Eps_elas);
+        m_elas.refresh();
+
+        size_t n = xt::strides(Eps_elas, 0);
         FRICTIONQPOTFEM_ASSERT(n == m_nip * 4);
 
         for (size_t e = 0; e < m_nelem_elas; ++e) {
             std::copy(
-                &m_Eps_elas(e, xt::missing),
-                &m_Eps_elas(e, xt::missing) + n,
+                &Eps_elas(e, xt::missing),
+                &Eps_elas(e, xt::missing) + n,
                 &m_Eps(m_elem_elas(e), xt::missing));
             std::copy(
-                &m_Sig_elas(e, xt::missing),
-                &m_Sig_elas(e, xt::missing) + n,
+                &Sig_elas(e, xt::missing),
+                &Sig_elas(e, xt::missing) + n,
                 &m_Sig(m_elem_elas(e), xt::missing));
         }
         for (size_t e = 0; e < m_nelem_plas; ++e) {
             std::copy(
-                &m_Eps_plas(e, xt::missing),
-                &m_Eps_plas(e, xt::missing) + n,
+                &Eps_plas(e, xt::missing),
+                &Eps_plas(e, xt::missing) + n,
                 &m_Eps(m_elem_plas(e), xt::missing));
             std::copy(
-                &m_Sig_plas(e, xt::missing),
-                &m_Sig_plas(e, xt::missing) + n,
+                &Sig_plas(e, xt::missing),
+                &Sig_plas(e, xt::missing) + n,
                 &m_Sig(m_elem_plas(e), xt::missing));
         }
 
@@ -1289,17 +1077,15 @@ protected:
 
     /**
     Update #m_fmaterial based on the current displacement field #m_u.
-    This implies computing #m_Eps_plas and #m_Sig_plas.
     */
     void computeForceMaterial()
     {
         m_full_outdated = true;
 
         m_vector_plas.asElement(m_u, m_ue_plas);
-        m_quad_plas.symGradN_vector(m_ue_plas, m_Eps_plas);
-        m_material_plas.setStrain(m_Eps_plas);
-        m_material_plas.stress(m_Sig_plas);
-        m_quad_plas.int_gradN_dot_tensor2_dV(m_Sig_plas, m_fe_plas);
+        m_quad_plas.symGradN_vector(m_ue_plas, m_plas.Eps());
+        m_plas.refresh();
+        m_quad_plas.int_gradN_dot_tensor2_dV(m_plas.Sig(), m_fe_plas);
         m_vector_plas.assembleNode(m_fe_plas, m_fplas);
 
         m_K_elas.dot(m_u, m_felas);
@@ -1341,18 +1127,15 @@ public:
         m_pert_u = delta_u;
 
         m_vector_plas.asElement(delta_u, m_ue_plas);
-        m_quad_plas.symGradN_vector(m_ue_plas, m_Eps_plas);
-        m_pert_Epsd_plastic = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(m_Eps_plas);
-
-        m_vector_plas.asElement(m_u, m_ue_plas);
-        m_quad_plas.symGradN_vector(m_ue_plas, m_Eps_plas);
+        auto Eps = m_quad_plas.SymGradN_vector(m_ue_plas);
+        m_pert_Epsd_plastic = GMatTensor::Cartesian2d::Deviatoric(Eps);
 
         if (!autoscale) {
             return 1.0;
         }
 
         auto deps = xt::amax(GMatElastoPlasticQPot::Cartesian2d::Epsd(m_pert_Epsd_plastic))();
-        auto d = xt::amin(xt::diff(this->epsy(), 1))();
+        auto d = xt::amin(xt::diff(m_plas.epsy(), 1))();
         double c = 0.1 * d / deps;
 
         m_pert_u *= c;
@@ -1412,10 +1195,11 @@ public:
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(m_pert_u, m_u.shape()));
         FRICTIONQPOTFEM_ASSERT(direction == 1 || direction == -1);
 
-        auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
-        auto idx = this->plastic_CurrentIndex();
-        auto epsy_l = this->plastic_CurrentYieldLeft();
-        auto epsy_r = this->plastic_CurrentYieldRight();
+        auto eps = GMatElastoPlasticQPot::Cartesian2d::Epsd(m_plas.Eps());
+        auto Epsd_plastic = GMatTensor::Cartesian2d::Deviatoric(m_plas.Eps());
+        auto idx = m_plas.i();
+        const auto& epsy_l = m_plas.epsy_left();
+        const auto& epsy_r = m_plas.epsy_right();
 
         FRICTIONQPOTFEM_WIP(iterative || direction > 0 || !xt::any(xt::equal(idx, 0)));
 
@@ -1435,7 +1219,7 @@ public:
         }
 
         if (!kick) {
-            auto d = target - GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps());
+            auto d = target - eps;
             if (direction > 0 && xt::any(d < 0.0)) {
                 return 0.0;
             }
@@ -1444,7 +1228,6 @@ public:
             }
         }
 
-        auto Epsd_plastic = GMatElastoPlasticQPot::Cartesian2d::Deviatoric(this->plastic_Eps());
         auto scale = xt::empty_like(target);
 
         for (size_t e = 0; e < m_nelem_plas; ++e) {
@@ -1497,8 +1280,8 @@ public:
 
             double dir = static_cast<double>(direction);
             auto steps = xt::sort(xt::ravel(xt::eval(xt::abs(scale))));
-            auto u_n = this->u();
-            auto jdx = xt::cast<long>(this->plastic_CurrentIndex());
+            auto u_n = m_u;
+            xt::xtensor<long, 2> jdx = xt::cast<long>(m_plas.i());
             size_t i;
             long nip = static_cast<long>(m_nip);
 
@@ -1508,7 +1291,7 @@ public:
 
             for (i = 0; i < steps.size(); ++i) {
                 this->setU(u_n + dir * steps(i) * m_pert_u);
-                auto jdx_new = xt::cast<long>(this->plastic_CurrentIndex());
+                auto jdx_new = xt::cast<long>(m_plas.i());
                 auto S = xt::abs(jdx_new - jdx);
                 if (!yield_element || !kick) {
                     if (xt::any(S > 0)) {
@@ -1538,7 +1321,7 @@ public:
 
                 ret = 0.5 * (right + left);
                 this->setU(u_n + dir * ret * m_pert_u);
-                auto jdx_new = xt::cast<long>(this->plastic_CurrentIndex());
+                auto jdx_new = xt::cast<long>(m_plas.i());
                 auto S = xt::abs(jdx_new - jdx);
 
                 if (!kick) {
@@ -1576,7 +1359,7 @@ public:
 
             {
                 this->setU(u_n + dir * left * m_pert_u);
-                auto jdx_new = xt::cast<long>(this->plastic_CurrentIndex());
+                auto jdx_new = xt::cast<long>(m_plas.i());
                 auto S = xt::abs(jdx_new - jdx);
 
                 FRICTIONQPOTFEM_REQUIRE(kick || xt::all(xt::equal(S, 0)));
@@ -1589,7 +1372,7 @@ public:
             }
             {
                 this->setU(u_n + dir * right * m_pert_u);
-                auto jdx_new = xt::cast<long>(this->plastic_CurrentIndex());
+                auto jdx_new = xt::cast<long>(m_plas.i());
                 auto S = xt::abs(jdx_new - jdx);
                 FRICTIONQPOTFEM_REQUIRE(!xt::all(xt::equal(S, 0)));
 
@@ -1616,12 +1399,12 @@ public:
 
         this->setU(m_u + ret * m_pert_u);
 
-        auto idx_new = this->plastic_CurrentIndex();
+        const auto& idx_new = m_plas.i();
         FRICTIONQPOTFEM_REQUIRE(kick || xt::all(xt::equal(idx, idx_new)));
         FRICTIONQPOTFEM_REQUIRE(!kick || xt::any(xt::not_equal(idx, idx_new)));
 
         if (!iterative) {
-            auto eps_new = GMatElastoPlasticQPot::Cartesian2d::Epsd(this->plastic_Eps())(e, q);
+            auto eps_new = GMatElastoPlasticQPot::Cartesian2d::Epsd(m_plas.Eps())(e, q);
             auto eps_target = target(e, q);
             FRICTIONQPOTFEM_REQUIRE(xt::allclose(eps_new, eps_target));
         }
@@ -1772,15 +1555,13 @@ public:
         double tol2 = tol * tol;
         GooseFEM::Iterate::StopList residuals(niter_tol);
 
-        auto idx_n = this->plastic_CurrentIndex();
+        auto idx_n = m_plas.i();
 
         for (iiter = 1; iiter < max_iter + 1; ++iiter) {
 
             this->timeStep();
 
-            auto idx = this->plastic_CurrentIndex();
-
-            if (xt::any(xt::not_equal(idx, idx_n))) {
+            if (xt::any(xt::not_equal(m_plas.i(), idx_n))) {
                 return iiter;
             }
 
@@ -1952,8 +1733,7 @@ public:
                 return iiter;
             }
 
-            array_type::tensor<size_t, 1> idx =
-                xt::view(this->plastic_CurrentIndex(), xt::all(), 0);
+            array_type::tensor<size_t, 1> idx = xt::view(m_plas.i(), xt::all(), 0);
 
             if (static_cast<size_t>(xt::sum(xt::not_equal(idx_n, idx))()) >= A_truncate) {
                 return 0;
@@ -1988,7 +1768,7 @@ public:
         size_t niter_tol = 20,
         size_t max_iter = 10000000)
     {
-        array_type::tensor<size_t, 1> idx_n = xt::view(this->plastic_CurrentIndex(), xt::all(), 0);
+        array_type::tensor<size_t, 1> idx_n = xt::view(m_plas.i(), xt::all(), 0);
         return this->minimise_truncate(idx_n, A_truncate, S_truncate, tol, niter_tol, max_iter);
     }
 
@@ -2058,8 +1838,8 @@ protected:
     GooseFEM::VectorPartitioned m_vector_plas; ///< #m_vector for plastic elements only.
     GooseFEM::MatrixDiagonalPartitioned m_M; ///< Mass matrix (diagonal).
     GooseFEM::MatrixDiagonal m_D; ///< Damping matrix (diagonal).
-    GMatElastoPlasticQPot::Cartesian2d::Array<2> m_material_elas; ///< Material for elastic el.
-    GMatElastoPlasticQPot::Cartesian2d::Array<2> m_material_plas; ///< Material for plastic el.
+    GMatElastoPlasticQPot::Cartesian2d::Elastic<2> m_elas; ///< Material for elastic el.
+    GMatElastoPlasticQPot::Cartesian2d::Cusp<2> m_plas; ///< Material for plastic el.
 
     /**
     Nodal displacements.
@@ -2099,14 +1879,6 @@ protected:
     array_type::tensor<double, 2> m_fres; ///< Nodal force: residual force.
     array_type::tensor<double, 4> m_Eps; ///< Integration point tensor: strain.
     array_type::tensor<double, 4> m_Sig; ///< Integration point tensor: stress.
-    array_type::tensor<double, 4>
-        m_Eps_elas; ///< Integration point tensor: strain for elastic elements.
-    array_type::tensor<double, 4>
-        m_Eps_plas; ///< Integration point tensor: strain for plastic elements.
-    array_type::tensor<double, 4>
-        m_Sig_elas; ///< Integration point tensor: stress for elastic elements.
-    array_type::tensor<double, 4>
-        m_Sig_plas; ///< Integration point tensor: stress for plastic elements.
     array_type::tensor<double, 4>
         m_Epsdot_plas; ///< Integration point tensor: strain-rate for plastic el.
     GooseFEM::Matrix m_K_elas; ///< Stiffness matrix for elastic elements only.
