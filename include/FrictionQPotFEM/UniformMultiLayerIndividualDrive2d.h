@@ -617,9 +617,7 @@ public:
 
         this->computeLayerUbarActive();
         this->computeForceFromTargetUbar();
-        if (m_allset) {
-            this->computeForceMaterial();
-        }
+        this->computeForceMaterial();
     }
 
     /**

@@ -226,6 +226,7 @@ protected:
         double eta)
     {
         m_t = 0.0;
+        m_full_outdated = true;
 
         m_coor = coor;
         m_conn = conn;
@@ -244,8 +245,6 @@ protected:
 
         m_nelem_elas = m_elem_elas.size();
         m_nelem_plas = m_elem_plas.size();
-        m_set_elas = !m_nelem_elas;
-        m_set_plas = !m_nelem_plas;
         m_N = m_nelem_plas;
 
 #ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
@@ -310,8 +309,6 @@ protected:
         this->setEta(eta);
         this->setElastic(elastic_K, elastic_G);
         this->setPlastic(plastic_K, plastic_G, plastic_epsy);
-
-        FRICTIONQPOTFEM_REQUIRE(m_allset);
     }
     /**
     \endcond
@@ -333,16 +330,6 @@ public:
     virtual std::string type() const
     {
         return "FrictionQPotFEM.Generic2d.System";
-    }
-
-protected:
-    /**
-    \todo Remove for new constructor.
-    Set #m_allset = ``true`` if all prerequisites are satisfied.
-    */
-    void evalAllSet()
-    {
-        m_allset = m_set_M && (m_set_D || m_set_visco) && m_set_elas && m_set_plas && m_dt > 0.0;
     }
 
 public:
@@ -379,7 +366,6 @@ public:
     template <class T>
     void setMassMatrix(const T& val_elem)
     {
-        FRICTIONQPOTFEM_ASSERT(!m_set_M);
         FRICTIONQPOTFEM_ASSERT(val_elem.size() == m_nelem);
 
         if (xt::allclose(val_elem, val_elem(0))) {
@@ -400,8 +386,6 @@ public:
         }
 
         m_M.assemble(nodalQuad.Int_N_scalar_NT_dV(val_quad));
-        m_set_M = true;
-        this->evalAllSet();
     }
 
 public:
@@ -466,11 +450,14 @@ public:
     template <class T>
     void setDampingMatrix(const T& val_elem)
     {
-        FRICTIONQPOTFEM_ASSERT(!m_set_D);
         FRICTIONQPOTFEM_ASSERT(val_elem.size() == m_nelem);
+        m_set_D = true;
 
         if (xt::allclose(val_elem, val_elem(0))) {
             m_alpha = val_elem(0);
+            if (detail::is_same(m_alpha, 0.0)) {
+                m_set_D = false;
+            }
         }
         else {
             m_alpha = 0.0;
@@ -487,8 +474,6 @@ public:
         }
 
         m_D.assemble(nodalQuad.Int_N_scalar_NT_dV(val_quad));
-        m_set_D = true;
-        this->evalAllSet();
     }
 
 public:
@@ -504,7 +489,6 @@ public:
     template <class S, class T>
     void setElastic(const S& K, const T& G)
     {
-        FRICTIONQPOTFEM_ASSERT(!m_set_elas || m_nelem_elas == 0);
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(K, {m_nelem_elas, m_nip}));
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(G, {m_nelem_elas, m_nip}));
 
@@ -519,9 +503,6 @@ public:
             m_K_elas.assemble(
                 m_quad_elas.Int_gradN_dot_tensor4_dot_gradNT_dV(m_material_elas.Tangent()));
         }
-
-        m_set_elas = true;
-        this->evalAllSet();
     }
 
 public:
@@ -539,7 +520,6 @@ public:
     template <class S, class T, class Y>
     void setPlastic(const S& K, const T& G, const Y& epsy)
     {
-        FRICTIONQPOTFEM_ASSERT(!m_set_plas || m_nelem_plas == 0);
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(K, {m_nelem_plas, m_nip}));
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(G, {m_nelem_plas, m_nip}));
         FRICTIONQPOTFEM_ASSERT(epsy.dimension() == 3);
@@ -564,9 +544,6 @@ public:
             FRICTIONQPOTFEM_REQUIRE(xt::all(xt::not_equal(
                 m_material_plas.type(), GMatElastoPlasticQPot::Cartesian2d::Type::Unset)));
         }
-
-        m_set_plas = true;
-        this->evalAllSet();
     }
 
 public:
@@ -578,7 +555,6 @@ public:
     template <class T>
     void reset_epsy(const T& epsy_elem)
     {
-        FRICTIONQPOTFEM_ASSERT(m_set_plas);
         FRICTIONQPOTFEM_ASSERT(epsy_elem.dimension() == 2);
         FRICTIONQPOTFEM_ASSERT(epsy_elem.shape(0) == m_nelem_plas);
 
@@ -647,7 +623,6 @@ public:
     void setDt(double dt)
     {
         m_dt = dt;
-        this->evalAllSet();
     }
 
 public:
@@ -1276,7 +1251,6 @@ protected:
     */
     void computeEpsSig()
     {
-        FRICTIONQPOTFEM_ASSERT(m_allset);
         if (!m_full_outdated) {
             return;
         }
@@ -1319,7 +1293,6 @@ protected:
     */
     void computeForceMaterial()
     {
-        FRICTIONQPOTFEM_ASSERT(m_allset);
         m_full_outdated = true;
 
         m_vector_plas.asElement(m_u, m_ue_plas);
@@ -1663,8 +1636,6 @@ public:
     */
     void timeStep()
     {
-        FRICTIONQPOTFEM_ASSERT(m_allset);
-
         // history
 
         m_t += m_dt;
@@ -2144,13 +2115,9 @@ protected:
     double m_eta; ///< Damping at the interface
     double m_rho; ///< Mass density (non-zero only if homogeneous).
     double m_alpha; ///< Background damping density (non-zero only if homogeneous).
-    bool m_allset = false; ///< Internal allocation check. // todo: remove (next few too)
-    bool m_set_M = false; ///< Internal allocation check: mass matrix was written.
-    bool m_set_D = false; ///< Internal allocation check: damping matrix was written.
-    bool m_set_visco = false; ///< Internal allocation check: interfacial damping specified.
-    bool m_set_elas = false; ///< Internal allocation check: elastic elements were written.
-    bool m_set_plas = false; ///< Internal allocation check: plastic elements were written.
-    bool m_full_outdated = true; ///< Keep track of the need to recompute fields on full geometry.
+    bool m_set_D; ///< Use #m_D only if it is non-zero.
+    bool m_set_visco; ///< Use #m_eta only if it is non-zero.
+    bool m_full_outdated; ///< Keep track of the need to recompute fields on full geometry.
     array_type::tensor<double, 2> m_pert_u; ///< See eventDriven_setDeltaU()
     array_type::tensor<double, 4> m_pert_Epsd_plastic; ///< Strain deviator for #m_pert_u.
 };
