@@ -225,6 +225,8 @@ protected:
         double alpha,
         double eta)
     {
+        m_t = 0.0;
+
         m_coor = coor;
         m_conn = conn;
         m_dofs = dofs;
@@ -308,6 +310,8 @@ protected:
         this->setEta(eta);
         this->setElastic(elastic_K, elastic_G);
         this->setPlastic(plastic_K, plastic_G, plastic_epsy);
+
+        FRICTIONQPOTFEM_REQUIRE(m_allset);
     }
     /**
     \endcond
@@ -2135,12 +2139,12 @@ protected:
     array_type::tensor<double, 4>
         m_Epsdot_plas; ///< Integration point tensor: strain-rate for plastic el.
     GooseFEM::Matrix m_K_elas; ///< Stiffness matrix for elastic elements only.
-    double m_t = 0.0; ///< Current time.
-    double m_dt = 0.0; ///< Time-step.
-    double m_eta = 0.0; ///< Damping at the interface
-    double m_rho = 0.0; ///< Mass density (non-zero only if homogeneous).
-    double m_alpha = 0.0; ///< Background damping density (non-zero only if homogeneous).
-    bool m_allset = false; ///< Internal allocation check.
+    double m_t; ///< Current time.
+    double m_dt; ///< Time-step.
+    double m_eta; ///< Damping at the interface
+    double m_rho; ///< Mass density (non-zero only if homogeneous).
+    double m_alpha; ///< Background damping density (non-zero only if homogeneous).
+    bool m_allset = false; ///< Internal allocation check. // todo: remove (next few too)
     bool m_set_M = false; ///< Internal allocation check: mass matrix was written.
     bool m_set_D = false; ///< Internal allocation check: damping matrix was written.
     bool m_set_visco = false; ///< Internal allocation check: interfacial damping specified.

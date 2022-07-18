@@ -361,7 +361,7 @@ protected:
     }
 
 private:
-    bool m_lever_set = false; ///< Lock class until properties have been set.
+    bool m_lever_set = false; ///< Lock class until properties have been set. // todo: remove
     double m_lever_H; ///< See setLeverProperties().
     array_type::tensor<double, 1> m_lever_hi; ///< See setLeverProperties().
     array_type::tensor<double, 1> m_lever_hi_H; ///< m_lever_hi / H
