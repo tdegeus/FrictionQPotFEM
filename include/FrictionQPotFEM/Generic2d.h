@@ -229,19 +229,16 @@ protected:
         m_full_outdated = true;
 
         m_coor = coor;
-        m_conn = conn;
-        m_dofs = dofs;
-        m_iip = iip;
         m_elem_elas = elastic_elem;
         m_elem_plas = plastic_elem;
 
-        m_conn_elas = xt::view(m_conn, xt::keep(m_elem_elas), xt::all());
-        m_conn_plas = xt::view(m_conn, xt::keep(m_elem_plas), xt::all());
+        array_type::tensor<size_t, 2> conn_elas = xt::view(conn, xt::keep(m_elem_elas), xt::all());
+        array_type::tensor<size_t, 2> conn_plas = xt::view(conn, xt::keep(m_elem_plas), xt::all());
 
         m_nnode = m_coor.shape(0);
         m_ndim = m_coor.shape(1);
-        m_nelem = m_conn.shape(0);
-        m_nne = m_conn.shape(1);
+        m_nelem = conn.shape(0);
+        m_nne = conn.shape(1);
 
         m_nelem_elas = m_elem_elas.size();
         m_nelem_plas = m_elem_plas.size();
@@ -252,12 +249,12 @@ protected:
         array_type::tensor<size_t, 1> elem = xt::concatenate(xt::xtuple(m_elem_elas, m_elem_plas));
         FRICTIONQPOTFEM_ASSERT(xt::sort(elem) == xt::arange<size_t>(m_nelem));
         // check that all "iip" or in "dofs"
-        FRICTIONQPOTFEM_ASSERT(xt::all(xt::isin(m_iip, m_dofs)));
+        FRICTIONQPOTFEM_ASSERT(xt::all(xt::isin(iip, dofs)));
 #endif
 
-        m_vector = GooseFEM::VectorPartitioned(m_conn, m_dofs, m_iip);
-        m_vector_elas = GooseFEM::VectorPartitioned(m_conn_elas, m_dofs, m_iip);
-        m_vector_plas = GooseFEM::VectorPartitioned(m_conn_plas, m_dofs, m_iip);
+        m_vector = GooseFEM::VectorPartitioned(conn, dofs, iip);
+        m_vector_elas = GooseFEM::VectorPartitioned(conn_elas, dofs, iip);
+        m_vector_plas = GooseFEM::VectorPartitioned(conn_plas, dofs, iip);
 
         m_quad = GooseFEM::Element::Quad4::Quadrature(m_vector.AsElement(m_coor));
         m_quad_elas = GooseFEM::Element::Quad4::Quadrature(m_vector_elas.AsElement(m_coor));
@@ -291,10 +288,10 @@ protected:
         m_Sig = m_quad.allocate_qtensor<2>(0.0);
         m_Epsdot_plas = m_quad_plas.allocate_qtensor<2>(0.0);
 
-        m_M = GooseFEM::MatrixDiagonalPartitioned(m_conn, m_dofs, m_iip);
-        m_D = GooseFEM::MatrixDiagonal(m_conn, m_dofs);
+        m_M = GooseFEM::MatrixDiagonalPartitioned(conn, dofs, iip);
+        m_D = GooseFEM::MatrixDiagonal(conn, dofs);
 
-        m_K_elas = GooseFEM::Matrix(m_conn_elas, m_dofs);
+        m_K_elas = GooseFEM::Matrix(conn_elas, dofs);
 
         // allocated to strain-free state, matching #m_u
         m_elas = GMatElastoPlasticQPot::Cartesian2d::Elastic<2>(elastic_K, elastic_G);
@@ -630,7 +627,7 @@ public:
     */
     const auto& conn() const
     {
-        return m_conn;
+        return m_vector.conn();
     }
 
 public:
@@ -652,7 +649,7 @@ public:
     */
     const auto& dofs() const
     {
-        return m_dofs;
+        return m_vector.dofs();
     }
 
 public:
@@ -995,7 +992,7 @@ public:
                 &ret(m_elem_plas(e), xt::missing));
         }
 
-        GooseFEM::MatrixPartitioned K(m_conn, m_dofs, m_iip);
+        GooseFEM::MatrixPartitioned K(m_vector.conn(), m_vector.dofs(), m_vector.iip());
         K.assemble(m_quad.Int_gradN_dot_tensor4_dot_gradNT_dV(ret));
         return K;
     }
@@ -1802,8 +1799,8 @@ public:
     array_type::tensor<double, 2> affineSimpleShearCentered(double delta_gamma) const
     {
         array_type::tensor<double, 2> ret = xt::zeros_like(m_u);
-        size_t ll = m_conn(m_elem_plas(0), 0);
-        size_t ul = m_conn(m_elem_plas(0), 3);
+        size_t ll = m_vector.conn()(m_elem_plas(0), 0);
+        size_t ul = m_vector.conn()(m_elem_plas(0), 3);
         double y0 = (m_coor(ul, 1) + m_coor(ll, 1)) / 2.0;
 
         for (size_t n = 0; n < m_nnode; ++n) {
@@ -1814,12 +1811,7 @@ public:
     }
 
 protected:
-    array_type::tensor<size_t, 2> m_conn; ///< Connectivity, see conn().
-    array_type::tensor<size_t, 2> m_conn_elas; ///< Slice of #m_conn for elastic elements.
-    array_type::tensor<size_t, 2> m_conn_plas; ///< Slice of #m_conn for plastic elements.
     array_type::tensor<double, 2> m_coor; ///< Nodal coordinates, see coor().
-    array_type::tensor<size_t, 2> m_dofs; ///< DOFs, shape: [#m_nnode, #m_ndim].
-    array_type::tensor<size_t, 1> m_iip; ///< Fixed DOFs.
     size_t m_N; ///< Number of plastic elements, alias of #m_nelem_plas.
     size_t m_nelem; ///< Number of elements.
     size_t m_nelem_elas; ///< Number of elastic elements.
@@ -1860,27 +1852,22 @@ protected:
     array_type::tensor<double, 2> m_a_n; ///< Nodal accelerations last time-step.
     array_type::tensor<double, 3> m_ue; ///< Element vector (used for displacements).
     array_type::tensor<double, 3> m_fe; ///< Element vector (used for forces).
-    array_type::tensor<double, 3>
-        m_ue_elas; ///< El. vector for elastic elements (used for displacements).
-    array_type::tensor<double, 3> m_fe_elas; ///< El. vector for plastic elements (used for forces).
-    array_type::tensor<double, 3>
-        m_ue_plas; ///< El. vector for elastic elements (used for displacements).
-    array_type::tensor<double, 3> m_fe_plas; ///< El. vector for plastic elements (used for forces).
+    array_type::tensor<double, 3> m_ue_elas; ///< #m_ue for elastic element only
+    array_type::tensor<double, 3> m_fe_elas; ///< #m_fe for elastic element only
+    array_type::tensor<double, 3> m_ue_plas; ///< #m_ue for plastic element only
+    array_type::tensor<double, 3> m_fe_plas; ///< #m_fe for plastic element only
     array_type::tensor<double, 2> m_fmaterial; ///< Nodal force, deriving from elasticity.
-    array_type::tensor<double, 2>
-        m_felas; ///< Nodal force, deriving from elasticity of elastic elements.
-    array_type::tensor<double, 2>
-        m_fplas; ///< Nodal force, deriving from elasticity of plastic elements.
-    array_type::tensor<double, 2> m_fdamp; ///< Nodal force, deriving from damping.
-    array_type::tensor<double, 2> m_fvisco; ///< Nodal force, deriving from damping at the interface
+    array_type::tensor<double, 2> m_felas; ///< Nodal force from elasticity of elastic elements.
+    array_type::tensor<double, 2> m_fplas; ///< Nodal force from elasticity of plastic elements.
+    array_type::tensor<double, 2> m_fdamp; ///< Nodal force from damping.
+    array_type::tensor<double, 2> m_fvisco; ///< Nodal force from damping at the interface
     array_type::tensor<double, 2> m_ftmp; ///< Temporary for internal use.
     array_type::tensor<double, 2> m_fint; ///< Nodal force: total internal force.
     array_type::tensor<double, 2> m_fext; ///< Nodal force: total external force (reaction force)
     array_type::tensor<double, 2> m_fres; ///< Nodal force: residual force.
-    array_type::tensor<double, 4> m_Eps; ///< Integration point tensor: strain.
-    array_type::tensor<double, 4> m_Sig; ///< Integration point tensor: stress.
-    array_type::tensor<double, 4>
-        m_Epsdot_plas; ///< Integration point tensor: strain-rate for plastic el.
+    array_type::tensor<double, 4> m_Eps; ///< Quad-point tensor: strain.
+    array_type::tensor<double, 4> m_Sig; ///< Quad-point tensor: stress.
+    array_type::tensor<double, 4> m_Epsdot_plas; ///< Quad-point tensor: strain-rate for plastic el.
     GooseFEM::Matrix m_K_elas; ///< Stiffness matrix for elastic elements only.
     double m_t; ///< Current time.
     double m_dt; ///< Time-step.
