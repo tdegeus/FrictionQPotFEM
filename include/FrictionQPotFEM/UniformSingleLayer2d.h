@@ -116,8 +116,8 @@ public:
     */
     double typical_plastic_h() const
     {
-        auto bot = xt::view(m_conn, xt::keep(m_elem_plas), 0);
-        auto top = xt::view(m_conn, xt::keep(m_elem_plas), 3);
+        auto bot = xt::view(m_vector.conn(), xt::keep(m_elem_plas), 0);
+        auto top = xt::view(m_vector.conn(), xt::keep(m_elem_plas), 3);
         auto h_plas = xt::view(m_coor, xt::keep(top), 1) - xt::view(m_coor, xt::keep(bot), 1);
         double h = h_plas(0);
         FRICTIONQPOTFEM_ASSERT(xt::allclose(h_plas, h));
@@ -282,12 +282,12 @@ public:
 
         // apply increment in shear strain as a perturbation to the selected element
         // - nodes belonging to the current element, from connectivity
-        auto elem = xt::view(m_conn, e, xt::all());
+        auto elem = xt::view(m_vector.conn(), e, xt::all());
         // - displacement-DOFs
         auto udofs = m_vector.AsDofs(m_u);
         // - update displacement-DOFs for the element
         for (size_t n = 0; n < m_nne; ++n) {
-            udofs(m_dofs(elem(n), 0)) +=
+            udofs(m_vector.dofs()(elem(n), 0)) +=
                 dgamma * amplify * (m_coor(elem(n), 1) - m_coor(elem(0), 1));
         }
         // - convert displacement-DOFs to (periodic) nodal displacement vector

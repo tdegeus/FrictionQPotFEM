@@ -262,7 +262,7 @@ protected:
 #ifdef FRICTIONQPOTFEM_ENABLE_ASSERT
         for (size_t i = 0; i < m_n_layer; ++i) {
             auto e = this->layerElements(i);
-            auto n = xt::unique(xt::view(m_conn, xt::keep(e)));
+            auto n = xt::unique(xt::view(m_vector.conn(), xt::keep(e)));
             FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(xt::sort(n), xt::sort(node[i]))));
         }
 #endif
