@@ -272,13 +272,6 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 &SUB::System::flowSteps<xt::pytensor<double, 2>>,
                 "flowSteps",
                 py::arg("n"),
-                py::arg("v"));
-
-            cls.def(
-                "flowSteps_boundcheck",
-                &SUB::System::flowSteps_boundcheck<xt::pytensor<double, 2>>,
-                "flowSteps_boundcheck",
-                py::arg("n"),
                 py::arg("v"),
                 py::arg("nmargin") = 5);
 
