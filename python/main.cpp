@@ -184,6 +184,10 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def_property_readonly("coor", &SUB::System::coor, "coor");
             cls.def_property_readonly("dofs", &SUB::System::dofs, "dofs");
 
+            cls.def("updated_u", &SUB::System::updated_u, "Update relevant fields after u update");
+            cls.def("updated_v", &SUB::System::updated_v, "Update relevant fields after v update");
+            cls.def("refresh", &SUB::System::refresh, "Recompute all forces");
+
             cls.def_property(
                 "u", &SUB::System::u, &SUB::System::setU<xt::pytensor<double, 2>>, "u");
 
