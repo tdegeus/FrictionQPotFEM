@@ -1472,7 +1472,7 @@ public:
     \param nmargin
         Number of potentials to leave as margin.
         -   `nmargin > 0`: function stops if the yield-index of any box is `nmargin` from the end.
-            In that case, the function returns a negative number.
+            In that case the function returns a negative number.
         -   `nmargin == 0`: no bounds-check is performed
             (the last potential is assumed infinitely elastic to the right).
 
@@ -1488,7 +1488,7 @@ public:
         size_t nmax = nyield - nmargin;
 
         FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
-        FRICTIONQPOTFEM_ASSERT(xt::all(m_plas.i() <= nmax));
+        FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
 
         for (long iiter = 0; iiter < n; ++iiter) {
 
@@ -1512,7 +1512,7 @@ public:
     \param nmargin
         Number of potentials to leave as margin.
         -   `nmargin > 0`: function stops if the yield-index of any box is `nmargin` from the end.
-            In that case, the function returns a negative number.
+            In that case the function returns a negative number.
         -   `nmargin == 0`: no bounds-check is performed
             (the last potential is assumed infinitely elastic to the right).
 
@@ -1536,7 +1536,7 @@ public:
         size_t nmax = nyield - nmargin;
 
         FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
-        FRICTIONQPOTFEM_ASSERT(xt::all(m_plas.i() <= nmax));
+        FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
 
         for (long iiter = 0; iiter < n; ++iiter) {
 
@@ -1610,52 +1610,50 @@ public:
 
     /**
     Make a number of steps with the following protocol.
-    (1) Add a displacement \f$ \underline{v} \Delta t \f$ to each of the nodes.
-    (2) Make a timeStep().
+    1.  Add a displacement \f$ \underline{v} \Delta t \f$ to each of the nodes.
+    2.  Make a timeStep().
 
-    \param n Number of steps to make.
-    \param v Nodal velocity to add `[nnode, ndim]`.
-    */
-    template <class T>
-    void flowSteps(size_t n, const T& v)
-    {
-        FRICTIONQPOTFEM_ASSERT(xt::has_shape(v, m_u.shape()));
+    \param n
+        Number of steps to make.
 
-        for (size_t i = 0; i < n; ++i) {
-            m_u += v * m_dt;
-            this->timeStep();
-        }
-    }
-
-    /**
-    \copydoc flowSteps(size_t, const T&)
-
-    This function stops if the yield-index in any of the plastic elements is close the end.
-    In that case the function returns zero, in all other cases the function returns a
-    positive number.
+    \param v
+        Nodal velocity `[nnode, ndim]`.s
 
     \param nmargin
         Number of potentials to leave as margin.
+        -   `nmargin > 0`: stop if the yield-index of any box is `nmargin` from the end.
+            In that case the function returns a negative number.
+        -   `nmargin == 0`: no bounds-check is performed
+            (the last potential is assumed infinitely elastic to the right).
+
+    \return
+        Number of time-steps made (negative if failure).
     */
     template <class T>
-    size_t flowSteps_boundcheck(size_t n, const T& v, size_t nmargin = 5)
+    long flowSteps(size_t n, const T& v, size_t nmargin = 5)
     {
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(v, m_u.shape()));
+        FRICTIONQPOTFEM_REQUIRE(n + 1 < std::numeric_limits<long>::max());
 
-        if (!this->boundcheck_right(nmargin)) {
-            return 0;
-        }
+        size_t nyield = m_plas.epsy().shape(2);
+        size_t nmax = nyield - nmargin;
 
-        for (size_t i = 0; i < n; ++i) {
+        FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
+        FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
+
+        for (long iiter = 1; iiter < static_cast<long>(n + 1); ++iiter) {
+
             m_u += v * m_dt;
             this->timeStep();
 
-            if (!this->boundcheck_right(nmargin)) {
-                return 0;
+            if (nmargin > 0) {
+                if (xt::any(m_plas.i() > nmax)) {
+                    return -iiter;
+                }
             }
         }
 
-        return n;
+        return static_cast<long>(n);
     }
 
     /**
