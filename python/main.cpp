@@ -169,8 +169,8 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "Homogeneous mass density. Otherwise use setMassMatrix.");
 
             cls.def_property("dt", &SUB::System::dt, &SUB::System::setDt, "Time step");
-
-            cls.def_property("t", &SUB::System::t, &SUB::System::setT, "Current time");
+            cls.def_property("t", &SUB::System::t, &SUB::System::setT, "Current time == inc * dt");
+            cls.def_property("inc", &SUB::System::inc, &SUB::System::setInc, "Current increment");
 
             cls.def("quench", &SUB::System::quench, "quench");
 

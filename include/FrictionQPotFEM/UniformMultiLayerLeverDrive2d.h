@@ -217,7 +217,7 @@ public:
         auto active0 = m_layerdrive_active;
         auto ubar0 = m_layerdrive_targetubar;
         auto xdrive0 = m_lever_target;
-        auto t0 = m_t;
+        auto inc0 = m_inc;
 
         array_type::tensor<double, 3> epsy0 = m_plas.epsy();
         array_type::tensor<double, 3> rigid = xt::empty<double>({m_nelem_plas, m_nip, size_t(2)});
@@ -266,7 +266,7 @@ public:
         this->layerSetTargetActive(active0);
         this->layerSetTargetUbar(ubar0);
         this->setLeverTarget(xdrive0);
-        this->setT(t0);
+        this->setInc(inc0);
     }
 
     /**

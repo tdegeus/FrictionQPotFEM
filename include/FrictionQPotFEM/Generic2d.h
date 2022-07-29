@@ -225,7 +225,7 @@ protected:
         double alpha,
         double eta)
     {
-        m_t = 0.0;
+        m_inc = 0;
         m_full_outdated = true;
 
         m_coor = coor;
@@ -438,7 +438,7 @@ public:
     Overwrite damping matrix, based on certain density (taken uniform per element).
     This function allows for more heterogeneity than the constructor.
     Note that you can specify either setEta() or setDampingMatrix() or both.
-
+    To use a homogeneous system, use setAlpha().
     \param val_elem Damping per element.
     */
     template <class T>
@@ -473,7 +473,6 @@ public:
 public:
     /**
     Check if elasticity is homogeneous.
-
     \return ``true`` is elasticity is homogeneous (``false`` otherwise).
     */
     bool isHomogeneousElastic() const
@@ -505,7 +504,6 @@ public:
     /**
     Overwrite nodal displacements.
     Internally, this updates the relevant forces using updated_u().
-
     \param u ``[nnode, ndim]``.
     */
     template <class T>
@@ -521,7 +519,6 @@ public:
     /**
     Overwrite nodal velocities.
     Internally, this updates the relevant forces using updated_v().
-
     \param v ``[nnode, ndim]``.
     */
     template <class T>
@@ -587,7 +584,6 @@ public:
     Note: the external force on the DOFs whose displacement are prescribed are response forces
     computed during timeStep(). Internally on the system of unknown DOFs is solved, so any
     change to the response forces is ignored.
-
     \param fext ``[nnode, ndim]``.
     */
     template <class T>
@@ -600,7 +596,6 @@ public:
 public:
     /**
     List of elastic elements. Shape: [System::m_nelem_elas].
-
     \return List of element numbers.
     */
     const auto& elastic_elem() const
@@ -611,7 +606,6 @@ public:
 public:
     /**
     List of plastic elements. Shape: [System::m_nelem_plas].
-
     \return List of element numbers.
     */
     const auto& plastic_elem() const
@@ -622,7 +616,6 @@ public:
 public:
     /**
     Connectivity. Shape: [System::m_nelem, System::m_nne].
-
     \return Connectivity.
     */
     const auto& conn() const
@@ -633,7 +626,6 @@ public:
 public:
     /**
     Nodal coordinates. Shape: [System::m_nnode, System::m_ndim].
-
     \return Nodal coordinates.
     */
     const auto& coor() const
@@ -644,7 +636,6 @@ public:
 public:
     /**
     DOFs per node.
-
     \return DOFs per node.
     */
     const auto& dofs() const
@@ -655,7 +646,6 @@ public:
 public:
     /**
     Nodal displacements.
-
     \return Nodal displacements.
     */
     const auto& u() const
@@ -666,7 +656,6 @@ public:
 public:
     /**
     Nodal velocities.
-
     \return Nodal velocities.
     */
     const auto& v() const
@@ -677,7 +666,6 @@ public:
 public:
     /**
     Nodal accelerations.
-
     \return Nodal accelerations.
     */
     const auto& a() const
@@ -688,7 +676,6 @@ public:
 public:
     /**
     Mass matrix, see System::m_M.
-
     \return Mass matrix (diagonal, partitioned).
     */
     auto& mass() const
@@ -732,7 +719,6 @@ public:
 public:
     /**
     Force deriving from elasticity.
-
     \return Nodal force. Shape ``[nnode, ndim]``    .
     */
     const auto& fmaterial() const
@@ -745,7 +731,6 @@ public:
     Force deriving from damping.
     This force is the sum of damping at the interface plus that of background damping
     (or just one of both if just one is specified).
-
     \return Nodal force. Shape ``[nnode, ndim]``    .
     */
     const auto& fdamp() const
@@ -757,7 +742,6 @@ public:
     /**
     Norm of the relative residual force (the external force at the top/bottom boundaries is
     used for normalisation).
-
     \return Relative residual.
     */
     double residual() const
@@ -788,21 +772,39 @@ public:
     */
     double t() const
     {
-        return m_t;
+        return m_inc * m_dt;
     }
 
     /**
     Overwrite time.
     */
-    void setT(double t)
+    void setT(double arg)
     {
-        m_t = t;
+        m_inc = static_cast<size_t>(arg / m_dt);
+        FRICTIONQPOTFEM_REQUIRE(xt::allclose(this->t(), arg));
+    }
+
+    /**
+    The increment, see setInc().
+    \return size_t.
+    */
+    size_t inc() const
+    {
+        return m_inc;
+    }
+
+    /**
+    Set increment.
+    \param arg size_t.
+    */
+    void setInc(size_t arg)
+    {
+        m_inc = arg;
     }
 
 public:
     /**
     Integration point volume (of each integration point)
-
     \return Integration point volume (System::m_quad::dV).
     */
     const auto& dV() const
@@ -812,9 +814,7 @@ public:
 
 public:
     /**
-    GooseFEM vector definition.
-    Takes care of bookkeeping.
-
+    GooseFEM vector definition. Takes care of bookkeeping.
     \return GooseFEM::VectorPartitioned (System::m_vector)
     */
     const GooseFEM::VectorPartitioned& vector() const
@@ -824,9 +824,7 @@ public:
 
 public:
     /**
-    GooseFEM quadrature definition.
-    Takes case of interpolation, and taking gradient and integrating.
-
+    GooseFEM quadrature definition. Takes case of interpolation, integration, and differentiation.
     \return GooseFEM::Element::Quad4::Quadrature (System::m_quad)
     */
     const GooseFEM::Element::Quad4::Quadrature& quad() const
@@ -857,8 +855,8 @@ public:
 public:
     /**
     Bulk modulus per integration point.
-
-    \return Integration point scalar. Shape: ``[nelem, nip]``.
+    Convenience function: assembles output from elastic() and plastic().
+    \return Integration point scalar (copy). Shape: ``[nelem, nip]``.
     */
     array_type::tensor<double, 2> K() const
     {
@@ -889,8 +887,8 @@ public:
 public:
     /**
     Shear modulus per integration point.
-
-    \return Integration point scalar. Shape: ``[nelem, nip]``.
+    Convenience function: assembles output from elastic() and plastic().
+    \return Integration point scalar (copy). Shape: ``[nelem, nip]``.
     */
     array_type::tensor<double, 2> G() const
     {
@@ -921,8 +919,7 @@ public:
 public:
     /**
     Stress tensor of each integration point.
-
-    \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
+    \return Integration point tensor (pointer). Shape: ``[nelem, nip, 2, 2]``.
     */
     const array_type::tensor<double, 4>& Sig()
     {
@@ -933,8 +930,7 @@ public:
 public:
     /**
     Strain tensor of each integration point.
-
-    \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
+    \return Integration point tensor (pointer). Shape: ``[nelem, nip, 2, 2]``.
     */
     const array_type::tensor<double, 4>& Eps()
     {
@@ -945,8 +941,7 @@ public:
 public:
     /**
     Strain-rate tensor (the symmetric gradient of the nodal velocities) of each integration point.
-
-    \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
+    \return Integration point tensor (copy). Shape: ``[nelem, nip, 2, 2]``.
     */
     array_type::tensor<double, 4> Epsdot() const
     {
@@ -956,8 +951,7 @@ public:
 public:
     /**
     Symmetric gradient of the nodal accelerations of each integration point.
-
-    \return Integration point tensor. Shape: ``[nelem, nip, 2, 2]``.
+    \return Integration point tensor (copy). Shape: ``[nelem, nip, 2, 2]``.
     */
     array_type::tensor<double, 4> Epsddot() const
     {
@@ -967,8 +961,8 @@ public:
 public:
     /**
     Stiffness tensor of each integration point.
-
-    \return Integration point tensor. Shape: ``[nelem, nip, 2, 2, 2, 2]``.
+    Convenience function: assembles output from elastic() and plastic().
+    \return Integration point tensor (copy). Shape: ``[nelem, nip, 2, 2, 2, 2]``.
     */
     GooseFEM::MatrixPartitioned stiffness() const
     {
@@ -1418,7 +1412,7 @@ public:
     {
         // history
 
-        m_t += m_dt;
+        m_inc++;
         xt::noalias(m_v_n) = m_v;
         xt::noalias(m_a_n) = m_a;
 
@@ -1869,7 +1863,7 @@ protected:
     array_type::tensor<double, 4> m_Sig; ///< Quad-point tensor: stress.
     array_type::tensor<double, 4> m_Epsdot_plas; ///< Quad-point tensor: strain-rate for plastic el.
     GooseFEM::Matrix m_K_elas; ///< Stiffness matrix for elastic elements only.
-    double m_t; ///< Current time.
+    size_t m_inc; ///< Current increment (current time = #m_dt * #m_inc).
     double m_dt; ///< Time-step.
     double m_eta; ///< Damping at the interface
     double m_rho; ///< Mass density (non-zero only if homogeneous).

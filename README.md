@@ -138,8 +138,9 @@ python -m pip install . -vv
 
 # Change-log
 
-## v0.18.0 (2022-07-29)
+## v0.18.0 (2022-07-29) - Breaking changes
 
+*   Adding free-function `epsy_initelastic_toquad`, `moduli_toquad`, `getuniform` to simplify transition to new API.
 *   Removing copies of `m_conn`, `m_dofs`, `m_iip`
 *   Removing obsolete `all_set`
 *   Removing unused defaults
