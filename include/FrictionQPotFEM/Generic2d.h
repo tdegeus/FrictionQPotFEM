@@ -473,7 +473,7 @@ public:
 public:
     /**
     Check if elasticity is homogeneous.
-    \return ``true`` is elasticity is homogeneous (``false`` otherwise).
+    \return `true` is elasticity is homogeneous (`false` otherwise).
     */
     bool isHomogeneousElastic() const
     {
@@ -504,7 +504,7 @@ public:
     /**
     Overwrite nodal displacements.
     Internally, this updates the relevant forces using updated_u().
-    \param u ``[nnode, ndim]``.
+    \param u `[nnode, ndim]`.
     */
     template <class T>
     void setU(const T& u)
@@ -519,7 +519,7 @@ public:
     /**
     Overwrite nodal velocities.
     Internally, this updates the relevant forces using updated_v().
-    \param v ``[nnode, ndim]``.
+    \param v `[nnode, ndim]`.
     */
     template <class T>
     void setV(const T& v)
@@ -533,7 +533,7 @@ public:
     /**
     Overwrite nodal accelerations.
 
-    \param a ``[nnode, ndim]``.
+    \param a `[nnode, ndim]`.
     */
     template <class T>
     void setA(const T& a)
@@ -585,7 +585,7 @@ public:
     Note: the external force on the DOFs whose displacement are prescribed are response forces
     computed during timeStep(). Internally on the system of unknown DOFs is solved, so any
     change to the response forces is ignored.
-    \param fext ``[nnode, ndim]``.
+    \param fext `[nnode, ndim]`.
     */
     template <class T>
     void setFext(const T& fext)
@@ -698,7 +698,7 @@ public:
 public:
     /**
     External force.
-    \return Nodal force. Shape ``[nnode, ndim]``    .
+    \return Nodal force. Shape `[nnode, ndim]`    .
     */
     const auto& fext()
     {
@@ -709,7 +709,7 @@ public:
 public:
     /**
     Internal force.
-    \return Nodal force. Shape ``[nnode, ndim]``    .
+    \return Nodal force. Shape `[nnode, ndim]`    .
     */
     const auto& fint()
     {
@@ -720,7 +720,7 @@ public:
 public:
     /**
     Force deriving from elasticity.
-    \return Nodal force. Shape ``[nnode, ndim]``    .
+    \return Nodal force. Shape `[nnode, ndim]`    .
     */
     const auto& fmaterial() const
     {
@@ -732,7 +732,7 @@ public:
     Force deriving from damping.
     This force is the sum of damping at the interface plus that of background damping
     (or just one of both if just one is specified).
-    \return Nodal force. Shape ``[nnode, ndim]``    .
+    \return Nodal force. Shape `[nnode, ndim]`    .
     */
     const auto& fdamp() const
     {
@@ -857,7 +857,7 @@ public:
     /**
     Bulk modulus per integration point.
     Convenience function: assembles output from elastic() and plastic().
-    \return Integration point scalar (copy). Shape: ``[nelem, nip]``.
+    \return Integration point scalar (copy). Shape: `[nelem, nip]`.
     */
     array_type::tensor<double, 2> K() const
     {
@@ -889,7 +889,7 @@ public:
     /**
     Shear modulus per integration point.
     Convenience function: assembles output from elastic() and plastic().
-    \return Integration point scalar (copy). Shape: ``[nelem, nip]``.
+    \return Integration point scalar (copy). Shape: `[nelem, nip]`.
     */
     array_type::tensor<double, 2> G() const
     {
@@ -920,7 +920,7 @@ public:
 public:
     /**
     Stress tensor of each integration point.
-    \return Integration point tensor (pointer). Shape: ``[nelem, nip, 2, 2]``.
+    \return Integration point tensor (pointer). Shape: `[nelem, nip, 2, 2]`.
     */
     const array_type::tensor<double, 4>& Sig()
     {
@@ -931,7 +931,7 @@ public:
 public:
     /**
     Strain tensor of each integration point.
-    \return Integration point tensor (pointer). Shape: ``[nelem, nip, 2, 2]``.
+    \return Integration point tensor (pointer). Shape: `[nelem, nip, 2, 2]`.
     */
     const array_type::tensor<double, 4>& Eps()
     {
@@ -942,7 +942,7 @@ public:
 public:
     /**
     Strain-rate tensor (the symmetric gradient of the nodal velocities) of each integration point.
-    \return Integration point tensor (copy). Shape: ``[nelem, nip, 2, 2]``.
+    \return Integration point tensor (copy). Shape: `[nelem, nip, 2, 2]`.
     */
     array_type::tensor<double, 4> Epsdot() const
     {
@@ -952,7 +952,7 @@ public:
 public:
     /**
     Symmetric gradient of the nodal accelerations of each integration point.
-    \return Integration point tensor (copy). Shape: ``[nelem, nip, 2, 2]``.
+    \return Integration point tensor (copy). Shape: `[nelem, nip, 2, 2]`.
     */
     array_type::tensor<double, 4> Epsddot() const
     {
@@ -963,7 +963,7 @@ public:
     /**
     Stiffness tensor of each integration point.
     Convenience function: assembles output from elastic() and plastic().
-    \return Integration point tensor (copy). Shape: ``[nelem, nip, 2, 2, 2, 2]``.
+    \return Integration point tensor (copy). Shape: `[nelem, nip, 2, 2, 2, 2]`.
     */
     GooseFEM::MatrixPartitioned stiffness() const
     {
@@ -1169,11 +1169,11 @@ public:
         Size of the local stain kick to apply.
 
     \param kick
-        If ``false``, increment displacements to ``deps / 2`` of yielding again.
-        If ``true``, increment displacements by a affine simple shear increment ``deps``.
+        If `false`, increment displacements to `deps / 2` of yielding again.
+        If `true`, increment displacements by a affine simple shear increment `deps`.
 
     \param direction
-        If ``+1``: apply shear to the right. If ``-1`` applying shear to the left.
+        If `+1`: apply shear to the right. If `-1` applying shear to the left.
 
     \param yield_element
         If `true` and `kick == true` then the element closest to yielding is selected (as normal),
@@ -1517,7 +1517,7 @@ public:
             (the last potential is assumed infinitely elastic to the right).
 
     \param tol Relative force tolerance for equilibrium. See System::residual for definition.
-    \param niter_tol Enforce the residual check for ``niter_tol`` consecutive increments.
+    \param niter_tol Enforce the residual check for `niter_tol` consecutive increments.
 
     \return
         -   Number of iterations: `== n`
@@ -1527,7 +1527,7 @@ public:
     long
     timeSteps_residualcheck(size_t n, size_t nmargin = 5, double tol = 1e-5, size_t niter_tol = 20)
     {
-        FRICTIONQPOTFEM_REQUIRE(tol < 1.0);
+        FRICTIONQPOTFEM_ASSERT(tol < 1.0);
         FRICTIONQPOTFEM_REQUIRE(n + 1 < std::numeric_limits<long>::max());
 
         double tol2 = tol * tol;
@@ -1560,32 +1560,36 @@ public:
     }
 
     /**
-    Perform a series of time-steps until:
-    -   the next plastic event,
-    -   equilibrium, or
-    -   a maximum number of iterations.
+    Perform a series of time-steps until the next plastic event, or equilibrium.
 
+    \param nmargin Number of potentials to have as margin initially.
     \param tol Relative force tolerance for equilibrium. See System::residual for definition.
-    \param niter_tol Enforce the residual check for ``niter_tol`` consecutive increments.
-    \param max_iter Maximum number of iterations.
+    \param niter_tol Enforce the residual check for `niter_tol` consecutive increments.
+    \param max_iter Maximum number of iterations.  Throws `std::runtime_error` otherwise.
 
     \return
-        -   *Number of iterations*:
-            If stopped by a plastic event or the maximum number of iterations.
-        -   `0`:
-            If stopped when the residual is reached
-            (so no plastic event occurred and the number of iterations was lower than the maximum).
+        -   Number of iterations.
+        -   `0` if there was no plastic activity and the residual was reached.
     */
-    size_t timeStepsUntilEvent(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 10000000)
+    size_t timeStepsUntilEvent(
+        size_t nmargin = 5,
+        double tol = 1e-5,
+        size_t niter_tol = 20,
+        size_t max_iter = 1e7)
     {
-        FRICTIONQPOTFEM_REQUIRE(tol < 1.0);
-        size_t iiter;
+        FRICTIONQPOTFEM_ASSERT(tol < 1.0);
+        FRICTIONQPOTFEM_ASSERT(max_iter + 1 < std::numeric_limits<long>::max());
+
         double tol2 = tol * tol;
         GooseFEM::Iterate::StopList residuals(niter_tol);
-
+        size_t nyield = m_plas.epsy().shape(2);
+        size_t nmax = nyield - nmargin;
         auto idx_n = m_plas.i();
 
-        for (iiter = 1; iiter < max_iter + 1; ++iiter) {
+        FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
+        FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
+
+        for (size_t iiter = 1; iiter < max_iter; ++iiter) {
 
             this->timeStep();
 
@@ -1601,7 +1605,7 @@ public:
             }
         }
 
-        return iiter;
+        throw std::runtime_error("No convergence found");
     }
 
     /**
@@ -1610,7 +1614,7 @@ public:
     (2) Make a timeStep().
 
     \param n Number of steps to make.
-    \param v Nodal velocity to add ``[nnode, ndim]``.
+    \param v Nodal velocity to add `[nnode, ndim]`.
     */
     template <class T>
     void flowSteps(size_t n, const T& v)
@@ -1658,14 +1662,14 @@ public:
     Minimise energy: run System::timeStep until a mechanical equilibrium has been reached.
 
     \param tol Relative force tolerance for equilibrium. See System::residual for definition.
-    \param niter_tol Enforce the residual check for ``niter_tol`` consecutive increments.
-    \param max_iter Maximum number of iterations. Throws ``std::runtime_error`` otherwise.
+    \param niter_tol Enforce the residual check for `niter_tol` consecutive increments.
+    \param max_iter Maximum number of iterations. Throws `std::runtime_error` otherwise.
 
     \return The number of iterations.
     */
-    size_t minimise(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 10000000)
+    size_t minimise(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 1e7)
     {
-        FRICTIONQPOTFEM_REQUIRE(tol < 1.0);
+        FRICTIONQPOTFEM_ASSERT(tol < 1.0);
         double tol2 = tol * tol;
         GooseFEM::Iterate::StopList residuals(niter_tol);
 
@@ -1699,9 +1703,9 @@ public:
         size_t nmargin = 5,
         double tol = 1e-5,
         size_t niter_tol = 20,
-        size_t max_iter = 10000000)
+        size_t max_iter = 1e7)
     {
-        FRICTIONQPOTFEM_REQUIRE(tol < 1.0);
+        FRICTIONQPOTFEM_ASSERT(tol < 1.0);
         double tol2 = tol * tol;
         GooseFEM::Iterate::StopList residuals(niter_tol);
 
@@ -1742,12 +1746,12 @@ public:
         size_t S_truncate = 0,
         double tol = 1e-5,
         size_t niter_tol = 20,
-        size_t max_iter = 10000000)
+        size_t max_iter = 1e7)
     {
         FRICTIONQPOTFEM_REQUIRE(xt::has_shape(idx_n, std::array<size_t, 1>{m_N}));
         FRICTIONQPOTFEM_REQUIRE(S_truncate == 0);
         FRICTIONQPOTFEM_REQUIRE(A_truncate > 0);
-        FRICTIONQPOTFEM_REQUIRE(tol < 1.0);
+        FRICTIONQPOTFEM_ASSERT(tol < 1.0);
         double tol2 = tol * tol;
         GooseFEM::Iterate::StopList residuals(niter_tol);
 
@@ -1780,13 +1784,13 @@ public:
     This function stops when a certain number of blocks has yielded at least once.
     In that case the function returns zero (in all other cases it returns a positive number).
 
-    \note ``A_truncate`` and ``S_truncate`` are defined on the first integration point.
+    \note `A_truncate` and `S_truncate` are defined on the first integration point.
 
     \param A_truncate
-        Truncate if ``A_truncate`` blocks have yielded at least once.
+        Truncate if `A_truncate` blocks have yielded at least once.
 
     \param S_truncate
-        Truncate if the number of times blocks yielded is equal to ``S_truncate``.
+        Truncate if the number of times blocks yielded is equal to `S_truncate`.
         **Warning** This option is reserved for future use, but for the moment does nothing.
     */
     size_t minimise_truncate(
@@ -1794,7 +1798,7 @@ public:
         size_t S_truncate = 0,
         double tol = 1e-5,
         size_t niter_tol = 20,
-        size_t max_iter = 10000000)
+        size_t max_iter = 1e7)
     {
         array_type::tensor<size_t, 1> idx_n = xt::view(m_plas.i(), xt::all(), 0);
         return this->minimise_truncate(idx_n, A_truncate, S_truncate, tol, niter_tol, max_iter);
