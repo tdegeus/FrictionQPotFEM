@@ -542,18 +542,19 @@ public:
         xt::noalias(m_a) = a;
     }
 
-protected:
+public:
     /**
-    Evaluate relevant forces when m_u is updated.
+    Evaluate relevant forces when #m_u is updated.
+    Under normal circumstances, this function is called automatically when needed.
     */
     virtual void updated_u()
     {
         this->computeForceMaterial();
     }
 
-protected:
     /**
-    Evaluate relevant forces when m_v is updated.
+    Evaluate relevant forces when #m_v is updated.
+    Under normal circumstances, this function is called automatically when needed.
     */
     void updated_v()
     {
@@ -1098,6 +1099,18 @@ protected:
         xt::noalias(m_fint) = m_fmaterial + m_fdamp;
         m_vector.copy_p(m_fint, m_fext);
         xt::noalias(m_fres) = m_fext - m_fint;
+    }
+
+public:
+    /**
+    Recompute all forces.
+    Under normal circumstances, this function is called automatically when needed.
+    */
+    void refresh()
+    {
+        this->updated_u();
+        this->updated_v();
+        this->computeInternalExternalResidualForce();
     }
 
 public:
