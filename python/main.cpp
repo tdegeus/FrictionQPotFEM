@@ -286,9 +286,10 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "timeStepsUntilEvent",
                 &SUB::System::timeStepsUntilEvent,
                 "timeStepsUntilEvent",
+                py::arg("nmargin") = 5,
                 py::arg("tol") = 1e-5,
                 py::arg("niter_tol") = 20,
-                py::arg("max_iter") = 10000000);
+                py::arg("max_iter") = size_t(1e7));
 
             cls.def(
                 "minimise",
@@ -296,7 +297,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "minimise",
                 py::arg("tol") = 1e-5,
                 py::arg("niter_tol") = 20,
-                py::arg("max_iter") = 10000000);
+                py::arg("max_iter") = size_t(1e7));
 
             cls.def(
                 "minimise_boundcheck",
@@ -305,7 +306,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("nmargin") = 5,
                 py::arg("tol") = 1e-5,
                 py::arg("niter_tol") = 20,
-                py::arg("max_iter") = 10000000);
+                py::arg("max_iter") = size_t(1e7));
 
             cls.def(
                 "minimise_truncate",
@@ -316,7 +317,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("S_truncate") = 0,
                 py::arg("tol") = 1e-5,
                 py::arg("niter_tol") = 20,
-                py::arg("max_iter") = 10000000);
+                py::arg("max_iter") = size_t(1e7));
 
             cls.def(
                 "minimise_truncate",
@@ -329,7 +330,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("S_truncate") = 0,
                 py::arg("tol") = 1e-5,
                 py::arg("niter_tol") = 20,
-                py::arg("max_iter") = 10000000);
+                py::arg("max_iter") = size_t(1e7));
 
             cls.def(
                 "affineSimpleShear",
