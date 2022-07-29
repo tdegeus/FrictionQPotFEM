@@ -1466,34 +1466,85 @@ public:
 
     /**
     Make a number of time steps, see timeStep().
+
     \param n Number of steps to make.
+
+    \param nmargin
+        Number of potentials to leave as margin.
+        -   `nmargin > 0`: function stops if the yield-index of any box is `nmargin` from the end.
+            In that case, the function returns a negative number.
+        -   `nmargin == 0`: no bounds-check is performed
+            (the last potential is assumed infinitely elastic to the right).
+
+    \return
+        -   Number of iterations: `== n`
+        -   Negative number: if stopped because of a yield-index margin.
     */
-    void timeSteps(size_t n)
+    long timeSteps(size_t n, size_t nmargin = 5)
     {
-        for (size_t i = 0; i < n; ++i) {
+        FRICTIONQPOTFEM_REQUIRE(n + 1 < std::numeric_limits<long>::max());
+
+        size_t nyield = m_plas.epsy().shape(2);
+        size_t nmax = nyield - nmargin;
+
+        FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
+        FRICTIONQPOTFEM_ASSERT(xt::all(m_plas.i() <= nmax));
+
+        for (long iiter = 0; iiter < n; ++iiter) {
+
+            if (nmargin > 0) {
+                if (xt::any(m_plas.i() > nmax)) {
+                    return -iiter;
+                }
+            }
+
             this->timeStep();
         }
+
+        return static_cast<long>(n);
     }
 
     /**
     Make a number of time steps (or stop early if mechanical equilibrium was reached).
 
     \param n (Maximum) Number of steps to make.
+
+    \param nmargin
+        Number of potentials to leave as margin.
+        -   `nmargin > 0`: function stops if the yield-index of any box is `nmargin` from the end.
+            In that case, the function returns a negative number.
+        -   `nmargin == 0`: no bounds-check is performed
+            (the last potential is assumed infinitely elastic to the right).
+
     \param tol Relative force tolerance for equilibrium. See System::residual for definition.
     \param niter_tol Enforce the residual check for ``niter_tol`` consecutive increments.
 
     \return
         -   Number of iterations: `== n`
-        -   `0`: if stopped when the residual is reached
-            (and the number of iterations was ``< n``).
+        -   `0`: if stopped when the residual is reached (and the number of iterations was `< n`).
+        -   Negative number: if stopped because of a yield-index margin.
     */
-    size_t timeSteps_residualcheck(size_t n, double tol = 1e-5, size_t niter_tol = 20)
+    long
+    timeSteps_residualcheck(size_t n, size_t nmargin = 5, double tol = 1e-5, size_t niter_tol = 20)
     {
         FRICTIONQPOTFEM_REQUIRE(tol < 1.0);
+        FRICTIONQPOTFEM_REQUIRE(n + 1 < std::numeric_limits<long>::max());
+
         double tol2 = tol * tol;
         GooseFEM::Iterate::StopList residuals(niter_tol);
+        size_t nyield = m_plas.epsy().shape(2);
+        size_t nmax = nyield - nmargin;
 
-        for (size_t i = 0; i < n; ++i) {
+        FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
+        FRICTIONQPOTFEM_ASSERT(xt::all(m_plas.i() <= nmax));
+
+        for (long iiter = 0; iiter < n; ++iiter) {
+
+            if (nmargin > 0) {
+                if (xt::any(m_plas.i() > nmax)) {
+                    return -iiter;
+                }
+            }
 
             this->timeStep();
 
@@ -1505,33 +1556,7 @@ public:
             }
         }
 
-        return n;
-    }
-
-    /**
-    \copydoc timeSteps(size_t)
-
-    This function stops if the yield-index in any of the plastic elements is close the end.
-    In that case the function returns zero, in all other cases the function returns a
-    positive number.
-
-    \param nmargin Number of potentials to leave as margin.
-    */
-    size_t timeSteps_boundcheck(size_t n, size_t nmargin = 5)
-    {
-        if (!this->boundcheck_right(nmargin)) {
-            return 0;
-        }
-
-        for (size_t i = 0; i < n; ++i) {
-            this->timeStep();
-
-            if (!this->boundcheck_right(nmargin)) {
-                return 0;
-            }
-        }
-
-        return n;
+        return static_cast<long>(n);
     }
 
     /**

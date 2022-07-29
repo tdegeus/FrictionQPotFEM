@@ -250,22 +250,22 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("iterative") = false);
 
             cls.def("timeStep", &SUB::System::timeStep, "timeStep");
-            cls.def("timeSteps", &SUB::System::timeSteps, "timeSteps");
+
+            cls.def(
+                "timeSteps",
+                &SUB::System::timeSteps,
+                "timeSteps",
+                py::arg("n"),
+                py::arg("nmargin") = 5);
 
             cls.def(
                 "timeSteps_residualcheck",
                 &SUB::System::timeSteps_residualcheck,
                 "timeSteps_residualcheck",
                 py::arg("n"),
+                py::arg("nmargin") = 5,
                 py::arg("tol") = 1e-5,
                 py::arg("niter_tol") = 20);
-
-            cls.def(
-                "timeSteps_boundcheck",
-                &SUB::System::timeSteps_boundcheck,
-                "timeSteps_boundcheck",
-                py::arg("n"),
-                py::arg("nmargin") = 5);
 
             cls.def(
                 "flowSteps",
