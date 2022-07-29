@@ -138,6 +138,25 @@ python -m pip install . -vv
 
 # Change-log
 
+## v0.18.0 (2022-07-29)
+
+*   Removing copies of `m_conn`, `m_dofs`, `m_iip`
+*   Removing obsolete `all_set`
+*   Removing unused defaults
+*   Forcing constructors to take all parameters.
+*   Adding `alpha` to set background damping density homogeneous
+*   Adding homogeneous `rho` (non-zero if system is homogeneous).
+*   `setEta` now disables the strain-gradient terms at the interface if argument is zero
+*   Using GMatTensor to get version strings
+*   Loading xtensor-python version (#153)
+*   [Python] Converting `setU`, `setV`, `setA`, `setFext` for to properties
+*   [Python] Using properties. Updating to python-goosefem >=1.3.0
+*   [dependencies] gmatelastoplasticqpot >=0.17.0
+*   [dependencies] goosefem >=1.3.0
+*   [dependencies] catch2 >=3.0.0
+*   [Python] Using NumPy-arrays everywhere
+*   Merging implementation in headers for maintainability
+
 ## v0.17.1
 
 *   Adding function to truncate minimization at a certain A (#130)
