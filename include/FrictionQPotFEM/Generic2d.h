@@ -995,10 +995,9 @@ public:
 public:
     /**
     Strain-rate tensor of integration points of plastic elements only, see System::plastic.
-
-    \return Integration point tensor. Shape: [plastic_elem().size(), nip, 2, 2].
+    \return Integration point tensor (pointer). Shape: [plastic_elem().size(), nip, 2, 2].
     */
-    array_type::tensor<double, 4> plastic_Epsdot()
+    const array_type::tensor<double, 4>& plastic_Epsdot()
     {
         // m_ue_plas, m_fe_plas are temporaries that can be reused
         if (!m_set_visco) {
