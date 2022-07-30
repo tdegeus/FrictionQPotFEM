@@ -288,18 +288,12 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "minimise",
                 &SUB::System::minimise,
                 "minimise",
-                py::arg("tol") = 1e-5,
-                py::arg("niter_tol") = 20,
-                py::arg("max_iter") = size_t(1e7));
-
-            cls.def(
-                "minimise_boundcheck",
-                &SUB::System::minimise_boundcheck,
-                "minimise_boundcheck",
                 py::arg("nmargin") = 5,
                 py::arg("tol") = 1e-5,
                 py::arg("niter_tol") = 20,
-                py::arg("max_iter") = size_t(1e7));
+                py::arg("max_iter") = size_t(1e7),
+                py::arg("time_activity") = false,
+                py::arg("max_iter_is_error") = true);
 
             cls.def(
                 "minimise_truncate",

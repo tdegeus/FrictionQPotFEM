@@ -1584,7 +1584,7 @@ public:
         GooseFEM::Iterate::StopList residuals(niter_tol);
         size_t nyield = m_plas.epsy().shape(2);
         size_t nmax = nyield - nmargin;
-        auto idx_n = m_plas.i();
+        auto i_n = m_plas.i();
 
         FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
         FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
@@ -1593,7 +1593,7 @@ public:
 
             this->timeStep();
 
-            if (xt::any(xt::not_equal(m_plas.i(), idx_n))) {
+            if (xt::any(xt::not_equal(m_plas.i(), i_n))) {
                 return iiter;
             }
 
@@ -1659,73 +1659,115 @@ public:
     /**
     Minimise energy: run System::timeStep until a mechanical equilibrium has been reached.
 
-    \param tol Relative force tolerance for equilibrium. See System::residual for definition.
-    \param niter_tol Enforce the residual check for `niter_tol` consecutive increments.
-    \param max_iter Maximum number of iterations. Throws `std::runtime_error` otherwise.
-
-    \return The number of iterations.
-    */
-    size_t minimise(double tol = 1e-5, size_t niter_tol = 20, size_t max_iter = 1e7)
-    {
-        FRICTIONQPOTFEM_ASSERT(tol < 1.0);
-        double tol2 = tol * tol;
-        GooseFEM::Iterate::StopList residuals(niter_tol);
-
-        for (size_t iiter = 1; iiter < max_iter + 1; ++iiter) {
-
-            this->timeStep();
-            residuals.roll_insert(this->residual());
-
-            if ((residuals.descending() && residuals.all_less(tol)) || residuals.all_less(tol2)) {
-                this->quench();
-                return iiter;
-            }
-        }
-
-        std::cout << "residuals = " << xt::adapt(residuals.data()) << std::endl;
-        bool converged = false;
-        FRICTIONQPOTFEM_REQUIRE(converged == true);
-        return 0; // irrelevant, the code never goes here
-    }
-
-    /**
-    \copydoc System::minimise(double, size_t, size_t)
-
-    This function stops if the yield-index in any of the plastic elements is close the end.
-    In that case the function returns zero (in all other cases it returns a positive number).
-
     \param nmargin
         Number of potentials to leave as margin.
+        -   `nmargin > 0`: function stops if the yield-index of any box is `nmargin` from the end.
+            In that case the function returns a negative number.
+        -   `nmargin == 0`: no bounds-check is performed
+            (the last potential is assumed infinitely elastic to the right).
+
+    \param tol
+        Relative force tolerance for equilibrium. See System::residual for definition.
+
+    \param niter_tol
+        Enforce the residual check for `niter_tol` consecutive increments.
+
+    \param max_iter
+        Maximum number of time-steps. Throws `std::runtime_error` otherwise.
+
+    \param time_activity
+        If `true` plastic activity is timed. After this function you can find:
+        -   quasistaticActivityFirst() : Increment with the first plastic event.
+        -   quasistaticActivityLast() : Increment with the last plastic event.
+        Attention: if you are changing the chunk of yield positions during the minimisation you
+        should copy quasistaticActivityFirst() after the first (relevant) call of minimise():
+        each time you call minimise(), quasistaticActivityFirst() is reset.
+
+    \param max_iter_is_error
+        If `true` an error is thrown when the maximum number of time-steps is reached.
+        If `false` the function simply returns `0`.
+
+    \return Number of time-steps made (negative if failure).
     */
-    size_t minimise_boundcheck(
+    size_t minimise(
         size_t nmargin = 5,
         double tol = 1e-5,
         size_t niter_tol = 20,
-        size_t max_iter = 1e7)
+        size_t max_iter = 1e7,
+        bool time_activity = false,
+        bool max_iter_is_error = true)
     {
         FRICTIONQPOTFEM_ASSERT(tol < 1.0);
+        FRICTIONQPOTFEM_ASSERT(max_iter + 1 < std::numeric_limits<long>::max());
+
         double tol2 = tol * tol;
         GooseFEM::Iterate::StopList residuals(niter_tol);
 
-        for (size_t iiter = 1; iiter < max_iter + 1; ++iiter) {
+        size_t nyield = m_plas.epsy().shape(2);
+        size_t nmax = nyield - nmargin;
+        array_type::tensor<long, 2> i_n = xt::cast<long>(m_plas.i());
+        long s = 0;
+        long s_n = 0;
+        bool init = true;
+
+        FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
+        FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
+
+        for (long iiter = 1; iiter < static_cast<long>(max_iter + 1); ++iiter) {
 
             this->timeStep();
             residuals.roll_insert(this->residual());
+
+            if (nmargin > 0) {
+                if (xt::any(m_plas.i() > nmax)) {
+                    return -iiter;
+                }
+            }
+
+            if (time_activity) {
+                array_type::tensor<long, 2> i = xt::cast<long>(m_plas.i());
+                s = xt::sum(xt::abs(i - i_n))();
+                if (s != s_n) {
+                    if (init) {
+                        init = false;
+                        m_qs_inc_first = m_inc;
+                    }
+                    m_qs_inc_last = m_inc;
+                }
+                s_n = s;
+            }
 
             if ((residuals.descending() && residuals.all_less(tol)) || residuals.all_less(tol2)) {
                 this->quench();
                 return iiter;
             }
-
-            if (!this->boundcheck_right(nmargin)) {
-                return 0;
-            }
         }
 
-        std::cout << "residuals = " << xt::adapt(residuals.data()) << std::endl;
-        bool converged = false;
-        FRICTIONQPOTFEM_REQUIRE(converged == true);
-        return 0; // irrelevant, the code never goes here
+        if (max_iter_is_error) {
+            throw std::runtime_error("No convergence found");
+        }
+
+        return 0;
+    }
+
+    /**
+    Increment with the first plastic event.
+    This value is only relevant if `time_activity = true` was used in the last call of minimise().
+    \return Increment.
+    */
+    size_t quasistaticActivityFirst() const
+    {
+        return m_qs_inc_first;
+    }
+
+    /**
+    Increment with the last plastic event.
+    This value is only relevant if `time_activity = true` was used in the last call of minimise().
+    \return Increment.
+    */
+    size_t quasistaticActivityLast() const
+    {
+        return m_qs_inc_last;
     }
 
     /**
@@ -1902,6 +1944,8 @@ protected:
     array_type::tensor<double, 4> m_Sig; ///< Quad-point tensor: stress.
     array_type::tensor<double, 4> m_Epsdot_plas; ///< Quad-point tensor: strain-rate for plastic el.
     GooseFEM::Matrix m_K_elas; ///< Stiffness matrix for elastic elements only.
+    size_t m_qs_inc_first = 0; ///< First increment with plastic activity during minimisation.
+    size_t m_qs_inc_last = 0; ///< Last increment with plastic activity during minimisation.
     size_t m_inc; ///< Current increment (current time = #m_dt * #m_inc).
     double m_dt; ///< Time-step.
     double m_eta; ///< Damping at the interface
