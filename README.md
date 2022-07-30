@@ -140,6 +140,16 @@ python -m pip install . -vv
 
 ## v0.18.0 (2022-07-29) - Breaking changes
 
+
+*   Flipping default: `nmargin = 0` (having a non-zero `nmargin` gives a false sense of security: nothing is thrown in reality)
+*   Deprecating `timeSteps_residualcheck(n)`. Replace by `minimise(max_iter=n, max_iter_is_error=False)`. `minimise` now returns `0` if convergence is successfully found.
+*   Adding `nmargin`, `time_activity`, and `max_iter_is_error` to `minimise`. Deprecating `minimise_boundcheck`
+*   Adding `nmargin` to `flowSteps`. Deprecating `flowSteps_boundcheck`
+*   Adding `nmargin` option to `timeStepsUntilEvent`
+*   Adding `nmargin` option to `timeSteps` and `timeSteps_residualcheck`. Deprecating `timeSteps_boundcheck`
+*   Converting `plastic_Epsdot` to pointer
+*   In case one really needs: adding `refresh`; making `update_u`, `update_v` public
+*   Adding `inc` and `setInc` (internally using `m_inc` instead of `m_t`)
 *   Adding free-function `epsy_initelastic_toquad`, `moduli_toquad`, `getuniform` to simplify transition to new API.
 *   Removing copies of `m_conn`, `m_dofs`, `m_iip`
 *   Removing obsolete `all_set`
