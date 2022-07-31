@@ -1568,7 +1568,7 @@ public:
     \param max_iter Maximum number of iterations.  Throws `std::runtime_error` otherwise.
 
     \return
-        -   Number of iterations.
+        -   Number of steps (`< max_iter` in case of convergence, `== max_iter` for no convergence).
         -   `0` if there was no plastic activity and the residual was reached.
     */
     size_t timeStepsUntilEvent(
@@ -1585,11 +1585,12 @@ public:
         size_t nyield = m_plas.epsy().shape(2);
         size_t nmax = nyield - nmargin;
         auto i_n = m_plas.i();
+        size_t iiter;
 
         FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
         FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
 
-        for (size_t iiter = 1; iiter < max_iter; ++iiter) {
+        for (iiter = 1; iiter < max_iter + 1; ++iiter) {
 
             this->timeStep();
 
@@ -1605,7 +1606,7 @@ public:
             }
         }
 
-        throw std::runtime_error("No convergence found");
+        return iiter;
     }
 
     /**
