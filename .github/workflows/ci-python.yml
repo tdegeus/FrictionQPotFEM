@@ -52,3 +52,6 @@ jobs:
 
     - name: Run Python tests
       run: python -m unittest discover tests
+
+    - name: Run Python examples
+      run: python -m unittest discover examples
