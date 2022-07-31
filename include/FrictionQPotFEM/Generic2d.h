@@ -1506,61 +1506,6 @@ public:
     }
 
     /**
-    Make a number of time steps (or stop early if mechanical equilibrium was reached).
-
-    \param n (Maximum) Number of steps to make.
-
-    \param nmargin
-        Number of potentials to leave as margin.
-        -   `nmargin > 0`: function stops if the yield-index of any box is `nmargin` from the end.
-            In that case the function returns a negative number.
-        -   `nmargin == 0`: no bounds-check is performed
-            (the last potential is assumed infinitely elastic to the right).
-
-    \param tol Relative force tolerance for equilibrium. See System::residual for definition.
-    \param niter_tol Enforce the residual check for `niter_tol` consecutive increments.
-
-    \return
-        -   Number of iterations: `== n`
-        -   `0`: if stopped when the residual is reached (and the number of iterations was `< n`).
-        -   Negative number: if stopped because of a yield-index margin.
-    */
-    long
-    timeSteps_residualcheck(size_t n, size_t nmargin = 5, double tol = 1e-5, size_t niter_tol = 20)
-    {
-        FRICTIONQPOTFEM_ASSERT(tol < 1.0);
-        FRICTIONQPOTFEM_REQUIRE(n + 1 < std::numeric_limits<long>::max());
-
-        double tol2 = tol * tol;
-        GooseFEM::Iterate::StopList residuals(niter_tol);
-        size_t nyield = m_plas.epsy().shape(2);
-        size_t nmax = nyield - nmargin;
-        long iiter;
-
-        FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
-        FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
-
-        for (iiter = 1; iiter < static_cast<long>(n + 1); ++iiter) {
-
-            this->timeStep();
-            residuals.roll_insert(this->residual());
-
-            if (nmargin > 0) {
-                if (xt::any(m_plas.i() > nmax)) {
-                    return -iiter;
-                }
-            }
-
-            if ((residuals.descending() && residuals.all_less(tol)) || residuals.all_less(tol2)) {
-                this->quench();
-                return 0;
-            }
-        }
-
-        return iiter;
-    }
-
-    /**
     Perform a series of time-steps until the next plastic event, or equilibrium.
 
     \param nmargin Number of potentials to have as margin **initially**.
@@ -1661,6 +1606,8 @@ public:
 
     /**
     Minimise energy: run System::timeStep until a mechanical equilibrium has been reached.
+    Can also be used to run `n` time-steps (or `< n` is equilibrium is reached before).
+    In that case, call with `minimise(max_iter=n, max_iter_is_error=False)`
 
     \param nmargin
         Number of potentials to leave as margin.
@@ -1688,9 +1635,12 @@ public:
 
     \param max_iter_is_error
         If `true` an error is thrown when the maximum number of time-steps is reached.
-        If `false` the function simply returns `0`.
+        If `false` the function simply returns `max_iter`.
 
-    \return Number of time-steps made (negative if failure).
+    \return
+        -   `0`: if stopped when the residual is reached (and number of steps `< max_iter`).
+        -   `max_iter`: if no residual was reached, and `max_iter_is_error = false`.
+        -   Negative number: if stopped because of a yield-index margin.
     */
     size_t minimise(
         size_t nmargin = 5,
@@ -1712,11 +1662,12 @@ public:
         long s = 0;
         long s_n = 0;
         bool init = true;
+        long iiter;
 
         FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
         FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
 
-        for (long iiter = 1; iiter < static_cast<long>(max_iter + 1); ++iiter) {
+        for (iiter = 1; iiter < static_cast<long>(max_iter + 1); ++iiter) {
 
             this->timeStep();
             residuals.roll_insert(this->residual());
@@ -1742,7 +1693,7 @@ public:
 
             if ((residuals.descending() && residuals.all_less(tol)) || residuals.all_less(tol2)) {
                 this->quench();
-                return iiter;
+                return 0;
             }
         }
 
@@ -1750,7 +1701,7 @@ public:
             throw std::runtime_error("No convergence found");
         }
 
-        return 0;
+        return iiter;
     }
 
     /**

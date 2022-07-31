@@ -259,15 +259,6 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("nmargin") = 5);
 
             cls.def(
-                "timeSteps_residualcheck",
-                &SUB::System::timeSteps_residualcheck,
-                "timeSteps_residualcheck",
-                py::arg("n"),
-                py::arg("nmargin") = 5,
-                py::arg("tol") = 1e-5,
-                py::arg("niter_tol") = 20);
-
-            cls.def(
                 "flowSteps",
                 &SUB::System::flowSteps<xt::pytensor<double, 2>>,
                 "flowSteps",
