@@ -38,35 +38,34 @@ int main(int argc, char* argv[])
     size_t ninc = xt::amax(H5Easy::load<xt::xtensor<size_t, 1>>(data, "/stored"))();
     bool kick = true;
     double deps = H5Easy::load<double>(data, "/run/epsd/kick");
-    size_t niter;
 
     sys.initEventDrivenSimpleShear();
 
-    for (size_t inc = 1; inc < ninc; ++inc) {
+    for (size_t step = 1; step < ninc; ++step) {
 
+        size_t inc_n = sys.inc();
         sys.eventDrivenStep(deps, kick);
 
         if (kick) {
-            niter = sys.minimise(1);
-            MYASSERT(niter > 0);
+            auto niter = sys.minimise(1);
+            MYASSERT(niter >= 0);
         }
         else {
-            niter = 0;
             MYASSERT(sys.residual() < 1e-2);
         }
 
         kick = !kick;
 
         auto u = sys.u();
-        auto u_stored = H5Easy::load<xt::xtensor<double, 2>>(data, fmt::format("/disp/{0:d}", inc));
-        double u_res = xt::norm_l2(u - u_stored)() / xt::norm_l2(u)();
-        MYASSERT(xt::norm_l2(u - u_stored)() / xt::norm_l2(u)() < 1e-5);
+        auto uref = H5Easy::load<xt::xtensor<double, 2>>(data, fmt::format("/disp/{0:d}", step));
+        double u_res = xt::norm_l2(u - uref)() / xt::norm_l2(u)();
+        MYASSERT(xt::norm_l2(u - uref)() / xt::norm_l2(u)() < 1e-5);
 
         fmt::print(
-            "inc = {0:8d}, kick = {1:1d}, iiter = {2:8d}, disp_error = {3:.2e}\n",
-            inc,
+            "step = {0:8d}, kick = {1:1d}, iiter = {2:8d}, disp_error = {3:.2e}\n",
+            step,
             kick,
-            niter,
+            sys.inc() - inc_n,
             u_res);
     }
 

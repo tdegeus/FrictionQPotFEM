@@ -333,8 +333,8 @@ TEST_CASE(
             1.0); // k_drive
 
         sys.layerSetTargetUbar(u_target);
-
-        sys.minimise();
+        auto niter = sys.minimise();
+        REQUIRE(niter >= 0);
 
         u_target(1, 0) = 0.05; // expected result (layer not prescribed)
 
