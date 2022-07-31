@@ -100,7 +100,7 @@ int main()
         sys.setU(u);
 
         size_t inc_n = sys.inc();
-        size_t niter = sys.minimise();
+        size_t niter = sys.minimise(5);
         MYASSERT(niter >= 0);
         std::cout << step << ", " << sys.inc() - inc_n << std::endl;
 

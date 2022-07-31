@@ -1518,7 +1518,7 @@ public:
         -   `0` if there was no plastic activity and the residual was reached.
     */
     size_t timeStepsUntilEvent(
-        size_t nmargin = 5,
+        size_t nmargin = 0,
         double tol = 1e-5,
         size_t niter_tol = 20,
         size_t max_iter = 1e7)
@@ -1643,7 +1643,7 @@ public:
         -   Negative number: if stopped because of a yield-index margin.
     */
     size_t minimise(
-        size_t nmargin = 5,
+        size_t nmargin = 0,
         double tol = 1e-5,
         size_t niter_tol = 20,
         size_t max_iter = 1e7,

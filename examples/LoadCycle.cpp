@@ -90,7 +90,7 @@ int main()
         sys.eventDrivenStep(1e-5, kick, +1.0);
         if (kick) {
             size_t inc_n = sys.inc();
-            size_t niter = sys.minimise();
+            size_t niter = sys.minimise(5);
             MYASSERT(niter >= 0);
             std::cout << step << ", " << sys.inc() - inc_n << std::endl;
         }
@@ -107,7 +107,7 @@ int main()
         sys.eventDrivenStep(1e-5, kick, -1.0);
         if (kick) {
             size_t inc_n = sys.inc();
-            size_t niter = sys.minimise();
+            size_t niter = sys.minimise(5);
             MYASSERT(niter >= 0);
             std::cout << step << ", " << sys.inc() - inc_n << std::endl;
         }
@@ -124,7 +124,7 @@ int main()
         sys.eventDrivenStep(1e-5, kick, +1.0);
         if (kick) {
             size_t inc_n = sys.inc();
-            size_t niter = sys.minimise();
+            size_t niter = sys.minimise(5);
             MYASSERT(niter >= 0);
             std::cout << step << ", " << sys.inc() - inc_n << std::endl;
         }
@@ -140,10 +140,10 @@ int main()
     for (; step < 700; ++step) {
         sys.eventDrivenStep(1e-5, kick, -1.0);
         if (kick) {
-            size_t inc_n = sys.step();
-            size_t niter = sys.minimise();
+            size_t inc_n = sys.inc();
+            size_t niter = sys.minimise(5);
             MYASSERT(niter >= 0);
-            std::cout << step << ", " << sys.step() - inc_n << std::endl;
+            std::cout << step << ", " << sys.inc() - inc_n << std::endl;
         }
         kick = !kick;
 
@@ -158,7 +158,7 @@ int main()
         sys.eventDrivenStep(1e-5, kick, +1.0);
         if (kick) {
             size_t inc_n = sys.inc();
-            size_t niter = sys.minimise();
+            size_t niter = sys.minimise(5);
             MYASSERT(niter >= 0);
             std::cout << step << ", " << sys.inc() - inc_n << std::endl;
         }
