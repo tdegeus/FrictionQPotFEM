@@ -1486,22 +1486,23 @@ public:
 
         size_t nyield = m_plas.epsy().shape(2);
         size_t nmax = nyield - nmargin;
+        long iiter;
 
         FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
         FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
 
-        for (long iiter = 0; iiter < static_cast<long>(n); ++iiter) {
+        for (iiter = 1; iiter < static_cast<long>(n + 1); ++iiter) {
+
+            this->timeStep();
 
             if (nmargin > 0) {
                 if (xt::any(m_plas.i() > nmax)) {
                     return -iiter;
                 }
             }
-
-            this->timeStep();
         }
 
-        return static_cast<long>(n);
+        return iiter;
     }
 
     /**
@@ -1534,11 +1535,15 @@ public:
         GooseFEM::Iterate::StopList residuals(niter_tol);
         size_t nyield = m_plas.epsy().shape(2);
         size_t nmax = nyield - nmargin;
+        long iiter;
 
         FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
         FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
 
-        for (long iiter = 0; iiter < static_cast<long>(n); ++iiter) {
+        for (iiter = 1; iiter < static_cast<long>(n + 1); ++iiter) {
+
+            this->timeStep();
+            residuals.roll_insert(this->residual());
 
             if (nmargin > 0) {
                 if (xt::any(m_plas.i() > nmax)) {
@@ -1546,23 +1551,19 @@ public:
                 }
             }
 
-            this->timeStep();
-
-            residuals.roll_insert(this->residual());
-
             if ((residuals.descending() && residuals.all_less(tol)) || residuals.all_less(tol2)) {
                 this->quench();
                 return 0;
             }
         }
 
-        return static_cast<long>(n);
+        return iiter;
     }
 
     /**
     Perform a series of time-steps until the next plastic event, or equilibrium.
 
-    \param nmargin Number of potentials to have as margin initially.
+    \param nmargin Number of potentials to have as margin **initially**.
     \param tol Relative force tolerance for equilibrium. See System::residual for definition.
     \param niter_tol Enforce the residual check for `niter_tol` consecutive increments.
     \param max_iter Maximum number of iterations.  Throws `std::runtime_error` otherwise.
@@ -1638,11 +1639,12 @@ public:
 
         size_t nyield = m_plas.epsy().shape(2);
         size_t nmax = nyield - nmargin;
+        long iiter;
 
         FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
         FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
 
-        for (long iiter = 1; iiter < static_cast<long>(n + 1); ++iiter) {
+        for (iiter = 1; iiter < static_cast<long>(n + 1); ++iiter) {
 
             m_u += v * m_dt;
             this->timeStep();
@@ -1654,7 +1656,7 @@ public:
             }
         }
 
-        return static_cast<long>(n);
+        return iiter;
     }
 
     /**
