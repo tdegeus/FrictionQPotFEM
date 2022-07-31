@@ -82,25 +82,26 @@ class test_UniformSingleLayer2d(unittest.TestCase):
 
         system.initEventDrivenSimpleShear()
 
-        ninc = 500
-        collect_Eps = np.zeros(ninc)
-        collect_Sig = np.zeros(ninc)
-        collect_Sig_plastic = np.zeros(ninc)
+        nstep = 500
+        collect_Eps = np.zeros(nstep)
+        collect_Sig = np.zeros(nstep)
+        collect_Sig_plastic = np.zeros(nstep)
         dV = system.quad.AsTensor(2, system.dV)
 
-        for inc in range(ninc):
+        for step in range(nstep):
 
-            if inc % 2 == 0:
+            if step % 2 == 0:
                 system.eventDrivenStep(deps=1e-5, kick=True)
-                system.minimise()
+                niter = system.minimise()
+                self.assertTrue(niter >= 0)
             else:
                 system.eventDrivenStep(deps=1e-5, kick=False)
 
             Epsbar = np.average(system.Eps(), weights=dV, axis=(0, 1))
             Sigbar = np.average(system.Sig(), weights=dV, axis=(0, 1))
-            collect_Eps[inc] = GMat.Epsd(Epsbar)
-            collect_Sig[inc] = GMat.Sigd(Sigbar)
-            collect_Sig_plastic[inc] = GMat.Sigd(np.mean(system.plastic.Sig, axis=(0, 1)))
+            collect_Eps[step] = GMat.Epsd(Epsbar)
+            collect_Sig[step] = GMat.Sigd(Sigbar)
+            collect_Sig_plastic[step] = GMat.Sigd(np.mean(system.plastic.Sig, axis=(0, 1)))
 
         with h5py.File(os.path.splitext(__file__)[0] + ".h5") as file:
             self.assertTrue(np.allclose(collect_Eps, file["Eps"][...]))

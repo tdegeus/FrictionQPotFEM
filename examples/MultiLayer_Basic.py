@@ -80,8 +80,8 @@ ubar[2, 0] = 0.5
 drive[2, 0] = True
 
 system.layerSetTargetUbar(ubar, drive)
-
-system.minimise()
+niter = system.minimise()
+assert niter >= 0
 
 try:
 

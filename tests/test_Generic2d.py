@@ -174,7 +174,7 @@ class test_Generic2d(unittest.TestCase):
         kicks = np.zeros(50, dtype=bool)
         kicks[1::2] = True
 
-        for inc, kick in enumerate(kicks):
+        for kick in kicks:
             idx_n = np.copy(system.plastic.i)
             u_n = np.copy(system.u)
             uptr = system.u

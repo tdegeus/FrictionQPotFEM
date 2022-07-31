@@ -88,23 +88,24 @@ class test_Generic2d(unittest.TestCase):
         collect_Sig_plastic = np.zeros(dF.shape[0])
         dV = system.quad.AsTensor(2, system.dV)
 
-        for inc in range(dF.shape[0]):
+        for step in range(dF.shape[0]):
 
             u = system.u
 
             for i in range(mesh.nnode):
                 for j in range(mesh.ndim):
                     for k in range(mesh.ndim):
-                        u[i, j] += dF[inc, j, k] * (coor[i, k] - coor[0, k])
+                        u[i, j] += dF[step, j, k] * (coor[i, k] - coor[0, k])
 
             system.u = u
-            system.minimise()
+            niter = system.minimise()
+            self.assertTrue(niter >= 0)
 
             Epsbar = np.average(system.Eps(), weights=dV, axis=(0, 1))
             Sigbar = np.average(system.Sig(), weights=dV, axis=(0, 1))
-            collect_Eps[inc] = GMat.Epsd(Epsbar)
-            collect_Sig[inc] = GMat.Sigd(Sigbar)
-            collect_Sig_plastic[inc] = GMat.Sigd(np.mean(system.plastic.Sig, axis=(0, 1)))
+            collect_Eps[step] = GMat.Epsd(Epsbar)
+            collect_Sig[step] = GMat.Sigd(Sigbar)
+            collect_Sig_plastic[step] = GMat.Sigd(np.mean(system.plastic.Sig, axis=(0, 1)))
 
         with h5py.File(os.path.splitext(__file__)[0] + ".h5") as file:
             self.assertTrue(np.allclose(collect_Eps, file["Eps"][...]))

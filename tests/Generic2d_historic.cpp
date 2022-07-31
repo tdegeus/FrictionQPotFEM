@@ -384,14 +384,14 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
 
         GooseFEM::Iterate::StopList residuals(20);
 
-        for (size_t inc = 0; inc < dF.shape(0); ++inc) {
+        for (size_t step = 0; step < dF.shape(0); ++step) {
 
             auto u = full.u();
 
             for (size_t i = 0; i < mesh.nnode(); ++i) {
                 for (size_t j = 0; j < mesh.ndim(); ++j) {
                     for (size_t k = 0; k < mesh.ndim(); ++k) {
-                        u(i, j) += dF(inc, j, k) * (coor(i, k) - coor(0, k));
+                        u(i, j) += dF(step, j, k) * (coor(i, k) - coor(0, k));
                     }
                 }
             }
@@ -419,8 +419,8 @@ TEST_CASE("FrictionQPotFEM::Generic2d_historic", "Generic2d.h")
             xt::xtensor<double, 2> Epsbar = xt::average(full.Eps(), dV, {0, 1});
             xt::xtensor<double, 2> Sigbar = xt::average(full.Sig(), dV, {0, 1});
 
-            compute_Eps(inc) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)();
-            compute_Sig(inc) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Sigbar)(); // here is a typo
+            compute_Eps(step) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)();
+            compute_Sig(step) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Sigbar)(); // todo: typo!
         }
 
         REQUIRE(xt::allclose(compute_Eps, check_Eps));

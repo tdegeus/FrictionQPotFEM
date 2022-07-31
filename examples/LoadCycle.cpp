@@ -4,6 +4,14 @@
 #include <xtensor/xcsv.hpp>
 #include <xtensor/xrandom.hpp>
 
+#define MYASSERT(expr) MYASSERT_IMPL(expr, __FILE__, __LINE__)
+#define MYASSERT_IMPL(expr, file, line) \
+    if (!(expr)) { \
+        throw std::runtime_error( \
+            std::string(file) + ':' + std::to_string(line) + \
+            ": assertion failed (" #expr ") \n\t"); \
+    }
+
 int main()
 {
     // Define a geometry
@@ -74,83 +82,93 @@ int main()
     xt::xtensor<double, 2> ret = xt::zeros<double>(std::array<size_t, 2>{800, 2});
     auto dV = sys.quad().AsTensor<2>(sys.dV());
     bool kick = true;
-    size_t inc = 0;
+    size_t step = 0;
 
     sys.initEventDrivenSimpleShear();
 
-    for (; inc < 100; ++inc) {
+    for (; step < 100; ++step) {
         sys.eventDrivenStep(1e-5, kick, +1.0);
         if (kick) {
+            size_t inc_n = sys.inc();
             size_t niter = sys.minimise();
-            std::cout << inc << ", " << niter << std::endl;
+            MYASSERT(niter >= 0);
+            std::cout << step << ", " << sys.inc() - inc_n << std::endl;
         }
         kick = !kick;
 
         xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         xt::xtensor<double, 2> Sigbar = xt::average(sys.Sig(), dV, {0, 1});
 
-        ret(inc, 0) = Epsbar(0, 1);
-        ret(inc, 1) = Sigbar(0, 1);
+        ret(step, 0) = Epsbar(0, 1);
+        ret(step, 1) = Sigbar(0, 1);
     }
 
-    for (; inc < 300; ++inc) {
+    for (; step < 300; ++step) {
         sys.eventDrivenStep(1e-5, kick, -1.0);
         if (kick) {
+            size_t inc_n = sys.inc();
             size_t niter = sys.minimise();
-            std::cout << inc << ", " << niter << std::endl;
+            MYASSERT(niter >= 0);
+            std::cout << step << ", " << sys.inc() - inc_n << std::endl;
         }
         kick = !kick;
 
         xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         xt::xtensor<double, 2> Sigbar = xt::average(sys.Sig(), dV, {0, 1});
 
-        ret(inc, 0) = Epsbar(0, 1);
-        ret(inc, 1) = Sigbar(0, 1);
+        ret(step, 0) = Epsbar(0, 1);
+        ret(step, 1) = Sigbar(0, 1);
     }
 
-    for (; inc < 500; ++inc) {
+    for (; step < 500; ++step) {
         sys.eventDrivenStep(1e-5, kick, +1.0);
         if (kick) {
+            size_t inc_n = sys.inc();
             size_t niter = sys.minimise();
-            std::cout << inc << ", " << niter << std::endl;
+            MYASSERT(niter >= 0);
+            std::cout << step << ", " << sys.inc() - inc_n << std::endl;
         }
         kick = !kick;
 
         xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         xt::xtensor<double, 2> Sigbar = xt::average(sys.Sig(), dV, {0, 1});
 
-        ret(inc, 0) = Epsbar(0, 1);
-        ret(inc, 1) = Sigbar(0, 1);
+        ret(step, 0) = Epsbar(0, 1);
+        ret(step, 1) = Sigbar(0, 1);
     }
 
-    for (; inc < 700; ++inc) {
+    for (; step < 700; ++step) {
         sys.eventDrivenStep(1e-5, kick, -1.0);
         if (kick) {
+            size_t inc_n = sys.step();
             size_t niter = sys.minimise();
-            std::cout << inc << ", " << niter << std::endl;
+            MYASSERT(niter >= 0);
+            std::cout << step << ", " << sys.step() - inc_n << std::endl;
         }
         kick = !kick;
 
         xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         xt::xtensor<double, 2> Sigbar = xt::average(sys.Sig(), dV, {0, 1});
 
-        ret(inc, 0) = Epsbar(0, 1);
-        ret(inc, 1) = Sigbar(0, 1);
+        ret(step, 0) = Epsbar(0, 1);
+        ret(step, 1) = Sigbar(0, 1);
     }
 
-    for (; inc < 800; ++inc) {
+    for (; step < 800; ++step) {
         sys.eventDrivenStep(1e-5, kick, +1.0);
         if (kick) {
+            size_t inc_n = sys.inc();
             size_t niter = sys.minimise();
-            std::cout << inc << ", " << niter << std::endl;
+            MYASSERT(niter >= 0);
+            std::cout << step << ", " << sys.inc() - inc_n << std::endl;
         }
         kick = !kick;
 
         xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         xt::xtensor<double, 2> Sigbar = xt::average(sys.Sig(), dV, {0, 1});
 
-        ret(inc, 0) = Epsbar(0, 1);
-        ret(inc, 1) = Sigbar(0, 1);
+        ret(step, 0) = Epsbar(0, 1);
+        ret(step, 1) = Sigbar(0, 1);
     }
 
     std::ofstream outfile("LoadCycle.txt");

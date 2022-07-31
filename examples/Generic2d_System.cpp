@@ -4,6 +4,14 @@
 #include <xtensor/xcsv.hpp>
 #include <xtensor/xrandom.hpp>
 
+#define MYASSERT(expr) MYASSERT_IMPL(expr, __FILE__, __LINE__)
+#define MYASSERT_IMPL(expr, file, line) \
+    if (!(expr)) { \
+        throw std::runtime_error( \
+            std::string(file) + ':' + std::to_string(line) + \
+            ": assertion failed (" #expr ") \n\t"); \
+    }
+
 int main()
 {
     // Define a geometry
@@ -77,28 +85,30 @@ int main()
     xt::xtensor<double, 2> ret = xt::zeros<double>(std::array<size_t, 2>{dF.shape(0), 2});
     auto dV = sys.quad().AsTensor<2>(sys.dV());
 
-    for (size_t inc = 0; inc < dF.shape(0); ++inc) {
+    for (size_t step = 0; step < dF.shape(0); ++step) {
 
         auto u = sys.u();
 
         for (size_t i = 0; i < mesh.nnode(); ++i) {
             for (size_t j = 0; j < mesh.ndim(); ++j) {
                 for (size_t k = 0; k < mesh.ndim(); ++k) {
-                    u(i, j) += dF(inc, j, k) * (coor(i, k) - coor(0, k));
+                    u(i, j) += dF(step, j, k) * (coor(i, k) - coor(0, k));
                 }
             }
         }
 
         sys.setU(u);
 
+        size_t inc_n = sys.inc();
         size_t niter = sys.minimise();
-        std::cout << inc << ", " << niter << std::endl;
+        MYASSERT(niter >= 0);
+        std::cout << step << ", " << sys.inc() - inc_n << std::endl;
 
         xt::xtensor<double, 2> Epsbar = xt::average(sys.Eps(), dV, {0, 1});
         xt::xtensor<double, 2> Sigbar = xt::average(sys.Sig(), dV, {0, 1});
 
-        ret(inc, 0) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)();
-        ret(inc, 1) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Sigbar)();
+        ret(step, 0) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Epsbar)();
+        ret(step, 1) = GMatElastoPlasticQPot::Cartesian2d::Epsd(Sigbar)();
     }
 
     std::ofstream outfile("Generic2d_System.txt");
