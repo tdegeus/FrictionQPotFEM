@@ -414,7 +414,7 @@ public:
         FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(m_plas.i(), 0)));
         this->layerSetTargetActive(active);
         this->layerSetTargetUbar(ubar);
-        this->minimise();
+        this->minimise(0);
         FRICTIONQPOTFEM_ASSERT(xt::all(xt::equal(m_plas.i(), 0)));
         auto up = m_u;
         m_u.fill(0.0);
