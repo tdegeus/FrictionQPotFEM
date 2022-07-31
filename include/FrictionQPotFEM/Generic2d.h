@@ -1773,9 +1773,7 @@ public:
     }
 
     /**
-    \copydoc System::minimise(double, size_t, size_t)
-
-    This function stops when a certain number of blocks has yielded at least once.
+    Like Generic2d::minimise(), but stops when a certain number of blocks has yielded at least once.
     In that case the function returns zero (in all other cases it returns a positive number).
 
     \note `A_truncate` and `S_truncate` are defined on the first integration point.
@@ -1786,6 +1784,15 @@ public:
     \param S_truncate
         Truncate if the number of times blocks yielded is equal to `S_truncate`.
         **Warning** This option is reserved for future use, but for the moment does nothing.
+
+    \param tol
+        Relative force tolerance for equilibrium. See System::residual for definition.
+
+    \param niter_tol
+        Enforce the residual check for `niter_tol` consecutive increments.
+
+    \param max_iter
+        Maximum number of time-steps. Throws `std::runtime_error` otherwise.
     */
     size_t minimise_truncate(
         size_t A_truncate = 0,
