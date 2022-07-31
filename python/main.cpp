@@ -256,7 +256,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 &SUB::System::timeSteps,
                 "timeSteps",
                 py::arg("n"),
-                py::arg("nmargin") = 5);
+                py::arg("nmargin") = 0);
 
             cls.def(
                 "flowSteps",
@@ -264,13 +264,13 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "flowSteps",
                 py::arg("n"),
                 py::arg("v"),
-                py::arg("nmargin") = 5);
+                py::arg("nmargin") = 0);
 
             cls.def(
                 "timeStepsUntilEvent",
                 &SUB::System::timeStepsUntilEvent,
                 "timeStepsUntilEvent",
-                py::arg("nmargin") = 5,
+                py::arg("nmargin") = 0,
                 py::arg("tol") = 1e-5,
                 py::arg("niter_tol") = 20,
                 py::arg("max_iter") = size_t(1e7));
@@ -279,7 +279,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 "minimise",
                 &SUB::System::minimise,
                 "minimise",
-                py::arg("nmargin") = 5,
+                py::arg("nmargin") = 0,
                 py::arg("tol") = 1e-5,
                 py::arg("niter_tol") = 20,
                 py::arg("max_iter") = size_t(1e7),

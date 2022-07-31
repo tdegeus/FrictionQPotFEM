@@ -106,7 +106,7 @@ class test_UniformMultiLayerIndividualDrive2d(unittest.TestCase):
 
             if step % 2 == 0:
                 system.eventDrivenStep(deps=1e-5, kick=True, iterative=True, yield_element=False)
-                niter = system.minimise()
+                niter = system.minimise(nmargin=5)
                 self.assertTrue(niter >= 0)
             else:
                 system.eventDrivenStep(deps=1e-5, kick=False, iterative=True, yield_element=False)
