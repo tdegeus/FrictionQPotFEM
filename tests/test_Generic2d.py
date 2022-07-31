@@ -334,14 +334,14 @@ class test_Generic2d(unittest.TestCase):
         for i in range(v.shape[0]):
             v[i, 0] = 0.1 * (x[i, 1] - x[0, 1])
 
-        system.flowSteps(10, v)
+        system.flowSteps(n=10, v=v, nmargin=0)
 
         # displacement is added affinely in an elastic system:
         # there is not residual force -> the system stays uniform
         self.assertTrue(np.allclose(system.u, 10 * v))
         self.assertTrue(np.allclose(system.t, 10))
 
-        system.timeSteps(10)
+        system.timeSteps(n=10, nmargin=0)
 
         self.assertTrue(np.allclose(system.u, 10 * v))
         self.assertTrue(np.allclose(system.t, 20))

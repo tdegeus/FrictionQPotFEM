@@ -1490,7 +1490,7 @@ public:
         FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
         FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
 
-        for (long iiter = 0; iiter < n; ++iiter) {
+        for (long iiter = 0; iiter < static_cast<long>(n); ++iiter) {
 
             if (nmargin > 0) {
                 if (xt::any(m_plas.i() > nmax)) {
@@ -1538,7 +1538,7 @@ public:
         FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
         FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
 
-        for (long iiter = 0; iiter < n; ++iiter) {
+        for (long iiter = 0; iiter < static_cast<long>(n); ++iiter) {
 
             if (nmargin > 0) {
                 if (xt::any(m_plas.i() > nmax)) {

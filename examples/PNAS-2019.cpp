@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
         sys.eventDrivenStep(deps, kick);
 
         if (kick) {
-            niter = sys.minimise_boundcheck(1);
+            niter = sys.minimise(1);
             MYASSERT(niter > 0);
         }
         else {
