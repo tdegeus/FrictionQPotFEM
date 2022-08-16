@@ -374,7 +374,7 @@ class test_Generic2d(unittest.TestCase):
         )
 
         system.v = np.ones_like(mesh.coor())
-        assert np.allclose(system.vector.AsDofs(system.fdamp), alpha)
+        self.assertTrue(np.allclose(system.vector.AsDofs(system.fdamp), alpha))
 
     def test_damping_no_alpha_eta(self):
 
@@ -414,7 +414,7 @@ class test_Generic2d(unittest.TestCase):
         f[conn[-3:, :2], 0] = eta
 
         system.v = v
-        assert np.allclose(system.fdamp, f)
+        self.assertTrue(np.allclose(system.fdamp, f))
 
     def test_damping_alpha_eta(self):
 
@@ -456,7 +456,7 @@ class test_Generic2d(unittest.TestCase):
         f[conn[-3:, :2], 0] += eta
 
         system.v = v
-        assert np.allclose(system.fdamp, f)
+        self.assertTrue(np.allclose(system.fdamp, f))
 
 
 if __name__ == "__main__":
