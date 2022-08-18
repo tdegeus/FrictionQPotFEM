@@ -1506,7 +1506,7 @@ public:
         -   Number of steps: `== n`.
         -   Negative number: if stopped because of a yield-index margin.
     */
-    long timeSteps(size_t n, size_t nmargin = 5)
+    long timeSteps(size_t n, size_t nmargin = 0)
     {
         FRICTIONQPOTFEM_REQUIRE(n + 1 < std::numeric_limits<long>::max());
 
@@ -1603,7 +1603,7 @@ public:
         Number of time-steps made (negative if failure).
     */
     template <class T>
-    long flowSteps(size_t n, const T& v, size_t nmargin = 5)
+    long flowSteps(size_t n, const T& v, size_t nmargin = 0)
     {
         FRICTIONQPOTFEM_ASSERT(xt::has_shape(v, m_u.shape()));
         FRICTIONQPOTFEM_REQUIRE(n + 1 < std::numeric_limits<long>::max());
@@ -1669,7 +1669,7 @@ public:
         -   Negative number: if stopped because of a yield-index margin.
     */
     long minimise(
-        size_t nmargin = 5,
+        size_t nmargin = 0,
         double tol = 1e-5,
         size_t niter_tol = 20,
         size_t max_iter = 1e7,

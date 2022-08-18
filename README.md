@@ -138,8 +138,7 @@ python -m pip install . -vv
 
 # Change-log
 
-## v0.18.0 (2022-07-29) - Breaking changes
-
+## v0.20.0 (2022-08-18) - Breaking changes
 
 *   Flipping default: `nmargin = 0` (having a non-zero `nmargin` gives a false sense of security: nothing is thrown in reality)
 *   Deprecating `timeSteps_residualcheck(n)`. Replace by `minimise(max_iter=n, max_iter_is_error=False)`. `minimise` now returns `0` if convergence is successfully found.
