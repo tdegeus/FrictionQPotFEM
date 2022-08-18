@@ -225,6 +225,26 @@ protected:
         double alpha,
         double eta)
     {
+        FRICTIONQPOTFEM_ASSERT(coor.dimension() == 2);
+        FRICTIONQPOTFEM_ASSERT(coor.shape(1) == 2);
+        FRICTIONQPOTFEM_ASSERT(conn.dimension() == 2);
+        FRICTIONQPOTFEM_ASSERT(dofs.dimension() == 2);
+        FRICTIONQPOTFEM_ASSERT(dofs.shape(1) == 2);
+        FRICTIONQPOTFEM_ASSERT(iip.dimension() == 1);
+        FRICTIONQPOTFEM_ASSERT(GooseFEM::is_unique(iip));
+        FRICTIONQPOTFEM_ASSERT(elastic_elem.dimension() == 1);
+        FRICTIONQPOTFEM_ASSERT(elastic_K.dimension() == 2);
+        FRICTIONQPOTFEM_ASSERT(elastic_K.shape(0) == elastic_elem.size());
+        FRICTIONQPOTFEM_ASSERT(elastic_G.dimension() == 2);
+        FRICTIONQPOTFEM_ASSERT(elastic_G.shape(0) == elastic_elem.size());
+        FRICTIONQPOTFEM_ASSERT(plastic_elem.dimension() == 1);
+        FRICTIONQPOTFEM_ASSERT(plastic_K.dimension() == 2);
+        FRICTIONQPOTFEM_ASSERT(plastic_K.shape(0) == plastic_elem.size());
+        FRICTIONQPOTFEM_ASSERT(plastic_G.dimension() == 2);
+        FRICTIONQPOTFEM_ASSERT(plastic_G.shape(0) == plastic_elem.size());
+        FRICTIONQPOTFEM_ASSERT(plastic_epsy.dimension() == 3);
+        FRICTIONQPOTFEM_ASSERT(plastic_epsy.shape(0) == plastic_elem.size());
+
         m_inc = 0;
         m_full_outdated = true;
 
@@ -260,6 +280,12 @@ protected:
         m_quad_elas = GooseFEM::Element::Quad4::Quadrature(m_vector_elas.AsElement(m_coor));
         m_quad_plas = GooseFEM::Element::Quad4::Quadrature(m_vector_plas.AsElement(m_coor));
         m_nip = m_quad.nip();
+
+        FRICTIONQPOTFEM_ASSERT(elastic_K.shape(1) == m_nip);
+        FRICTIONQPOTFEM_ASSERT(elastic_G.shape(1) == m_nip);
+        FRICTIONQPOTFEM_ASSERT(plastic_K.shape(1) == m_nip);
+        FRICTIONQPOTFEM_ASSERT(plastic_G.shape(1) == m_nip);
+        FRICTIONQPOTFEM_ASSERT(plastic_epsy.shape(1) == m_nip);
 
         m_u = m_vector.allocate_nodevec(0.0);
         m_v = m_vector.allocate_nodevec(0.0);
