@@ -1497,7 +1497,7 @@ public:
 
     \param nmargin
         Number of potentials to leave as margin.
-        -   `nmargin > 0`: function stops if the yield-index of any box is `nmargin` from the end
+        -   `nmargin > 0`: stop if the yield-index of any box is `nmargin` from the end
             and return a negative number.
         -   `nmargin == 0`: no bounds-check is performed
             (the last potential is assumed infinitely elastic to the right).
@@ -1594,8 +1594,8 @@ public:
 
     \param nmargin
         Number of potentials to leave as margin.
-        -   `nmargin > 0`: stop if the yield-index of any box is `nmargin` from the end.
-            In that case the function returns a negative number.
+        -   `nmargin > 0`: stop if the yield-index of any box is `nmargin` from the end,
+            and return a negative number.
         -   `nmargin == 0`: no bounds-check is performed
             (the last potential is assumed infinitely elastic to the right).
 
@@ -1637,7 +1637,7 @@ public:
 
     \param nmargin
         Number of potentials to leave as margin.
-        -   `nmargin > 0`: function stops if the yield-index of any box is `nmargin` from the end
+        -   `nmargin > 0`: stop if the yield-index of any box is `nmargin` from the end
             and return a negative number.
         -   `nmargin == 0`: no bounds-check is performed
             (the last potential is assumed infinitely elastic to the right).
@@ -1668,8 +1668,8 @@ public:
         -   `max_iter`: if no residual was reached, and `max_iter_is_error = false`.
         -   Negative number: if stopped because of a yield-index margin.
     */
-    size_t minimise(
-        size_t nmargin = 0,
+    long minimise(
+        size_t nmargin = 5,
         double tol = 1e-5,
         size_t niter_tol = 20,
         size_t max_iter = 1e7,
