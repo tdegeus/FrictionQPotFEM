@@ -1346,7 +1346,7 @@ public:
 
             // iterate to actual step
 
-            for (size_t iiter = 0; iiter < 1100; ++iiter) {
+            for (size_t step = 0; step < 1100; ++step) {
 
                 ret = 0.5 * (right + left);
                 this->setU(u_n + dir * ret * m_pert_u);
@@ -1381,7 +1381,7 @@ public:
                 if ((right - left) / left < 1e-5) {
                     break;
                 }
-                FRICTIONQPOTFEM_REQUIRE(iiter < 1000);
+                FRICTIONQPOTFEM_REQUIRE(step < 1000);
             }
 
             // final assertion: make sure that "left" and "right" are still bounds
@@ -1497,13 +1497,13 @@ public:
 
     \param nmargin
         Number of potentials to leave as margin.
-        -   `nmargin > 0`: function stops if the yield-index of any box is `nmargin` from the end.
-            In that case the function returns a negative number.
+        -   `nmargin > 0`: function stops if the yield-index of any box is `nmargin` from the end
+            and return a negative number.
         -   `nmargin == 0`: no bounds-check is performed
             (the last potential is assumed infinitely elastic to the right).
 
     \return
-        -   Number of iterations: `== n`
+        -   Number of steps: `== n`.
         -   Negative number: if stopped because of a yield-index margin.
     */
     long timeSteps(size_t n, size_t nmargin = 5)
@@ -1512,23 +1512,23 @@ public:
 
         size_t nyield = m_plas.epsy().shape(2);
         size_t nmax = nyield - nmargin;
-        long iiter;
+        long step;
 
         FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
         FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
 
-        for (iiter = 1; iiter < static_cast<long>(n + 1); ++iiter) {
+        for (step = 1; step < static_cast<long>(n + 1); ++step) {
 
             this->timeStep();
 
             if (nmargin > 0) {
                 if (xt::any(m_plas.i() > nmax)) {
-                    return -iiter;
+                    return -step;
                 }
             }
         }
 
-        return iiter;
+        return step;
     }
 
     /**
@@ -1557,17 +1557,17 @@ public:
         size_t nyield = m_plas.epsy().shape(2);
         size_t nmax = nyield - nmargin;
         auto i_n = m_plas.i();
-        size_t iiter;
+        size_t step;
 
         FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
         FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
 
-        for (iiter = 1; iiter < max_iter + 1; ++iiter) {
+        for (step = 1; step < max_iter + 1; ++step) {
 
             this->timeStep();
 
             if (xt::any(xt::not_equal(m_plas.i(), i_n))) {
-                return iiter;
+                return step;
             }
 
             residuals.roll_insert(this->residual());
@@ -1578,7 +1578,7 @@ public:
             }
         }
 
-        return iiter;
+        return step;
     }
 
     /**
@@ -1610,24 +1610,24 @@ public:
 
         size_t nyield = m_plas.epsy().shape(2);
         size_t nmax = nyield - nmargin;
-        long iiter;
+        long step;
 
         FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
         FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
 
-        for (iiter = 1; iiter < static_cast<long>(n + 1); ++iiter) {
+        for (step = 1; step < static_cast<long>(n + 1); ++step) {
 
             m_u += v * m_dt;
             this->timeStep();
 
             if (nmargin > 0) {
                 if (xt::any(m_plas.i() > nmax)) {
-                    return -iiter;
+                    return -step;
                 }
             }
         }
 
-        return iiter;
+        return step;
     }
 
     /**
@@ -1637,8 +1637,8 @@ public:
 
     \param nmargin
         Number of potentials to leave as margin.
-        -   `nmargin > 0`: function stops if the yield-index of any box is `nmargin` from the end.
-            In that case the function returns a negative number.
+        -   `nmargin > 0`: function stops if the yield-index of any box is `nmargin` from the end
+            and return a negative number.
         -   `nmargin == 0`: no bounds-check is performed
             (the last potential is assumed infinitely elastic to the right).
 
@@ -1688,19 +1688,19 @@ public:
         long s = 0;
         long s_n = 0;
         bool init = true;
-        long iiter;
+        long step;
 
         FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
         FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
 
-        for (iiter = 1; iiter < static_cast<long>(max_iter + 1); ++iiter) {
+        for (step = 1; step < static_cast<long>(max_iter + 1); ++step) {
 
             this->timeStep();
             residuals.roll_insert(this->residual());
 
             if (nmargin > 0) {
                 if (xt::any(m_plas.i() > nmax)) {
-                    return -iiter;
+                    return -step;
                 }
             }
 
@@ -1727,7 +1727,7 @@ public:
             throw std::runtime_error("No convergence found");
         }
 
-        return iiter;
+        return step;
     }
 
     /**
@@ -1775,14 +1775,14 @@ public:
         double tol2 = tol * tol;
         GooseFEM::Iterate::StopList residuals(niter_tol);
 
-        for (size_t iiter = 1; iiter < max_iter + 1; ++iiter) {
+        for (size_t step = 1; step < max_iter + 1; ++step) {
 
             this->timeStep();
             residuals.roll_insert(this->residual());
 
             if ((residuals.descending() && residuals.all_less(tol)) || residuals.all_less(tol2)) {
                 this->quench();
-                return iiter;
+                return step;
             }
 
             array_type::tensor<size_t, 1> idx = xt::view(m_plas.i(), xt::all(), 0);
