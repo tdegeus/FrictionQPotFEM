@@ -98,8 +98,8 @@ class test_Generic2d(unittest.TestCase):
                         u[i, j] += dF[step, j, k] * (coor[i, k] - coor[0, k])
 
             system.u = u
-            niter = system.minimise(nmargin=5)
-            self.assertTrue(niter >= 0)
+            ret = system.minimise(nmargin=5)
+            self.assertTrue(ret == 0)
 
             Epsbar = np.average(system.Eps(), weights=dV, axis=(0, 1))
             Sigbar = np.average(system.Sig(), weights=dV, axis=(0, 1))

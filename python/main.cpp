@@ -224,12 +224,6 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def("plastic_Epsdot", &SUB::System::plastic_Epsdot, "plastic_Epsdot");
 
             cls.def(
-                "boundcheck_right",
-                &SUB::System::boundcheck_right,
-                "boundcheck_right",
-                py::arg("n"));
-
-            cls.def(
                 "eventDriven_setDeltaU",
                 &SUB::System::eventDriven_setDeltaU<xt::pytensor<double, 2>>,
                 "eventDriven_setDeltaU",

@@ -1034,18 +1034,6 @@ public:
         return m_Epsdot_plas;
     }
 
-public:
-    /**
-    Check that the current yield-index is at least `n` away from the end.
-    \param n Margin.
-    \return `true` if the current yield-index is at least `n` away from the end.
-    */
-    bool boundcheck_right(size_t n) const
-    {
-        FRICTIONQPOTFEM_REQUIRE(m_plas.epsy().shape(2) > n);
-        return xt::all(m_plas.i() < m_plas.epsy().shape(2) - n);
-    }
-
 protected:
     /**
     Compute #m_Sig and #m_Eps using #m_u.
@@ -1540,7 +1528,7 @@ public:
     \param max_iter Maximum number of iterations.  Throws `std::runtime_error` otherwise.
 
     \return
-        -   Number of steps (`< max_iter` in case of convergence, `== max_iter` for no convergence).
+        -   Number of steps.
         -   `0` if there was no plastic activity and the residual was reached.
     */
     size_t timeStepsUntilEvent(

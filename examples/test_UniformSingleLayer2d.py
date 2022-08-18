@@ -102,7 +102,7 @@ class test_UniformSingleLayer2d(unittest.TestCase):
                 self.assertTrue(np.max(system.plastic.i - i_n) == 1)
 
                 ret = system.minimise(nmargin=5)
-                self.assertTrue(ret >= 0)
+                self.assertTrue(ret == 0)
                 pbar.set_description(f"step: {step:4d}, iiter = {system.inc - inc_n:8d}")
 
             else:

@@ -116,7 +116,7 @@ class test_stich_mesh(unittest.TestCase):
 
         system.layerSetTargetUbar(ubar)
         ret = system.minimise(nmargin=5)
-        self.assertGreaterEqual(ret, 0)
+        self.assertTrue(ret == 0)
 
         ubar[1, 0] = 0.25
         self.assertTrue(np.allclose(ubar, system.layerUbar(), rtol=1e-4, atol=5e-2))
