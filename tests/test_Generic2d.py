@@ -125,11 +125,10 @@ class test_Generic2d(unittest.TestCase):
 
                 self.assertTrue(np.allclose(GMat.Epsd(system.plastic.Eps), eps_expect))
                 self.assertTrue(system.residual() < 1e-5)
-
-                self.assertTrue(system.boundcheck_right(0))
+                self.assertTrue(np.all(system.plastic.i < system.plastic.epsy.shape[-1]))
 
                 if index == 3:
-                    self.assertFalse(system.boundcheck_right(3))
+                    self.assertFalse(np.all(system.plastic.i < system.plastic.epsy.shape[-1]) - 3)
 
     def test_eventDrivenSimpleShear_random(self):
         """

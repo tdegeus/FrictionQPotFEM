@@ -140,32 +140,41 @@ python -m pip install . -vv
 
 ## v0.20.0 (2022-08-18) - Breaking changes
 
-*   Flipping default: `nmargin = 0` (having a non-zero `nmargin` gives a false sense of security: nothing is thrown in reality)
+### Changes
+
+*   Deprecating `boundcheck_right`.
+*   Flipping default: `nmargin = 0` (having a non-zero `nmargin` gives a false sense of security: nothing is thrown in reality).
 *   Deprecating `timeSteps_residualcheck(n)`. Replace by `minimise(max_iter=n, max_iter_is_error=False)`. `minimise` now returns `0` if convergence is successfully found.
-*   Adding `nmargin`, `time_activity`, and `max_iter_is_error` to `minimise`. Deprecating `minimise_boundcheck`
-*   Adding `nmargin` to `flowSteps`. Deprecating `flowSteps_boundcheck`
-*   Adding `nmargin` option to `timeStepsUntilEvent`
-*   Adding `nmargin` option to `timeSteps` and `timeSteps_residualcheck`. Deprecating `timeSteps_boundcheck`
+*   Adding `nmargin`, `time_activity`, and `max_iter_is_error` to `minimise`. Deprecating `minimise_boundcheck`.
+*   Adding `nmargin` to `flowSteps`. Deprecating `flowSteps_boundcheck`.
+*   Adding `nmargin` option to `timeStepsUntilEvent`.
+*   Adding `nmargin` option to `timeSteps`. Deprecating `timeSteps_boundcheck`.
 *   Converting `plastic_Epsdot` to pointer
 *   In case one really needs: adding `refresh`; making `update_u`, `update_v` public
 *   Adding `inc` and `setInc` (internally using `m_inc` instead of `m_t`)
 *   Adding free-function `epsy_initelastic_toquad`, `moduli_toquad`, `getuniform` to simplify transition to new API.
-*   Removing copies of `m_conn`, `m_dofs`, `m_iip`
-*   Removing obsolete `all_set`
-*   Removing unused defaults
-*   Forcing constructors to take all parameters.
-*   Adding `alpha` to set background damping density homogeneous
+*   Removing copies of `m_conn`, `m_dofs`, `m_iip`.
+*   Removing unused defaults.
+*   Forcing constructors to take all parameters, removing obsolete `all_set`. Note that the 'old' 'constructor' functions like `setMassMatrix` can still be called after the constructor if customisation is needed.
+*   Adding `alpha` to set background damping density homogeneous.
 *   Adding homogeneous `rho` (non-zero if system is homogeneous).
-*   `setEta` now disables the strain-gradient terms at the interface if argument is zero
-*   Using GMatTensor to get version strings
-*   Loading xtensor-python version (#153)
-*   [Python] Converting `setU`, `setV`, `setA`, `setFext` for to properties
+*   `setEta` now disables the strain-gradient terms at the interface if argument is zero.
+*   Using GMatTensor to get version strings.
+*   Loading xtensor-python version (#153).
+*   [Python] Converting `setU`, `setV`, `setA`, `setFext` to properties.
 *   [Python] Using properties. Updating to python-goosefem >=1.3.0
 *   [dependencies] gmatelastoplasticqpot >=0.17.0
 *   [dependencies] goosefem >=1.3.0
 *   [dependencies] catch2 >=3.0.0
-*   [Python] Using NumPy-arrays everywhere
-*   Merging implementation in headers for maintainability
+*   [Python] Using NumPy-arrays everywhere.
+*   Merging implementation in headers for maintainability.
+
+### Things to change in your code
+
+*   `flowSteps`: assure that return is non-negative if `nmargin > 0`.
+*   `minimise`: assure that return is zero for normal operation.
+*   `system.plastic_CurrentIndex()` -> `system.plastic.i` in Python (or `system.plastic().i()` in C++).
+*   `system.boundcheck_right(n)` -> `np.all(system.plastic.i < system.plastic.epsy.shape[-1] - n)`.
 
 ## v0.17.1
 

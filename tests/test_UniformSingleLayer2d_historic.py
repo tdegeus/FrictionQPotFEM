@@ -92,8 +92,8 @@ class test_UniformSingleLayer2d(unittest.TestCase):
 
             if step % 2 == 0:
                 system.eventDrivenStep(deps=1e-5, kick=True)
-                niter = system.minimise()
-                self.assertTrue(niter >= 0)
+                ret = system.minimise()
+                self.assertTrue(ret == 0)
             else:
                 system.eventDrivenStep(deps=1e-5, kick=False)
 
