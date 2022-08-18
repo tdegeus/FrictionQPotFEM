@@ -75,7 +75,7 @@ class test_stich_mesh(unittest.TestCase):
         dofs[bottom[0], 0] = dofs[bottom[-1], 0]
         dofs = GooseFEM.Mesh.renumber(dofs)
 
-        iip = np.concatenate((dofs[bottom, :].ravel(), dofs[top, 1].ravel()))
+        iip = np.unique(np.concatenate((dofs[bottom, :].ravel(), dofs[top, 1].ravel())))
 
         elas = []
         plas = []
