@@ -166,12 +166,11 @@ public:
     {
         FRICTIONQPOTFEM_ASSERT(this->isHomogeneousElastic());
 
-        auto u_new = this->u();
         auto dV = m_quad.AsTensor<2>(this->dV());
         double G = m_plas.G().flat(0);
 
-        array_type::tensor<double, 2> Epsbar = xt::average(this->Eps(), dV, {0, 1});
-        array_type::tensor<double, 2> Sigbar = xt::average(this->Sig(), dV, {0, 1});
+        array_type::tensor<double, 2> Epsbar = detail::myaverage(this->Eps(), dV, {0, 1});
+        array_type::tensor<double, 2> Sigbar = detail::myaverage(this->Sig(), dV, {0, 1});
         array_type::tensor<double, 2> Epsd = GMatTensor::Cartesian2d::Deviatoric(Epsbar);
         double epsxx = Epsd(0, 0);
         double epsxy = Epsd(0, 1);
@@ -194,16 +193,15 @@ public:
         }
 
         for (size_t n = 0; n < m_nnode; ++n) {
-            u_new(n, 0) += direction * dgamma * (m_coor(n, 1) - m_coor(0, 1));
+            m_u(n, 0) += direction * dgamma * (m_coor(n, 1) - m_coor(0, 1));
         }
-        this->setU(u_new);
+        this->updated_u();
 
         // sanity check
         // ------------
 
-        Sigbar = xt::average(this->Sig(), dV, {0, 1});
+        Sigbar = detail::myaverage(this->Sig(), dV, {0, 1});
         sig = GMatElastoPlasticQPot::Cartesian2d::Sigd(Sigbar)();
-
         FRICTIONQPOTFEM_REQUIRE(std::abs(target_stress - sig) / sig < 1e-4);
 
         return direction * dgamma;

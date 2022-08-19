@@ -29,6 +29,40 @@
 
 namespace FrictionQPotFEM {
 
+namespace detail {
+
+/**
+Drop-in replacement for xt::average(a, w, {0, 1});
+There appears to be a library bug.
+*/
+array_type::tensor<double, 2> myaverage(
+    const array_type::tensor<double, 4>& a,
+    const array_type::tensor<double, 4>& w,
+    const std::array<size_t, 2>& axis)
+{
+    FRICTIONQPOTFEM_ASSERT(axis[0] == 0);
+    FRICTIONQPOTFEM_ASSERT(axis[1] == 1);
+    FRICTIONQPOTFEM_ASSERT(xt::has_shape(a, w.shape()));
+
+    array_type::tensor<double, 2> ret = xt::zeros<double>({a.shape(2), a.shape(3)});
+    array_type::tensor<double, 2> norm = xt::zeros<double>({a.shape(2), a.shape(3)});
+
+    for (size_t i = 0; i < a.shape(0); ++i) {
+        for (size_t j = 0; j < a.shape(1); ++j) {
+            for (size_t k = 0; k < a.shape(2); ++k) {
+                for (size_t l = 0; l < a.shape(3); ++l) {
+                    ret(k, l) += a(i, j, k, l) * w(i, j, k, l);
+                    norm(k, l) += w(i, j, k, l);
+                }
+            }
+        }
+    }
+
+    return ret / norm;
+}
+
+} // namespace detail
+
 /**
 Convert array of yield strains stored per element [nelem, n]:
 
