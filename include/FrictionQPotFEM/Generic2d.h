@@ -807,7 +807,7 @@ public:
     */
     void setT(double arg)
     {
-        m_inc = static_cast<size_t>(arg / m_dt);
+        m_inc = static_cast<size_t>(std::round(arg / m_dt));
         FRICTIONQPOTFEM_REQUIRE(xt::allclose(this->t(), arg));
     }
 
