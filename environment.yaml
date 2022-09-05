@@ -3,7 +3,7 @@ channels:
 dependencies:
 - catch2 >=3.0.0
 - cmake
-- doxygen
+- doxygen >=1.9.5
 - graphviz
 - fmt
 - gmatelastoplasticqpot >=0.17.0
