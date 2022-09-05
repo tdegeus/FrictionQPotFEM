@@ -71,6 +71,7 @@ class test_Generic2d(unittest.TestCase):
         elastic = np.array([0, 1, 2, 6, 7, 8], dtype=np.uint64)
         plastic = np.array([3, 4, 5], dtype=np.uint64)
         epsy = 1e-3 * np.cumsum(np.ones((plastic.size, 5)), axis=1)
+        epsy[:, -1] = 100.0
 
         system = FrictionQPotFEM.UniformSingleLayer2d.System(
             coor=coor,
