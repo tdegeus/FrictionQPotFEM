@@ -29,6 +29,14 @@ inline std::vector<std::string> version_dependencies()
 }
 
 /**
+\copydoc Generic2d::version_compiler()
+*/
+inline std::vector<std::string> version_compiler()
+{
+    return Generic2d::version_compiler();
+}
+
+/**
 System that comprises several layers (elastic or plastic).
 The average displacement of each layer can be coupled to a prescribed target value
 using a linear spring (one spring per spatial dimension):

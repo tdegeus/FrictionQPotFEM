@@ -163,6 +163,15 @@ inline std::vector<std::string> version_dependencies()
 }
 
 /**
+Version information of the compilers.
+\return List of strings.
+*/
+inline std::vector<std::string> version_compiler()
+{
+    return GMatTensor::version_compiler();
+}
+
+/**
 System with elastic elements and plastic elements (GMatElastoPlasticQPot).
 
 For efficiency, the nodal forces for the elastic elements are evaluated using the tangent.
