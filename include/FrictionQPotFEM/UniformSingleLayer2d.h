@@ -34,6 +34,14 @@ inline std::vector<std::string> version_dependencies()
 }
 
 /**
+\copydoc Generic2d::version_compiler()
+*/
+inline std::vector<std::string> version_compiler()
+{
+    return Generic2d::version_compiler();
+}
+
+/**
 Class that uses GMatElastoPlasticQPot to evaluate stress everywhere
 */
 class System : public Generic2d::System {

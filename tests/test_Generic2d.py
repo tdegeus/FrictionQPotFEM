@@ -1,3 +1,4 @@
+import datetime
 import unittest
 
 import FrictionQPotFEM
@@ -37,6 +38,31 @@ class test_Generic2d(unittest.TestCase):
         self.assertTrue("xtensor" in deps)
         self.assertTrue("xtensor-python" in deps)
         self.assertTrue("xtl" in deps)
+
+    def test_version_compiler(self):
+
+        deps = FrictionQPotFEM.Generic2d.version_compiler()
+        deps = {i.split("=")[0]: i.split("=")[1] for i in deps}
+
+        month_mapping = {
+            "Jan": 1,
+            "Feb": 2,
+            "Mar": 3,
+            "Apr": 4,
+            "May": 5,
+            "Jun": 6,
+            "Jul": 7,
+            "Aug": 8,
+            "Sep": 9,
+            "Oct": 10,
+            "Nov": 11,
+            "Dec": 12,
+        }
+
+        month, day, year = deps["date"].split("-")
+        parsed = datetime.datetime(day=int(day), month=month_mapping[month], year=int(year))
+
+        self.assertEqual(parsed.day, datetime.date.today().day)
 
     def test_eventDrivenSimpleShear(self):
         """

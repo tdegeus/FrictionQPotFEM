@@ -92,6 +92,9 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             &SUB::version_dependencies,
             "Return version information of library and its dependencies.");
 
+        sub.def(
+            "version_compiler", &SUB::version_compiler, "Version information of the compilers.");
+
         {
 
             py::class_<SUB::System> cls(sub, "System");
@@ -337,6 +340,9 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             &SUB::version_dependencies,
             "Return version information of library and its dependencies.");
 
+        sub.def(
+            "version_compiler", &SUB::version_compiler, "Version information of the compilers.");
+
         {
 
             py::class_<SUB::System, FrictionQPotFEM::Generic2d::System> cls(sub, "System");
@@ -502,6 +508,9 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             &SUB::version_dependencies,
             "Return version information of library and its dependencies.");
 
+        sub.def(
+            "version_compiler", &SUB::version_compiler, "Version information of the compilers.");
+
         py::class_<SUB::System, FrictionQPotFEM::Generic2d::System> cls(sub, "System");
 
         cls.def(
@@ -645,6 +654,9 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             "version_dependencies",
             &SUB::version_dependencies,
             "Return version information of library and its dependencies.");
+
+        sub.def(
+            "version_compiler", &SUB::version_compiler, "Version information of the compilers.");
 
         py::class_<SUB::System, FrictionQPotFEM::UniformMultiLayerIndividualDrive2d::System> cls(
             sub, "System");

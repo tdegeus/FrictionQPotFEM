@@ -30,6 +30,14 @@ inline std::vector<std::string> version_dependencies()
 }
 
 /**
+\copydoc Generic2d::version_compiler()
+*/
+inline std::vector<std::string> version_compiler()
+{
+    return Generic2d::version_compiler();
+}
+
+/**
 Similar to UniformMultiLayerIndividualDrive2d::System(), but with the difference that the
 target average displacement per layer is not individually prescribed, but determined by
 a lever, whose position (whose rotation to be precise) is determined by a driving spring
