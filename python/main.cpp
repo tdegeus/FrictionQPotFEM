@@ -19,6 +19,7 @@
 #include <FrictionQPotFEM/UniformMultiLayerIndividualDrive2d.h>
 #include <FrictionQPotFEM/UniformMultiLayerLeverDrive2d.h>
 #include <FrictionQPotFEM/UniformSingleLayer2d.h>
+#include <FrictionQPotFEM/UniformSingleLayerThermal2d.h>
 
 namespace py = pybind11;
 
@@ -488,6 +489,77 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
             cls.def("__repr__", [](const SUB::LocalTriggerFineLayer&) {
                 return "<FrictionQPotFEM.UniformSingleLayer2d.LocalTriggerFineLayer>";
+            });
+        }
+    }
+
+    // -------------------------------------------
+    // FrictionQPotFEM.UniformSingleLayerThermal2d
+    // -------------------------------------------
+
+    {
+
+        py::module sub =
+            mod.def_submodule("UniformSingleLayerThermal2d", "UniformSingleLayerThermal2d");
+
+        namespace SUB = FrictionQPotFEM::UniformSingleLayerThermal2d;
+
+        sub.def(
+            "version_dependencies",
+            &SUB::version_dependencies,
+            "Return version information of library and its dependencies.");
+
+        sub.def(
+            "version_compiler", &SUB::version_compiler, "Version information of the compilers.");
+
+        {
+
+            py::class_<SUB::System, FrictionQPotFEM::Generic2d::System> cls(sub, "System");
+
+            cls.def(
+                py::init<
+                    const xt::pytensor<double, 2>&,
+                    const xt::pytensor<size_t, 2>&,
+                    const xt::pytensor<size_t, 2>&,
+                    const xt::pytensor<size_t, 1>&,
+                    const xt::pytensor<size_t, 1>&,
+                    const xt::pytensor<double, 2>&,
+                    const xt::pytensor<double, 2>&,
+                    const xt::pytensor<size_t, 1>&,
+                    const xt::pytensor<double, 2>&,
+                    const xt::pytensor<double, 2>&,
+                    const xt::pytensor<double, 3>&,
+                    double,
+                    double,
+                    double,
+                    double,
+                    size_t,
+                    size_t,
+                    double>(),
+                "System",
+                py::arg("coor"),
+                py::arg("conn"),
+                py::arg("dofs"),
+                py::arg("iip"),
+                py::arg("elastic_elem"),
+                py::arg("elastic_K"),
+                py::arg("elastic_G"),
+                py::arg("plastic_elem"),
+                py::arg("plastic_K"),
+                py::arg("plastic_G"),
+                py::arg("plastic_epsy"),
+                py::arg("dt"),
+                py::arg("rho"),
+                py::arg("alpha"),
+                py::arg("eta"),
+                py::arg("temperature_dinc"),
+                py::arg("temperature_seed"),
+                py::arg("temperature"));
+
+            cls.def_property_readonly("SigThermal", &SUB::System::SigThermal, "SigThermal");
+
+            cls.def("__repr__", [](const SUB::System&) {
+                return "<FrictionQPotFEM.UniformSingleLayerThermal2d.System>";
             });
         }
     }
