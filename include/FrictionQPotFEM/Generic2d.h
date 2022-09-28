@@ -850,7 +850,7 @@ public:
     */
     void setT(double arg)
     {
-        m_inc = static_cast<size_t>(std::round(arg / m_dt));
+        this->setInc(static_cast<size_t>(std::round(arg / m_dt)));
         FRICTIONQPOTFEM_REQUIRE(xt::allclose(this->t(), arg));
     }
 
@@ -867,7 +867,7 @@ public:
     Set increment.
     \param arg size_t.
     */
-    void setInc(size_t arg)
+    virtual void setInc(size_t arg)
     {
         m_inc = arg;
     }
