@@ -120,24 +120,16 @@ public:
             alpha,
             eta);
 
+        FRICTIONQPOTFEM_REQUIRE(m_conn(m_elem_plas.front(), 0) == m_conn(m_elem_plas.back(), 1));
+        FRICTIONQPOTFEM_REQUIRE(m_conn(m_elem_plas.front(), 3) == m_conn(m_elem_plas.back(), 2));
+        FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(xt::unique(xt::view(m_conn(xt::keep(m_elem_plas), xt::all()))), xt::arange<size_t>(m_conn(m_elem_plas.front(), 0), m_conn(m_elem_plas.back(), 3)))));
+
         m_T = temperature;
         m_dinc = temperature_dinc;
-
-        m_fthermal = xt::empty_like(m_fint);
-        m_TSig = xt::zeros_like(m_Sig);
-
-        size_t n = m_nelem * m_nip;
-        array_type::tensor<size_t, 2> istate = xt::arange<size_t>(n).reshape({m_nelem, m_nip});
-        array_type::tensor<size_t, 2> iseq = xt::zeros<size_t>({m_nelem, m_nip});
-
-        size_t seed = temperature_seed;
-        m_gen_sig = prrng::pcg32_tensor<2>(xt::eval(seed + istate), iseq);
-        m_gen_phi = prrng::pcg32_tensor<2>(xt::eval(m_nelem * m_nip * seed + istate), iseq);
-        m_gen_sgn = prrng::pcg32_tensor<2>(xt::eval(2 * m_nelem * m_nip * seed + istate), iseq);
+        m_fthermal = xt::zeros_like(m_fint);
+        m_gen = prrng::pcg32(temperature_seed, 0);
         m_ncache = 100;
         m_cache_start = -m_ncache;
-        m_cache = xt::empty<double>({(size_t)m_ncache, m_nelem, m_nip, (size_t)2, (size_t)2});
-
         this->setInc(m_inc);
     }
 
@@ -145,14 +137,11 @@ protected:
     size_t m_computed; ///< Increment at which the thermal stress tensor was generated.
     size_t m_dinc; ///< Duration to keep the same random thermal stress tensor.
     double m_T; ///< Standard deviation for signed equivalent thermal stress.
-    array_type::tensor<double, 4> m_TSig; ///< Quad-point tensor: thermal stress.
     array_type::tensor<double, 2> m_fthermal; ///< Nodal force from temperature.
-    array_type::tensor<double, 5> m_cache; ///< Cache for #m_TSig.
+    array_type::tensor<double, 3> m_cache; ///< Cache [ncache, m_elem_plas.size(), 3, 2]
     int64_t m_cache_start; ///< Start index of the cache.
     int64_t m_ncache; ///< Number of cached items.
-    prrng::pcg32_tensor<2> m_gen_sig; ///< Random generator for equivalent thermal stress.
-    prrng::pcg32_tensor<2> m_gen_phi; ///< Random generator for ratio between simple and pure shear.
-    prrng::pcg32_tensor<2> m_gen_sgn; ///< Random generator for sign (of pure shear).
+    prrng::pcg32 m_gen; ///< Random generator for thermal forces
 
 public:
     std::string type() const override
@@ -160,71 +149,39 @@ public:
         return "FrictionQPotFEM.UniformSingleLayerThermal2d.System";
     }
 
-    /**
-     * @brief Thermal stress tensor.
-     */
-    const array_type::tensor<double, 4>& SigThermal() const
-    {
-        return m_TSig;
-    }
-
 protected:
     /**
-     * @brief Update the cache of stress tensors.
+     * @brief Update cache of thermal forces on the weak layer.
      */
     void updateCache(int64_t index)
     {
         int64_t advance = index - m_cache_start - m_ncache;
 
         if (advance != 0) {
-            m_gen_sig.advance(xt::eval(advance * xt::ones<int64_t>({m_nelem * m_nip})));
-            m_gen_phi.advance(xt::eval(advance * xt::ones<int64_t>({m_nelem * m_nip})));
-            m_gen_sgn.advance(xt::eval(advance * xt::ones<int64_t>({m_nelem * m_nip})));
+            m_gen.advance(advance * static_cast<int64_t>(m_N * 6));
         }
 
         m_cache_start += m_ncache;
-
         size_t n = static_cast<size_t>(m_ncache);
-        auto sig = m_gen_sig.normal({n}, 0, m_T);
-        auto phi = m_gen_phi.random({n});
-        auto sgn = m_gen_sgn.randint({n}, (int)2);
-
-        for (size_t i = 0; i < n; ++i) {
-            for (size_t e = 0; e < m_nelem; ++e) {
-                for (size_t q = 0; q < m_nip; ++q) {
-                    double fac = 1;
-                    if (sgn(i, e, q) == 0) {
-                        fac = -1;
-                    }
-                    m_cache(i, e, q, 0, 0) = -fac * std::sqrt(phi(e, q, i)) * 0.5 * sig(e, q, i);
-                    m_cache(i, e, q, 1, 1) = fac * std::sqrt(phi(e, q, i)) * 0.5 * sig(e, q, i);
-                    m_cache(i, e, q, 0, 1) = std::sqrt(1 - phi(e, q, i)) * 0.5 * sig(e, q, i);
-                    m_cache(i, e, q, 1, 0) = std::sqrt(1 - phi(e, q, i)) * 0.5 * sig(e, q, i);
-                }
-            }
-        }
+        m_cache = m_gen_sig.normal({n, m_N, size_t(3), size_t(2)}, 0, m_T);
     }
 
 public:
     void setInc(size_t arg) override
     {
         m_inc = arg;
-        m_computed = m_inc;
         this->updateCache(static_cast<int64_t>((m_inc - m_inc % m_dinc) / m_dinc));
-
-        std::copy(m_cache.data(), m_cache.data() + m_TSig.size(), m_TSig.data());
-        m_quad.int_gradN_dot_tensor2_dV(m_TSig, m_fe);
-        m_vector.assembleNode(m_fe, m_fthermal);
+        this->computeThermalForce(true);
     }
 
 protected:
-    void computeThermalForce()
+    void computeThermalForce(bool force = false)
     {
-        if (m_inc == m_computed) {
+        if (m_inc == m_computed && !force) {
             return;
         }
 
-        if (m_inc % m_dinc != 0) {
+        if (m_inc % m_dinc != 0 && !force) {
             return;
         }
 
@@ -234,10 +191,35 @@ protected:
             this->updateCache(index);
         }
 
-        int64_t offset = index - m_cache_start;
-        std::copy(m_cache.data() + offset, m_cache.data() + offset + m_TSig.size(), m_TSig.data());
-        m_quad.int_gradN_dot_tensor2_dV(m_TSig, m_fe);
-        m_vector.assembleNode(m_fe, m_fthermal);
+        std::fill(&m_thermal(m_cnnn(m_elem_plas.front(), 0), 0), &m_thermal(m_cnnn(m_elem_plas.back(), 2), 1), 0);
+
+        for (size_t e = 0; e < m_N; ++e) {
+            size_t* elem = &m_conn(m_elem_plas(e), 0);
+            double* chache = &m_cache(index, e, 0, 0);
+
+            m_fthermal(elem[0], 0) += cache[0];
+            m_fthermal(elem[3], 0) -= cache[0];
+            m_fthermal(elem[0], 1) += cache[1];
+            m_fthermal(elem[3], 1) -= cache[1];
+
+            m_fthermal(elem[0], 0) += cache[2];
+            m_fthermal(elem[1], 0) -= cache[2];
+            m_fthermal(elem[0], 1) += cache[3];
+            m_fthermal(elem[1], 1) -= cache[3];
+
+            m_fthermal(elem[2], 0) += cache[4];
+            m_fthermal(elem[3], 0) -= cache[4];
+            m_fthermal(elem[2], 1) += cache[5];
+            m_fthermal(elem[3], 1) -= cache[5];
+        }
+
+        // apply periodic boundary conditions
+        m_fthermal(m_conn(m_elem_plas.back(), 1), 0) = m_fthermal(m_conn(m_elem_plas.front(), 0), 0);
+        m_fthermal(m_conn(m_elem_plas.back(), 1), 1) = m_fthermal(m_conn(m_elem_plas.front(), 0), 1);
+        m_fthermal(m_conn(m_elem_plas.back(), 2), 0) = m_fthermal(m_conn(m_elem_plas.front(), 3), 0);
+        m_fthermal(m_conn(m_elem_plas.back(), 2), 1) = m_fthermal(m_conn(m_elem_plas.front(), 3), 1);
+
+        m_computed = m_inc;
     }
 
 protected:
