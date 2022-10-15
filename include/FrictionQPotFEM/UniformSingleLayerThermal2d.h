@@ -120,9 +120,11 @@ public:
             alpha,
             eta);
 
-        FRICTIONQPOTFEM_REQUIRE(m_conn(m_elem_plas.front(), 0) == m_conn(m_elem_plas.back(), 1));
-        FRICTIONQPOTFEM_REQUIRE(m_conn(m_elem_plas.front(), 3) == m_conn(m_elem_plas.back(), 2));
-        FRICTIONQPOTFEM_REQUIRE(xt::all(xt::equal(xt::unique(xt::view(m_conn(xt::keep(m_elem_plas), xt::all()))), xt::arange<size_t>(m_conn(m_elem_plas.front(), 0), m_conn(m_elem_plas.back(), 3)))));
+        auto& pconn = m_vector_plas.conn();
+        FRICTIONQPOTFEM_REQUIRE(pconn(0, 0) == pconn(m_N - 1, 1));
+        FRICTIONQPOTFEM_REQUIRE(pconn(0, 3) == pconn(m_N - 1, 2));
+        FRICTIONQPOTFEM_REQUIRE(xt::all(
+            xt::equal(xt::unique(pconn), xt::arange<size_t>(pconn(0, 0), pconn(m_N - 1, 2) + 1))));
 
         m_T = temperature;
         m_dinc = temperature_dinc;
@@ -163,7 +165,7 @@ protected:
 
         m_cache_start += m_ncache;
         size_t n = static_cast<size_t>(m_ncache);
-        m_cache = m_gen_sig.normal({n, m_N, size_t(3), size_t(2)}, 0, m_T);
+        m_cache = m_gen.normal({n, m_N, size_t(3), size_t(2)}, 0, m_T);
     }
 
 public:
@@ -191,11 +193,16 @@ protected:
             this->updateCache(index);
         }
 
-        std::fill(&m_thermal(m_cnnn(m_elem_plas.front(), 0), 0), &m_thermal(m_cnnn(m_elem_plas.back(), 2), 1), 0);
+        auto& conn = m_vector_plas.conn();
+
+        std::fill(&m_fthermal(conn(0, 0), 0), &m_fthermal(conn(m_N - 1, 2), 1), 0);
+
+        // todo: remove
+        FRICTIONQPOTFEM_REQUIRE(xt::allclose(m_fthermal, 0));
 
         for (size_t e = 0; e < m_N; ++e) {
-            size_t* elem = &m_conn(m_elem_plas(e), 0);
-            double* chache = &m_cache(index, e, 0, 0);
+            const size_t* elem = &conn(e, 0);
+            double* cache = &m_cache(index, e, 0, 0);
 
             m_fthermal(elem[0], 0) += cache[0];
             m_fthermal(elem[3], 0) -= cache[0];
@@ -214,10 +221,10 @@ protected:
         }
 
         // apply periodic boundary conditions
-        m_fthermal(m_conn(m_elem_plas.back(), 1), 0) = m_fthermal(m_conn(m_elem_plas.front(), 0), 0);
-        m_fthermal(m_conn(m_elem_plas.back(), 1), 1) = m_fthermal(m_conn(m_elem_plas.front(), 0), 1);
-        m_fthermal(m_conn(m_elem_plas.back(), 2), 0) = m_fthermal(m_conn(m_elem_plas.front(), 3), 0);
-        m_fthermal(m_conn(m_elem_plas.back(), 2), 1) = m_fthermal(m_conn(m_elem_plas.front(), 3), 1);
+        m_fthermal(conn(m_N - 1, 1), 0) = m_fthermal(conn(0, 0), 0);
+        m_fthermal(conn(m_N - 1, 1), 1) = m_fthermal(conn(0, 0), 1);
+        m_fthermal(conn(m_N - 1, 2), 0) = m_fthermal(conn(0, 3), 0);
+        m_fthermal(conn(m_N - 1, 2), 1) = m_fthermal(conn(0, 3), 1);
 
         m_computed = m_inc;
     }
