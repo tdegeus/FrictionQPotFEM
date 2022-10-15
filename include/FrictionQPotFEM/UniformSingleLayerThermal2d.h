@@ -121,12 +121,30 @@ public:
             eta);
 
         auto& pconn = m_vector_plas.conn();
+        double h = coor(pconn(0, 1), 0) - coor(pconn(0, 0), 0);
         FRICTIONQPOTFEM_REQUIRE(pconn(0, 0) == pconn(m_N - 1, 1));
         FRICTIONQPOTFEM_REQUIRE(pconn(0, 3) == pconn(m_N - 1, 2));
         FRICTIONQPOTFEM_REQUIRE(xt::all(
             xt::equal(xt::unique(pconn), xt::arange<size_t>(pconn(0, 0), pconn(m_N - 1, 2) + 1))));
+        FRICTIONQPOTFEM_REQUIRE(xt::allclose(
+            xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 1)), 0) -
+                xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 0)), 0),
+            h));
+        FRICTIONQPOTFEM_REQUIRE(xt::allclose(
+            xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 2)), 0) -
+                xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 1)), 0),
+            h));
+        FRICTIONQPOTFEM_REQUIRE(xt::allclose(
+            xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 3)), 0) -
+                xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 2)), 0),
+            h));
+        FRICTIONQPOTFEM_REQUIRE(xt::allclose(
+            xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 3)), 0) -
+                xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 0)), 0),
+            h));
 
         m_T = temperature;
+        m_std = m_T * 0.25 * h;
         m_dinc = temperature_dinc;
         m_fthermal = xt::zeros_like(m_fint);
         m_gen = prrng::pcg32(temperature_seed, 0);
@@ -138,7 +156,8 @@ public:
 protected:
     size_t m_computed; ///< Increment at which the thermal stress tensor was generated.
     size_t m_dinc; ///< Duration to keep the same random thermal stress tensor.
-    double m_T; ///< Standard deviation for signed equivalent thermal stress.
+    double m_T; ///< Definition of temperature (units of equivalent stress).
+    double m_std; ///< Standard deviation for signed equivalent thermal stress.
     array_type::tensor<double, 2> m_fthermal; ///< Nodal force from temperature.
     array_type::tensor<double, 3> m_cache; ///< Cache [ncache, m_elem_plas.size(), 3, 2]
     int64_t m_cache_start; ///< Start index of the cache.
@@ -165,7 +184,7 @@ protected:
 
         m_cache_start += m_ncache;
         size_t n = static_cast<size_t>(m_ncache);
-        m_cache = m_gen.normal({n, m_N, size_t(3), size_t(2)}, 0, m_T);
+        m_cache = m_gen.normal({n, m_N, size_t(3), size_t(2)}, 0, m_std);
     }
 
 public:
