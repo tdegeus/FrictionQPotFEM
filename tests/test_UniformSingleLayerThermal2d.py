@@ -66,8 +66,8 @@ class test_Generic2d(unittest.TestCase):
             matrix.assemble(Ke)
 
             ninc = 500
-            sig = np.zeros_like(mat.Sig)
-            abssig = np.zeros_like(mat.Sig)
+            sig = np.zeros_like(mat.Sig[plastic, ...])
+            abssig = np.zeros_like(mat.Sig[plastic, ...])
 
             for inc in range(ninc):
 
@@ -79,8 +79,8 @@ class test_Generic2d(unittest.TestCase):
                 elem.symGradN_vector(ue, mat.Eps)
                 mat.refresh()
 
-                sig += mat.Sig
-                abssig += np.abs(mat.Sig)
+                sig += mat.Sig[plastic, ...]
+                abssig += np.abs(mat.Sig[plastic, ...])
                 system.timeStep()
 
                 self.assertTrue(
@@ -89,7 +89,7 @@ class test_Generic2d(unittest.TestCase):
                     )
                 )
 
-            self.assertLess(np.abs(np.mean(GMat.Sigd(abssig / ninc)) / system.temperature - 1), 0.1)
+            self.assertLess(np.abs(np.mean(GMat.Sigd(abssig / ninc)) / system.temperature - 1), 0.2)
             self.assertLess(np.mean(GMat.Sigd(sig / ninc)) / system.temperature, 0.1)
 
     def test_restore(self):
