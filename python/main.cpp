@@ -553,9 +553,9 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("rho"),
                 py::arg("alpha"),
                 py::arg("eta"),
-                py::arg("temperature_dinc") = 0,
-                py::arg("temperature_seed") = 0,
-                py::arg("temperature") = 0);
+                py::arg("temperature_dinc"),
+                py::arg("temperature_seed"),
+                py::arg("temperature"));
 
             cls.def_property_readonly("fthermal", &SUB::System::fthermal, "fthermal");
             cls.def_property_readonly("temperature", &SUB::System::temperature, "temperature");
