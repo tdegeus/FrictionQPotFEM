@@ -64,6 +64,71 @@ class test_Generic2d(unittest.TestCase):
 
         self.assertEqual(parsed.day, datetime.date.today().day)
 
+    def test_applyStres(self):
+        """
+        Apply a stress to the top.
+        """
+
+        mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
+        coor = mesh.coor()
+        dofs = mesh.dofs()
+        dofs[mesh.nodesLeftOpenEdge(), ...] = dofs[mesh.nodesRightOpenEdge(), ...]
+        iip = np.concatenate(
+            (dofs[mesh.nodesBottomEdge(), :].ravel(), dofs[mesh.nodesTopEdge(), 1])
+        )
+
+        elastic = np.array([0, 1, 2, 6, 7, 8], dtype=np.uint64)
+        plastic = np.array([3, 4, 5], dtype=np.uint64)
+        epsy = np.cumsum(1000 * np.ones((plastic.size, 5)), axis=1)
+
+        system = FrictionQPotFEM.Generic2d.System(
+            coor=coor,
+            conn=mesh.conn(),
+            dofs=dofs,
+            iip=iip,
+            elastic_elem=elastic,
+            elastic_K=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            elastic_G=FrictionQPotFEM.moduli_toquad(np.ones(elastic.size)),
+            plastic_elem=plastic,
+            plastic_K=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_G=FrictionQPotFEM.moduli_toquad(np.ones(plastic.size)),
+            plastic_epsy=FrictionQPotFEM.epsy_initelastic_toquad(epsy),
+            dt=1,
+            rho=1,
+            alpha=1,
+            eta=0,
+        )
+
+        sigxy = 0.1
+        system.applyShearStress(sigxy)
+
+        vector = GooseFEM.VectorPartitioned(mesh.conn(), dofs, iip)
+        matrix = GooseFEM.MatrixPartitioned(mesh.conn(), dofs, iip)
+        solver = GooseFEM.MatrixPartitionedSolver()
+        elem = GooseFEM.Element.Quad4.Quadrature(vector.AsElement(coor))
+        mat = GMat.Elastic2d(np.ones([vector.nelem, elem.nip]), np.ones([vector.nelem, elem.nip]))
+
+        Ke = elem.Int_gradN_dot_tensor4_dot_gradNT_dV(mat.C)
+        matrix.assemble(Ke)
+
+        system.u = np.zeros_like(system.u)
+        solver.solve(matrix, system.fext, system.u)
+
+        ue = vector.AsElement(system.u)
+        elem.symGradN_vector(ue, mat.Eps)
+        system.refresh()
+        mat.refresh()
+
+        # stress must be uniform
+        self.assertTrue(np.allclose(mat.Sig[..., 0, 0], 0))
+        self.assertTrue(np.allclose(mat.Sig[..., 1, 1], 0))
+        self.assertTrue(np.allclose(mat.Sig[..., 0, 1], mat.Sig[0, 0, 0, 1]))
+        self.assertTrue(np.allclose(mat.Sig[..., 1, 0], mat.Sig[0, 0, 1, 0]))
+
+        dV = system.quad.AsTensor(2, system.quad.dV)
+        sigbar = np.average(system.Sig(), weights=dV, axis=(0, 1))
+        self.assertAlmostEqual(sigbar[0, 1], sigxy)
+
     def test_eventDrivenSimpleShear(self):
         """
         Simple test of event driven simple shear in a homogeneous system:
