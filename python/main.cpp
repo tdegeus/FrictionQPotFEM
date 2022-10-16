@@ -208,6 +208,12 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
             cls.def_property(
                 "fext", &SUB::System::fext, &SUB::System::setFext<xt::pytensor<double, 2>>, "fext");
 
+            cls.def(
+                "applyShearStress",
+                &SUB::System::applyShearStress,
+                "Apply shear stress to the top boundary",
+                py::arg("sigxy"));
+
             cls.def_property_readonly("fint", &SUB::System::fint, "fint");
             cls.def_property_readonly("fmaterial", &SUB::System::fmaterial, "fmaterial");
             cls.def_property_readonly("fdamp", &SUB::System::fdamp, "fdamp");

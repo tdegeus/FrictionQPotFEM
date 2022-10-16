@@ -775,6 +775,47 @@ public:
         return m_fext;
     }
 
+    /**
+     * @brief Modify the external force such that a shear stress is applied to the top boundary.
+     * @param sigxy The shear stress to be applied.
+     */
+    void applyShearStress(double sigxy)
+    {
+        double t = m_coor(m_coor.shape(0) - 1, 1);
+        double b = m_coor(0, 1);
+        auto top = xt::sort(
+            xt::flatten_indices(xt::argwhere(xt::isclose(xt::view(m_coor, xt::all(), 1), t))));
+        auto bot = xt::sort(
+            xt::flatten_indices(xt::argwhere(xt::isclose(xt::view(m_coor, xt::all(), 1), b))));
+        double h = m_coor(top(1), 0) - m_coor(top(0), 0);
+
+        for (size_t i = 0; i < top.size() - 1; i++) {
+            FRICTIONQPOTFEM_REQUIRE(xt::allclose(m_coor(top(i + 1), 0) - m_coor(top(i), 0), h));
+        }
+
+        for (size_t d = 0; d < 2; d++) {
+            auto dofs = xt::view(m_vector.dofs(), xt::keep(top), d);
+            if (d == 0) {
+                FRICTIONQPOTFEM_REQUIRE(!xt::any(xt::in1d(dofs, m_vector.iip())));
+            }
+            else {
+                FRICTIONQPOTFEM_REQUIRE(xt::all(xt::in1d(dofs, m_vector.iip())));
+            }
+        }
+
+        for (size_t d = 0; d < 2; d++) {
+            auto dofs = xt::view(m_vector.dofs(), xt::keep(bot), d);
+            FRICTIONQPOTFEM_REQUIRE(xt::all(xt::in1d(dofs, m_vector.iip())));
+        }
+
+        m_fext(top.front(), 0) = 0.5 * sigxy * h;
+        m_fext(top.back(), 0) = 0.5 * sigxy * h;
+
+        for (size_t i = 1; i < top.size() - 1; i++) {
+            m_fext(top(i), 0) = sigxy * h;
+        }
+    }
+
 public:
     /**
     Internal force.
