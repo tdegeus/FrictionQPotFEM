@@ -185,10 +185,12 @@ endif()
 if(BUILD_DOCS OR BUILD_ALL)
 
     find_package(Doxygen REQUIRED)
+    find_package(GMatElastic REQUIRED)
     find_package(GMatTensor REQUIRED)
     find_package(QPot REQUIRED)
 
     get_target_property(GooseFEM_INCLUDE GooseFEM INTERFACE_INCLUDE_DIRECTORIES)
+    get_target_property(GMatElastic_INCLUDE GMatElastic INTERFACE_INCLUDE_DIRECTORIES)
     get_target_property(GMatElastoPlasticQPot_INCLUDE GMatElastoPlasticQPot INTERFACE_INCLUDE_DIRECTORIES)
     get_target_property(GMatTensor_INCLUDE GMatTensor INTERFACE_INCLUDE_DIRECTORIES)
     get_target_property(QPot_INCLUDE QPot INTERFACE_INCLUDE_DIRECTORIES)
@@ -196,18 +198,21 @@ if(BUILD_DOCS OR BUILD_ALL)
     set(${PROJECT_NAME}_DOCS_INCL
         "${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}"
         "${GooseFEM_INCLUDE}/GooseFEM"
+        "${GMatElastic_INCLUDE}/GMatElastic"
         "${GMatElastoPlasticQPot_INCLUDE}/GMatElastoPlasticQPot"
         "${GMatTensor_INCLUDE}/GMatTensor")
 
     set(${PROJECT_NAME}_DOCS_STRIP
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         "${GooseFEM_INCLUDE}"
+        "${GMatElastic_INCLUDE}"
         "${GMatElastoPlasticQPot_INCLUDE}"
         "${GMatTensor_INCLUDE}"
         "${QPot_INCLUDE}")
 
     # deal with strange doxygen bug
     string(REGEX REPLACE "(.*)(include)" "\\1" GooseFEM_STRIP ${GooseFEM_INCLUDE})
+    string(REGEX REPLACE "(.*)(include)" "\\1" GMatElastic_STRIP ${GMatElastic_INCLUDE})
     string(REGEX REPLACE "(.*)(include)" "\\1" GMatElastoPlasticQPot_STRIP ${GMatElastoPlasticQPot_INCLUDE})
     string(REGEX REPLACE "(.*)(include)" "\\1" GMatTensor_STRIP ${GMatTensor_INCLUDE})
     string(REGEX REPLACE "(.*)(include)" "\\1" QPot_STRIP ${QPot_INCLUDE})
@@ -215,6 +220,7 @@ if(BUILD_DOCS OR BUILD_ALL)
     set(${PROJECT_NAME}_DOCS_STRIP_INC
         "${CMAKE_CURRENT_SOURCE_DIR}/include"
         "${GooseFEM_STRIP}"
+        "${GMatElastic_STRIP}"
         "${GMatElastoPlasticQPot_STRIP}"
         "${GMatTensor_STRIP}"
         "${QPot_STRIP}")

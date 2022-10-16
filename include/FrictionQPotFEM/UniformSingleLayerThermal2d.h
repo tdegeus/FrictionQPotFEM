@@ -208,6 +208,10 @@ public:
     }
 
 protected:
+    /**
+     * @brief Update the thermal force vector.
+     * @param force If `false` updating is skipped if already computed for the current increment.
+     */
     void computeThermalForce(bool force = false)
     {
         if (m_inc == m_computed && !force) {
