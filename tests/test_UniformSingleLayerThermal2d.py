@@ -1,3 +1,4 @@
+import time
 import unittest
 
 import FrictionQPotFEM
@@ -122,7 +123,7 @@ class test_Generic2d(unittest.TestCase):
             alpha=1,
             eta=0,
             temperature_dinc=2,
-            temperature_seed=0,
+            temperature_seed=int(time.time()),
             temperature=sig0,
         )
 
