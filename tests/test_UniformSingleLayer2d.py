@@ -13,7 +13,10 @@ class test_Generic2d(unittest.TestCase):
 
     def test_eventDrivenSimpleShear(self):
 
-        for model in [FrictionQPotFEM.UniformSingleLayer2d, FrictionQPotFEM.UniformSingleLayerThermal2d]:
+        for model in [
+            FrictionQPotFEM.UniformSingleLayer2d,
+            FrictionQPotFEM.UniformSingleLayerThermal2d,
+        ]:
 
             mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
             coor = mesh.coor()
@@ -65,7 +68,10 @@ class test_Generic2d(unittest.TestCase):
 
     def test_addSimpleShearToFixedStress(self):
 
-        for model in [FrictionQPotFEM.UniformSingleLayer2d, FrictionQPotFEM.UniformSingleLayerThermal2d]:
+        for model in [
+            FrictionQPotFEM.UniformSingleLayer2d,
+            FrictionQPotFEM.UniformSingleLayerThermal2d,
+        ]:
 
             mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
             coor = mesh.coor()

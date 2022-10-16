@@ -80,7 +80,7 @@ public:
      * @param alpha Background damping density, see setDampingMatrix().
      * @param eta Damping at the interface (homogeneous), see setEta().
      * @param temperature_dinc Duration to keep the same random thermal stress tensor.
-     * @param temperature_seed Seed random generator thermal stress (`s + arange(3 * nelem)` are used).
+     * @param temperature_seed Seed random generator thermal stress.
      * @param temperature 'Temperature': in units of the the equivalent stress.
      */
     template <class C, class E, class L, class M, class Y>

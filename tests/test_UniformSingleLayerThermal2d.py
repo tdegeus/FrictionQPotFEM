@@ -45,7 +45,7 @@ class test_Generic2d(unittest.TestCase):
                 eta=0,
                 temperature_dinc=2,
                 temperature_seed=0,
-                temperature=sig0,
+                temperature=3.4 * sig0,
             )
 
             if ih == 0:
@@ -57,20 +57,39 @@ class test_Generic2d(unittest.TestCase):
             matrix = GooseFEM.MatrixPartitioned(mesh.conn(), dofs, iip)
             solver = GooseFEM.MatrixPartitionedSolver()
             elem = GooseFEM.Element.Quad4.Quadrature(vector.AsElement(coor))
-            mat = GMat.Elastic2d(np.ones([vector.nelem, elem.nip]), np.ones([vector.nelem, elem.nip]))
+            mat = GMat.Elastic2d(
+                np.ones([vector.nelem, elem.nip]), np.ones([vector.nelem, elem.nip])
+            )
 
             Ke = elem.Int_gradN_dot_tensor4_dot_gradNT_dV(mat.C)
             matrix.assemble(Ke)
 
-            disp = np.zeros_like(coor)
-            solver.solve(matrix, system.fthermal, disp)
+            ninc = 500
+            sig = np.zeros_like(mat.Sig)
+            abssig = np.zeros_like(mat.Sig)
 
-            ue = vector.AsElement(disp)
-            elem.symGradN_vector(ue, mat.Eps)
-            mat.refresh()
+            for inc in range(ninc):
 
-            self.assertTrue(np.abs(np.mean(GMat.Sigd(mat.Sig)) / system.temperature - 1) < 0.1)
-            self.assertTrue(np.allclose(disp[mesh.nodesLeftOpenEdge(), ...], disp[mesh.nodesRightOpenEdge(), ...]))
+                disp = np.zeros_like(coor)
+                system.u = disp
+                solver.solve(matrix, system.fthermal, disp)
+
+                ue = vector.AsElement(disp)
+                elem.symGradN_vector(ue, mat.Eps)
+                mat.refresh()
+
+                sig += mat.Sig
+                abssig += np.abs(mat.Sig)
+                system.timeStep()
+
+                self.assertTrue(
+                    np.allclose(
+                        disp[mesh.nodesLeftOpenEdge(), ...], disp[mesh.nodesRightOpenEdge(), ...]
+                    )
+                )
+
+            self.assertLess(np.abs(np.mean(GMat.Sigd(abssig / ninc)) / system.temperature - 1), 0.1)
+            self.assertLess(np.mean(GMat.Sigd(sig / ninc)) / system.temperature, 0.1)
 
     def test_restore(self):
 

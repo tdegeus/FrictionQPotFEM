@@ -514,7 +514,8 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
         {
 
-            py::class_<SUB::System, FrictionQPotFEM::UniformSingleLayer2d::System> cls(sub, "System");
+            py::class_<SUB::System, FrictionQPotFEM::UniformSingleLayer2d::System> cls(
+                sub, "System");
 
             cls.def(
                 py::init<
