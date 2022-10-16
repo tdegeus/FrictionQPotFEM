@@ -514,7 +514,7 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
 
         {
 
-            py::class_<SUB::System, FrictionQPotFEM::Generic2d::System> cls(sub, "System");
+            py::class_<SUB::System, FrictionQPotFEM::UniformSingleLayer2d::System> cls(sub, "System");
 
             cls.def(
                 py::init<
@@ -552,9 +552,12 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("rho"),
                 py::arg("alpha"),
                 py::arg("eta"),
-                py::arg("temperature_dinc"),
-                py::arg("temperature_seed"),
-                py::arg("temperature"));
+                py::arg("temperature_dinc") = 0,
+                py::arg("temperature_seed") = 0,
+                py::arg("temperature") = 0);
+
+            cls.def_property_readonly("fthermal", &SUB::System::fthermal, "fthermal");
+            cls.def_property_readonly("temperature", &SUB::System::temperature, "temperature");
 
             cls.def("__repr__", [](const SUB::System&) {
                 return "<FrictionQPotFEM.UniformSingleLayerThermal2d.System>";

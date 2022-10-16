@@ -41,13 +41,14 @@ inline std::vector<std::string> version_compiler()
 }
 
 /**
-Compared to UniformSingleLayer2d::System() this class adds thermal fluctuations.
-The fluctuations are implemented as a stress field that is random for each Gauss point.
-The stress tensor per Gauss point is constructed such that the equivalent stress is the
-absolute value of a random variable drawn from a normal distribution `N(0, temperature)`.
-That value is then randomly distributed between simple and pure shear contributions with
-random directions.
-*/
+ * @brief Compared to UniformSingleLayer2d::System() this class adds thermal fluctuations.
+ *
+ * The fluctuations are implemented as a dipolar force on each element edge.
+ * Both its components are drawn from a normal distribution with zero mean and 'temperature'
+ * standard deviation.
+ * The temperature specification is thereby in units of the equivalent stress, see
+ * GMatElastoPlasticQPot::Cartesian2d::Sigd().
+ */
 class System : public UniformSingleLayer2d::System {
 
 public:
@@ -58,30 +59,30 @@ public:
 
 public:
     /**
-    Define the geometry, including boundary conditions and element sets.
-
-    \tparam C Type of nodal coordinates, e.g. `array_type::tensor<double, 2>`
-    \tparam E Type of connectivity and DOFs, e.g. `array_type::tensor<size_t, 2>`
-    \tparam L Type of node/element lists, e.g. `array_type::tensor<size_t, 1>`
-    \param coor Nodal coordinates.
-    \param conn Connectivity.
-    \param dofs DOFs per node.
-    \param iip DOFs whose displacement is fixed.
-    \param elastic_elem Elastic elements.
-    \param elastic_K Bulk modulus per quad. point of each elastic element, see setElastic().
-    \param elastic_G Shear modulus per quad. point of each elastic element, see setElastic().
-    \param plastic_elem Plastic elements.
-    \param plastic_K Bulk modulus per quad. point of each plastic element, see Plastic().
-    \param plastic_G Shear modulus per quad. point of each plastic element, see Plastic().
-    \param plastic_epsy Yield strain per quad. point of each plastic element, see Plastic().
-    \param dt Time step, set setDt().
-    \param rho Mass density, see setMassMatrix().
-    \param alpha Background damping density, see setDampingMatrix().
-    \param eta Damping at the interface (homogeneous), see setEta().
-    \param temperature_dinc Duration to keep the same random thermal stress tensor.
-    \param temperature_seed Seed random generator thermal stress (`s + arange(3 * nelem)` are used).
-    \param temperature 'Temperature': standard deviation of the equivalent stress.
-    */
+     * @brief Define the geometry, including boundary conditions and element sets.
+     *
+     * @tparam C Type of nodal coordinates, e.g. `array_type::tensor<double, 2>`
+     * @tparam E Type of connectivity and DOFs, e.g. `array_type::tensor<size_t, 2>`
+     * @tparam L Type of node/element lists, e.g. `array_type::tensor<size_t, 1>`
+     * @param coor Nodal coordinates.
+     * @param conn Connectivity.
+     * @param dofs DOFs per node.
+     * @param iip DOFs whose displacement is fixed.
+     * @param elastic_elem Elastic elements.
+     * @param elastic_K Bulk modulus per quad. point of each elastic element, see setElastic().
+     * @param elastic_G Shear modulus per quad. point of each elastic element, see setElastic().
+     * @param plastic_elem Plastic elements.
+     * @param plastic_K Bulk modulus per quad. point of each plastic element, see Plastic().
+     * @param plastic_G Shear modulus per quad. point of each plastic element, see Plastic().
+     * @param plastic_epsy Yield strain per quad. point of each plastic element, see Plastic().
+     * @param dt Time step, set setDt().
+     * @param rho Mass density, see setMassMatrix().
+     * @param alpha Background damping density, see setDampingMatrix().
+     * @param eta Damping at the interface (homogeneous), see setEta().
+     * @param temperature_dinc Duration to keep the same random thermal stress tensor.
+     * @param temperature_seed Seed random generator thermal stress (`s + arange(3 * nelem)` are used).
+     * @param temperature 'Temperature': in units of the the equivalent stress.
+     */
     template <class C, class E, class L, class M, class Y>
     System(
         const C& coor,
@@ -122,29 +123,20 @@ public:
 
         auto& pconn = m_vector_plas.conn();
         double h = coor(pconn(0, 1), 0) - coor(pconn(0, 0), 0);
-        FRICTIONQPOTFEM_REQUIRE(pconn(0, 0) == pconn(m_N - 1, 1));
-        FRICTIONQPOTFEM_REQUIRE(pconn(0, 3) == pconn(m_N - 1, 2));
-        FRICTIONQPOTFEM_REQUIRE(xt::all(
-            xt::equal(xt::unique(pconn), xt::arange<size_t>(pconn(0, 0), pconn(m_N - 1, 2) + 1))));
-        FRICTIONQPOTFEM_REQUIRE(xt::allclose(
-            xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 1)), 0) -
-                xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 0)), 0),
-            h));
-        FRICTIONQPOTFEM_REQUIRE(xt::allclose(
-            xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 2)), 0) -
-                xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 1)), 0),
-            h));
-        FRICTIONQPOTFEM_REQUIRE(xt::allclose(
-            xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 3)), 0) -
-                xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 2)), 0),
-            h));
-        FRICTIONQPOTFEM_REQUIRE(xt::allclose(
-            xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 3)), 0) -
-                xt::view(coor, xt::keep(xt::view(pconn, xt::all(), 0)), 0),
-            h));
+        for (size_t d = 0; d < dofs.shape(1); ++d) {
+            FRICTIONQPOTFEM_REQUIRE(dofs(pconn(0, 0), d) == dofs(pconn(m_N - 1, 1), d));
+            FRICTIONQPOTFEM_REQUIRE(dofs(pconn(0, 3), d) == dofs(pconn(m_N - 1, 2), d));
+        }
+
+        for (size_t e = 0; e < m_N; ++e) {
+            FRICTIONQPOTFEM_REQUIRE(xt::allclose(coor(pconn(e, 1), 0) - coor(pconn(e, 0), 0), h));
+            FRICTIONQPOTFEM_REQUIRE(xt::allclose(coor(pconn(e, 2), 1) - coor(pconn(e, 1), 1), h));
+            FRICTIONQPOTFEM_REQUIRE(xt::allclose(coor(pconn(e, 2), 0) - coor(pconn(e, 3), 0), h));
+            FRICTIONQPOTFEM_REQUIRE(xt::allclose(coor(pconn(e, 3), 1) - coor(pconn(e, 1), 1), h));
+        }
 
         m_T = temperature;
-        m_std = m_T * 0.25 * h;
+        m_std = m_T * h;
         m_dinc = temperature_dinc;
         m_fthermal = xt::zeros_like(m_fint);
         m_gen = prrng::pcg32(temperature_seed, 0);
@@ -159,7 +151,7 @@ protected:
     double m_T; ///< Definition of temperature (units of equivalent stress).
     double m_std; ///< Standard deviation for signed equivalent thermal stress.
     array_type::tensor<double, 2> m_fthermal; ///< Nodal force from temperature.
-    array_type::tensor<double, 3> m_cache; ///< Cache [ncache, m_elem_plas.size(), 3, 2]
+    array_type::tensor<double, 4> m_cache; ///< Cache [ncache, m_elem_plas.size(), 3, 2]
     int64_t m_cache_start; ///< Start index of the cache.
     int64_t m_ncache; ///< Number of cached items.
     prrng::pcg32 m_gen; ///< Random generator for thermal forces
@@ -168,6 +160,24 @@ public:
     std::string type() const override
     {
         return "FrictionQPotFEM.UniformSingleLayerThermal2d.System";
+    }
+
+    /**
+     * @brief The force vector that represents the effect of temperature (on the weak layer only).
+     * @return nodevec
+     */
+    const array_type::tensor<double, 2>& fthermal() const
+    {
+        return m_fthermal;
+    }
+
+    /**
+     * @brief Return the target temperature.
+     * @return double
+     */
+    double temperature() const
+    {
+        return m_T;
     }
 
 protected:
@@ -214,36 +224,29 @@ protected:
 
         auto& conn = m_vector_plas.conn();
 
-        std::fill(&m_fthermal(conn(0, 0), 0), &m_fthermal(conn(m_N - 1, 2), 1), 0);
-
-        // todo: remove
-        FRICTIONQPOTFEM_REQUIRE(xt::allclose(m_fthermal, 0));
+        std::fill(&m_fthermal(conn(0, 0), 0), &m_fthermal(conn(m_N - 1, 2), 1) + 1, 0);
 
         for (size_t e = 0; e < m_N; ++e) {
             const size_t* elem = &conn(e, 0);
             double* cache = &m_cache(index, e, 0, 0);
 
-            m_fthermal(elem[0], 0) += cache[0];
-            m_fthermal(elem[3], 0) -= cache[0];
-            m_fthermal(elem[0], 1) += cache[1];
-            m_fthermal(elem[3], 1) -= cache[1];
-
-            m_fthermal(elem[0], 0) += cache[2];
-            m_fthermal(elem[1], 0) -= cache[2];
-            m_fthermal(elem[0], 1) += cache[3];
-            m_fthermal(elem[1], 1) -= cache[3];
-
-            m_fthermal(elem[2], 0) += cache[4];
-            m_fthermal(elem[3], 0) -= cache[4];
-            m_fthermal(elem[2], 1) += cache[5];
-            m_fthermal(elem[3], 1) -= cache[5];
+            for (size_t d = 0; d < 2; ++d) {
+                m_fthermal(elem[0], d) += cache[0 + d];
+                m_fthermal(elem[3], d) -= cache[0 + d];
+                m_fthermal(elem[0], d) += cache[2 + d];
+                m_fthermal(elem[1], d) -= cache[2 + d];
+                m_fthermal(elem[2], d) += cache[4 + d];
+                m_fthermal(elem[3], d) -= cache[4 + d];
+            }
         }
 
         // apply periodic boundary conditions
-        m_fthermal(conn(m_N - 1, 1), 0) = m_fthermal(conn(0, 0), 0);
-        m_fthermal(conn(m_N - 1, 1), 1) = m_fthermal(conn(0, 0), 1);
-        m_fthermal(conn(m_N - 1, 2), 0) = m_fthermal(conn(0, 3), 0);
-        m_fthermal(conn(m_N - 1, 2), 1) = m_fthermal(conn(0, 3), 1);
+        for (size_t d = 0; d < 2; ++d) {
+            m_fthermal(conn(0, 0), d) += m_fthermal(conn(m_N - 1, 1), d);
+            m_fthermal(conn(0, 3), d) += m_fthermal(conn(m_N - 1, 2), d);
+            m_fthermal(conn(m_N - 1, 1), d) = m_fthermal(conn(0, 0), d);
+            m_fthermal(conn(m_N - 1, 2), d) = m_fthermal(conn(0, 3), d);
+        }
 
         m_computed = m_inc;
     }
