@@ -51,30 +51,6 @@ jobs:
       run: |
         SKBUILD_CONFIGURE_OPTIONS="-DUSE_DEBUG=1" python -m pip install . -vv
 
-    - name: python tests/test_Generic2d.py
-      run: python tests/test_Generic2d.py
-    - name: python tests/test_Generic2d_historic.py
-      run: python tests/test_Generic2d_historic.py
-    - name: python tests/test_UniformMultiLayerIndividualDrive2d.py
-      run: python tests/test_UniformMultiLayerIndividualDrive2d.py
-    - name: python tests/test_UniformMultiLayerIndividualDrive2d_historic.py
-      run: python tests/test_UniformMultiLayerIndividualDrive2d_historic.py
-    - name: python tests/test_UniformMultiLayerLeverDrive2d.py
-      run: python tests/test_UniformMultiLayerLeverDrive2d.py
-    - name: python tests/test_UniformMultiLayerLeverDrive2d_historic.py
-      run: python tests/test_UniformMultiLayerLeverDrive2d_historic.py
-    - name: python tests/test_UniformSingleLayer2d.py
-      run: python tests/test_UniformSingleLayer2d.py
-    - name: python tests/test_UniformSingleLayer2d_LocalTriggerFineLayer.py
-      run: python tests/test_UniformSingleLayer2d_LocalTriggerFineLayer.py
-    - name: python tests/test_UniformSingleLayer2d_historic.py
-      run: python tests/test_UniformSingleLayer2d_historic.py
-    - name: python tests/test_UniformSingleLayerThermal2d.py
-      run: python tests/test_UniformSingleLayerThermal2d.py
-    - name: python tests/test_basic.py
-      run: python tests/test_basic.py
-
-
     - name: Run Python tests
       run: python -m unittest discover tests
 
