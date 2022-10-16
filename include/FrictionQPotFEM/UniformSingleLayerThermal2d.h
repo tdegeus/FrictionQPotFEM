@@ -141,7 +141,8 @@ public:
         m_fthermal = xt::zeros_like(m_fint);
         m_gen = prrng::pcg32(temperature_seed, 0);
         m_ncache = 100;
-        m_cache_start = -m_ncache;
+        m_cache = m_gen.normal({size_t(m_ncache), m_N, size_t(3), size_t(2)}, 0, m_std);
+        m_cache_start = 0;
         this->setInc(m_inc);
     }
 
@@ -186,22 +187,23 @@ protected:
      */
     void updateCache(int64_t index)
     {
-        int64_t advance = index - m_cache_start - m_ncache;
+        if (index >= m_cache_start && index < m_cache_start + m_ncache) {
+            return;
+        }
 
+        int64_t advance = index - m_cache_start - m_ncache;
         if (advance != 0) {
             m_gen.advance(advance * static_cast<int64_t>(m_N * 6));
         }
 
-        m_cache_start += m_ncache;
-        size_t n = static_cast<size_t>(m_ncache);
-        m_cache = m_gen.normal({n, m_N, size_t(3), size_t(2)}, 0, m_std);
+        m_cache = m_gen.normal({size_t(m_ncache), m_N, size_t(3), size_t(2)}, 0, m_std);
+        m_cache_start = index;
     }
 
 public:
     void setInc(size_t arg) override
     {
         m_inc = arg;
-        this->updateCache(static_cast<int64_t>((m_inc - m_inc % m_dinc) / m_dinc));
         this->computeThermalForce(true);
     }
 
@@ -217,10 +219,7 @@ protected:
         }
 
         int64_t index = static_cast<int64_t>(m_inc / m_dinc);
-
-        if (index - m_cache_start >= m_ncache) {
-            this->updateCache(index);
-        }
+        this->updateCache(index);
 
         auto& conn = m_vector_plas.conn();
 
@@ -228,7 +227,7 @@ protected:
 
         for (size_t e = 0; e < m_N; ++e) {
             const size_t* elem = &conn(e, 0);
-            double* cache = &m_cache(index, e, 0, 0);
+            double* cache = &m_cache(index - m_cache_start, e, 0, 0);
 
             for (size_t d = 0; d < 2; ++d) {
                 m_fthermal(elem[0], d) += cache[0 + d];

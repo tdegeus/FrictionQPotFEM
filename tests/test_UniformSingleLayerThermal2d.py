@@ -13,7 +13,7 @@ class test_Generic2d(unittest.TestCase):
 
     def test_dimension(self):
 
-        for h in [1, 1.5, 2, np.pi, 4]:
+        for ih, h in enumerate([1, 1.5, 2, np.pi, 4]):
 
             mesh = GooseFEM.Mesh.Quad4.Regular(3, 3, h=h)
             coor = mesh.coor()
@@ -47,6 +47,11 @@ class test_Generic2d(unittest.TestCase):
                 temperature_seed=0,
                 temperature=sig0,
             )
+
+            if ih == 0:
+                f0 = np.copy(system.fthermal)
+            else:
+                self.assertTrue(np.allclose(f0, system.fthermal / h))
 
             vector = GooseFEM.VectorPartitioned(mesh.conn(), dofs, iip)
             matrix = GooseFEM.MatrixPartitioned(mesh.conn(), dofs, iip)
@@ -103,19 +108,18 @@ class test_Generic2d(unittest.TestCase):
         )
 
         ninc = 500
+        incs = list(range(ninc))
         f = np.zeros([ninc] + list(system.fthermal.shape))
 
-        for inc in range(ninc):
+        for inc in incs:
             f[inc, ...] = system.fthermal
             system.timeStep()
 
-        for inc in range(ninc):
+        np.random.shuffle(incs)
+
+        for inc in incs:
             system.inc = inc
-            print(inc)
             self.assertTrue(np.allclose(f[inc, ...], system.fthermal))
-
-
-
 
 
 if __name__ == "__main__":
