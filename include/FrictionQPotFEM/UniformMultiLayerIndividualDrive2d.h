@@ -1,8 +1,8 @@
 /**
-\file
-\copyright Copyright 2020. Tom de Geus. All rights reserved.
-\license This project is released under the GNU Public License (MIT).
-*/
+ * @file
+ * @copyright Copyright 2020. Tom de Geus. All rights reserved.
+ * @license This project is released under the GNU Public License (MIT).
+ */
 
 #ifndef FRICTIONQPOTFEM_UNIFORMMULTILAYERINDIVIDUALDRIVE2D_H
 #define FRICTIONQPOTFEM_UNIFORMMULTILAYERINDIVIDUALDRIVE2D_H
@@ -13,47 +13,47 @@
 namespace FrictionQPotFEM {
 
 /**
-System in 2-d with:
--   Several weak layers.
--   Each layer driven independently through a spring.
--   Uniform elasticity.
-*/
+ * System in 2-d with:
+ * -   Several weak layers.
+ * -   Each layer driven independently through a spring.
+ * -   Uniform elasticity.
+ */
 namespace UniformMultiLayerIndividualDrive2d {
 
 /**
-\copydoc Generic2d::version_dependencies()
-*/
+ * @copydoc Generic2d::version_dependencies()
+ */
 inline std::vector<std::string> version_dependencies()
 {
     return Generic2d::version_dependencies();
 }
 
 /**
-\copydoc Generic2d::version_compiler()
-*/
+ * @copydoc Generic2d::version_compiler()
+ */
 inline std::vector<std::string> version_compiler()
 {
     return Generic2d::version_compiler();
 }
 
 /**
-System that comprises several layers (elastic or plastic).
-The average displacement of each layer can be coupled to a prescribed target value
-using a linear spring (one spring per spatial dimension):
--   To set its stiffness use layerSetDriveStiffness().
--   Each spring can be switched on individually using layerSetTargetActive().
-    By default all springs are inactive (their stiffness is effectively zero).
-
-Terminology:
--   `ubar`: the average displacement per layer [#nlayer, 2],
-            see layerUbar() and layerSetUbar().
-
--   `target_ubar`: the target average displacement per layer [#nlayer, 2],
-                   see layerTargetUbar() and layerSetTargetUbar().
-
--   `target_active`: the average displacement per layer/DOF is only enforced if the spring
-                     is active, see layerTargetActive() and layerSetTargetActive().
-*/
+ * System that comprises several layers (elastic or plastic).
+ * The average displacement of each layer can be coupled to a prescribed target value
+ * using a linear spring (one spring per spatial dimension):
+ * -   To set its stiffness use layerSetDriveStiffness().
+ * -   Each spring can be switched on individually using layerSetTargetActive().
+ *     By default all springs are inactive (their stiffness is effectively zero).
+ *
+ * Terminology:
+ * -   `ubar`: the average displacement per layer [#nlayer, 2],
+ *             see layerUbar() and layerSetUbar().
+ *
+ * -   `target_ubar`: the target average displacement per layer [#nlayer, 2],
+ *                    see layerTargetUbar() and layerSetTargetUbar().
+ *
+ * -   `target_active`: the average displacement per layer/DOF is only enforced if the spring
+ *                      is active, see layerTargetActive() and layerSetTargetActive().
+ */
 class System : public Generic2d::System {
 
 public:
@@ -62,27 +62,27 @@ public:
     virtual ~System(){};
 
     /**
-    Define basic geometry.
-
-    \param coor Nodal coordinates.
-    \param conn Connectivity.
-    \param dofs DOFs per node.
-    \param iip DOFs whose displacement is fixed.
-    \param elem Elements per layer.
-    \param node Nodes per layer.
-    \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
-    \param elastic_K Bulk modulus per quad. point of each elastic element, see setElastic().
-    \param elastic_G Shear modulus per quad. point of each elastic element, see setElastic().
-    \param plastic_K Bulk modulus per quad. point of each plastic element, see Plastic().
-    \param plastic_G Shear modulus per quad. point of each plastic element, see Plastic().
-    \param plastic_epsy Yield strain per quad. point of each plastic element, see Plastic().
-    \param dt Time step, set setDt().
-    \param rho Mass density, see setMassMatrix().
-    \param alpha Background damping density, see setDampingMatrix().
-    \param eta Damping at the interface (homogeneous), see setEta().
-    \param drive_is_active Per layer (de)activate drive for each DOF, see layerSetTargetActive().
-    \param k_drive Stiffness of driving spring, see layerSetDriveStiffness().
-    */
+     * Define basic geometry.
+     *
+     * @param coor Nodal coordinates.
+     * @param conn Connectivity.
+     * @param dofs DOFs per node.
+     * @param iip DOFs whose displacement is fixed.
+     * @param elem Elements per layer.
+     * @param node Nodes per layer.
+     * @param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
+     * @param elastic_K Bulk modulus per quad. point of each elastic element, see setElastic().
+     * @param elastic_G Shear modulus per quad. point of each elastic element, see setElastic().
+     * @param plastic_K Bulk modulus per quad. point of each plastic element, see Plastic().
+     * @param plastic_G Shear modulus per quad. point of each plastic element, see Plastic().
+     * @param plastic_epsy Yield strain per quad. point of each plastic element, see Plastic().
+     * @param dt Time step, set setDt().
+     * @param rho Mass density, see setMassMatrix().
+     * @param alpha Background damping density, see setDampingMatrix().
+     * @param eta Damping at the interface (homogeneous), see setEta().
+     * @param drive_is_active Per layer (de)activate drive for each DOF, see layerSetTargetActive().
+     * @param k_drive Stiffness of driving spring, see layerSetDriveStiffness().
+     */
     System(
         const array_type::tensor<double, 2>& coor,
         const array_type::tensor<size_t, 2>& conn,
@@ -126,8 +126,8 @@ public:
 
 protected:
     /**
-    \cond
-    */
+     * \cond
+     */
     void init(
         const array_type::tensor<double, 2>& coor,
         const array_type::tensor<size_t, 2>& conn,
@@ -294,8 +294,8 @@ protected:
         this->layerSetTargetActive(drive_is_active);
     }
     /**
-    \endcond
-    */
+     * \endcond
+     */
 
 public:
     size_t N() const override
@@ -309,19 +309,19 @@ public:
     }
 
     /**
-    Return number of layers.
-    \return Number of layers.
-    */
+     * Return number of layers.
+     * @return Number of layers.
+     */
     size_t nlayer() const
     {
         return m_n_layer;
     }
 
     /**
-    Return the elements belonging to the i-th layer.
-    \param i Index of the layer.
-    \return List of element numbers.
-    */
+     * Return the elements belonging to the i-th layer.
+     * @param i Index of the layer.
+     * @return List of element numbers.
+     */
     array_type::tensor<size_t, 1> layerElements(size_t i) const
     {
         FRICTIONQPOTFEM_ASSERT(i < m_n_layer);
@@ -329,10 +329,10 @@ public:
     }
 
     /**
-    Return the nodes belonging to the i-th layer.
-    \param i Index of the layer.
-    \return List of node numbers.
-    */
+     * Return the nodes belonging to the i-th layer.
+     * @param i Index of the layer.
+     * @return List of node numbers.
+     */
     array_type::tensor<size_t, 1> layerNodes(size_t i) const
     {
         FRICTIONQPOTFEM_ASSERT(i < m_n_layer);
@@ -340,24 +340,24 @@ public:
     }
 
     /**
-    Return if a layer is elastic (`false`) or plastic (`true`).
-    \return [#nlayer].
-    */
+     * Return if a layer is elastic (`false`) or plastic (`true`).
+     * @return [#nlayer].
+     */
     const array_type::tensor<bool, 1>& layerIsPlastic() const
     {
         return m_layer_is_plastic;
     }
 
     /**
-    Set the stiffness of the springs connecting
-    the average displacement of a layer ("ubar") to its set target value.
-    Note that the stiffness of all springs is taken the same.
-
-    \param k The stiffness.
-    \param symmetric
-        If `true` the spring is a normal spring.
-        If `false` the spring has no stiffness under compression.
-    */
+     * Set the stiffness of the springs connecting
+     * the average displacement of a layer ("ubar") to its set target value.
+     * Note that the stiffness of all springs is taken the same.
+     *
+     * @param k The stiffness.
+     * @param symmetric
+     *     If `true` the spring is a normal spring.
+     *     If `false` the spring has no stiffness under compression.
+     */
     void layerSetDriveStiffness(double k, bool symmetric = true)
     {
         m_drive_spring_symmetric = symmetric;
@@ -367,23 +367,23 @@ public:
     }
 
     /**
-    Initialise the event driven protocol by applying a perturbation to the loading springs
-    and computing and storing the linear, purely elastic, response.
-    The system can thereafter be moved forward to the next event.
-    Note that this function itself does not change the system in any way,
-    it just stores the relevant perturbations.
-
-    \tparam S `array_type::tensor<double, 2>`
-    \param ubar
-        The perturbation in the target average position of each layer [#nlayer, 2].
-
-    \tparam T `array_type::tensor<bool, 2>`
-    \param active
-        For each layer and each degree-of-freedom specify if
-        the spring is active (`true`) or not (`false`) [#nlayer, 2].
-
-    \return Value with which the input perturbation is scaled, see also eventDriven_deltaUbar().
-    */
+     * Initialise the event driven protocol by applying a perturbation to the loading springs
+     * and computing and storing the linear, purely elastic, response.
+     * The system can thereafter be moved forward to the next event.
+     * Note that this function itself does not change the system in any way,
+     * it just stores the relevant perturbations.
+     *
+     * @tparam S `array_type::tensor<double, 2>`
+     * @param ubar
+     *     The perturbation in the target average position of each layer [#nlayer, 2].
+     *
+     * @tparam T `array_type::tensor<bool, 2>`
+     * @param active
+     *     For each layer and each degree-of-freedom specify if
+     *     the spring is active (`true`) or not (`false`) [#nlayer, 2].
+     *
+     * @return Value with which the input perturbation is scaled, see also eventDriven_deltaUbar().
+     */
     template <class S, class T>
     double initEventDriven(const S& ubar, const T& active)
     {
@@ -450,12 +450,12 @@ public:
     }
 
     /**
-    Restore perturbation used from event driven protocol.
-    \param ubar See eventDriven_deltaUbar().
-    \param active See eventDriven_targetActive().
-    \param delta_u See eventDriven_deltaU().
-    \return Value with which the input perturbation is scaled, see also eventDriven_deltaU().
-    */
+     * Restore perturbation used from event driven protocol.
+     * @param ubar See eventDriven_deltaUbar().
+     * @param active See eventDriven_targetActive().
+     * @param delta_u See eventDriven_deltaU().
+     * @return Value with which the input perturbation is scaled, see also eventDriven_deltaU().
+     */
     template <class S, class T, class U>
     double initEventDriven(const S& ubar, const T& active, const U& delta_u)
     {
@@ -469,18 +469,18 @@ public:
     }
 
     /**
-    Get target average position perturbation used for event driven code.
-    \return [#nlayer, 2]
-    */
+     * Get target average position perturbation used for event driven code.
+     * @return [#nlayer, 2]
+     */
     const array_type::tensor<double, 2>& eventDriven_deltaUbar() const
     {
         return m_pert_layerdrive_targetubar;
     }
 
     /**
-    Get if the target average position is prescribed in the event driven code.
-    \return [#nlayer, 2]
-    */
+     * Get if the target average position is prescribed in the event driven code.
+     * @return [#nlayer, 2]
+     */
     const array_type::tensor<bool, 2>& eventDriven_targetActive() const
     {
         return m_pert_layerdrive_active;
@@ -500,14 +500,14 @@ public:
     }
 
     /**
-    Turn on (or off) springs connecting
-    the average displacement of a layer ("ubar") to its set target value.
-
-    \tparam T e.g. `array_type::tensor<bool, 2>`
-    \param active
-        For each layer and each degree-of-freedom specify if
-        the spring is active (`true`) or not (`false`) [#nlayer, 2].
-    */
+     * Turn on (or off) springs connecting
+     * the average displacement of a layer ("ubar") to its set target value.
+     *
+     * @tparam T e.g. `array_type::tensor<bool, 2>`
+     * @param active
+     *     For each layer and each degree-of-freedom specify if
+     *     the spring is active (`true`) or not (`false`) [#nlayer, 2].
+     */
     template <class T>
     void layerSetTargetActive(const T& active)
     {
@@ -518,12 +518,12 @@ public:
     }
 
     /**
-    List the average displacement of each layer.
-    Requires to recompute the average displacements
-    (as they are normally only computed on the driven DOFs).
-
-    \return Average displacement per layer [#nlayer, 2]
-    */
+     * List the average displacement of each layer.
+     * Requires to recompute the average displacements
+     * (as they are normally only computed on the driven DOFs).
+     *
+     * @return Average displacement per layer [#nlayer, 2]
+     */
     array_type::tensor<double, 2> layerUbar()
     {
         // Recompute needed because computeLayerUbarActive() only computes the average
@@ -552,32 +552,32 @@ public:
     }
 
     /**
-    List the target average displacement per layer.
-    \return [#nlayer, 2]
-    */
+     * List the target average displacement per layer.
+     * @return [#nlayer, 2]
+     */
     const array_type::tensor<double, 2>& layerTargetUbar() const
     {
         return m_layerdrive_targetubar;
     }
 
     /**
-    List if the driving spring is activate.
-    \return [#nlayer, 2]
-    */
+     * List if the driving spring is activate.
+     * @return [#nlayer, 2]
+     */
     const array_type::tensor<bool, 2>& layerTargetActive() const
     {
         return m_layerdrive_active;
     }
 
     /**
-    Overwrite the target average displacement per layer.
-    Only layers that have an active driving spring will feel a force
-    (if its average displacement is different from the target displacement),
-    see layerSetTargetActive().
-
-    \tparam T e.g. `array_type::tensor<double, 2>`
-    \param ubar The target average position of each layer [#nlayer, 2].
-    */
+     * Overwrite the target average displacement per layer.
+     * Only layers that have an active driving spring will feel a force
+     * (if its average displacement is different from the target displacement),
+     * see layerSetTargetActive().
+     *
+     * @tparam T e.g. `array_type::tensor<double, 2>`
+     * @param ubar The target average position of each layer [#nlayer, 2].
+     */
     template <class T>
     void layerSetTargetUbar(const T& ubar)
     {
@@ -587,19 +587,19 @@ public:
     }
 
     /**
-    Move the layer such that the average displacement is exactly equal to its input value.
-
-    \tparam S e.g. `array_type::tensor<double, 2>`
-    \tparam T e.g. `array_type::tensor<bool, 2>`
-
-    \param ubar
-        The target average position of each layer [#nlayer, 2].
-
-    \param prescribe
-        Per layers/degree-of-freedom specify if its average is modified [#nlayer, 2].
-        Note that this not modify which of the driving springs is active or not,
-        that can only be changed using layerSetTargetActive().
-    */
+     * Move the layer such that the average displacement is exactly equal to its input value.
+     *
+     * @tparam S e.g. `array_type::tensor<double, 2>`
+     * @tparam T e.g. `array_type::tensor<bool, 2>`
+     *
+     * @param ubar
+     *     The target average position of each layer [#nlayer, 2].
+     *
+     * @param prescribe
+     *     Per layers/degree-of-freedom specify if its average is modified [#nlayer, 2].
+     *     Note that this not modify which of the driving springs is active or not,
+     *     that can only be changed using layerSetTargetActive().
+     */
     template <class S, class T>
     void layerSetUbar(const S& ubar, const T& prescribe)
     {
@@ -622,16 +622,16 @@ public:
     }
 
     /**
-    Get target average displacements that correspond to affine simple shear
-    (with the bottom fixed).
-    In particular \f$ \bar{u}_x^i = 2 \Delta \gamma h_i \f$
-    with \f$ \bar{u}_x^i \f$ the \f$ x \f$-component of the target average displacement
-    of layer \f$ i \f$.
-
-    \tparam T e.g. `array_type::tensor<double, 1>`
-    \param delta_gamma Affine strain to add.
-    \param height The height \f$ h_i \f$ of the loading frame of each layer [#nlayer].
-    */
+     * Get target average displacements that correspond to affine simple shear
+     * (with the bottom fixed).
+     * In particular \f$ \bar{u}_x^i = 2 \Delta \gamma h_i \f$
+     * with \f$ \bar{u}_x^i \f$ the \f$ x \f$-component of the target average displacement
+     * of layer \f$ i \f$.
+     *
+     * @tparam T e.g. `array_type::tensor<double, 1>`
+     * @param delta_gamma Affine strain to add.
+     * @param height The height \f$ h_i \f$ of the loading frame of each layer [#nlayer].
+     */
     template <class T>
     array_type::tensor<double, 2>
     layerTargetUbar_affineSimpleShear(double delta_gamma, const T& height) const
@@ -648,26 +648,26 @@ public:
     }
 
     /**
-    Nodal force induced by the driving springs.
-    The only non-zero contribution comes from:
-    -   springs that are active, see layerSetTargetActive(), and
-    -   layers whose average displacement is different from its target value.
-
-    \return nodevec [nnode, ndim].
-    */
+     * Nodal force induced by the driving springs.
+     * The only non-zero contribution comes from:
+     * -   springs that are active, see layerSetTargetActive(), and
+     * -   layers whose average displacement is different from its target value.
+     *
+     * @return nodevec [nnode, ndim].
+     */
     const array_type::tensor<double, 2>& fdrive() const
     {
         return m_fdrive;
     }
 
     /**
-    Force of each of the driving springs.
-    The only non-zero contribution comes from:
-    -   springs that are active, see layerSetTargetActive(), and
-    -   layers whose average displacement is different from its target value.
-
-    \return [#nlayer, ndim].
-    */
+     * Force of each of the driving springs.
+     * The only non-zero contribution comes from:
+     * -   springs that are active, see layerSetTargetActive(), and
+     * -   layers whose average displacement is different from its target value.
+     *
+     * @return [#nlayer, ndim].
+     */
     array_type::tensor<double, 2> layerFdrive() const
     {
         array_type::tensor<double, 2> ret = xt::zeros<double>({m_n_layer, size_t(2)});
@@ -685,8 +685,8 @@ public:
 
 protected:
     /**
-    Compute the average displacement of all layers with an active driving spring.
-    */
+     * Compute the average displacement of all layers with an active driving spring.
+     */
     void computeLayerUbarActive()
     {
         m_layer_ubar.fill(0.0);
@@ -711,13 +711,13 @@ protected:
     }
 
     /**
-    Compute force deriving from the activate springs between the average displacement of
-    the layer and its target value.
-    The force is applied as a force density.
-
-    Internal rule: computeLayerUbarActive() is called before this function,
-    if the displacement changed since the last time the average was computed.
-    */
+     * Compute force deriving from the activate springs between the average displacement of
+     * the layer and its target value.
+     * The force is applied as a force density.
+     *
+     * Internal rule: computeLayerUbarActive() is called before this function,
+     * if the displacement changed since the last time the average was computed.
+     */
     void computeForceFromTargetUbar()
     {
         m_uq.fill(0.0); // pre-allocated value that an be freely used
@@ -744,8 +744,8 @@ protected:
     }
 
     /**
-    Evaluate relevant forces when m_u is updated.
-    */
+     * Evaluate relevant forces when m_u is updated.
+     */
     void updated_u() override
     {
         this->computeLayerUbarActive();
@@ -754,14 +754,14 @@ protected:
     }
 
     /**
-    Compute:
-    -   m_fint = m_fdrive + m_fmaterial + m_fdamp
-    -   m_fext[iip] = m_fint[iip]
-    -   m_fres = m_fext - m_fint
-
-    Internal rule: all relevant forces are expected to be updated before this function is
-    called.
-    */
+     * Compute:
+     * -   m_fint = m_fdrive + m_fmaterial + m_fdamp
+     * -   m_fext[iip] = m_fint[iip]
+     * -   m_fres = m_fext - m_fint
+     *
+     * Internal rule: all relevant forces are expected to be updated before this function is
+     * called.
+     */
     void computeInternalExternalResidualForce() override
     {
         xt::noalias(m_fint) = m_fdrive + m_fmaterial + m_fdamp;
