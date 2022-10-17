@@ -1,8 +1,8 @@
 /**
-\file
-\copyright Copyright 2020. Tom de Geus. All rights reserved.
-\license This project is released under the GNU Public License (MIT).
-*/
+ * @file
+ * @copyright Copyright 2020. Tom de Geus. All rights reserved.
+ * @license This project is released under the GNU Public License (MIT).
+ */
 
 #ifndef FRICTIONQPOTFEM_UNIFORMMULTILAYERLEVERDRIVE2D_H
 #define FRICTIONQPOTFEM_UNIFORMMULTILAYERLEVERDRIVE2D_H
@@ -13,38 +13,38 @@
 namespace FrictionQPotFEM {
 
 /**
-System in 2-d with:
-
--   Several weak layers.
--   Layers connected to a lever, that is driven through a spring.
--   Uniform elasticity.
-*/
+ * System in 2-d with:
+ *
+ * -   Several weak layers.
+ * -   Layers connected to a lever, that is driven through a spring.
+ * -   Uniform elasticity.
+ */
 namespace UniformMultiLayerLeverDrive2d {
 
 /**
-\copydoc Generic2d::version_dependencies()
-*/
+ * @copydoc Generic2d::version_dependencies()
+ */
 inline std::vector<std::string> version_dependencies()
 {
     return Generic2d::version_dependencies();
 }
 
 /**
-\copydoc Generic2d::version_compiler()
-*/
+ * @copydoc Generic2d::version_compiler()
+ */
 inline std::vector<std::string> version_compiler()
 {
     return Generic2d::version_compiler();
 }
 
 /**
-Similar to UniformMultiLayerIndividualDrive2d::System(), but with the difference that the
-target average displacement per layer is not individually prescribed, but determined by
-a lever, whose position (whose rotation to be precise) is determined by a driving spring
-attached to it.
-The assumption is made that the lever has no inertia:
-its position is computed by assuming that the sum of moments acting on it is zero.
-*/
+ * Similar to UniformMultiLayerIndividualDrive2d::System(), but with the difference that the
+ * target average displacement per layer is not individually prescribed, but determined by
+ * a lever, whose position (whose rotation to be precise) is determined by a driving spring
+ * attached to it.
+ * The assumption is made that the lever has no inertia:
+ * its position is computed by assuming that the sum of moments acting on it is zero.
+ */
 class System : public UniformMultiLayerIndividualDrive2d::System {
 
 private:
@@ -56,29 +56,29 @@ public:
     virtual ~System(){};
 
     /**
-    Define basic geometry.
-
-    \param coor Nodal coordinates.
-    \param conn Connectivity.
-    \param dofs DOFs per node.
-    \param iip DOFs whose displacement is fixed.
-    \param elem Elements per layer.
-    \param node Nodes per layer.
-    \param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
-    \param elastic_K Bulk modulus per quad. point of each elastic element, see setElastic().
-    \param elastic_G Shear modulus per quad. point of each elastic element, see setElastic().
-    \param plastic_K Bulk modulus per quad. point of each plastic element, see Plastic().
-    \param plastic_G Shear modulus per quad. point of each plastic element, see Plastic().
-    \param plastic_epsy Yield strain per quad. point of each plastic element, see Plastic().
-    \param dt Time step, set setDt().
-    \param rho Mass density, see setMassMatrix().
-    \param alpha Background damping density, see setDampingMatrix().
-    \param eta Damping at the interface (homogeneous), see setEta().
-    \param drive_is_active Per layer (de)activate drive for each DOF, see layerSetTargetActive().
-    \param k_drive Stiffness of driving spring, see layerSetDriveStiffness().
-    \param H The height of the spring pulling the lever, see setLeverProperties().
-    \param hi The height of the loading frame of each layer, setLeverProperties().
-    */
+     * Define basic geometry.
+     *
+     * @param coor Nodal coordinates.
+     * @param conn Connectivity.
+     * @param dofs DOFs per node.
+     * @param iip DOFs whose displacement is fixed.
+     * @param elem Elements per layer.
+     * @param node Nodes per layer.
+     * @param layer_is_plastic Per layer set if elastic (= 0) or plastic (= 1).
+     * @param elastic_K Bulk modulus per quad. point of each elastic element, see setElastic().
+     * @param elastic_G Shear modulus per quad. point of each elastic element, see setElastic().
+     * @param plastic_K Bulk modulus per quad. point of each plastic element, see Plastic().
+     * @param plastic_G Shear modulus per quad. point of each plastic element, see Plastic().
+     * @param plastic_epsy Yield strain per quad. point of each plastic element, see Plastic().
+     * @param dt Time step, set setDt().
+     * @param rho Mass density, see setMassMatrix().
+     * @param alpha Background damping density, see setDampingMatrix().
+     * @param eta Damping at the interface (homogeneous), see setEta().
+     * @param drive_is_active Per layer (de)activate drive for each DOF, see layerSetTargetActive().
+     * @param k_drive Stiffness of driving spring, see layerSetDriveStiffness().
+     * @param H The height of the spring pulling the lever, see setLeverProperties().
+     * @param hi The height of the loading frame of each layer, setLeverProperties().
+     */
     System(
         const array_type::tensor<double, 2>& coor,
         const array_type::tensor<size_t, 2>& conn,
@@ -147,12 +147,12 @@ public:
     }
 
     /**
-    Overwrite the lever properties.
-
-    \tparam T e.g. `array_type::tensor<double, 1>`
-    \param H The height of the spring pulling the lever.
-    \param hi The height \f$ h_i \f$ of the loading frame of each layer [nlayer].
-    */
+     * Overwrite the lever properties.
+     *
+     * @tparam T e.g. `array_type::tensor<double, 1>`
+     * @param H The height of the spring pulling the lever.
+     * @param hi The height \f$ h_i \f$ of the loading frame of each layer [nlayer].
+     */
     template <class T>
     void setLeverProperties(double H, const T& hi)
     {
@@ -167,10 +167,10 @@ public:
     }
 
     /**
-    Overwrite the target 'position' of the spring pulling the lever.
-
-    \param xdrive Lever position
-    */
+     * Overwrite the target 'position' of the spring pulling the lever.
+     *
+     * @param xdrive Lever position
+     */
     void setLeverTarget(double xdrive)
     {
         m_lever_target = xdrive;
@@ -178,39 +178,39 @@ public:
     }
 
     /**
-    Get the current target lever 'position'.
-
-    \return double
-    */
+     * Get the current target lever 'position'.
+     *
+     * @return double
+     */
     double leverTarget() const
     {
         return m_lever_target;
     }
 
     /**
-    Get the current lever 'position'.
-
-    \return double
-    */
+     * Get the current lever 'position'.
+     *
+     * @return double
+     */
     double leverPosition() const
     {
         return m_lever_u;
     }
 
     /**
-    Initialise the event driven protocol by applying a perturbation to loading spring
-    and computing and storing the linear, purely elastic, response.
-    The system can thereafter be moved forward to the next event.
-    Note that this function itself does not change the system in any way,
-    it just stores the relevant perturbations.
-
-    \param xlever Target 'position' of the spring pulling the lever.
-
-    \param active
-        For each layer and each degree-of-freedom specify if
-        the spring is active (`true`) or not (`false`) [#nlayer, 2].
-    \
-    */
+     * Initialise the event driven protocol by applying a perturbation to loading spring
+     * and computing and storing the linear, purely elastic, response.
+     * The system can thereafter be moved forward to the next event.
+     * Note that this function itself does not change the system in any way,
+     * it just stores the relevant perturbations.
+     *
+     * @param xlever Target 'position' of the spring pulling the lever.
+     *
+     * @param active
+     *     For each layer and each degree-of-freedom specify if
+     *     the spring is active (`true`) or not (`false`) [#nlayer, 2].
+     * \
+     */
     template <class T>
     void initEventDriven(double xlever, const T& active)
     {
@@ -278,13 +278,13 @@ public:
     }
 
     /**
-    Restore perturbation used from event driven protocol.
-    \param xlever See eventDriven_leverPosition().
-    \param active See eventDriven_targetActive().
-    \param delta_u See eventDriven_deltaU().
-    \param delta_ubar See eventDriven_deltaUbar().
-    \return Value with which the input perturbation is scaled, see also eventDriven_deltaU().
-    */
+     * Restore perturbation used from event driven protocol.
+     * @param xlever See eventDriven_leverPosition().
+     * @param active See eventDriven_targetActive().
+     * @param delta_u See eventDriven_deltaU().
+     * @param delta_ubar See eventDriven_deltaUbar().
+     * @return Value with which the input perturbation is scaled, see also eventDriven_deltaU().
+     */
     template <class T, class U, class W>
     double initEventDriven(double xlever, const T& active, const U& delta_u, const W& delta_ubar)
     {
@@ -313,9 +313,10 @@ public:
     }
 
     /**
-    Get target 'position' of the spring pulling the lever perturbation used for event driven code.
-    \return Value
-    */
+     * Get target 'position' of the spring pulling the lever perturbation used for event driven
+     * code.
+     * @return Value
+     */
     double eventDriven_deltaLeverPosition() const
     {
         return m_pert_lever_target;
@@ -323,10 +324,10 @@ public:
 
 protected:
     /**
-    Evaluate relevant forces when m_u is updated.
-    The assumption is made that the lever has no inertia:
-    its position is computed by assuming that the sum of moments acting on it is zero.
-    */
+     * Evaluate relevant forces when m_u is updated.
+     * The assumption is made that the lever has no inertia:
+     * its position is computed by assuming that the sum of moments acting on it is zero.
+     */
     void updated_u() override
     {
         this->computeLayerUbarActive();

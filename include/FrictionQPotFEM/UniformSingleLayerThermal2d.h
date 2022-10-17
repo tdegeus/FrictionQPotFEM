@@ -1,8 +1,8 @@
 /**
-\file
-\copyright Copyright 2020. Tom de Geus. All rights reserved.
-\license This project is released under the GNU Public License (MIT).
-*/
+ * @file
+ * @copyright Copyright 2020. Tom de Geus. All rights reserved.
+ * @license This project is released under the GNU Public License (MIT).
+ */
 
 #ifndef FRICTIONQPOTFEM_UNIFORMSINGLELAYERTHERMAL2D_H
 #define FRICTIONQPOTFEM_UNIFORMSINGLELAYERTHERMAL2D_H
@@ -16,25 +16,25 @@
 namespace FrictionQPotFEM {
 
 /**
-System in 2-d with:
-
--   A weak, middle, layer.
--   Uniform elasticity.
--   Thermal fluctuations.
-*/
+ * System in 2-d with:
+ *
+ * -   A weak, middle, layer.
+ * -   Uniform elasticity.
+ * -   Thermal fluctuations.
+ */
 namespace UniformSingleLayerThermal2d {
 
 /**
-\copydoc Generic2d::version_dependencies()
-*/
+ * @copydoc Generic2d::version_dependencies()
+ */
 inline std::vector<std::string> version_dependencies()
 {
     return Generic2d::version_dependencies();
 }
 
 /**
-\copydoc Generic2d::version_compiler()
-*/
+ * @copydoc Generic2d::version_compiler()
+ */
 inline std::vector<std::string> version_compiler()
 {
     return Generic2d::version_compiler();
@@ -256,13 +256,13 @@ protected:
 
 protected:
     /**
-    Compute:
-    -   m_fint = m_fmaterial + m_fdamp + m_fthermal
-    -   m_fext[iip] = m_fint[iip]
-    -   m_fres = m_fext - m_fint
-
-    Internal rule: all relevant forces are expected to be updated before this function is called.
-    */
+     * Compute:
+     * -   m_fint = m_fmaterial + m_fdamp + m_fthermal
+     * -   m_fext[iip] = m_fint[iip]
+     * -   m_fres = m_fext - m_fint
+     *
+     * Internal rule: all relevant forces are expected to be updated before this function is called.
+     */
     void computeInternalExternalResidualForce() override
     {
         this->computeThermalForce();

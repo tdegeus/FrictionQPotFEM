@@ -1,8 +1,8 @@
 /**
-\file
-\copyright Copyright 2020. Tom de Geus. All rights reserved.
-\license This project is released under the GNU Public License (MIT).
-*/
+ * @file
+ * @copyright Copyright 2020. Tom de Geus. All rights reserved.
+ * @license This project is released under the GNU Public License (MIT).
+ */
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -24,10 +24,10 @@
 namespace py = pybind11;
 
 /**
-Overrides the `__name__` of a module.
-Classes defined by pybind11 use the `__name__` of the module as of the time they are defined,
-which affects the `__repr__` of the class type objects.
-*/
+ * Overrides the `__name__` of a module.
+ * Classes defined by pybind11 use the `__name__` of the module as of the time they are defined,
+ * which affects the `__repr__` of the class type objects.
+ */
 class ScopedModuleNameOverride {
 public:
     explicit ScopedModuleNameOverride(py::module m, std::string name) : module_(std::move(m))

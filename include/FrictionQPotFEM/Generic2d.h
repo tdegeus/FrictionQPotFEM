@@ -1,8 +1,8 @@
 /**
-\file
-\copyright Copyright 2020. Tom de Geus. All rights reserved.
-\license This project is released under the GNU Public License (MIT).
-*/
+ * @file
+ * @copyright Copyright 2020. Tom de Geus. All rights reserved.
+ * @license This project is released under the GNU Public License (MIT).
+ */
 
 #ifndef FRICTIONQPOTFEM_GENERIC2D_H
 #define FRICTIONQPOTFEM_GENERIC2D_H
@@ -32,9 +32,9 @@ namespace FrictionQPotFEM {
 namespace detail {
 
 /**
-Drop-in replacement for xt::average(a, w, {0, 1});
-There appears to be a library bug.
-*/
+ * Drop-in replacement for xt::average(a, w, {0, 1});
+ * There appears to be a library bug.
+ */
 array_type::tensor<double, 2> myaverage(
     const array_type::tensor<double, 4>& a,
     const array_type::tensor<double, 4>& w,
@@ -64,15 +64,15 @@ array_type::tensor<double, 2> myaverage(
 } // namespace detail
 
 /**
-Convert array of yield strains stored per element [nelem, n]:
-
-1.  Pre-prepend elastic: epsy[e, :] -> [-epsy[e, 0], epsy[e, :]]
-2.  Broadcast to be the same for all quadrature points, converting the shape to [nelem, nip, n].
-
-\param arg Yield strains per element.
-\param nip Number of integration points.
-\return Broadcast yield strains.
-*/
+ * Convert array of yield strains stored per element [nelem, n]:
+ *
+ * 1.  Pre-prepend elastic: epsy[e, :] -> [-epsy[e, 0], epsy[e, :]]
+ * 2.  Broadcast to be the same for all quadrature points, converting the shape to [nelem, nip, n].
+ *
+ * @param arg Yield strains per element.
+ * @param nip Number of integration points.
+ * @return Broadcast yield strains.
+ */
 inline array_type::tensor<double, 3> epsy_initelastic_toquad(
     const array_type::tensor<double, 2>& arg,
     size_t nip = GooseFEM::Element::Quad4::Gauss::nip())
@@ -90,13 +90,13 @@ inline array_type::tensor<double, 3> epsy_initelastic_toquad(
 }
 
 /**
-Broadcast array of moduli stored per element [nelem] to be the same for all quadrature points,
-converting the shape to [nelem, nip].
-
-\param arg Moduli per element.
-\param nip Number of integration points.
-\return Broadcast moduli.
-*/
+ * Broadcast array of moduli stored per element [nelem] to be the same for all quadrature points,
+ * converting the shape to [nelem, nip].
+ *
+ * @param arg Moduli per element.
+ * @param nip Number of integration points.
+ * @return Broadcast moduli.
+ */
 inline array_type::tensor<double, 2> moduli_toquad(
     const array_type::tensor<double, 1>& arg,
     size_t nip = GooseFEM::Element::Quad4::Gauss::nip())
@@ -113,14 +113,14 @@ inline array_type::tensor<double, 2> moduli_toquad(
 }
 
 /**
-Extract uniform value (throw if not uniform):
-
--   If `all(arg[0] == arg)` return `arg[0]`.
--   Otherwise throw.
-
-\param arg Values.
-\return Uniform value.
-*/
+ * Extract uniform value (throw if not uniform):
+ *
+ * -   If `all(arg[0] == arg)` return `arg[0]`.
+ * -   Otherwise throw.
+ *
+ * @param arg Values.
+ * @return Uniform value.
+ */
 template <class T>
 inline typename T::value_type getuniform(const T& arg)
 {
@@ -132,9 +132,9 @@ inline typename T::value_type getuniform(const T& arg)
 }
 
 /**
-Generic system of elastic and plastic elements.
-For the moment this not part of the public API and can be subjected to changes.
-*/
+ * Generic system of elastic and plastic elements.
+ * For the moment this not part of the public API and can be subjected to changes.
+ */
 namespace Generic2d {
 
 namespace detail {
@@ -148,37 +148,37 @@ bool is_same(double a, double b)
 } // namespace detail
 
 /**
-Return versions of this library and of all of its dependencies.
-The output is a list of strings, e.g.::
-
-    "frictionqpotfem=0.7.1",
-    "goosefem=0.7.0",
-    ...
-
-\return List of strings.
-*/
+ * Return versions of this library and of all of its dependencies.
+ * The output is a list of strings, e.g.::
+ *
+ *     "frictionqpotfem=0.7.1",
+ *     "goosefem=0.7.0",
+ *     ...
+ *
+ * @return List of strings.
+ */
 inline std::vector<std::string> version_dependencies()
 {
     return GMatTensor::version_dependencies();
 }
 
 /**
-Version information of the compilers.
-\return List of strings.
-*/
+ * Version information of the compilers.
+ * @return List of strings.
+ */
 inline std::vector<std::string> version_compiler()
 {
     return GMatTensor::version_compiler();
 }
 
 /**
-System with elastic elements and plastic elements (GMatElastoPlasticQPot).
-
-For efficiency, the nodal forces for the elastic elements are evaluated using the tangent.
-This means that getting stresses and strains in those elements is not for free.
-Therefore, there are separate methods to get stresses and strains only in the plastic elements
-(as they are readily available as they are needed for the force computation).
-*/
+ * System with elastic elements and plastic elements (GMatElastoPlasticQPot).
+ *
+ * For efficiency, the nodal forces for the elastic elements are evaluated using the tangent.
+ * This means that getting stresses and strains in those elements is not for free.
+ * Therefore, there are separate methods to get stresses and strains only in the plastic elements
+ * (as they are readily available as they are needed for the force computation).
+ */
 class System {
 
 public:
@@ -189,27 +189,27 @@ public:
 
 public:
     /**
-    Define the geometry, including boundary conditions and element sets.
-
-    \tparam C Type of nodal coordinates, e.g. `array_type::tensor<double, 2>`
-    \tparam E Type of connectivity and DOFs, e.g. `array_type::tensor<size_t, 2>`
-    \tparam L Type of node/element lists, e.g. `array_type::tensor<size_t, 1>`
-    \param coor Nodal coordinates.
-    \param conn Connectivity.
-    \param dofs DOFs per node.
-    \param iip DOFs whose displacement is fixed.
-    \param elastic_elem Elastic elements.
-    \param elastic_K Bulk modulus per quad. point of each elastic element, see setElastic().
-    \param elastic_G Shear modulus per quad. point of each elastic element, see setElastic().
-    \param plastic_elem Plastic elements.
-    \param plastic_K Bulk modulus per quad. point of each plastic element, see Plastic().
-    \param plastic_G Shear modulus per quad. point of each plastic element, see Plastic().
-    \param plastic_epsy Yield strain per quad. point of each plastic element, see Plastic().
-    \param dt Time step, set setDt().
-    \param rho Mass density, see setMassMatrix().
-    \param alpha Background damping density, see setDampingMatrix().
-    \param eta Damping at the interface (homogeneous), see setEta().
-    */
+     * Define the geometry, including boundary conditions and element sets.
+     *
+     * @tparam C Type of nodal coordinates, e.g. `array_type::tensor<double, 2>`
+     * @tparam E Type of connectivity and DOFs, e.g. `array_type::tensor<size_t, 2>`
+     * @tparam L Type of node/element lists, e.g. `array_type::tensor<size_t, 1>`
+     * @param coor Nodal coordinates.
+     * @param conn Connectivity.
+     * @param dofs DOFs per node.
+     * @param iip DOFs whose displacement is fixed.
+     * @param elastic_elem Elastic elements.
+     * @param elastic_K Bulk modulus per quad. point of each elastic element, see setElastic().
+     * @param elastic_G Shear modulus per quad. point of each elastic element, see setElastic().
+     * @param plastic_elem Plastic elements.
+     * @param plastic_K Bulk modulus per quad. point of each plastic element, see Plastic().
+     * @param plastic_G Shear modulus per quad. point of each plastic element, see Plastic().
+     * @param plastic_epsy Yield strain per quad. point of each plastic element, see Plastic().
+     * @param dt Time step, set setDt().
+     * @param rho Mass density, see setMassMatrix().
+     * @param alpha Background damping density, see setDampingMatrix().
+     * @param eta Damping at the interface (homogeneous), see setEta().
+     */
     template <class C, class E, class L, class M, class Y>
     System(
         const C& coor,
@@ -248,8 +248,8 @@ public:
 
 protected:
     /**
-    \cond
-    */
+     * \cond
+     */
     template <class C, class E, class L, class M, class Y>
     void initSystem(
         const C& coor,
@@ -374,13 +374,13 @@ protected:
         this->setEta(eta);
     }
     /**
-    \endcond
-    */
+     * \endcond
+     */
 
 public:
     /**
-    Return the linear system size (in number of blocks).
-    */
+     * Return the linear system size (in number of blocks).
+     */
     virtual size_t N() const
     {
         return m_nelem_plas;
@@ -388,8 +388,8 @@ public:
 
 public:
     /**
-    Return the type of system.
-    */
+     * Return the type of system.
+     */
     virtual std::string type() const
     {
         return "FrictionQPotFEM.Generic2d.System";
@@ -397,11 +397,11 @@ public:
 
 public:
     /**
-    Mass density.
-    The output is non-zero only if the density is homogeneous.
-    I.e. a zero value does not mean that there is no mass.
-    \return Float
-    */
+     * Mass density.
+     * The output is non-zero only if the density is homogeneous.
+     * I.e. a zero value does not mean that there is no mass.
+     * @return Float
+     */
     double rho() const
     {
         return m_rho;
@@ -409,10 +409,10 @@ public:
 
 public:
     /**
-    Overwrite the mass density to a homogeneous quantity.
-    To use a non-homogeneous density use setMassMatrix().
-    \param rho Mass density.
-    */
+     * Overwrite the mass density to a homogeneous quantity.
+     * To use a non-homogeneous density use setMassMatrix().
+     * @param rho Mass density.
+     */
     void setRho(double rho)
     {
         return this->setMassMatrix(xt::eval(rho * xt::ones<double>({m_nelem})));
@@ -420,12 +420,12 @@ public:
 
 public:
     /**
-    Overwrite mass matrix, based on certain density that is uniform per element.
-    This function allows for more heterogeneity than the constructor.
-    To use a homogeneous system, use setRho().
-    \tparam T e.g. `array_type::tensor<double, 1>`.
-    \param val_elem Density per element.
-    */
+     * Overwrite mass matrix, based on certain density that is uniform per element.
+     * This function allows for more heterogeneity than the constructor.
+     * To use a homogeneous system, use setRho().
+     * @tparam T e.g. `array_type::tensor<double, 1>`.
+     * @param val_elem Density per element.
+     */
     template <class T>
     void setMassMatrix(const T& val_elem)
     {
@@ -453,10 +453,10 @@ public:
 
 public:
     /**
-    Overwrite the value of the damping at the interface.
-    Note that you can specify either setEta() or setDampingMatrix() or both.
-    \param eta Damping parameter
-    */
+     * Overwrite the value of the damping at the interface.
+     * Note that you can specify either setEta() or setDampingMatrix() or both.
+     * @param eta Damping parameter
+     */
     void setEta(double eta)
     {
         if (detail::is_same(eta, 0.0)) {
@@ -471,9 +471,9 @@ public:
 
 public:
     /**
-    Get the damping at the interface.
-    \return Float
-    */
+     * Get the damping at the interface.
+     * @return Float
+     */
     double eta() const
     {
         return m_eta;
@@ -481,10 +481,10 @@ public:
 
 public:
     /**
-    Overwrite background damping density (proportional to the velocity),
-    To use a non-homogeneous density use setDampingMatrix().
-    \param alpha Damping parameter.
-    */
+     * Overwrite background damping density (proportional to the velocity),
+     * To use a non-homogeneous density use setDampingMatrix().
+     * @param alpha Damping parameter.
+     */
     void setAlpha(double alpha)
     {
         return this->setDampingMatrix(xt::eval(alpha * xt::ones<double>({m_nelem})));
@@ -492,11 +492,11 @@ public:
 
 public:
     /**
-    Background damping density.
-    The output is non-zero only if the density is homogeneous.
-    I.e. a zero value does not mean that there is no damping.
-    \return Float
-    */
+     * Background damping density.
+     * The output is non-zero only if the density is homogeneous.
+     * I.e. a zero value does not mean that there is no damping.
+     * @return Float
+     */
     double alpha() const
     {
         return m_alpha;
@@ -504,12 +504,12 @@ public:
 
 public:
     /**
-    Overwrite damping matrix, based on certain density (taken uniform per element).
-    This function allows for more heterogeneity than the constructor.
-    Note that you can specify either setEta() or setDampingMatrix() or both.
-    To use a homogeneous system, use setAlpha().
-    \param val_elem Damping per element.
-    */
+     * Overwrite damping matrix, based on certain density (taken uniform per element).
+     * This function allows for more heterogeneity than the constructor.
+     * Note that you can specify either setEta() or setDampingMatrix() or both.
+     * To use a homogeneous system, use setAlpha().
+     * @param val_elem Damping per element.
+     */
     template <class T>
     void setDampingMatrix(const T& val_elem)
     {
@@ -541,9 +541,9 @@ public:
 
 public:
     /**
-    Check if elasticity is homogeneous.
-    \return `true` is elasticity is homogeneous (`false` otherwise).
-    */
+     * Check if elasticity is homogeneous.
+     * @return `true` is elasticity is homogeneous (`false` otherwise).
+     */
     bool isHomogeneousElastic() const
     {
         auto k = this->K();
@@ -554,16 +554,16 @@ public:
 
 public:
     /**
-    Get time step.
-    */
+     * Get time step.
+     */
     double dt() const
     {
         return m_dt;
     }
 
     /**
-    Overwrite time step. Using for example in System::timeStep and System::minimise.
-    */
+     * Overwrite time step. Using for example in System::timeStep and System::minimise.
+     */
     void setDt(double dt)
     {
         m_dt = dt;
@@ -571,10 +571,10 @@ public:
 
 public:
     /**
-    Overwrite nodal displacements.
-    Internally, this updates the relevant forces using updated_u().
-    \param u `[nnode, ndim]`.
-    */
+     * Overwrite nodal displacements.
+     * Internally, this updates the relevant forces using updated_u().
+     * @param u `[nnode, ndim]`.
+     */
     template <class T>
     void setU(const T& u)
     {
@@ -586,10 +586,10 @@ public:
 
 public:
     /**
-    Overwrite nodal velocities.
-    Internally, this updates the relevant forces using updated_v().
-    \param v `[nnode, ndim]`.
-    */
+     * Overwrite nodal velocities.
+     * Internally, this updates the relevant forces using updated_v().
+     * @param v `[nnode, ndim]`.
+     */
     template <class T>
     void setV(const T& v)
     {
@@ -600,10 +600,10 @@ public:
 
 public:
     /**
-    Overwrite nodal accelerations.
-
-    \param a `[nnode, ndim]`.
-    */
+     * Overwrite nodal accelerations.
+     *
+     * @param a `[nnode, ndim]`.
+     */
     template <class T>
     void setA(const T& a)
     {
@@ -613,18 +613,18 @@ public:
 
 public:
     /**
-    Evaluate relevant forces when #m_u is updated.
-    Under normal circumstances, this function is called automatically when needed.
-    */
+     * Evaluate relevant forces when #m_u is updated.
+     * Under normal circumstances, this function is called automatically when needed.
+     */
     virtual void updated_u()
     {
         this->computeForceMaterial();
     }
 
     /**
-    Evaluate relevant forces when #m_v is updated.
-    Under normal circumstances, this function is called automatically when needed.
-    */
+     * Evaluate relevant forces when #m_v is updated.
+     * Under normal circumstances, this function is called automatically when needed.
+     */
     void updated_v()
     {
         if (m_set_D) {
@@ -650,12 +650,12 @@ public:
 
 public:
     /**
-    Overwrite external force.
-    Note: the external force on the DOFs whose displacement are prescribed are response forces
-    computed during timeStep(). Internally on the system of unknown DOFs is solved, so any
-    change to the response forces is ignored.
-    \param fext `[nnode, ndim]`.
-    */
+     * Overwrite external force.
+     * Note: the external force on the DOFs whose displacement are prescribed are response forces
+     * computed during timeStep(). Internally on the system of unknown DOFs is solved, so any
+     * change to the response forces is ignored.
+     * @param fext `[nnode, ndim]`.
+     */
     template <class T>
     void setFext(const T& fext)
     {
@@ -665,9 +665,9 @@ public:
 
 public:
     /**
-    List of elastic elements. Shape: [System::m_nelem_elas].
-    \return List of element numbers.
-    */
+     * List of elastic elements. Shape: [System::m_nelem_elas].
+     * @return List of element numbers.
+     */
     const auto& elastic_elem() const
     {
         return m_elem_elas;
@@ -675,9 +675,9 @@ public:
 
 public:
     /**
-    List of plastic elements. Shape: [System::m_nelem_plas].
-    \return List of element numbers.
-    */
+     * List of plastic elements. Shape: [System::m_nelem_plas].
+     * @return List of element numbers.
+     */
     const auto& plastic_elem() const
     {
         return m_elem_plas;
@@ -685,9 +685,9 @@ public:
 
 public:
     /**
-    Connectivity. Shape: [System::m_nelem, System::m_nne].
-    \return Connectivity.
-    */
+     * Connectivity. Shape: [System::m_nelem, System::m_nne].
+     * @return Connectivity.
+     */
     const auto& conn() const
     {
         return m_vector.conn();
@@ -695,9 +695,9 @@ public:
 
 public:
     /**
-    Nodal coordinates. Shape: [System::m_nnode, System::m_ndim].
-    \return Nodal coordinates.
-    */
+     * Nodal coordinates. Shape: [System::m_nnode, System::m_ndim].
+     * @return Nodal coordinates.
+     */
     const auto& coor() const
     {
         return m_coor;
@@ -705,9 +705,9 @@ public:
 
 public:
     /**
-    DOFs per node.
-    \return DOFs per node.
-    */
+     * DOFs per node.
+     * @return DOFs per node.
+     */
     const auto& dofs() const
     {
         return m_vector.dofs();
@@ -715,9 +715,9 @@ public:
 
 public:
     /**
-    Nodal displacements.
-    \return Nodal displacements.
-    */
+     * Nodal displacements.
+     * @return Nodal displacements.
+     */
     const auto& u() const
     {
         return m_u;
@@ -725,9 +725,9 @@ public:
 
 public:
     /**
-    Nodal velocities.
-    \return Nodal velocities.
-    */
+     * Nodal velocities.
+     * @return Nodal velocities.
+     */
     const auto& v() const
     {
         return m_v;
@@ -735,9 +735,9 @@ public:
 
 public:
     /**
-    Nodal accelerations.
-    \return Nodal accelerations.
-    */
+     * Nodal accelerations.
+     * @return Nodal accelerations.
+     */
     const auto& a() const
     {
         return m_a;
@@ -745,9 +745,9 @@ public:
 
 public:
     /**
-    Mass matrix, see System::m_M.
-    \return Mass matrix (diagonal, partitioned).
-    */
+     * Mass matrix, see System::m_M.
+     * @return Mass matrix (diagonal, partitioned).
+     */
     auto& mass() const
     {
         return m_M;
@@ -755,10 +755,10 @@ public:
 
 public:
     /**
-    Damping matrix, see setAlpha() and setDampingMatrix().
-    Note that there can be second source of damping, see setEta().
-    \return Damping matrix (diagonal).
-    */
+     * Damping matrix, see setAlpha() and setDampingMatrix().
+     * Note that there can be second source of damping, see setEta().
+     * @return Damping matrix (diagonal).
+     */
     auto& damping() const
     {
         return m_D;
@@ -766,9 +766,9 @@ public:
 
 public:
     /**
-    External force.
-    \return Nodal force. Shape `[nnode, ndim]`    .
-    */
+     * External force.
+     * @return Nodal force. Shape `[nnode, ndim]`    .
+     */
     const auto& fext()
     {
         this->computeInternalExternalResidualForce();
@@ -818,9 +818,9 @@ public:
 
 public:
     /**
-    Internal force.
-    \return Nodal force. Shape `[nnode, ndim]`    .
-    */
+     * Internal force.
+     * @return Nodal force. Shape `[nnode, ndim]`    .
+     */
     const auto& fint()
     {
         this->computeInternalExternalResidualForce();
@@ -829,9 +829,9 @@ public:
 
 public:
     /**
-    Force deriving from elasticity.
-    \return Nodal force. Shape `[nnode, ndim]`    .
-    */
+     * Force deriving from elasticity.
+     * @return Nodal force. Shape `[nnode, ndim]`    .
+     */
     const auto& fmaterial() const
     {
         return m_fmaterial;
@@ -839,11 +839,11 @@ public:
 
 public:
     /**
-    Force deriving from damping.
-    This force is the sum of damping at the interface plus that of background damping
-    (or just one of both if just one is specified).
-    \return Nodal force. Shape `[nnode, ndim]`    .
-    */
+     * Force deriving from damping.
+     * This force is the sum of damping at the interface plus that of background damping
+     * (or just one of both if just one is specified).
+     * @return Nodal force. Shape `[nnode, ndim]`    .
+     */
     const auto& fdamp() const
     {
         return m_fdamp;
@@ -851,10 +851,10 @@ public:
 
 public:
     /**
-    Norm of the relative residual force (the external force at the top/bottom boundaries is
-    used for normalisation).
-    \return Relative residual.
-    */
+     * Norm of the relative residual force (the external force at the top/bottom boundaries is
+     * used for normalisation).
+     * @return Relative residual.
+     */
     double residual() const
     {
         double r_fres = xt::norm_l2(m_fres)();
@@ -867,9 +867,9 @@ public:
 
 public:
     /**
-    Set nodal velocities and accelerations equal to zero.
-    Call this function after an energy minimisation (taken care of in System::minimise).
-    */
+     * Set nodal velocities and accelerations equal to zero.
+     * Call this function after an energy minimisation (taken care of in System::minimise).
+     */
     void quench()
     {
         m_v.fill(0.0);
@@ -879,16 +879,16 @@ public:
 
 public:
     /**
-    Current time.
-    */
+     * Current time.
+     */
     double t() const
     {
         return m_inc * m_dt;
     }
 
     /**
-    Overwrite time.
-    */
+     * Overwrite time.
+     */
     void setT(double arg)
     {
         this->setInc(static_cast<size_t>(std::round(arg / m_dt)));
@@ -896,18 +896,18 @@ public:
     }
 
     /**
-    The increment, see setInc().
-    \return size_t.
-    */
+     * The increment, see setInc().
+     * @return size_t.
+     */
     size_t inc() const
     {
         return m_inc;
     }
 
     /**
-    Set increment.
-    \param arg size_t.
-    */
+     * Set increment.
+     * @param arg size_t.
+     */
     virtual void setInc(size_t arg)
     {
         m_inc = arg;
@@ -915,9 +915,9 @@ public:
 
 public:
     /**
-    Integration point volume (of each integration point)
-    \return Integration point volume (System::m_quad::dV).
-    */
+     * Integration point volume (of each integration point)
+     * @return Integration point volume (System::m_quad::dV).
+     */
     const auto& dV() const
     {
         return m_quad.dV();
@@ -925,9 +925,9 @@ public:
 
 public:
     /**
-    GooseFEM vector definition. Takes care of bookkeeping.
-    \return GooseFEM::VectorPartitioned (System::m_vector)
-    */
+     * GooseFEM vector definition. Takes care of bookkeeping.
+     * @return GooseFEM::VectorPartitioned (System::m_vector)
+     */
     const GooseFEM::VectorPartitioned& vector() const
     {
         return m_vector;
@@ -935,9 +935,10 @@ public:
 
 public:
     /**
-    GooseFEM quadrature definition. Takes case of interpolation, integration, and differentiation.
-    \return GooseFEM::Element::Quad4::Quadrature (System::m_quad)
-    */
+     * GooseFEM quadrature definition. Takes case of interpolation, integration, and
+     * differentiation.
+     * @return GooseFEM::Element::Quad4::Quadrature (System::m_quad)
+     */
     const GooseFEM::Element::Quad4::Quadrature& quad() const
     {
         return m_quad;
@@ -945,9 +946,9 @@ public:
 
 public:
     /**
-    Elastic material mode, used for all elastic elements.
-    \return GMatElastoPlasticQPot::Cartesian2d::Elastic<2>&
-    */
+     * Elastic material mode, used for all elastic elements.
+     * @return GMatElastoPlasticQPot::Cartesian2d::Elastic<2>&
+     */
     GMatElastoPlasticQPot::Cartesian2d::Elastic<2>& elastic()
     {
         return m_elas;
@@ -955,9 +956,9 @@ public:
 
 public:
     /**
-    Elastic material mode, used for all elastic elements.
-    \return GMatElastoPlasticQPot::Cartesian2d::Cusp<2>&
-    */
+     * Elastic material mode, used for all elastic elements.
+     * @return GMatElastoPlasticQPot::Cartesian2d::Cusp<2>&
+     */
     GMatElastoPlasticQPot::Cartesian2d::Cusp<2>& plastic()
     {
         return m_plas;
@@ -965,10 +966,10 @@ public:
 
 public:
     /**
-    Bulk modulus per integration point.
-    Convenience function: assembles output from elastic() and plastic().
-    \return Integration point scalar (copy). Shape: `[nelem, nip]`.
-    */
+     * Bulk modulus per integration point.
+     * Convenience function: assembles output from elastic() and plastic().
+     * @return Integration point scalar (copy). Shape: `[nelem, nip]`.
+     */
     array_type::tensor<double, 2> K() const
     {
         array_type::tensor<double, 2> ret = xt::empty<double>({m_nelem, m_nip});
@@ -997,10 +998,10 @@ public:
 
 public:
     /**
-    Shear modulus per integration point.
-    Convenience function: assembles output from elastic() and plastic().
-    \return Integration point scalar (copy). Shape: `[nelem, nip]`.
-    */
+     * Shear modulus per integration point.
+     * Convenience function: assembles output from elastic() and plastic().
+     * @return Integration point scalar (copy). Shape: `[nelem, nip]`.
+     */
     array_type::tensor<double, 2> G() const
     {
         array_type::tensor<double, 2> ret = xt::empty<double>({m_nelem, m_nip});
@@ -1029,9 +1030,9 @@ public:
 
 public:
     /**
-    Stress tensor of each integration point.
-    \return Integration point tensor (pointer). Shape: `[nelem, nip, 2, 2]`.
-    */
+     * Stress tensor of each integration point.
+     * @return Integration point tensor (pointer). Shape: `[nelem, nip, 2, 2]`.
+     */
     const array_type::tensor<double, 4>& Sig()
     {
         this->computeEpsSig();
@@ -1040,9 +1041,9 @@ public:
 
 public:
     /**
-    Strain tensor of each integration point.
-    \return Integration point tensor (pointer). Shape: `[nelem, nip, 2, 2]`.
-    */
+     * Strain tensor of each integration point.
+     * @return Integration point tensor (pointer). Shape: `[nelem, nip, 2, 2]`.
+     */
     const array_type::tensor<double, 4>& Eps()
     {
         this->computeEpsSig();
@@ -1051,9 +1052,10 @@ public:
 
 public:
     /**
-    Strain-rate tensor (the symmetric gradient of the nodal velocities) of each integration point.
-    \return Integration point tensor (copy). Shape: `[nelem, nip, 2, 2]`.
-    */
+     * Strain-rate tensor (the symmetric gradient of the nodal velocities) of each integration
+     * point.
+     * @return Integration point tensor (copy). Shape: `[nelem, nip, 2, 2]`.
+     */
     array_type::tensor<double, 4> Epsdot() const
     {
         return m_quad.SymGradN_vector(m_vector.AsElement(m_v));
@@ -1061,9 +1063,9 @@ public:
 
 public:
     /**
-    Symmetric gradient of the nodal accelerations of each integration point.
-    \return Integration point tensor (copy). Shape: `[nelem, nip, 2, 2]`.
-    */
+     * Symmetric gradient of the nodal accelerations of each integration point.
+     * @return Integration point tensor (copy). Shape: `[nelem, nip, 2, 2]`.
+     */
     array_type::tensor<double, 4> Epsddot() const
     {
         return m_quad.SymGradN_vector(m_vector.AsElement(m_a));
@@ -1071,10 +1073,10 @@ public:
 
 public:
     /**
-    Stiffness tensor of each integration point.
-    Convenience function: assembles output from elastic() and plastic().
-    \return Integration point tensor (copy). Shape: `[nelem, nip, 2, 2, 2, 2]`.
-    */
+     * Stiffness tensor of each integration point.
+     * Convenience function: assembles output from elastic() and plastic().
+     * @return Integration point tensor (copy). Shape: `[nelem, nip, 2, 2, 2, 2]`.
+     */
     GooseFEM::MatrixPartitioned stiffness() const
     {
         auto ret = m_quad.allocate_qtensor<4>(0.0);
@@ -1104,9 +1106,9 @@ public:
 
 public:
     /**
-    Strain-rate tensor of integration points of plastic elements only, see System::plastic.
-    \return Integration point tensor (pointer). Shape: [plastic_elem().size(), nip, 2, 2].
-    */
+     * Strain-rate tensor of integration points of plastic elements only, see System::plastic.
+     * @return Integration point tensor (pointer). Shape: [plastic_elem().size(), nip, 2, 2].
+     */
     const array_type::tensor<double, 4>& plastic_Epsdot()
     {
         // m_ue_plas, m_fe_plas are temporaries that can be reused
@@ -1120,8 +1122,8 @@ public:
 
 protected:
     /**
-    Compute #m_Sig and #m_Eps using #m_u.
-    */
+     * Compute #m_Sig and #m_Eps using #m_u.
+     */
     void computeEpsSig()
     {
         if (!m_full_outdated) {
@@ -1165,8 +1167,8 @@ protected:
     }
 
     /**
-    Update #m_fmaterial based on the current displacement field #m_u.
-    */
+     * Update #m_fmaterial based on the current displacement field #m_u.
+     */
     void computeForceMaterial()
     {
         m_full_outdated = true;
@@ -1184,13 +1186,13 @@ protected:
 
 protected:
     /**
-    Compute:
-    -   m_fint = m_fmaterial + m_fdamp
-    -   m_fext[iip] = m_fint[iip]
-    -   m_fres = m_fext - m_fint
-
-    Internal rule: all relevant forces are expected to be updated before this function is called.
-    */
+     * Compute:
+     * -    m_fint = m_fmaterial + m_fdamp
+     * -    m_fext[iip] = m_fint[iip]
+     * -    m_fres = m_fext - m_fint
+     *
+     * Internal rule: all relevant forces are expected to be updated before this function is called.
+     */
     virtual void computeInternalExternalResidualForce()
     {
         xt::noalias(m_fint) = m_fmaterial + m_fdamp;
@@ -1200,9 +1202,9 @@ protected:
 
 public:
     /**
-    Recompute all forces.
-    Under normal circumstances, this function is called automatically when needed.
-    */
+     * Recompute all forces.
+     * Under normal circumstances, this function is called automatically when needed.
+     */
     void refresh()
     {
         this->updated_u();
@@ -1212,15 +1214,15 @@ public:
 
 public:
     /**
-    Set purely elastic and linear response to specific boundary conditions.
-    Since this response is linear and elastic it can be scaled freely to transverse a
-    fully elastic interval at once, without running any dynamics,
-    and run an event driven code using eventDrivenStep().
-
-    \param delta_u Nodal displacement field.
-    \param autoscale Scale such that the perturbation is small enough.
-    \return Value with which the input perturbation is scaled, see also eventDriven_deltaU().
-    */
+     * Set purely elastic and linear response to specific boundary conditions.
+     * Since this response is linear and elastic it can be scaled freely to transverse a
+     * fully elastic interval at once, without running any dynamics,
+     * and run an event driven code using eventDrivenStep().
+     *
+     * @param delta_u Nodal displacement field.
+     * @param autoscale Scale such that the perturbation is small enough.
+     * @return Value with which the input perturbation is scaled, see also eventDriven_deltaU().
+     */
     template <class T>
     double eventDriven_setDeltaU(const T& delta_u, bool autoscale = true)
     {
@@ -1246,46 +1248,48 @@ public:
     }
 
     /**
-    Get displacement perturbation used for event driven code, see eventDriven_setDeltaU().
-    \return Nodal displacements.
-    */
+     * Get displacement perturbation used for event driven code, see eventDriven_setDeltaU().
+     * @return Nodal displacements.
+     */
     const auto& eventDriven_deltaU() const
     {
         return m_pert_u;
     }
 
     /**
-    Add event driven step for the boundary conditions that correspond to the displacement
-    perturbation set in eventDriven_setDeltaU().
-
-    \todo
-        The current implementation is suited for unloading, but only until the first yield strain.
-        An improved implementation is needed to deal with the symmetry of the equivalent strain.
-        A `FRICTIONQPOTFEM_WIP` assertion is made.
-
-    \param deps
-        Size of the local stain kick to apply.
-
-    \param kick
-        If `false`, increment displacements to `deps / 2` of yielding again.
-        If `true`, increment displacements by a affine simple shear increment `deps`.
-
-    \param direction
-        If `+1`: apply shear to the right. If `-1` applying shear to the left.
-
-    \param yield_element
-        If `true` and `kick == true` then the element closest to yielding is selected (as normal),
-        but of that element the displacement update is the maximum of the element, such that all
-        integration points of the element are forced to yield.
-
-    \param iterative
-        If `true` the step is iteratively searched.
-        This is more costly by recommended, if the perturbation is non-analytical
-        (and contains numerical errors).
-
-    \return
-        Factor with which the displacement perturbation, see eventDriven_deltaU(), is scaled.
-    */
+     * Add event driven step for the boundary conditions that correspond to the displacement
+     * perturbation set in eventDriven_setDeltaU().
+     *
+     * \todo
+     *      The current implementation is suited for unloading,
+     *      but only until the first yield strain.
+     *      An improved implementation is needed to deal with the symmetry of
+     *      the equivalent strain.
+     *      A `FRICTIONQPOTFEM_WIP` assertion is made.
+     *
+     * @param deps
+     *      Size of the local stain kick to apply.
+     *
+     * @param kick
+     *      If `false`, increment displacements to `deps / 2` of yielding again.
+     *      If `true`, increment displacements by a affine simple shear increment `deps`.
+     *
+     * @param direction
+     *      If `+1`: apply shear to the right. If `-1` applying shear to the left.
+     *
+     * @param yield_element
+     *      If `true` and `kick == true` then the element closest to yielding is selected
+     *      (as normal), but of that element the displacement update is the maximum of the element,
+     *      such that all integration points of the element are forced to yield.
+     *
+     * @param iterative
+     *      If `true` the step is iteratively searched.
+     *      This is more costly by recommended, if the perturbation is non-analytical
+     *      (and contains numerical errors).
+     *
+     * @return
+     *      Factor with which the displacement perturbation, see eventDriven_deltaU(), is scaled.
+     */
     virtual double eventDrivenStep(
         double deps,
         bool kick,
@@ -1514,10 +1518,10 @@ public:
     }
 
     /**
-    Make a time-step: apply velocity-Verlet integration.
-    Forces are computed where needed using:
-    updated_u(), updated_v(), and computeInternalExternalResidualForce().
-    */
+     * Make a time-step: apply velocity-Verlet integration.
+     * Forces are computed where needed using:
+     * updated_u(), updated_v(), and computeInternalExternalResidualForce().
+     */
     void timeStep()
     {
         // history
@@ -1563,21 +1567,21 @@ public:
     }
 
     /**
-    Make a number of time steps, see timeStep().
-
-    \param n Number of steps to make.
-
-    \param nmargin
-        Number of potentials to leave as margin.
-        -   `nmargin > 0`: stop if the yield-index of any box is `nmargin` from the end
-            and return a negative number.
-        -   `nmargin == 0`: no bounds-check is performed
-            (the last potential is assumed infinitely elastic to the right).
-
-    \return
-        -   Number of steps: `== n`.
-        -   Negative number: if stopped because of a yield-index margin.
-    */
+     * Make a number of time steps, see timeStep().
+     *
+     * @param n Number of steps to make.
+     *
+     * @param nmargin
+     *      Number of potentials to leave as margin.
+     *      -   `nmargin > 0`: stop if the yield-index of any box is `nmargin` from the end
+     *          and return a negative number.
+     *      -   `nmargin == 0`: no bounds-check is performed
+     *          (the last potential is assumed infinitely elastic to the right).
+     *
+     * @return
+     *      -   Number of steps: `== n`.
+     *      -   Negative number: if stopped because of a yield-index margin.
+     */
     long timeSteps(size_t n, size_t nmargin = 0)
     {
         FRICTIONQPOTFEM_REQUIRE(n + 1 < std::numeric_limits<long>::max());
@@ -1604,17 +1608,17 @@ public:
     }
 
     /**
-    Perform a series of time-steps until the next plastic event, or equilibrium.
-
-    \param nmargin Number of potentials to have as margin **initially**.
-    \param tol Relative force tolerance for equilibrium. See System::residual for definition.
-    \param niter_tol Enforce the residual check for `niter_tol` consecutive increments.
-    \param max_iter Maximum number of iterations.  Throws `std::runtime_error` otherwise.
-
-    \return
-        -   Number of steps.
-        -   `0` if there was no plastic activity and the residual was reached.
-    */
+     * Perform a series of time-steps until the next plastic event, or equilibrium.
+     *
+     * @param nmargin Number of potentials to have as margin **initially**.
+     * @param tol Relative force tolerance for equilibrium. See System::residual for definition.
+     * @param niter_tol Enforce the residual check for `niter_tol` consecutive increments.
+     * @param max_iter Maximum number of iterations.  Throws `std::runtime_error` otherwise.
+     *
+     * @return
+     *     -   Number of steps.
+     *     -   `0` if there was no plastic activity and the residual was reached.
+     */
     size_t timeStepsUntilEvent(
         size_t nmargin = 0,
         double tol = 1e-5,
@@ -1654,26 +1658,26 @@ public:
     }
 
     /**
-    Make a number of steps with the following protocol.
-    1.  Add a displacement \f$ \underline{v} \Delta t \f$ to each of the nodes.
-    2.  Make a timeStep().
-
-    \param n
-        Number of steps to make.
-
-    \param v
-        Nodal velocity `[nnode, ndim]`.s
-
-    \param nmargin
-        Number of potentials to leave as margin.
-        -   `nmargin > 0`: stop if the yield-index of any box is `nmargin` from the end,
-            and return a negative number.
-        -   `nmargin == 0`: no bounds-check is performed
-            (the last potential is assumed infinitely elastic to the right).
-
-    \return
-        Number of time-steps made (negative if failure).
-    */
+     * Make a number of steps with the following protocol.
+     * 1.  Add a displacement \f$ \underline{v} \Delta t \f$ to each of the nodes.
+     * 2.  Make a timeStep().
+     *
+     * @param n
+     *     Number of steps to make.
+     *
+     * @param v
+     *     Nodal velocity `[nnode, ndim]`.s
+     *
+     * @param nmargin
+     *     Number of potentials to leave as margin.
+     *     -   `nmargin > 0`: stop if the yield-index of any box is `nmargin` from the end,
+     *         and return a negative number.
+     *     -   `nmargin == 0`: no bounds-check is performed
+     *         (the last potential is assumed infinitely elastic to the right).
+     *
+     * @return
+     *     Number of time-steps made (negative if failure).
+     */
     template <class T>
     long flowSteps(size_t n, const T& v, size_t nmargin = 0)
     {
@@ -1703,43 +1707,43 @@ public:
     }
 
     /**
-    Minimise energy: run System::timeStep until a mechanical equilibrium has been reached.
-    Can also be used to run `n` time-steps (or `< n` is equilibrium is reached before).
-    In that case, call with `minimise(max_iter=n, max_iter_is_error=False)`
-
-    \param nmargin
-        Number of potentials to leave as margin.
-        -   `nmargin > 0`: stop if the yield-index of any box is `nmargin` from the end
-            and return a negative number.
-        -   `nmargin == 0`: no bounds-check is performed
-            (the last potential is assumed infinitely elastic to the right).
-
-    \param tol
-        Relative force tolerance for equilibrium. See System::residual for definition.
-
-    \param niter_tol
-        Enforce the residual check for `niter_tol` consecutive increments.
-
-    \param max_iter
-        Maximum number of time-steps. Throws `std::runtime_error` otherwise.
-
-    \param time_activity
-        If `true` plastic activity is timed. After this function you can find:
-        -   quasistaticActivityFirst() : Increment with the first plastic event.
-        -   quasistaticActivityLast() : Increment with the last plastic event.
-        Attention: if you are changing the chunk of yield positions during the minimisation you
-        should copy quasistaticActivityFirst() after the first (relevant) call of minimise():
-        each time you call minimise(), quasistaticActivityFirst() is reset.
-
-    \param max_iter_is_error
-        If `true` an error is thrown when the maximum number of time-steps is reached.
-        If `false` the function simply returns `max_iter`.
-
-    \return
-        -   `0`: if stopped when the residual is reached (and number of steps `< max_iter`).
-        -   `max_iter`: if no residual was reached, and `max_iter_is_error = false`.
-        -   Negative number: if stopped because of a yield-index margin.
-    */
+     * Minimise energy: run System::timeStep until a mechanical equilibrium has been reached.
+     * Can also be used to run `n` time-steps (or `< n` is equilibrium is reached before).
+     * In that case, call with `minimise(max_iter=n, max_iter_is_error=False)`
+     *
+     * @param nmargin
+     *     Number of potentials to leave as margin.
+     *     -   `nmargin > 0`: stop if the yield-index of any box is `nmargin` from the end
+     *         and return a negative number.
+     *     -   `nmargin == 0`: no bounds-check is performed
+     *         (the last potential is assumed infinitely elastic to the right).
+     *
+     * @param tol
+     *     Relative force tolerance for equilibrium. See System::residual for definition.
+     *
+     * @param niter_tol
+     *     Enforce the residual check for `niter_tol` consecutive increments.
+     *
+     * @param max_iter
+     *     Maximum number of time-steps. Throws `std::runtime_error` otherwise.
+     *
+     * @param time_activity
+     *     If `true` plastic activity is timed. After this function you can find:
+     *     -   quasistaticActivityFirst() : Increment with the first plastic event.
+     *     -   quasistaticActivityLast() : Increment with the last plastic event.
+     *     Attention: if you are changing the chunk of yield positions during the minimisation you
+     *     should copy quasistaticActivityFirst() after the first (relevant) call of minimise():
+     *     each time you call minimise(), quasistaticActivityFirst() is reset.
+     *
+     * @param max_iter_is_error
+     *     If `true` an error is thrown when the maximum number of time-steps is reached.
+     *     If `false` the function simply returns `max_iter`.
+     *
+     * @return
+     *     -   `0`: if stopped when the residual is reached (and number of steps `< max_iter`).
+     *     -   `max_iter`: if no residual was reached, and `max_iter_is_error = false`.
+     *     -   Negative number: if stopped because of a yield-index margin.
+     */
     long minimise(
         size_t nmargin = 0,
         double tol = 1e-5,
@@ -1803,34 +1807,36 @@ public:
     }
 
     /**
-    Increment with the first plastic event.
-    This value is only relevant if `time_activity = true` was used in the last call of minimise().
-    \return Increment.
-    */
+     * Increment with the first plastic event.
+     * This value is only relevant if `time_activity = true` was used in the last call of
+     * minimise().
+     * @return Increment.
+     */
     size_t quasistaticActivityFirst() const
     {
         return m_qs_inc_first;
     }
 
     /**
-    Increment with the last plastic event.
-    This value is only relevant if `time_activity = true` was used in the last call of minimise().
-    \return Increment.
-    */
+     * Increment with the last plastic event.
+     * This value is only relevant if `time_activity = true` was used in the last call of
+     * minimise().
+     * @return Increment.
+     */
     size_t quasistaticActivityLast() const
     {
         return m_qs_inc_last;
     }
 
     /**
-    \copydoc System::minimise_truncate(size_t, size_t, double, size_t, size_t)
-
-    This overload can be used to specify a reference state when manually triggering.
-    If triggering is done before calling this function, already one block yielded,
-    making `A_truncate` and `S_truncate` inaccurate.
-
-    \param idx_n Reference potential index of the first integration point.
-    */
+     * @copydoc System::minimise_truncate(size_t, size_t, double, size_t, size_t)
+     *
+     * This overload can be used to specify a reference state when manually triggering.
+     * If triggering is done before calling this function, already one block yielded,
+     * making `A_truncate` and `S_truncate` inaccurate.
+     *
+     * @param idx_n Reference potential index of the first integration point.
+     */
     template <class T>
     size_t minimise_truncate(
         const T& idx_n,
@@ -1871,27 +1877,28 @@ public:
     }
 
     /**
-    Like Generic2d::minimise(), but stops when a certain number of blocks has yielded at least once.
-    In that case the function returns zero (in all other cases it returns a positive number).
-
-    \note `A_truncate` and `S_truncate` are defined on the first integration point.
-
-    \param A_truncate
-        Truncate if `A_truncate` blocks have yielded at least once.
-
-    \param S_truncate
-        Truncate if the number of times blocks yielded is equal to `S_truncate`.
-        **Warning** This option is reserved for future use, but for the moment does nothing.
-
-    \param tol
-        Relative force tolerance for equilibrium. See System::residual for definition.
-
-    \param niter_tol
-        Enforce the residual check for `niter_tol` consecutive increments.
-
-    \param max_iter
-        Maximum number of time-steps. Throws `std::runtime_error` otherwise.
-    */
+     * Like Generic2d::minimise(), but stops when a certain number of blocks has yielded at least
+     * once. In that case the function returns zero (in all other cases it returns a positive
+     * number).
+     *
+     * \note `A_truncate` and `S_truncate` are defined on the first integration point.
+     *
+     * @param A_truncate
+     *     Truncate if `A_truncate` blocks have yielded at least once.
+     *
+     * @param S_truncate
+     *     Truncate if the number of times blocks yielded is equal to `S_truncate`.
+     *     **Warning** This option is reserved for future use, but for the moment does nothing.
+     *
+     * @param tol
+     *     Relative force tolerance for equilibrium. See System::residual for definition.
+     *
+     * @param niter_tol
+     *     Enforce the residual check for `niter_tol` consecutive increments.
+     *
+     * @param max_iter
+     *     Maximum number of time-steps. Throws `std::runtime_error` otherwise.
+     */
     size_t minimise_truncate(
         size_t A_truncate = 0,
         size_t S_truncate = 0,
@@ -1904,12 +1911,12 @@ public:
     }
 
     /**
-    Get the displacement field that corresponds to an affine simple shear of a certain strain.
-    The displacement of the bottom boundary is zero, while it is maximal for the top boundary.
-
-    \param delta_gamma Strain to add (the shear component of deformation gradient is twice that).
-    \return Nodal displacements.
-    */
+     * Get the displacement field that corresponds to an affine simple shear of a certain strain.
+     * The displacement of the bottom boundary is zero, while it is maximal for the top boundary.
+     *
+     * @param delta_gamma Strain to add (the shear component of deformation gradient is twice that).
+     * @return Nodal displacements.
+     */
     array_type::tensor<double, 2> affineSimpleShear(double delta_gamma) const
     {
         array_type::tensor<double, 2> ret = xt::zeros_like(m_u);
@@ -1922,14 +1929,14 @@ public:
     }
 
     /**
-    Get the displacement field that corresponds to an affine simple shear of a certain strain.
-    Similar to affineSimpleShear() with the difference that the displacement is zero
-    exactly in the middle, while the displacement at the bottom and the top boundary is maximal
-    (with a negative displacement for the bottom boundary).
-
-    \param delta_gamma Strain to add (the shear component of deformation gradient is twice that).
-    \return Nodal displacements.
-    */
+     * Get the displacement field that corresponds to an affine simple shear of a certain strain.
+     * Similar to affineSimpleShear() with the difference that the displacement is zero
+     * exactly in the middle, while the displacement at the bottom and the top boundary is maximal
+     * (with a negative displacement for the bottom boundary).
+     *
+     * @param delta_gamma Strain to add (the shear component of deformation gradient is twice that).
+     * @return Nodal displacements.
+     */
     array_type::tensor<double, 2> affineSimpleShearCentered(double delta_gamma) const
     {
         array_type::tensor<double, 2> ret = xt::zeros_like(m_u);
@@ -1968,17 +1975,19 @@ protected:
     GMatElastoPlasticQPot::Cartesian2d::Cusp<2> m_plas; ///< Material for plastic el.
 
     /**
-    Nodal displacements.
-    \warning To make sure that the right forces are computed at the right time,
-    always call updated_u() after manually updating #m_u (setU() automatically take care of this).
-    */
+     * Nodal displacements.
+     * @warning To make sure that the right forces are computed at the right time,
+     * always call updated_u() after manually updating #m_u (setU() automatically take care of
+     * this).
+     */
     array_type::tensor<double, 2> m_u;
 
     /**
-    Nodal velocities.
-    \warning To make sure that the right forces are computed at the right time,
-    always call updated_v() after manually updating #m_v (setV() automatically take care of this).
-    */
+     * Nodal velocities.
+     * @warning To make sure that the right forces are computed at the right time,
+     * always call updated_v() after manually updating #m_v (setV() automatically take care of
+     * this).
+     */
     array_type::tensor<double, 2> m_v;
 
     array_type::tensor<double, 2> m_a; ///< Nodal accelerations.
