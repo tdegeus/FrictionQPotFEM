@@ -62,7 +62,7 @@ class test_UniformSingleLayer2d(unittest.TestCase):
         initseq = np.zeros(N)
         generators = prrng.pcg32_array(initstate, initseq)
 
-        epsy = 1e-5 + 1e-3 * generators.weibull([1000], k=2.0, l=1.0)
+        epsy = 1e-5 + 1e-3 * generators.weibull([1000], k=2.0, scale=1.0)
         epsy[:, 0] = 1e-5 + 1e-3 * generators.random([1]).ravel()
         epsy = np.cumsum(epsy, 1)
 
