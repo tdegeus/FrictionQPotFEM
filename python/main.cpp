@@ -280,6 +280,18 @@ PYBIND11_MODULE(_FrictionQPotFEM, mod)
                 py::arg("max_iter") = size_t(1e7));
 
             cls.def(
+                "minimise_highfrequency",
+                &SUB::System::minimise_highfrequency,
+                "minimise_highfrequency",
+                py::arg("nodes"),
+                py::arg("top"),
+                py::arg("t_step") = 1,
+                py::arg("nmargin") = 0,
+                py::arg("tol") = 1e-5,
+                py::arg("niter_tol") = 20,
+                py::arg("max_iter") = size_t(1e7));
+
+            cls.def(
                 "minimise",
                 &SUB::System::minimise,
                 "minimise",

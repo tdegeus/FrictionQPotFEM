@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <string>
+#include <tuple>
 
 #include "config.h"
 
@@ -1655,6 +1656,126 @@ public:
         }
 
         return step;
+    }
+
+    /**
+     * @brief Minimise energy while doing a high-frequency measurement of:
+     *
+     *  -   The average force at the top boundary.
+     *  -   The displacement, velocity, and acceleration of selected nodes.
+     *
+     * @param nodes List of nodes to sample.
+     *
+     * @param top
+     *      Nodes of the top boundary.
+     *      ``f_x = sum(fext[top, 0]) / (top.size - 1)`` (accounting for periodicity).
+     *
+     * @param t_step Sample every `t_step` time steps.
+     * @param nmargin Number of potentials to have as margin **initially**.
+     * @param tol Relative force tolerance for equilibrium. See System::residual for definition.
+     * @param niter_tol Enforce the residual check for `niter_tol` consecutive increments.
+     * @param max_iter Maximum number of iterations.  Throws `std::runtime_error` otherwise.
+     *
+     * @return
+     *      A tuple (``f_x``, ``u_x``, ``u_y``, ``v_x``, ``v_y``, ``a_x``, ``a_y``).
+     *      For the latter three the rows correspond to the selected nodes.
+     */
+    std::tuple<
+        array_type::tensor<double, 1>,
+        array_type::tensor<double, 2>,
+        array_type::tensor<double, 2>,
+        array_type::tensor<double, 2>,
+        array_type::tensor<double, 2>,
+        array_type::tensor<double, 2>,
+        array_type::tensor<double, 2>>
+    minimise_highfrequency(
+        const array_type::tensor<size_t, 1>& nodes,
+        const array_type::tensor<size_t, 1>& top,
+        size_t t_step = 1,
+        size_t nmargin = 0,
+        double tol = 1e-5,
+        size_t niter_tol = 20,
+        size_t max_iter = 1e7)
+    {
+        FRICTIONQPOTFEM_ASSERT(tol < 1.0);
+        FRICTIONQPOTFEM_ASSERT(max_iter + 1 < std::numeric_limits<long>::max());
+
+        double tol2 = tol * tol;
+        GooseFEM::Iterate::StopList residuals(niter_tol);
+
+        size_t nyield = m_plas.epsy().shape(2);
+        size_t nmax = nyield - nmargin;
+
+        FRICTIONQPOTFEM_ASSERT(nmargin < nyield);
+        FRICTIONQPOTFEM_REQUIRE(xt::all(m_plas.i() <= nmax));
+        FRICTIONQPOTFEM_REQUIRE(nmargin == 0 || xt::all(m_plas.i() >= nmargin));
+
+        std::vector<double> fext;
+        std::vector<std::vector<double>> ux(nodes.size());
+        std::vector<std::vector<double>> uy(nodes.size());
+        std::vector<std::vector<double>> vx(nodes.size());
+        std::vector<std::vector<double>> vy(nodes.size());
+        std::vector<std::vector<double>> ax(nodes.size());
+        std::vector<std::vector<double>> ay(nodes.size());
+
+        for (size_t step = 1; step < max_iter + 1; ++step) {
+
+            this->timeStep();
+            residuals.roll_insert(this->residual());
+
+            if (step % t_step == 0) {
+
+                double f = 0.0;
+                for (auto& n : top) {
+                    f += m_fext(n, 0);
+                }
+                fext.push_back(f / static_cast<double>(top.size() - 1)); // account for periodicity
+
+                for (size_t i = 0; i < nodes.size(); ++i) {
+                    size_t n = nodes(i);
+                    ux[i].push_back(m_u(n, 0));
+                    uy[i].push_back(m_u(n, 1));
+                    vx[i].push_back(m_v(n, 0));
+                    vy[i].push_back(m_v(n, 1));
+                    ax[i].push_back(m_a(n, 0));
+                    ay[i].push_back(m_a(n, 1));
+                }
+            }
+
+            if (nmargin > 0) {
+                if (xt::any(m_plas.i() > nmax) || xt::any(m_plas.i() < nmargin)) {
+                    throw std::runtime_error("Out of bounds");
+                }
+            }
+
+            if ((residuals.descending() && residuals.all_less(tol)) || residuals.all_less(tol2)) {
+                this->quench();
+
+                size_t n = fext.size();
+                array_type::tensor<double, 1> ret_fext = xt::empty<double>({n});
+                array_type::tensor<double, 2> ret_ux = xt::empty<double>({nodes.size(), n});
+                array_type::tensor<double, 2> ret_uy = xt::empty<double>({nodes.size(), n});
+                array_type::tensor<double, 2> ret_vx = xt::empty<double>({nodes.size(), n});
+                array_type::tensor<double, 2> ret_vy = xt::empty<double>({nodes.size(), n});
+                array_type::tensor<double, 2> ret_ax = xt::empty<double>({nodes.size(), n});
+                array_type::tensor<double, 2> ret_ay = xt::empty<double>({nodes.size(), n});
+
+                std::copy(fext.begin(), fext.end(), ret_fext.begin());
+
+                for (size_t i = 0; i < nodes.size(); ++i) {
+                    std::copy(ux[i].begin(), ux[i].end(), ret_ux.begin() + i * n);
+                    std::copy(uy[i].begin(), uy[i].end(), ret_uy.begin() + i * n);
+                    std::copy(vx[i].begin(), vx[i].end(), ret_vx.begin() + i * n);
+                    std::copy(vy[i].begin(), vy[i].end(), ret_vy.begin() + i * n);
+                    std::copy(ax[i].begin(), ax[i].end(), ret_ax.begin() + i * n);
+                    std::copy(ay[i].begin(), ay[i].end(), ret_ay.begin() + i * n);
+                }
+
+                return std::make_tuple(ret_fext, ret_ux, ret_uy, ret_vx, ret_vy, ret_ax, ret_ay);
+            }
+        }
+
+        throw std::runtime_error("No convergence found");
     }
 
     /**
