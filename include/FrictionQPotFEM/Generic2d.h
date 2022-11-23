@@ -1355,6 +1355,15 @@ public:
             }
         }
 
+        if (kick) {
+            size_t nyield = m_plas.epsy().shape(m_plas.epsy().dimension() - 1);
+            size_t bound = direction > 0 ? nyield - 2 : 0;
+            if (xt::all(xt::equal(idx, bound))) {
+                return 0.0;
+            }
+            scale = xt::where(xt::equal(idx, bound), std::numeric_limits<double>::max(), scale);
+        }
+
         double ret;
         size_t e;
         size_t q;
