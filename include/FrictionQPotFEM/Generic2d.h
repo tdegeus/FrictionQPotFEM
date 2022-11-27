@@ -1686,15 +1686,11 @@ public:
      * @param max_iter Maximum number of iterations.  Throws `std::runtime_error` otherwise.
      *
      * @return
-     *      A tuple (``f_x``, ``u_x``, ``u_y``, ``v_x``, ``v_y``, ``a_x``, ``a_y``).
+     *      A tuple (``f_x``, ``u_x``, ``u_y``).
      *      For the latter three the rows correspond to the selected nodes.
      */
     std::tuple<
         array_type::tensor<double, 1>,
-        array_type::tensor<double, 2>,
-        array_type::tensor<double, 2>,
-        array_type::tensor<double, 2>,
-        array_type::tensor<double, 2>,
         array_type::tensor<double, 2>,
         array_type::tensor<double, 2>>
     minimise_highfrequency(
@@ -1722,10 +1718,6 @@ public:
         std::vector<double> fext;
         std::vector<std::vector<double>> ux(nodes.size());
         std::vector<std::vector<double>> uy(nodes.size());
-        std::vector<std::vector<double>> vx(nodes.size());
-        std::vector<std::vector<double>> vy(nodes.size());
-        std::vector<std::vector<double>> ax(nodes.size());
-        std::vector<std::vector<double>> ay(nodes.size());
 
         for (size_t step = 1; step < max_iter + 1; ++step) {
 
@@ -1744,10 +1736,6 @@ public:
                     size_t n = nodes(i);
                     ux[i].push_back(m_u(n, 0));
                     uy[i].push_back(m_u(n, 1));
-                    vx[i].push_back(m_v(n, 0));
-                    vy[i].push_back(m_v(n, 1));
-                    ax[i].push_back(m_a(n, 0));
-                    ay[i].push_back(m_a(n, 1));
                 }
             }
 
@@ -1762,25 +1750,22 @@ public:
 
                 size_t n = fext.size();
                 array_type::tensor<double, 1> ret_fext = xt::empty<double>({n});
-                array_type::tensor<double, 2> ret_ux = xt::empty<double>({nodes.size(), n});
-                array_type::tensor<double, 2> ret_uy = xt::empty<double>({nodes.size(), n});
-                array_type::tensor<double, 2> ret_vx = xt::empty<double>({nodes.size(), n});
-                array_type::tensor<double, 2> ret_vy = xt::empty<double>({nodes.size(), n});
-                array_type::tensor<double, 2> ret_ax = xt::empty<double>({nodes.size(), n});
-                array_type::tensor<double, 2> ret_ay = xt::empty<double>({nodes.size(), n});
-
                 std::copy(fext.begin(), fext.end(), ret_fext.begin());
+                fext.resize(0);
 
+                array_type::tensor<double, 2> ret_ux = xt::empty<double>({nodes.size(), n});
                 for (size_t i = 0; i < nodes.size(); ++i) {
                     std::copy(ux[i].begin(), ux[i].end(), ret_ux.begin() + i * n);
-                    std::copy(uy[i].begin(), uy[i].end(), ret_uy.begin() + i * n);
-                    std::copy(vx[i].begin(), vx[i].end(), ret_vx.begin() + i * n);
-                    std::copy(vy[i].begin(), vy[i].end(), ret_vy.begin() + i * n);
-                    std::copy(ax[i].begin(), ax[i].end(), ret_ax.begin() + i * n);
-                    std::copy(ay[i].begin(), ay[i].end(), ret_ay.begin() + i * n);
                 }
+                ux.resize(0);
 
-                return std::make_tuple(ret_fext, ret_ux, ret_uy, ret_vx, ret_vy, ret_ax, ret_ay);
+                array_type::tensor<double, 2> ret_uy = xt::empty<double>({nodes.size(), n});
+                for (size_t i = 0; i < nodes.size(); ++i) {
+                    std::copy(uy[i].begin(), uy[i].end(), ret_uy.begin() + i * n);
+                }
+                uy.resize(0);
+
+                return std::make_tuple(ret_fext, ret_ux, ret_uy);
             }
         }
 
