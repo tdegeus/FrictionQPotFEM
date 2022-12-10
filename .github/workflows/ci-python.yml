@@ -41,15 +41,23 @@ jobs:
           python-goosefem
           python-prrng
           tqdm
-          sel(linux): cxx-compiler
           sel(win): clang_win-64
 
     - name: Set dummy version
       run: echo "SETUPTOOLS_SCM_PRETEND_VERSION=0.0" >> $GITHUB_ENV
 
     - name: Build and install Python module
+      if: runner.os == 'Linux'
+      env:
+        CC: gcc-11
+        CXX: g++-11
       run: |
-        SKBUILD_CONFIGURE_OPTIONS="-DUSE_DEBUG=1" python -m pip install . -vv
+        SKBUILD_CONFIGURE_OPTIONS="-DUSE_DEBUG=1" python -m pip install . -v
+
+    - name: Build and install Python module
+      if: runner.os != 'Linux'
+      run: |
+        SKBUILD_CONFIGURE_OPTIONS="-DUSE_DEBUG=1" python -m pip install . -v
 
     - name: Run Python tests
       run: python -m unittest discover tests
