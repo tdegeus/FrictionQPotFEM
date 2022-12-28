@@ -488,6 +488,12 @@ public:
      */
     void setAlpha(double alpha)
     {
+        if (detail::is_same(alpha, 0.0)) {
+            m_set_D = false;
+            m_alpha = 0.0;
+            return;
+        }
+
         return this->setDampingMatrix(xt::eval(alpha * xt::ones<double>({m_nelem})));
     }
 
