@@ -1,0 +1,4 @@
+<map id="GooseFEM::Element::QuadratureBaseCartesian&lt; D &gt;" name="GooseFEM::Element::QuadratureBaseCartesian&lt; D &gt;">
+<area shape="rect" id="node1" title="CRTP base class for interpolation and quadrature for a generic element in Cartesian coordinates." alt="" coords="5,93,235,133"/>
+<area shape="rect" id="node2" href="$classGooseFEM_1_1Element_1_1QuadratureBase.html" title="CRTP base class for quadrature." alt="" coords="37,5,203,45"/>
+</map>

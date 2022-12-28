@@ -1,0 +1,5 @@
+<map id="GooseFEM::Mesh::Hex8::FineLayer" name="GooseFEM::Mesh::Hex8::FineLayer">
+<area shape="rect" id="node1" title="Mesh with fine middle layer, and coarser elements towards the top and bottom." alt="" coords="49,167,225,207"/>
+<area shape="rect" id="node2" href="$classGooseFEM_1_1Mesh_1_1RegularBase3d.html" title=" " alt="" coords="17,79,257,119"/>
+<area shape="rect" id="node3" href="$classGooseFEM_1_1Mesh_1_1RegularBase.html" title="CRTP base class for regular meshes." alt="" coords="5,5,269,31"/>
+</map>

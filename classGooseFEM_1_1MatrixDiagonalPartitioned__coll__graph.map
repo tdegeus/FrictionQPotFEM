@@ -1,0 +1,6 @@
+<map id="GooseFEM::MatrixDiagonalPartitioned" name="GooseFEM::MatrixDiagonalPartitioned">
+<area shape="rect" id="node1" title="Diagonal and partitioned matrix." alt="" coords="569,37,768,77"/>
+<area shape="rect" id="node2" href="$classGooseFEM_1_1MatrixPartitionedBase.html" title=" " alt="" coords="267,5,521,45"/>
+<area shape="rect" id="node3" href="$classGooseFEM_1_1MatrixBase.html" title="CRTP base class for a matrix." alt="" coords="5,13,219,38"/>
+<area shape="rect" id="node4" href="$classGooseFEM_1_1MatrixDiagonalBase.html" title=" " alt="" coords="267,69,521,109"/>
+</map>

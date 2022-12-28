@@ -1,0 +1,5 @@
+<map id="GooseFEM::MatrixPartitioned" name="GooseFEM::MatrixPartitioned">
+<area shape="rect" id="node1" title="Sparse matrix partitioned in an unknown and a prescribed part." alt="" coords="7,167,217,192"/>
+<area shape="rect" id="node2" href="$classGooseFEM_1_1MatrixPartitionedBase.html" title=" " alt="" coords="7,79,217,119"/>
+<area shape="rect" id="node3" href="$classGooseFEM_1_1MatrixBase.html" title="CRTP base class for a matrix." alt="" coords="5,5,219,31"/>
+</map>

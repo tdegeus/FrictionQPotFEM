@@ -1,0 +1,5 @@
+<map id="GooseFEM::Element::Quad4::QuadratureAxisymmetric" name="GooseFEM::Element::Quad4::QuadratureAxisymmetric">
+<area shape="rect" id="node1" title="Interpolation and quadrature." alt="" coords="5,196,241,236"/>
+<area shape="rect" id="node2" href="$classGooseFEM_1_1Element_1_1QuadratureBaseCartesian.html" title=" " alt="" coords="15,93,231,148"/>
+<area shape="rect" id="node3" href="$classGooseFEM_1_1Element_1_1QuadratureBase.html" title="CRTP base class for quadrature." alt="" coords="40,5,207,45"/>
+</map>

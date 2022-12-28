@@ -1,0 +1,4 @@
+<map id="FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayerFull" name="FrictionQPotFEM::UniformSingleLayer2d::LocalTriggerFineLayerFull">
+<area shape="rect" id="node1" title="Trigger element by a linear combination of simple shear and a pure shear perturbations." alt="" coords="23,5,250,60"/>
+<area shape="rect" id="node2" href="$classFrictionQPotFEM_1_1UniformSingleLayer2d_1_1LocalTriggerFineLayer.html" title="Similar to LocalTriggerFineLayerFull, with the difference that only a (small) group of elements aroun..." alt="" coords="5,108,268,148"/>
+</map>

@@ -1,0 +1,5 @@
+<map id="GooseFEM::MatrixDiagonal" name="GooseFEM::MatrixDiagonal">
+<area shape="rect" id="node1" title="Diagonal matrix." alt="" coords="252,45,451,70"/>
+<area shape="rect" id="node2" href="$classGooseFEM_1_1MatrixBase.html" title=" " alt="" coords="18,5,191,45"/>
+<area shape="rect" id="node3" href="$classGooseFEM_1_1MatrixDiagonalBase.html" title=" " alt="" coords="5,69,204,109"/>
+</map>

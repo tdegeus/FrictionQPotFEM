@@ -1,0 +1,4 @@
+<map id="GooseFEM::Mesh::Stitch" name="GooseFEM::Mesh::Stitch">
+<area shape="rect" id="node1" title="Stitch mesh objects, automatically searching for overlapping nodes." alt="" coords="9,5,188,31"/>
+<area shape="rect" id="node2" href="$classGooseFEM_1_1Mesh_1_1Vstack.html" title="Vertically stack meshes." alt="" coords="5,79,192,104"/>
+</map>

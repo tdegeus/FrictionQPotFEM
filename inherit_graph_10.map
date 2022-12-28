@@ -1,0 +1,13 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classGooseFEM_1_1MatrixBase.html" title="CRTP base class for a matrix." alt="" coords="5,173,219,198"/>
+<area shape="rect" id="node2" href="$classGooseFEM_1_1MatrixPartitionedBase.html" title=" " alt="" coords="267,101,521,141"/>
+<area shape="rect" id="node4" href="$classGooseFEM_1_1MatrixPartitionedBase.html" title=" " alt="" coords="289,229,499,269"/>
+<area shape="rect" id="node6" href="$classGooseFEM_1_1MatrixPartitionedBase.html" title=" " alt="" coords="275,293,513,333"/>
+<area shape="rect" id="node7" href="$classGooseFEM_1_1MatrixPartitionedBase.html" title="CRTP base class for a partitioned matrix." alt="" coords="289,37,499,77"/>
+<area shape="rect" id="node3" href="$classGooseFEM_1_1MatrixDiagonalPartitioned.html" title="Diagonal and partitioned matrix." alt="" coords="609,165,808,205"/>
+<area shape="rect" id="node5" href="$classGooseFEM_1_1MatrixPartitioned.html" title="Sparse matrix partitioned in an unknown and a prescribed part." alt="" coords="603,237,814,262"/>
+<area shape="rect" id="node8" href="$classGooseFEM_1_1MatrixPartitionedTyingsBase.html" title=" " alt="" coords="569,5,848,45"/>
+<area shape="rect" id="node10" href="$classGooseFEM_1_1MatrixPartitionedTyingsBase.html" title="CRTP base class for a partitioned matrix with tying." alt="" coords="603,69,814,109"/>
+<area shape="rect" id="node9" href="$classGooseFEM_1_1MatrixPartitionedTyings.html" title="Sparse matrix from with dependent DOFs are eliminated, and the remaining (small) independent system i..." alt="" coords="896,5,1107,45"/>
+<area shape="rect" id="node11" href="$classGooseFEM_1_1MatrixDiagonalBase.html" title=" " alt="" coords="267,165,521,205"/>
+</map>

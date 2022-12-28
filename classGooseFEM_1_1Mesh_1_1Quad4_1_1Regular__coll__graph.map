@@ -1,0 +1,5 @@
+<map id="GooseFEM::Mesh::Quad4::Regular" name="GooseFEM::Mesh::Quad4::Regular">
+<area shape="rect" id="node1" title="Regular mesh: equi&#45;sized elements." alt="" coords="45,167,229,207"/>
+<area shape="rect" id="node2" href="$classGooseFEM_1_1Mesh_1_1RegularBase2d.html" title=" " alt="" coords="17,79,257,119"/>
+<area shape="rect" id="node3" href="$classGooseFEM_1_1Mesh_1_1RegularBase.html" title="CRTP base class for regular meshes." alt="" coords="5,5,269,31"/>
+</map>

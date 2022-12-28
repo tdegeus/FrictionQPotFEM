@@ -1,0 +1,5 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classGooseFEM_1_1Vector.html" title="Class to switch between storage types." alt="" coords="5,35,145,60"/>
+<area shape="rect" id="node2" href="$classGooseFEM_1_1VectorPartitioned.html" title="Class to switch between storage types, based on a mesh and DOFs that are partitioned in:" alt="" coords="193,5,404,31"/>
+<area shape="rect" id="node3" href="$classGooseFEM_1_1VectorPartitionedTyings.html" title="Class to switch between storage types." alt="" coords="193,55,404,95"/>
+</map>

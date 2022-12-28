@@ -1,0 +1,6 @@
+<map id="GooseFEM::MatrixPartitionedTyings" name="GooseFEM::MatrixPartitionedTyings">
+<area shape="rect" id="node1" title="Sparse matrix from with dependent DOFs are eliminated, and the remaining (small) independent system i..." alt="" coords="39,255,250,295"/>
+<area shape="rect" id="node2" href="$classGooseFEM_1_1MatrixPartitionedTyingsBase.html" title=" " alt="" coords="5,167,284,207"/>
+<area shape="rect" id="node3" href="$classGooseFEM_1_1MatrixPartitionedBase.html" title="CRTP base class for a partitioned matrix." alt="" coords="39,79,250,119"/>
+<area shape="rect" id="node4" href="$classGooseFEM_1_1MatrixBase.html" title="CRTP base class for a matrix." alt="" coords="38,5,251,31"/>
+</map>
