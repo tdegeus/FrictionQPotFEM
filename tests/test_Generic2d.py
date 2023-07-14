@@ -124,7 +124,7 @@ class test_Generic2d(unittest.TestCase):
         self.assertTrue(np.allclose(mat.Sig[..., 1, 0], mat.Sig[0, 0, 1, 0]))
 
         dV = system.quad.AsTensor(2, system.quad.dV)
-        sigbar = np.average(system.Sig(), weights=dV, axis=(0, 1))
+        sigbar = np.average(system.Sig, weights=dV, axis=(0, 1))
         self.assertAlmostEqual(sigbar[0, 1], sigxy)
 
     def test_eventDrivenSimpleShear(self):
@@ -211,7 +211,7 @@ class test_Generic2d(unittest.TestCase):
                 system.eventDrivenStep(0.1, kick, direction)
 
                 self.assertTrue(np.allclose(GMat.Epsd(system.plastic.Eps), eps_expect))
-                self.assertTrue(system.residual() < 1e-5)
+                self.assertLess(system.residual, 1e-5)
                 self.assertTrue(np.all(system.plastic.i < system.plastic.epsy.shape[-1]))
 
                 if index == 3:
@@ -379,7 +379,7 @@ class test_Generic2d(unittest.TestCase):
                 system.eventDrivenStep(0.05, kick, direction, yield_element=True)
 
                 self.assertTrue(np.allclose(GMat.Epsd(system.plastic.Eps), eps_expect))
-                self.assertTrue(system.residual() < 1e-5)
+                self.assertLess(system.residual, 1e-5)
 
     def test_flowSteps(self):
         """

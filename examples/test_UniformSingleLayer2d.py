@@ -105,7 +105,7 @@ class test_UniformSingleLayer2d(unittest.TestCase):
             else:
                 system.eventDrivenStep(deps, kick=False)
                 self.assertTrue(np.all(system.plastic.i == i_n))
-                self.assertTrue(system.residual() < 1e-2)
+                self.assertLess(system.residual, 1e-2)
 
             check[step] = np.copy(system.u)
 

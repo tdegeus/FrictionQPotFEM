@@ -96,8 +96,8 @@ class test_UniformSingleLayer2d(unittest.TestCase):
             else:
                 system.eventDrivenStep(deps=1e-5, kick=False)
 
-            Epsbar = np.average(system.Eps(), weights=dV, axis=(0, 1))
-            Sigbar = np.average(system.Sig(), weights=dV, axis=(0, 1))
+            Epsbar = np.average(system.Eps, weights=dV, axis=(0, 1))
+            Sigbar = np.average(system.Sig, weights=dV, axis=(0, 1))
             collect_Eps[step] = GMat.Epsd(Epsbar)
             collect_Sig[step] = GMat.Sigd(Sigbar)
             collect_Sig_plastic[step] = GMat.Sigd(np.mean(system.plastic.Sig, axis=(0, 1)))

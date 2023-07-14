@@ -56,7 +56,7 @@ class test_Generic2d(unittest.TestCase):
                 eps_expect = epsy[0, index] + m * 0.5 * 1e-4
                 system.eventDrivenStep(1e-4, kick, direction)
                 self.assertTrue(np.allclose(GMat.Epsd(system.plastic.Eps), eps_expect))
-                self.assertTrue(system.residual() < 1e-5)
+                self.assertLess(system.residual, 1e-5)
 
     def test_addSimpleShearToFixedStress(self):
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
@@ -92,19 +92,19 @@ class test_Generic2d(unittest.TestCase):
 
         for step in range(4):
             u_n = np.copy(system.u)
-            sig_n = GMat.Sigd(np.average(system.Sig(), weights=dV, axis=(0, 1)))
+            sig_n = GMat.Sigd(np.average(system.Sig, weights=dV, axis=(0, 1)))
 
             system.eventDrivenStep(1e-4, step % 2 == 0, direction=1)
             system.minimise()
 
-            sig = GMat.Sigd(np.average(system.Sig(), weights=dV, axis=(0, 1)))
+            sig = GMat.Sigd(np.average(system.Sig, weights=dV, axis=(0, 1)))
 
         target = sig_n + 0.5 * (sig - sig_n)
         system.u = u_n
         system.addSimpleShearToFixedStress(target)
 
         self.assertTrue(
-            np.isclose(target, GMat.Sigd(np.average(system.Sig(), weights=dV, axis=(0, 1))))
+            np.isclose(target, GMat.Sigd(np.average(system.Sig, weights=dV, axis=(0, 1))))
         )
 
 

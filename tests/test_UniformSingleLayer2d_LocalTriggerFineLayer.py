@@ -266,7 +266,7 @@ class test_Generic2d(unittest.TestCase):
             self.assertTrue(np.allclose(delta_u, modelTrigger.delta_u(itrigger, 0)))
 
         Barrier = np.array(Barrier)
-        self.assertTrue(np.allclose(Barrier, modelTrigger.barriers()[:, 0]))
+        self.assertTrue(np.allclose(Barrier, modelTrigger.barriers[:, 0]))
 
 
 if __name__ == "__main__":
