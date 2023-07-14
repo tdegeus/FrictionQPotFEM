@@ -9,7 +9,6 @@ import numpy as np
 
 
 def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
-
     fext = np.zeros(vector.shape_nodevec())
     disp = np.zeros(vector.shape_nodevec())
 
@@ -43,7 +42,6 @@ def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
 
 
 def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N=100):
-
     # solve for "p = 0"
     a = dgamma**2
     b = 2 * gamma * dgamma
@@ -86,7 +84,6 @@ def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N=100):
 
 
 def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p, e):
-
     dE = np.empty(P.size)
 
     for i, (p, s) in enumerate(zip(P.ravel(), S.ravel())):
@@ -101,7 +98,6 @@ class test_Generic2d(unittest.TestCase):
     """
 
     def test_basic(self):
-
         # ------------------------
         # initialise configuration
         # ------------------------
@@ -229,7 +225,6 @@ class test_Generic2d(unittest.TestCase):
         Barrier = []
 
         for itrigger, trigger in enumerate(plastic):
-
             Sigstar_s = np.array([[0.0, +1.0], [+1.0, 0.0]])
 
             Sigstar_p = np.array([[+1.0, 0.0], [0.0, -1.0]])
@@ -271,9 +266,8 @@ class test_Generic2d(unittest.TestCase):
             self.assertTrue(np.allclose(delta_u, modelTrigger.delta_u(itrigger, 0)))
 
         Barrier = np.array(Barrier)
-        self.assertTrue(np.allclose(Barrier, modelTrigger.barriers()[:, 0]))
+        self.assertTrue(np.allclose(Barrier, modelTrigger.barriers[:, 0]))
 
 
 if __name__ == "__main__":
-
     unittest.main()

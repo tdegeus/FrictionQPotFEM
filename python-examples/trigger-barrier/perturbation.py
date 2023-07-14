@@ -10,7 +10,6 @@ plt.style.use(["goose", "goose-latex"])
 
 
 def ComputePerturbation(sigma_star_test):
-
     # mesh
     # ----
 
@@ -131,7 +130,6 @@ def ComputePerturbation(sigma_star_test):
 
 
 def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N=100):
-
     # solve for "p = 0"
     a = dgamma**2
     b = 2 * gamma * dgamma
@@ -174,7 +172,6 @@ def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N=100):
 
 
 def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p):
-
     dE = np.empty(P.size)
 
     for i, (p, s) in enumerate(zip(P.ravel(), S.ravel())):
@@ -342,7 +339,6 @@ E0 = np.average(0.5 * gtens.A2_ddot_B2(Sig, Eps), weights=dV) * np.sum(dV)
 
 for i, p in enumerate(P):
     for j, s in enumerate(S):
-
         Eps_n = Eps + s * Eps_s + p * Eps_p
         Sig_n = Sig + s * Sig_s + p * Sig_p
 

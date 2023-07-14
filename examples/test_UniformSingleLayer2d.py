@@ -25,7 +25,6 @@ class test_UniformSingleLayer2d(unittest.TestCase):
     """
 
     def test_main(self):
-
         N = 3**2
         h = np.pi
         L = h * N
@@ -92,12 +91,10 @@ class test_UniformSingleLayer2d(unittest.TestCase):
         pbar = tqdm.tqdm(range(1000))
 
         for step in pbar:
-
             inc_n = system.inc
             i_n = np.copy(system.plastic.i)
 
             if step % 2 == 0:
-
                 system.eventDrivenStep(deps, kick=True)
                 self.assertTrue(np.max(system.plastic.i - i_n) == 1)
 
@@ -106,10 +103,9 @@ class test_UniformSingleLayer2d(unittest.TestCase):
                 pbar.set_description(f"step: {step:4d}, iiter = {system.inc - inc_n:8d}")
 
             else:
-
                 system.eventDrivenStep(deps, kick=False)
                 self.assertTrue(np.all(system.plastic.i == i_n))
-                self.assertTrue(system.residual() < 1e-2)
+                self.assertLess(system.residual, 1e-2)
 
             check[step] = np.copy(system.u)
 
@@ -119,5 +115,4 @@ class test_UniformSingleLayer2d(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()

@@ -27,7 +27,6 @@ class test_Generic2d(unittest.TestCase):
     """
 
     def test_version_dependencies(self):
-
         deps = FrictionQPotFEM.Generic2d.version_dependencies()
         deps = [i.split("=")[0] for i in deps]
 
@@ -40,7 +39,6 @@ class test_Generic2d(unittest.TestCase):
         self.assertTrue("xtl" in deps)
 
     def test_version_compiler(self):
-
         deps = FrictionQPotFEM.Generic2d.version_compiler()
         deps = {i.split("=")[0]: i.split("=")[1] for i in deps}
 
@@ -126,7 +124,7 @@ class test_Generic2d(unittest.TestCase):
         self.assertTrue(np.allclose(mat.Sig[..., 1, 0], mat.Sig[0, 0, 1, 0]))
 
         dV = system.quad.AsTensor(2, system.quad.dV)
-        sigbar = np.average(system.Sig(), weights=dV, axis=(0, 1))
+        sigbar = np.average(system.Sig, weights=dV, axis=(0, 1))
         self.assertAlmostEqual(sigbar[0, 1], sigxy)
 
     def test_eventDrivenSimpleShear(self):
@@ -176,7 +174,6 @@ class test_Generic2d(unittest.TestCase):
             delta_u[i, 0] = 0.1 * (coor[i, 1] - coor[0, 1])
 
         for loop in range(2):
-
             if loop == 0:
                 system.eventDriven_setDeltaU(delta_u)
                 delta_u = system.eventDriven_deltaU
@@ -204,7 +201,6 @@ class test_Generic2d(unittest.TestCase):
             ]
 
             for direction, kick, index, f, throw in settings:
-
                 eps_expect = epsy[0, index] + f * 0.5 * 0.1
 
                 if throw:
@@ -215,7 +211,7 @@ class test_Generic2d(unittest.TestCase):
                 system.eventDrivenStep(0.1, kick, direction)
 
                 self.assertTrue(np.allclose(GMat.Epsd(system.plastic.Eps), eps_expect))
-                self.assertTrue(system.residual() < 1e-5)
+                self.assertLess(system.residual, 1e-5)
                 self.assertTrue(np.all(system.plastic.i < system.plastic.epsy.shape[-1]))
 
                 if index == 3:
@@ -352,7 +348,6 @@ class test_Generic2d(unittest.TestCase):
             delta_u[i, 0] = 0.1 * (coor[i, 1] - coor[0, 1])
 
         for loop in range(2):
-
             if loop == 0:
                 system.eventDriven_setDeltaU(delta_u)
                 delta_u = system.eventDriven_deltaU
@@ -371,7 +366,6 @@ class test_Generic2d(unittest.TestCase):
             ]
 
             for direction, kick, index, f, throw in settings:
-
                 if not kick:
                     eps_expect = epsy[0, index] + f * 0.5 * 0.05
                 else:
@@ -385,7 +379,7 @@ class test_Generic2d(unittest.TestCase):
                 system.eventDrivenStep(0.05, kick, direction, yield_element=True)
 
                 self.assertTrue(np.allclose(GMat.Epsd(system.plastic.Eps), eps_expect))
-                self.assertTrue(system.residual() < 1e-5)
+                self.assertLess(system.residual, 1e-5)
 
     def test_flowSteps(self):
         """
@@ -437,7 +431,6 @@ class test_Generic2d(unittest.TestCase):
         self.assertTrue(np.allclose(system.t, 20))
 
     def test_damping_alpha_no_eta(self):
-
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
 
         elastic = np.array([0, 1, 2, 6, 7, 8], dtype=np.uint64)
@@ -467,7 +460,6 @@ class test_Generic2d(unittest.TestCase):
         self.assertTrue(np.allclose(system.vector.AsDofs(system.fdamp), alpha))
 
     def test_damping_no_alpha_eta(self):
-
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
         coor = mesh.coor()
         conn = mesh.conn()
@@ -507,7 +499,6 @@ class test_Generic2d(unittest.TestCase):
         self.assertTrue(np.allclose(system.fdamp, f))
 
     def test_damping_alpha_eta(self):
-
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
         coor = mesh.coor()
         conn = mesh.conn()
@@ -550,5 +541,4 @@ class test_Generic2d(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()

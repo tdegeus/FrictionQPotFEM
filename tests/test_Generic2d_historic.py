@@ -89,7 +89,6 @@ class test_Generic2d(unittest.TestCase):
         dV = system.quad.AsTensor(2, system.dV)
 
         for step in range(dF.shape[0]):
-
             u = system.u
 
             for i in range(mesh.nnode):
@@ -101,8 +100,8 @@ class test_Generic2d(unittest.TestCase):
             ret = system.minimise(nmargin=5)
             self.assertTrue(ret == 0)
 
-            Epsbar = np.average(system.Eps(), weights=dV, axis=(0, 1))
-            Sigbar = np.average(system.Sig(), weights=dV, axis=(0, 1))
+            Epsbar = np.average(system.Eps, weights=dV, axis=(0, 1))
+            Sigbar = np.average(system.Sig, weights=dV, axis=(0, 1))
             collect_Eps[step] = GMat.Epsd(Epsbar)
             collect_Sig[step] = GMat.Sigd(Sigbar)
             collect_Sig_plastic[step] = GMat.Sigd(np.mean(system.plastic.Sig, axis=(0, 1)))
@@ -115,5 +114,4 @@ class test_Generic2d(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()

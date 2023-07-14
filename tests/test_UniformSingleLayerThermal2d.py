@@ -13,9 +13,7 @@ class test_Generic2d(unittest.TestCase):
     """
 
     def test_dimension(self):
-
         for ih, h in enumerate([1, 1.5, 2, np.pi, 4]):
-
             mesh = GooseFEM.Mesh.Quad4.Regular(3, 3, h=h)
             coor = mesh.coor()
             dofs = mesh.dofs()
@@ -70,7 +68,6 @@ class test_Generic2d(unittest.TestCase):
             abssig = np.zeros_like(mat.Sig[plastic, ...])
 
             for inc in range(ninc):
-
                 disp = np.zeros_like(coor)
                 system.u = disp
                 solver.solve(matrix, system.fthermal, disp)
@@ -93,7 +90,6 @@ class test_Generic2d(unittest.TestCase):
             self.assertLess(np.mean(GMat.Sigd(sig / ninc)) / system.temperature, 0.1)
 
     def test_restore(self):
-
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
         coor = mesh.coor()
         dofs = mesh.dofs()
@@ -143,5 +139,4 @@ class test_Generic2d(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()

@@ -9,7 +9,6 @@ plt.style.use(["goose", "goose-latex"])
 
 
 def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
-
     fext = vector.AllocateNodevec(0.0)
     disp = vector.AllocateNodevec(0.0)
 
@@ -44,7 +43,6 @@ def ComputePerturbation(sigma_star_test, trigger, mat, quad, vector, K, Solver):
 
 
 def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N=100):
-
     # solve for "p = 0"
     a = dgamma**2
     b = 2 * gamma * dgamma
@@ -87,7 +85,6 @@ def GetYieldSurface(E, gamma, dE, dgamma, epsy=0.5, N=100):
 
 
 def ComputeEnergy(P, S, Eps, Sig, dV, Eps_s, Sig_s, Eps_p, Sig_p):
-
     dE = np.empty(P.size)
 
     for i, (p, s) in enumerate(zip(P.ravel(), S.ravel())):
@@ -213,7 +210,6 @@ N = len(plastic)
 config = []
 
 for i in range(nconfig):
-
     Sigstar_s = np.array([[0.0, +1.0], [+1.0, 0.0]])
 
     Sigstar_p = np.array([[+1.0, 0.0], [0.0, -1.0]])
@@ -246,7 +242,6 @@ for i in range(nconfig):
 Barrier = []
 
 for itrigger, trigger in enumerate(plastic):
-
     Sigstar_s = np.array([[0.0, +1.0], [+1.0, 0.0]])
 
     Sigstar_p = np.array([[+1.0, 0.0], [0.0, -1.0]])
