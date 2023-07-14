@@ -11,7 +11,6 @@ class Test(unittest.TestCase):
     """
 
     def test_FrictionQPotFEM_Generic2d_System(self):
-
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
 
         elastic = np.array([0, 1, 2, 6, 7, 8])
@@ -39,7 +38,6 @@ class Test(unittest.TestCase):
         self.assertEqual(system.type, "FrictionQPotFEM.Generic2d.System")
 
     def test_FrictionQPotFEM_UniformSingleLayer2d_System(self):
-
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
 
         elastic = np.array([0, 1, 2, 6, 7, 8])
@@ -67,7 +65,6 @@ class Test(unittest.TestCase):
         self.assertEqual(system.type, "FrictionQPotFEM.UniformSingleLayer2d.System")
 
     def test_FrictionQPotFEM_UniformMultiLayerIndividualDrive2d_System(self):
-
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
 
         layers = [i * 3 + np.arange(3) for i in range(3)]
@@ -100,7 +97,6 @@ class Test(unittest.TestCase):
         self.assertEqual(system.type, "FrictionQPotFEM.UniformMultiLayerIndividualDrive2d.System")
 
     def test_FrictionQPotFEM_UniformMultiLayerLeverDrive2d_System(self):
-
         mesh = GooseFEM.Mesh.Quad4.Regular(3, 3)
 
         layers = [i * 3 + np.arange(3) for i in range(3)]
@@ -136,5 +132,4 @@ class Test(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()

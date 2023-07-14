@@ -103,7 +103,6 @@ class test_UniformMultiLayerIndividualDrive2d(unittest.TestCase):
         dV = system.quad.AsTensor(2, system.dV)
 
         for step in range(nstep):
-
             if step % 2 == 0:
                 system.eventDrivenStep(deps=1e-5, kick=True, iterative=True, yield_element=False)
                 ret = system.minimise(nmargin=5)
@@ -125,5 +124,4 @@ class test_UniformMultiLayerIndividualDrive2d(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()

@@ -12,7 +12,6 @@ class test_Generic2d(unittest.TestCase):
     """
 
     def test_eventDrivenSimpleShear(self):
-
         mesh = GooseFEM.Mesh.Quad4.Regular(nx=3, ny=2 * 3 + 1)
         coor = mesh.coor()
         conn = mesh.conn()
@@ -55,7 +54,6 @@ class test_Generic2d(unittest.TestCase):
         drive_u[-1, 0] = 5.0
 
         for loop in range(2):
-
             if loop == 0:
                 system.initEventDriven(drive_u, drive_active)
                 delta_active = system.eventDriven_targetActive
@@ -71,7 +69,6 @@ class test_Generic2d(unittest.TestCase):
             multi = [-1, -1, +1, -1, +1, -1, +1, -1, +1]
 
             for direction, kick, index, m in zip(directions, kicks, indices, multi):
-
                 eps_expect = epsy[0, index] + m * 0.5 * 1e-4
                 system.eventDrivenStep(1e-4, kick, direction)
                 self.assertTrue(np.allclose(GMat.Epsd(system.plastic.Eps), eps_expect))
@@ -79,5 +76,4 @@ class test_Generic2d(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()

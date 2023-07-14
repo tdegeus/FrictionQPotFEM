@@ -17,7 +17,6 @@ class test_stich_mesh(unittest.TestCase):
     """
 
     def test_main(self):
-
         layer_elas = GooseFEM.Mesh.Quad4.Regular(20, 6)
         layer_plas = GooseFEM.Mesh.Quad4.Regular(20, 1)
 
@@ -141,5 +140,4 @@ class test_stich_mesh(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()

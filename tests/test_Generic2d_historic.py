@@ -89,7 +89,6 @@ class test_Generic2d(unittest.TestCase):
         dV = system.quad.AsTensor(2, system.dV)
 
         for step in range(dF.shape[0]):
-
             u = system.u
 
             for i in range(mesh.nnode):
@@ -115,5 +114,4 @@ class test_Generic2d(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()

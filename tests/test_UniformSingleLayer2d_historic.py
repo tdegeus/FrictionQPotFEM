@@ -89,7 +89,6 @@ class test_UniformSingleLayer2d(unittest.TestCase):
         dV = system.quad.AsTensor(2, system.dV)
 
         for step in range(nstep):
-
             if step % 2 == 0:
                 system.eventDrivenStep(deps=1e-5, kick=True)
                 ret = system.minimise()
@@ -111,5 +110,4 @@ class test_UniformSingleLayer2d(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()

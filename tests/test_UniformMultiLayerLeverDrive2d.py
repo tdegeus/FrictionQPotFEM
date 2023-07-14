@@ -65,7 +65,6 @@ class test_Generic2d(unittest.TestCase):
         drive_active[-1, 0] = True
 
         for loop in range(2):
-
             if loop == 0:
                 system.initEventDriven(0.1, drive_active)
                 delta_xlever = system.eventDriven_deltaLeverPosition()
@@ -82,7 +81,6 @@ class test_Generic2d(unittest.TestCase):
             multi = [-1, -1, +1, -1, +1, -1, +1, -1, +1]
 
             for direction, kick, index, m in zip(directions, kicks, indices, multi):
-
                 eps_expect = epsy[0, index] + m * 0.5 * 1e-4
                 system.eventDrivenStep(1e-4, kick, direction)
                 self.assertTrue(np.allclose(GMat.Epsd(system.plastic.Eps), eps_expect))
@@ -90,5 +88,4 @@ class test_Generic2d(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     unittest.main()
