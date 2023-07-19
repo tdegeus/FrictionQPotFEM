@@ -3,6 +3,7 @@ channels:
 dependencies:
 - catch2 >=3.0.0
 - cmake
+- conda_envfile >0.3.1
 - doxygen >=1.9.5
 - fmt
 - gmatelastoplasticqpot >=0.17.0
